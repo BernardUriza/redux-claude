@@ -345,9 +345,7 @@ export const GatewayDashboard = () => {
     systemHealth,
     processWithAllAgents,
     processWithSequentialAgents,
-    executeTriageOnly,
-    executeDiagnosticFlow,
-    executeFullWorkflow,
+    processWithSingleAgent,
     selectOptimalAgents,
     resetAgent,
     toggleAgent
@@ -370,7 +368,7 @@ export const GatewayDashboard = () => {
         // Process with multi-agent system
         const [, agentResults] = await Promise.all([
           sendMessage(input),
-          executeFullWorkflow(input)
+          processWithSequentialAgents(input)
         ])
         
         setMultiAgentResults(prev => [...agentResults, ...prev])
