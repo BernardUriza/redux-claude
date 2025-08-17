@@ -439,13 +439,13 @@ export const GatewayDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
           
           {/* Left Panel - Chat */}
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 flex flex-col h-full shadow-2xl border border-white/20 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-cyan-500/20">
+          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 flex flex-col shadow-2xl border border-white/20 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-cyan-500/20" style={{height: 'calc(100vh - 200px)'}}>
             <h2 className="text-3xl font-bold mb-4 text-white flex-shrink-0 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
               💬 Chat Médico
             </h2>
             
-            {/* Chat Messages Container - FLEX GROW */}
-            <div className="flex-1 overflow-y-auto bg-black/20 backdrop-blur-sm rounded-2xl p-4 mb-4 border border-white/10 custom-scrollbar min-h-0">
+            {/* Chat Messages Container - ALTURA FIJA BRUTAL */}
+            <div className="overflow-y-auto bg-black/20 backdrop-blur-sm rounded-2xl p-4 mb-4 border border-white/10 custom-scrollbar" style={{height: '400px'}}>
               {messages.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-gray-300">
                   <div className="text-center">
@@ -523,7 +523,7 @@ export const GatewayDashboard = () => {
           </div>
           
           {/* Right Panel - Multi-Agent or Single Agent */}
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 flex flex-col h-full shadow-2xl border border-white/20 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-500/20">
+          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 flex flex-col shadow-2xl border border-white/20 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-500/20" style={{height: 'calc(100vh - 200px)'}}>
             {activeTab === 'multi' ? (
               <>
                 <h2 className="text-3xl font-bold mb-4 text-white flex-shrink-0 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -551,8 +551,8 @@ export const GatewayDashboard = () => {
                   </div>
                 </div>
                 
-                {/* Multi-Agent Results Timeline - FLEX GROW */}
-                <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar min-h-0">
+                {/* Multi-Agent Results Timeline - ALTURA FIJA BRUTAL */}
+                <div className="overflow-y-auto space-y-3 custom-scrollbar" style={{height: '300px'}}>
                   <div className="font-bold text-lg text-white sticky top-0 bg-gradient-to-r from-purple-900/90 to-slate-900/90 backdrop-blur-sm pb-2 rounded-lg mb-3 px-3 py-2 border border-white/20">
                     ⚡ Agent Decisions
                   </div>
