@@ -269,7 +269,18 @@ export const useMultiAgentGateway = () => {
     getAvailableAgents,
     getFailedAgents,
     getAgentHealth,
-    getSystemOverview,
+    systemHealth: getSystemOverview() || {
+      totalAgents: 0,
+      activeAgents: 0,
+      availableAgents: 0,
+      failedAgents: 0,
+      avgSuccessRate: 0,
+      avgLatency: 0,
+      isHealthy: false,
+      activeRequests: 0,
+      lastHealthCheck: Date.now(),
+      systemLatency: 0
+    },
     getSessionInfo
   }
 }

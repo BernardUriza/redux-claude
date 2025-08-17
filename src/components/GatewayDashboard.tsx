@@ -516,7 +516,7 @@ export const GatewayDashboard = () => {
                 <div className="flex-shrink-0 mb-4">
                   <div className="font-bold text-lg text-gray-700 mb-3">Agent Status</div>
                   <div className="grid grid-cols-2 gap-3">
-                    {agentSummaries.map((summary) => (
+                    {(agentSummaries || []).map((summary) => (
                       <AgentStatusCard 
                         key={summary.agentType} 
                         agentType={summary.agentType}
@@ -530,16 +530,16 @@ export const GatewayDashboard = () => {
                 <div className="flex-1 overflow-y-auto space-y-4 min-h-0">
                   <div className="font-bold text-lg text-gray-700 sticky top-0 bg-white pb-2">Agent Decisions</div>
                   
-                  {systemHealth.activeRequests > 0 && (
+                  {systemHealth?.activeRequests > 0 && (
                     <div className="border-2 border-blue-300 bg-blue-50 rounded-lg p-4">
                       <div className="flex items-center space-x-2">
                         <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                        <span className="text-blue-700">Processing {systemHealth.activeRequests} agents...</span>
+                        <span className="text-blue-700">Processing {systemHealth?.activeRequests || 0} agents...</span>
                       </div>
                     </div>
                   )}
                   
-                  {multiAgentResults.length === 0 && systemHealth.activeRequests === 0 ? (
+                  {multiAgentResults.length === 0 && (systemHealth?.activeRequests || 0) === 0 ? (
                     <div className="flex items-center justify-center h-32 text-gray-500">
                       <div className="text-center">
                         <div className="text-3xl mb-2">🚀</div>
