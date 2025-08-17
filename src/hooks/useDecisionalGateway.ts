@@ -79,14 +79,13 @@ export const useDecisionalGateway = () => {
     const decisionId = nanoid()
     const decisionType = detectDecisionType(query)
     
-    // Check circuit breaker and select provider
-    const state = store.getState() as RootState
+    // Check circuit breaker and select provider using Redux selector
     let selectedProvider = activeProvider
     
-    if (isCircuitOpen(selectedProvider, state)) {
+    if (isCircuitOpen(selectedProvider, { decisions: { circuitBreaker } } as RootState)) {
       selectedProvider = getAvailableProvider(selectedProvider)
       
-      if (isCircuitOpen(selectedProvider, state)) {
+      if (isCircuitOpen(selectedProvider, { decisions: { circuitBreaker } } as RootState)) {
         throw new Error('All providers are unavailable')
       }
     }
@@ -187,5 +186,3 @@ export const useDecisionalGateway = () => {
   }
 }
 
-// Helper to access store outside component
-import { store } from '@/store/store'

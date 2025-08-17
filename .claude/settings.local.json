@@ -15,7 +15,10 @@
       "Bash(rm:*)",
       "Bash(mv:*)",
       "Bash(npm run build:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(powershell:*)",
+      "Bash(taskkill:*)",
+      "WebFetch(domain:dev.to)"
     ],
     "deny": [],
     "ask": []

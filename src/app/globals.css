@@ -2,6 +2,16 @@
 /* Creado por Bernard Orozco */
 @import "tailwindcss";
 
+/* Variables para Tailwind v4 */
+:root {
+  --background-primary: #f8fafc;
+  --background-secondary: #dbeafe;
+  --text-primary: #374151;
+  --text-secondary: #6b7280;
+  --blue-primary: #3b82f6;
+  --blue-secondary: #1e40af;
+}
+
 /* Estilos base personalizados para Tailwind v4 */
 @layer base {
   body {
