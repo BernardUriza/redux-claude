@@ -290,27 +290,27 @@ const MultiAgentDecisionCard = ({ result }: { result: DecisionResult }) => {
 }
 
 const SystemHealthPanel = ({ systemHealth }: { systemHealth: any }) => (
-  <div className="grid grid-cols-4 gap-3 mb-6">
-    <div className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20 transform transition-all duration-300 hover:scale-105 hover:shadow-cyan-500/50">
-      <div className="text-3xl font-black text-cyan-400 mb-1">{systemHealth?.availableAgents || 0}</div>
-      <div className="text-xs text-gray-300 font-semibold">Available Agents</div>
+  <div className="grid grid-cols-4 gap-2 mb-4 flex-shrink-0">
+    <div className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20 transform transition-all duration-300 hover:scale-105">
+      <div className="text-2xl font-black text-cyan-400">{systemHealth?.availableAgents || 0}</div>
+      <div className="text-xs text-gray-300">Available</div>
     </div>
     
-    <div className="bg-gradient-to-br from-emerald-500/20 to-green-500/20 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20 transform transition-all duration-300 hover:scale-105 hover:shadow-emerald-500/50">
-      <div className="text-3xl font-black text-emerald-400 mb-1">{systemHealth?.avgSuccessRate || 0}%</div>
-      <div className="text-xs text-gray-300 font-semibold">System Success</div>
+    <div className="bg-gradient-to-br from-emerald-500/20 to-green-500/20 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20 transform transition-all duration-300 hover:scale-105">
+      <div className="text-2xl font-black text-emerald-400">{systemHealth?.avgSuccessRate || 0}%</div>
+      <div className="text-xs text-gray-300">Success</div>
     </div>
     
-    <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20 transform transition-all duration-300 hover:scale-105 hover:shadow-purple-500/50">
-      <div className="text-3xl font-black text-purple-400 mb-1">{systemHealth?.avgLatency || 0}ms</div>
-      <div className="text-xs text-gray-300 font-semibold">System Latency</div>
+    <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20 transform transition-all duration-300 hover:scale-105">
+      <div className="text-2xl font-black text-purple-400">{systemHealth?.avgLatency || 0}ms</div>
+      <div className="text-xs text-gray-300">Latency</div>
     </div>
     
-    <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20 transform transition-all duration-300 hover:scale-105 hover:shadow-yellow-500/50">
-      <div className={`text-4xl font-bold mb-1 ${systemHealth?.isHealthy ? 'text-green-400' : 'text-red-400'} animate-pulse`}>
+    <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20 transform transition-all duration-300 hover:scale-105">
+      <div className={`text-2xl font-bold ${systemHealth?.isHealthy ? 'text-green-400' : 'text-red-400'} animate-pulse`}>
         {systemHealth?.isHealthy ? '✅' : '❌'}
       </div>
-      <div className="text-xs text-gray-300 font-semibold">System Health</div>
+      <div className="text-xs text-gray-300">Health</div>
     </div>
   </div>
 )
@@ -386,7 +386,7 @@ export const GatewayDashboard = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 relative overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden flex flex-col">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
@@ -394,18 +394,18 @@ export const GatewayDashboard = () => {
         <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '4s'}}></div>
       </div>
       
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header */}
-        <div className="text-center mb-8">
-          {/* Main Title with Enhanced Gradient */}
-          <div className="mb-6">
-            <h1 className="text-6xl font-black mb-3 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-pulse">
+      <div className="max-w-7xl mx-auto relative z-10 flex flex-col h-full p-4">
+        {/* Header - FLEX SHRINK */}
+        <div className="text-center mb-6 flex-shrink-0">
+          {/* Main Title - COMPACT */}
+          <div className="mb-4">
+            <h1 className="text-4xl font-black mb-2 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               Multi-Agent Gateway
             </h1>
-            <div className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-2">
+            <div className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-1">
               PoC v2.0
             </div>
-            <p className="text-gray-300">Creado por <span className="font-bold text-cyan-400">Bernard Orozco</span> 🚀</p>
+            <p className="text-sm text-gray-300">Creado por <span className="font-bold text-cyan-400">Bernard Orozco</span> 🚀</p>
           </div>
           
           {/* Tab Selector with Glassmorphism */}
@@ -435,8 +435,8 @@ export const GatewayDashboard = () => {
           </div>
         </div>
         
-        {/* Split Screen Layout - Fixed Height */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-280px)]">
+        {/* Split Screen Layout - FLEX GROW */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
           
           {/* Left Panel - Chat */}
           <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 flex flex-col h-full shadow-2xl border border-white/20 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-cyan-500/20">
@@ -444,8 +444,8 @@ export const GatewayDashboard = () => {
               💬 Chat Médico
             </h2>
             
-            {/* Chat Messages Container with FIXED Height and Internal Scroll */}
-            <div className="h-[400px] overflow-y-auto bg-black/20 backdrop-blur-sm rounded-2xl p-4 mb-4 border border-white/10 custom-scrollbar">
+            {/* Chat Messages Container - FLEX GROW */}
+            <div className="flex-1 overflow-y-auto bg-black/20 backdrop-blur-sm rounded-2xl p-4 mb-4 border border-white/10 custom-scrollbar min-h-0">
               {messages.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-gray-300">
                   <div className="text-center">
@@ -551,8 +551,8 @@ export const GatewayDashboard = () => {
                   </div>
                 </div>
                 
-                {/* Multi-Agent Results Timeline - FIXED HEIGHT with SCROLL */}
-                <div className="h-[300px] overflow-y-auto space-y-3 custom-scrollbar">
+                {/* Multi-Agent Results Timeline - FLEX GROW */}
+                <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar min-h-0">
                   <div className="font-bold text-lg text-white sticky top-0 bg-gradient-to-r from-purple-900/90 to-slate-900/90 backdrop-blur-sm pb-2 rounded-lg mb-3 px-3 py-2 border border-white/20">
                     ⚡ Agent Decisions
                   </div>
