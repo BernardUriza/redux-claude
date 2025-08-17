@@ -8,7 +8,8 @@ import {
   completeDecision, 
   failDecision, 
   retryDecision,
-  pruneDecisions 
+  pruneDecisions,
+  addAuditEntries 
 } from '@/store/decisionsSlice'
 import { 
   ProviderType, 
@@ -21,6 +22,7 @@ import {
 import { nanoid } from '@reduxjs/toolkit'
 
 import { callClaudeForDecision, getAvailableProvider } from '@/services/decisionalMiddleware'
+import { auditEngine } from '@/services/auditEngine'
 
 // Circuit breaker utility
 const isCircuitOpen = (provider: ProviderType, state: RootState): boolean => {
@@ -45,7 +47,9 @@ export const useDecisionalGateway = () => {
     totalProcessed,
     averageConfidence,
     averageLatency,
-    circuitBreaker
+    circuitBreaker,
+    auditEntries,
+    sessionQuality
   } = useSelector((state: RootState) => state.decisions)
   
   const requestAbortControllerRef = useRef<AbortController | null>(null)
@@ -61,11 +65,21 @@ export const useDecisionalGateway = () => {
 
   const detectDecisionType = (query: string): DecisionType => {
     const lowerQuery = query.toLowerCase()
-    const validationKeywords = ['validar', 'aprobar', 'revisar', 'confirmar', 'verificar']
+    const validationKeywords = ['validar', 'aprobar', 'revisar', 'confirmar', 'verificar', 'revisar plan', 'verificar tratamiento']
     
     return validationKeywords.some(keyword => lowerQuery.includes(keyword))
       ? DecisionType.VALIDATION
       : DecisionType.DIAGNOSIS
+  }
+
+  const shouldTriggerMultipleDecisions = (query: string): boolean => {
+    const lowerQuery = query.toLowerCase()
+    const multiTriggers = [
+      'síntomas', 'análisis completo', 'evaluación', 'historia clínica',
+      'seguimiento', 'plan de tratamiento', 'diagnóstico diferencial'
+    ]
+    
+    return multiTriggers.some(trigger => lowerQuery.includes(trigger)) || query.length > 100
   }
 
 
@@ -98,11 +112,19 @@ export const useDecisionalGateway = () => {
     }))
     
     try {
+      // Get previous decisions for context
+      const previousDecisions = items.slice(-3).map(item => ({
+        type: item.type,
+        decision: item.decision,
+        confidence: item.confidence
+      }))
+
       const response = await callClaudeForDecision(
         decisionType,
         query,
         selectedProvider,
-        requestAbortControllerRef.current.signal
+        requestAbortControllerRef.current.signal,
+        previousDecisions
       )
       
       const completedDecision: DecisionItem = {
@@ -119,7 +141,29 @@ export const useDecisionalGateway = () => {
       }
       
       dispatch(completeDecision(completedDecision))
+      
+      // Perform audit analysis
+      const auditEntries = auditEngine.auditDecision(completedDecision, items)
+      if (auditEntries.length > 0) {
+        dispatch(addAuditEntries(auditEntries))
+      }
+      
       dispatch(pruneDecisions()) // Keep only last 50
+      
+      // Trigger additional decisions for complex cases
+      if (shouldTriggerMultipleDecisions(query)) {
+        setTimeout(async () => {
+          // Trigger validation decision if we just made a diagnosis
+          if (decisionType === DecisionType.DIAGNOSIS) {
+            const validationQuery = `Validar el plan de diagnóstico propuesto para: ${query}`
+            try {
+              await processDecision(validationQuery)
+            } catch (error) {
+              console.warn('Auto-validation failed:', error)
+            }
+          }
+        }, 2000) // 2 second delay
+      }
       
       return decisionId
       
@@ -176,13 +220,16 @@ export const useDecisionalGateway = () => {
     error,
     stats,
     circuitBreaker,
+    auditEntries,
+    sessionQuality,
     
     // Actions
     processDecision,
     retryFailedDecision,
     
     // Utils
-    detectDecisionType
+    detectDecisionType,
+    getAuditReport: () => auditEngine.generateAuditReport()
   }
 }
 

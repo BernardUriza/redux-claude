@@ -83,38 +83,63 @@ const getFallbackDecision = async (
   }
 }
 
-// System prompts for different decision types
-const getSystemPrompt = (type: DecisionType): string => {
+// Enhanced system prompts with doctor context and feedback
+const getSystemPrompt = (type: DecisionType, previousDecisions?: any[]): string => {
+  const doctorContext = `You are an AI assistant helping a licensed medical doctor. The doctor is using this system to get structured clinical decision support. You should provide professional-grade medical insights suitable for a practicing physician.`
+  
+  const feedbackContext = previousDecisions && previousDecisions.length > 0 
+    ? `\n\nPrevious decisions in this session: ${JSON.stringify(previousDecisions.slice(-3), null, 2)}\nUse this context to provide more targeted analysis.`
+    : ''
+
   switch (type) {
     case DecisionType.DIAGNOSIS:
-      return `You are a medical diagnostic AI. Return ONLY a JSON object with this exact structure:
+      return `${doctorContext}
+
+Based on the patient information provided, return ONLY a JSON object with this exact structure:
 {
-  "differentials": ["condition1", "condition2"],
+  "differentials": ["most_likely_condition", "alternative_diagnosis", "rule_out_condition"],
   "priority": "low|medium|high|critical",
-  "tests_needed": ["test1", "test2"],
-  "confidence_factors": ["factor1", "factor2"]
-}`
+  "tests_needed": ["diagnostic_test1", "diagnostic_test2"],
+  "confidence_factors": ["supporting_evidence1", "supporting_evidence2"],
+  "clinical_notes": "brief_clinical_reasoning",
+  "red_flags": ["warning_sign1", "warning_sign2"] or [],
+  "follow_up_timeframe": "immediate|24hours|48hours|1week|routine"
+}
+
+Priority guidelines:
+- critical: Life-threatening, needs immediate intervention
+- high: Urgent medical attention required within hours
+- medium: Should be seen within days, monitor closely  
+- low: Routine follow-up appropriate${feedbackContext}`
 
     case DecisionType.VALIDATION:
-      return `You are a medical validation AI. Return ONLY a JSON object with this exact structure:
+      return `${doctorContext}
+
+For the medical decision or treatment plan presented, return ONLY a JSON object with this exact structure:
 {
   "approved": true|false,
-  "flags": ["flag1", "flag2"],
+  "flags": ["safety_concern1", "contraindication1"] or [],
   "urgency": 1-5,
-  "risk_score": 0-100
-}`
+  "risk_score": 0-100,
+  "recommendations": ["modify_dose", "add_monitoring", "consider_alternative"],
+  "contraindications": ["condition1", "drug_interaction1"] or [],
+  "monitoring_required": ["lab_test1", "vital_signs", "symptom_watch"]
+}
+
+Risk score: 0-25 (low), 26-50 (moderate), 51-75 (high), 76-100 (critical)${feedbackContext}`
 
     default:
       throw new Error(`Unsupported decision type: ${type}`)
   }
 }
 
-// Claude API call with structured prompts
+// Claude API call with structured prompts and feedback
 export const callClaudeForDecision = async (
   type: DecisionType,
   query: string,
   provider: ProviderType = ProviderType.CLAUDE,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  previousDecisions?: any[]
 ): Promise<DecisionResponse> => {
   const startTime = Date.now()
   
@@ -132,8 +157,8 @@ export const callClaudeForDecision = async (
     
     const response = await anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
-      max_tokens: 500,
-      system: getSystemPrompt(type),
+      max_tokens: 800, // Increased for richer responses
+      system: getSystemPrompt(type, previousDecisions),
       messages: [{ role: 'user', content: query }]
     })
 

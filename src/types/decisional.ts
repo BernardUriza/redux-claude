@@ -24,6 +24,9 @@ export type DiagnosisDecision = {
   priority: 'low' | 'medium' | 'high' | 'critical'
   tests_needed: string[]
   confidence_factors: string[]
+  clinical_notes: string
+  red_flags: string[]
+  follow_up_timeframe: 'immediate' | '24hours' | '48hours' | '1week' | 'routine'
 }
 
 export type ValidationDecision = {
@@ -31,6 +34,9 @@ export type ValidationDecision = {
   flags: string[]
   urgency: 1 | 2 | 3 | 4 | 5
   risk_score: number
+  recommendations: string[]
+  contraindications: string[]
+  monitoring_required: string[]
 }
 
 export type DecisionData = DiagnosisDecision | ValidationDecision
@@ -64,4 +70,11 @@ export type DecisionsState = {
   averageConfidence: number
   averageLatency: number
   circuitBreaker: Record<ProviderType, CircuitBreakerState>
+  auditEntries: import('@/types/audit').AuditEntry[]
+  sessionQuality: {
+    clinicalCoherence: number
+    safetyScore: number
+    decisionQuality: number
+    recommendationLevel: 'safe' | 'review_required' | 'clinical_oversight_needed'
+  }
 }

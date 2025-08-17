@@ -8,6 +8,7 @@ import {
   DecisionStatus,
   CircuitBreakerState 
 } from '@/types/decisional'
+import { AuditEntry } from '@/types/audit'
 
 const initialCircuitBreaker: CircuitBreakerState = {
   isOpen: false,
@@ -28,6 +29,13 @@ const initialState: DecisionsState = {
     [ProviderType.CLAUDE]: { ...initialCircuitBreaker },
     [ProviderType.OPENAI]: { ...initialCircuitBreaker },
     [ProviderType.LOCAL]: { ...initialCircuitBreaker }
+  },
+  auditEntries: [],
+  sessionQuality: {
+    clinicalCoherence: 100,
+    safetyScore: 100,
+    decisionQuality: 100,
+    recommendationLevel: 'safe'
   }
 }
 
@@ -142,6 +150,28 @@ const decisionsSlice = createSlice({
       state.circuitBreaker[action.payload] = { ...initialCircuitBreaker }
     },
 
+    // Add audit entries
+    addAuditEntries: (state, action: PayloadAction<AuditEntry[]>) => {
+      state.auditEntries.push(...action.payload)
+      
+      // Update session quality based on audit entries
+      const critical = state.auditEntries.filter(e => e.level === 'critical').length
+      const warnings = state.auditEntries.filter(e => e.level === 'warning').length
+      const total = Math.max(state.totalProcessed, 1)
+      
+      state.sessionQuality.clinicalCoherence = Math.max(0, 100 - (critical * 50 / total) - (warnings * 20 / total))
+      state.sessionQuality.safetyScore = Math.max(0, 100 - (critical * 30) - (warnings * 10))
+      state.sessionQuality.decisionQuality = Math.max(0, 100 - (critical * 40 / total) - (warnings * 15 / total))
+      
+      if (critical > 0) {
+        state.sessionQuality.recommendationLevel = 'clinical_oversight_needed'
+      } else if (warnings > 2) {
+        state.sessionQuality.recommendationLevel = 'review_required'
+      } else {
+        state.sessionQuality.recommendationLevel = 'safe'
+      }
+    },
+
     // Clear all decisions
     clearDecisions: (state) => {
       state.items = []
@@ -149,6 +179,13 @@ const decisionsSlice = createSlice({
       state.averageConfidence = 0
       state.averageLatency = 0
       state.error = null
+      state.auditEntries = []
+      state.sessionQuality = {
+        clinicalCoherence: 100,
+        safetyScore: 100,
+        decisionQuality: 100,
+        recommendationLevel: 'safe'
+      }
     }
   }
 })
@@ -161,6 +198,7 @@ export const {
   setActiveProvider,
   pruneDecisions,
   resetCircuitBreaker,
+  addAuditEntries,
   clearDecisions
 } = decisionsSlice.actions
 

@@ -3,11 +3,13 @@
 import { configureStore } from '@reduxjs/toolkit'
 import chatReducer from './chatSlice'
 import decisionsReducer from './decisionsSlice'
+import agentCircuitBreakersReducer from './agentCircuitBreakers'
 
 export const store = configureStore({
   reducer: {
     chat: chatReducer,
-    decisions: decisionsReducer
+    decisions: decisionsReducer,
+    agentCircuitBreakers: agentCircuitBreakersReducer
   }
 })
 
