@@ -2,10 +2,12 @@
 // Creado por Bernard Orozco
 import { configureStore } from '@reduxjs/toolkit'
 import chatReducer from './chatSlice'
+import decisionsReducer from './decisionsSlice'
 
 export const store = configureStore({
   reducer: {
-    chat: chatReducer
+    chat: chatReducer,
+    decisions: decisionsReducer
   }
 })
 

@@ -13,7 +13,9 @@
       "Bash(pkill:*)",
       "WebSearch",
       "Bash(rm:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm ls:*)"
     ],
     "deny": [],
     "ask": []
