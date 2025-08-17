@@ -2,7 +2,7 @@
 // Creado por Bernard Orozco
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState, AppDispatch } from '@/store/store'
-import { addUserMessage, addAssistantMessage, setError } from '@/store/chatSlice'
+import { addUserMessage, addAssistantMessage, setError, clearChat } from '@/store/chatSlice'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({
@@ -45,10 +45,15 @@ export const useClaudeChat = () => {
     }
   }
 
+  const clearChatHistory = () => {
+    dispatch(clearChat())
+  }
+
   return {
     messages,
     isLoading,
     error,
-    sendMessage
+    sendMessage,
+    clearChatHistory
   }
 }

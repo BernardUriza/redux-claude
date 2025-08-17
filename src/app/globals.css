@@ -1,69 +1,55 @@
 /* src/app/globals.css */
 /* Creado por Bernard Orozco */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
+/* Estilos base personalizados para Tailwind v4 */
 @layer base {
   body {
-    @apply bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen;
+    background: linear-gradient(135deg, #f8fafc 0%, #dbeafe 50%, #e0e7ff 100%);
+    min-height: 100vh;
   }
 }
 
-@layer components {
-  .chat-bubble-user {
-    @apply bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform hover:scale-105 transition-all duration-200;
+@layer utilities {
+  /* Animaciones personalizadas */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  
-  .chat-bubble-assistant {
-    @apply bg-white border border-gray-200 shadow-lg transform hover:scale-105 transition-all duration-200;
+
+  @keyframes bounce-dots {
+    0%, 80%, 100% {
+      transform: scale(0);
+    }
+    40% {
+      transform: scale(1);
+    }
   }
-  
-  .chat-container {
-    @apply bg-white/70 backdrop-blur-sm border border-gray-200/50 shadow-xl;
+
+  .fade-in-up {
+    animation: fadeInUp 0.3s ease-out;
   }
-  
-  .input-container {
-    @apply bg-white/80 backdrop-blur-sm shadow-lg border border-gray-200/50;
-  }
-  
-  .send-button {
-    @apply bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg;
-  }
-  
-  .typing-indicator {
-    @apply flex space-x-1;
-  }
-  
+
   .typing-dot {
-    @apply w-2 h-2 bg-gray-400 rounded-full animate-bounce;
+    width: 8px;
+    height: 8px;
+    background-color: #9ca3af;
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce-dots 1.4s infinite ease-in-out both;
   }
-}
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+  .typing-dot:nth-child(1) { 
+    animation-delay: -0.32s; 
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  
+  .typing-dot:nth-child(2) { 
+    animation-delay: -0.16s; 
   }
-}
-
-@keyframes pulse-gentle {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-.fade-in-up {
-  animation: fadeInUp 0.3s ease-out;
-}
-
-.pulse-gentle {
-  animation: pulse-gentle 1.5s ease-in-out infinite;
 }
