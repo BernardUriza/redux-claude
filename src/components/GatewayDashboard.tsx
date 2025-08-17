@@ -217,38 +217,34 @@ const AgentStatusCard = ({ agentType, summary }: {
   }
 
   return (
-    <div className={`rounded-lg p-4 border-2 ${getStatusColor(summary.status, summary.health.circuitBreakerState)}`}>
+    <div className={`rounded-xl p-3 border transition-all duration-300 transform hover:scale-105 backdrop-blur-sm ${getStatusColor(summary.status, summary.health.circuitBreakerState)}`}>
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1">
           <span className="text-lg">{agent.icon}</span>
           <div>
-            <div className="font-bold text-sm">{agent.name}</div>
-            <div className="text-xs text-gray-500">{agentType.toUpperCase()}</div>
+            <div className="font-bold text-xs text-white">{agent.name.split(' ')[0]}</div>
+            <div className="text-xs text-gray-300">{agentType.toUpperCase()}</div>
           </div>
         </div>
-        <div className="text-xl">
+        <div className="text-lg">
           {getStatusIcon(summary.status, summary.health.circuitBreakerState)}
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 text-xs">
-        <div>
-          <div className="font-bold">{summary.health.successRate}%</div>
-          <div className="text-gray-500">Success</div>
+      <div className="grid grid-cols-2 gap-1 text-xs">
+        <div className="text-center">
+          <div className="font-bold text-cyan-400">{summary.health.successRate}%</div>
+          <div className="text-gray-400">Success</div>
         </div>
-        <div>
-          <div className="font-bold">{summary.health.avgLatency}ms</div>
-          <div className="text-gray-500">Latency</div>
-        </div>
-        <div>
-          <div className="font-bold">{summary.health.totalCalls}</div>
-          <div className="text-gray-500">Calls</div>
+        <div className="text-center">
+          <div className="font-bold text-purple-400">{summary.health.avgLatency}ms</div>
+          <div className="text-gray-400">Latency</div>
         </div>
       </div>
 
       {summary.health.circuitBreakerState === CircuitBreakerState.OPEN && (
-        <div className="mt-2 text-xs text-red-600">
-          Circuit Open - Failures: {summary.health.failures}
+        <div className="mt-2 text-xs text-red-400 animate-pulse">
+          🔴 Circuit Open
         </div>
       )}
     </div>
@@ -294,27 +290,27 @@ const MultiAgentDecisionCard = ({ result }: { result: DecisionResult }) => {
 }
 
 const SystemHealthPanel = ({ systemHealth }: { systemHealth: any }) => (
-  <div className="grid grid-cols-4 gap-3 mb-4">
-    <div className="bg-white rounded-lg p-3 shadow border">
-      <div className="text-2xl font-bold text-blue-600">{systemHealth.availableAgents}</div>
-      <div className="text-xs text-gray-500">Available Agents</div>
+  <div className="grid grid-cols-4 gap-3 mb-6">
+    <div className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20 transform transition-all duration-300 hover:scale-105 hover:shadow-cyan-500/50">
+      <div className="text-3xl font-black text-cyan-400 mb-1">{systemHealth?.availableAgents || 0}</div>
+      <div className="text-xs text-gray-300 font-semibold">Available Agents</div>
     </div>
     
-    <div className="bg-white rounded-lg p-3 shadow border">
-      <div className="text-2xl font-bold text-green-600">{systemHealth.avgSuccessRate}%</div>
-      <div className="text-xs text-gray-500">System Success</div>
+    <div className="bg-gradient-to-br from-emerald-500/20 to-green-500/20 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20 transform transition-all duration-300 hover:scale-105 hover:shadow-emerald-500/50">
+      <div className="text-3xl font-black text-emerald-400 mb-1">{systemHealth?.avgSuccessRate || 0}%</div>
+      <div className="text-xs text-gray-300 font-semibold">System Success</div>
     </div>
     
-    <div className="bg-white rounded-lg p-3 shadow border">
-      <div className="text-2xl font-bold text-purple-600">{systemHealth.avgLatency}ms</div>
-      <div className="text-xs text-gray-500">System Latency</div>
+    <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20 transform transition-all duration-300 hover:scale-105 hover:shadow-purple-500/50">
+      <div className="text-3xl font-black text-purple-400 mb-1">{systemHealth?.avgLatency || 0}ms</div>
+      <div className="text-xs text-gray-300 font-semibold">System Latency</div>
     </div>
     
-    <div className="bg-white rounded-lg p-3 shadow border">
-      <div className={`text-2xl font-bold ${systemHealth.isHealthy ? 'text-green-600' : 'text-red-600'}`}>
-        {systemHealth.isHealthy ? '✅' : '❌'}
+    <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20 transform transition-all duration-300 hover:scale-105 hover:shadow-yellow-500/50">
+      <div className={`text-4xl font-bold mb-1 ${systemHealth?.isHealthy ? 'text-green-400' : 'text-red-400'} animate-pulse`}>
+        {systemHealth?.isHealthy ? '✅' : '❌'}
       </div>
-      <div className="text-xs text-gray-500">System Health</div>
+      <div className="text-xs text-gray-300 font-semibold">System Health</div>
     </div>
   </div>
 )
@@ -390,34 +386,47 @@ export const GatewayDashboard = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '4s'}}></div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Multi-Agent Gateway PoC
-          </h1>
-          <p className="text-gray-600">Creado por <span className="font-bold">Bernard Orozco</span></p>
+        <div className="text-center mb-8">
+          {/* Main Title with Enhanced Gradient */}
+          <div className="mb-6">
+            <h1 className="text-6xl font-black mb-3 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-pulse">
+              Multi-Agent Gateway
+            </h1>
+            <div className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-2">
+              PoC v2.0
+            </div>
+            <p className="text-gray-300">Creado por <span className="font-bold text-cyan-400">Bernard Orozco</span> 🚀</p>
+          </div>
           
-          {/* Tab Selector */}
-          <div className="flex justify-center mt-4">
-            <div className="bg-white rounded-lg p-1 shadow">
+          {/* Tab Selector with Glassmorphism */}
+          <div className="flex justify-center mt-6">
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-2 shadow-2xl border border-white/20">
               <button
                 onClick={() => setActiveTab('multi')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 ${
                   activeTab === 'multi' 
-                    ? 'bg-blue-500 text-white' 
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50' 
+                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 🤖 Multi-Agent System
               </button>
               <button
                 onClick={() => setActiveTab('single')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 ${
                   activeTab === 'single' 
-                    ? 'bg-blue-500 text-white' 
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/50' 
+                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 ⚡ Single Agent (Legacy)
@@ -426,30 +435,34 @@ export const GatewayDashboard = () => {
           </div>
         </div>
         
-        {/* Split Screen Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ height: 'calc(100vh - 200px)' }}>
+        {/* Split Screen Layout - Fixed Height */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-280px)]">
           
           {/* Left Panel - Chat */}
-          <div className="bg-gray-50 rounded-lg p-6 flex flex-col h-full">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800 flex-shrink-0">Chat Médico</h2>
+          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 flex flex-col h-full shadow-2xl border border-white/20 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-cyan-500/20">
+            <h2 className="text-3xl font-bold mb-4 text-white flex-shrink-0 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+              💬 Chat Médico
+            </h2>
             
-            {/* Chat Messages Container with Proper Scroll */}
-            <div className="flex-1 overflow-y-auto bg-white rounded-lg p-4 mb-4 min-h-0">
+            {/* Chat Messages Container with FIXED Height and Internal Scroll */}
+            <div className="h-[400px] overflow-y-auto bg-black/20 backdrop-blur-sm rounded-2xl p-4 mb-4 border border-white/10 custom-scrollbar">
               {messages.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-500">
+                <div className="flex items-center justify-center h-full text-gray-300">
                   <div className="text-center">
-                    <div className="text-4xl mb-2">🩺</div>
-                    <p>Inicia la conversación médica...</p>
+                    <div className="text-6xl mb-4 animate-bounce">🩺</div>
+                    <p className="text-lg font-semibold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                      Inicia la conversación médica...
+                    </p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {messages.map((msg, idx) => (
-                    <div key={idx} className={`${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                      <div className={`inline-block p-3 rounded-lg max-w-[85%] break-words ${
+                    <div key={idx} className={`${msg.role === 'user' ? 'text-right' : 'text-left'} animate-fadeIn`}>
+                      <div className={`inline-block p-4 rounded-2xl max-w-[85%] break-words transition-all duration-300 transform hover:scale-105 ${
                         msg.role === 'user' 
-                          ? 'bg-blue-500 text-white' 
-                          : 'bg-gray-200 text-gray-800'
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50' 
+                          : 'bg-white/20 backdrop-blur-sm text-gray-100 border border-white/20 shadow-lg'
                       }`}>
                         <div className="whitespace-pre-wrap text-sm leading-relaxed">
                           {msg.content}
@@ -475,24 +488,34 @@ export const GatewayDashboard = () => {
               )}
             </div>
             
-            {/* Input Form - Fixed at Bottom */}
+            {/* Input Form - Enhanced with Glassmorphism */}
             <div className="flex-shrink-0">
-              <form onSubmit={handleSubmit} className="bg-white rounded-lg p-4 shadow-lg border">
+              <form onSubmit={handleSubmit} className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/20">
                 <div className="flex space-x-3">
                   <input
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Describe síntomas médicos o solicita validación..."
-                    className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+                    className="flex-1 p-4 bg-black/20 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 text-white placeholder-gray-300 transition-all duration-300"
                     disabled={chatLoading || decisionLoading}
                   />
                   <button
                     type="submit"
                     disabled={chatLoading || decisionLoading || !input.trim()}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed text-sm whitespace-nowrap"
+                    className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-6 py-4 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg shadow-cyan-500/50 whitespace-nowrap"
                   >
-                    {chatLoading || decisionLoading ? 'Procesando...' : 'Enviar'}
+                    {chatLoading || decisionLoading ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Procesando...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <span>Enviar</span>
+                        <span>🚀</span>
+                      </div>
+                    )}
                   </button>
                 </div>
               </form>
@@ -500,20 +523,24 @@ export const GatewayDashboard = () => {
           </div>
           
           {/* Right Panel - Multi-Agent or Single Agent */}
-          <div className="bg-white rounded-lg p-6 flex flex-col h-full">
+          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 flex flex-col h-full shadow-2xl border border-white/20 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-500/20">
             {activeTab === 'multi' ? (
               <>
-                <h2 className="text-2xl font-bold mb-4 text-gray-800 flex-shrink-0">🤖 Multi-Agent System</h2>
+                <h2 className="text-3xl font-bold mb-4 text-white flex-shrink-0 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  🤖 Multi-Agent System
+                </h2>
                 
                 {/* System Health Panel */}
                 <div className="flex-shrink-0 mb-4">
                   <SystemHealthPanel systemHealth={systemHealth} />
                 </div>
                 
-                {/* Agent Status Grid */}
+                {/* Agent Status Grid - COMPACT */}
                 <div className="flex-shrink-0 mb-4">
-                  <div className="font-bold text-lg text-gray-700 mb-3">Agent Status</div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="font-bold text-lg text-white mb-3 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                    🔧 Agent Status
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
                     {(agentSummaries || []).map((summary) => (
                       <AgentStatusCard 
                         key={summary.agentType} 
@@ -524,9 +551,11 @@ export const GatewayDashboard = () => {
                   </div>
                 </div>
                 
-                {/* Multi-Agent Results Timeline */}
-                <div className="flex-1 overflow-y-auto space-y-4 min-h-0">
-                  <div className="font-bold text-lg text-gray-700 sticky top-0 bg-white pb-2">Agent Decisions</div>
+                {/* Multi-Agent Results Timeline - FIXED HEIGHT with SCROLL */}
+                <div className="h-[300px] overflow-y-auto space-y-3 custom-scrollbar">
+                  <div className="font-bold text-lg text-white sticky top-0 bg-gradient-to-r from-purple-900/90 to-slate-900/90 backdrop-blur-sm pb-2 rounded-lg mb-3 px-3 py-2 border border-white/20">
+                    ⚡ Agent Decisions
+                  </div>
                   
                   {systemHealth?.activeRequests > 0 && (
                     <div className="border-2 border-blue-300 bg-blue-50 rounded-lg p-4">
