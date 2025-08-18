@@ -318,7 +318,7 @@ const SystemHealthPanel = ({ systemHealth }: { systemHealth: any }) => (
 // Enhanced Main Component with Multi-Agent Support
 export const GatewayDashboard = () => {
   const [input, setInput] = useState('')
-  const [activeTab, setActiveTab] = useState<'single' | 'multi'>('multi')
+  const [activeTab, setActiveTab] = useState<'single' | 'multi' | 'cognitive'>('cognitive')
   const [multiAgentResults, setMultiAgentResults] = useState<DecisionResult[]>([])
   
   const { messages, isLoading: chatLoading, sendMessage } = useClaudeChat()
@@ -346,6 +346,28 @@ export const GatewayDashboard = () => {
     resetAgent,
     toggleAgent
   } = useMultiAgentGateway()
+
+  // Cognitive system hook
+  const cognitiveSystem = useRef<any>(null)
+  const [cognitiveLoading, setCognitiveLoading] = useState(false)
+  const [cognitiveResults, setCognitiveResults] = useState<any>(null)
+  
+  // Mock cognitive hook implementation (would be replaced with useCognitiveSystem)
+  const mockCognitiveMetrics = {
+    systemConfidence: 85,
+    uncertaintyLevel: 15,
+    overallHealth: 92,
+    memoryLoad: 0.3,
+    learningProgress: 78,
+    consensusRate: 88,
+    activeDebates: 1,
+    pipelineSuccess: 91,
+    avgLatency: 850,
+    activeGoals: 3,
+    knowledgeGaps: 2,
+    strengths: 4,
+    weaknesses: 1
+  }
   
   const chatEndRef = useRef<HTMLDivElement>(null)
   const decisionsEndRef = useRef<HTMLDivElement>(null)
@@ -357,10 +379,68 @@ export const GatewayDashboard = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || chatLoading) return
+    if (!input.trim() || chatLoading || cognitiveLoading) return
     
     try {
-      if (activeTab === 'multi') {
+      if (activeTab === 'cognitive') {
+        // Process with full cognitive system
+        setCognitiveLoading(true)
+        const [chatResult] = await Promise.all([
+          sendMessage(input),
+          // Mock cognitive processing
+          new Promise(resolve => setTimeout(resolve, 2000))
+        ])
+        
+        // Mock cognitive results
+        const mockResults = {
+          decisions: [
+            {
+              id: 'cog-1',
+              agentType: 'diagnostic',
+              agentName: 'Diagnostic Specialist',
+              confidence: 87,
+              latency: 1200,
+              success: true,
+              decision: {
+                differentials: [
+                  { condition: 'Migraine', probability: 0.7, evidence: ['headache', 'photophobia'] },
+                  { condition: 'Tension headache', probability: 0.3, evidence: ['stress', 'neck tension'] }
+                ]
+              }
+            },
+            {
+              id: 'cog-2',
+              agentType: 'validation',
+              agentName: 'Clinical Validator',
+              confidence: 91,
+              latency: 800,
+              success: true,
+              decision: { valid: true, concerns: [], risk_level: 'low' }
+            }
+          ],
+          consensus: {
+            reached: true,
+            confidence: 89,
+            finalDecision: { primary_diagnosis: 'Migraine', confidence: 0.7 }
+          },
+          memory: {
+            context: 'diagnostic',
+            symptoms: ['headache', 'photophobia'],
+            hypotheses: [{ description: 'Migraine', confidence: 87 }]
+          },
+          insights: {
+            pattern: 'Neurological symptoms cluster',
+            recommendation: 'Consider MRI if symptoms persist',
+            confidence: 85,
+            learnings: ['Migraine diagnosis pattern recognized', 'High confidence validation']
+          }
+        }
+        
+        setCognitiveResults(mockResults)
+        setCognitiveLoading(false)
+        console.log('Cognitive processing complete:', mockResults)
+        
+      } else if (activeTab === 'multi') {
         // Process with multi-agent system
         const [, agentResults] = await Promise.all([
           sendMessage(input),
@@ -380,6 +460,7 @@ export const GatewayDashboard = () => {
       }
     } catch (error) {
       console.error('Processing failed:', error)
+      setCognitiveLoading(false)
     }
     
     setInput('')
@@ -412,6 +493,16 @@ export const GatewayDashboard = () => {
           <div className="flex justify-center mt-6">
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-2 shadow-2xl border border-white/20">
               <button
+                onClick={() => setActiveTab('cognitive')}
+                className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 ${
+                  activeTab === 'cognitive' 
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/50' 
+                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                🧠 Cognitive System
+              </button>
+              <button
                 onClick={() => setActiveTab('multi')}
                 className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 ${
                   activeTab === 'multi' 
@@ -419,7 +510,7 @@ export const GatewayDashboard = () => {
                     : 'text-gray-300 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                🤖 Multi-Agent System
+                🤖 Multi-Agent
               </button>
               <button
                 onClick={() => setActiveTab('single')}
@@ -429,7 +520,7 @@ export const GatewayDashboard = () => {
                     : 'text-gray-300 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                ⚡ Single Agent (Legacy)
+                ⚡ Legacy
               </button>
             </div>
           </div>
@@ -502,10 +593,10 @@ export const GatewayDashboard = () => {
                   />
                   <button
                     type="submit"
-                    disabled={chatLoading || decisionLoading || !input.trim()}
+                    disabled={chatLoading || decisionLoading || cognitiveLoading || !input.trim()}
                     className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-6 py-4 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg shadow-cyan-500/50 whitespace-nowrap"
                   >
-                    {chatLoading || decisionLoading ? (
+                    {chatLoading || decisionLoading || cognitiveLoading ? (
                       <div className="flex items-center space-x-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         <span>Procesando...</span>
@@ -522,9 +613,150 @@ export const GatewayDashboard = () => {
             </div>
           </div>
           
-          {/* Right Panel - Multi-Agent or Single Agent */}
+          {/* Right Panel - Cognitive, Multi-Agent or Single Agent */}
           <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 flex flex-col shadow-2xl border border-white/20 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-500/20" style={{height: 'calc(100vh - 200px)'}}>
-            {activeTab === 'multi' ? (
+            {activeTab === 'cognitive' ? (
+              <>
+                <h2 className="text-3xl font-bold mb-4 text-white flex-shrink-0 bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                  🧠 Cognitive System
+                </h2>
+                
+                {/* Cognitive Health Metrics */}
+                <div className="flex-shrink-0 mb-4">
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20">
+                      <div className="text-2xl font-black text-emerald-400">{mockCognitiveMetrics.systemConfidence}%</div>
+                      <div className="text-xs text-gray-300">Confidence</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-500/20 to-indigo-500/20 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20">
+                      <div className="text-2xl font-black text-blue-400">{mockCognitiveMetrics.overallHealth}%</div>
+                      <div className="text-xs text-gray-300">Health</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20">
+                      <div className="text-2xl font-black text-purple-400">{mockCognitiveMetrics.learningProgress}%</div>
+                      <div className="text-xs text-gray-300">Learning</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20">
+                      <div className="text-2xl font-black text-orange-400">{mockCognitiveMetrics.consensusRate}%</div>
+                      <div className="text-xs text-gray-300">Consensus</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Memory & Pipeline Status */}
+                <div className="flex-shrink-0 mb-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white/10 rounded-lg p-3 border border-white/20">
+                      <div className="text-sm font-bold text-cyan-400 mb-2">🧠 Memory System</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div><span className="text-gray-400">Load:</span> <span className="text-white">{Math.round(mockCognitiveMetrics.memoryLoad * 100)}%</span></div>
+                        <div><span className="text-gray-400">Goals:</span> <span className="text-white">{mockCognitiveMetrics.activeGoals}</span></div>
+                        <div><span className="text-gray-400">Gaps:</span> <span className="text-white">{mockCognitiveMetrics.knowledgeGaps}</span></div>
+                        <div><span className="text-gray-400">Insights:</span> <span className="text-white">12</span></div>
+                      </div>
+                    </div>
+                    <div className="bg-white/10 rounded-lg p-3 border border-white/20">
+                      <div className="text-sm font-bold text-purple-400 mb-2">⚡ Pipeline Status</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div><span className="text-gray-400">Success:</span> <span className="text-white">{mockCognitiveMetrics.pipelineSuccess}%</span></div>
+                        <div><span className="text-gray-400">Latency:</span> <span className="text-white">{mockCognitiveMetrics.avgLatency}ms</span></div>
+                        <div><span className="text-gray-400">Debates:</span> <span className="text-white">{mockCognitiveMetrics.activeDebates}</span></div>
+                        <div><span className="text-gray-400">Mode:</span> <span className="text-white">Adaptive</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cognitive Processing Results */}
+                <div className="overflow-y-auto space-y-3 custom-scrollbar" style={{height: '300px'}}>
+                  <div className="font-bold text-lg text-white sticky top-0 bg-gradient-to-r from-emerald-900/90 to-slate-900/90 backdrop-blur-sm pb-2 rounded-lg mb-3 px-3 py-2 border border-white/20">
+                    🔮 Cognitive Analysis
+                  </div>
+                  
+                  {cognitiveLoading && (
+                    <div className="border-2 border-emerald-300 bg-emerald-50 rounded-lg p-4">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-emerald-700">Processing cognitive analysis...</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {cognitiveResults ? (
+                    <div className="space-y-4">
+                      {/* Consensus Panel */}
+                      {cognitiveResults.consensus && (
+                        <div className="bg-white/10 rounded-lg p-4 border border-emerald-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-bold text-emerald-400">🤝 Consensus Reached</span>
+                            <span className="text-sm text-emerald-300">{cognitiveResults.consensus.confidence}%</span>
+                          </div>
+                          <div className="bg-gray-900 text-emerald-400 p-3 rounded font-mono text-xs">
+                            <pre>{JSON.stringify(cognitiveResults.consensus.finalDecision, null, 2)}</pre>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Memory Context */}
+                      {cognitiveResults.memory && (
+                        <div className="bg-white/10 rounded-lg p-4 border border-blue-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-bold text-blue-400">🧠 Memory Context</span>
+                            <span className="text-sm text-blue-300">{cognitiveResults.memory.context}</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div><span className="text-gray-400">Symptoms:</span> <span className="text-white">{cognitiveResults.memory.symptoms.join(', ')}</span></div>
+                            <div><span className="text-gray-400">Hypotheses:</span> <span className="text-white">{cognitiveResults.memory.hypotheses.length}</span></div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Insights */}
+                      {cognitiveResults.insights && (
+                        <div className="bg-white/10 rounded-lg p-4 border border-purple-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-bold text-purple-400">💡 AI Insights</span>
+                            <span className="text-sm text-purple-300">{cognitiveResults.insights.confidence}%</span>
+                          </div>
+                          <div className="space-y-2 text-sm">
+                            <div><span className="font-semibold text-purple-300">Pattern:</span> <span className="text-white">{cognitiveResults.insights.pattern}</span></div>
+                            <div><span className="font-semibold text-purple-300">Recommendation:</span> <span className="text-white">{cognitiveResults.insights.recommendation}</span></div>
+                            {cognitiveResults.insights.learnings.map((learning: string, idx: number) => (
+                              <div key={idx} className="text-xs text-purple-200">• {learning}</div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Agent Decisions */}
+                      {cognitiveResults.decisions.map((decision: any) => (
+                        <div key={decision.id} className="bg-white/10 rounded-lg p-4 border border-gray-300">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-bold text-gray-300">{decision.agentName}</span>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-gray-400">{decision.confidence}%</span>
+                              <span className={`text-xs px-2 py-1 rounded ${decision.success ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                                {decision.success ? 'SUCCESS' : 'FAILED'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="bg-gray-900 text-green-400 p-3 rounded font-mono text-xs overflow-auto max-h-32">
+                            <pre>{JSON.stringify(decision.decision, null, 2)}</pre>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-32 text-gray-500">
+                      <div className="text-center">
+                        <div className="text-3xl mb-2">🧠</div>
+                        <p>Ready for cognitive processing</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : activeTab === 'multi' ? (
               <>
                 <h2 className="text-3xl font-bold mb-4 text-white flex-shrink-0 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                   🤖 Multi-Agent System

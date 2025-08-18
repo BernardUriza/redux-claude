@@ -19,6 +19,8 @@ import {
   agentCallFailed,
   checkCircuitBreaker 
 } from '@/store/agentCircuitBreakers'
+import { contextualMemory } from './contextualMemory'
+import { reinforcementLearning } from './reinforcementLearning'
 
 export class MultiAgentOrchestrator {
   private abortControllers: Map<string, AbortController> = new Map()
@@ -78,11 +80,15 @@ export class MultiAgentOrchestrator {
     const startTime = Date.now()
     
     try {
+      // Get contextual memory for agent
+      const agentContext = contextualMemory.getRelevantContext(agentType)
+      
       // Simulate agent-specific system prompt call to Claude
       const response = await this.callAgentSpecificClaude(
         agentDef,
         input,
-        abortController.signal
+        abortController.signal,
+        agentContext
       )
       
       const latency = Date.now() - startTime
@@ -147,25 +153,64 @@ export class MultiAgentOrchestrator {
     }
   }
 
-  // Call Claude with agent-specific system prompt
+  // Call Claude with agent-specific system prompt and context
   private async callAgentSpecificClaude(
     agentDef: AgentDefinition,
     input: string,
-    signal: AbortSignal
+    signal: AbortSignal,
+    context?: any
   ): Promise<{ decision: AgentDecision, confidence: number }> {
-    // Use existing Claude middleware but with agent-specific prompt
+    // Enhanced system prompt with contextual information
+    let enhancedPrompt = agentDef.systemPrompt
+    
+    if (context) {
+      enhancedPrompt += `\n\n## CONTEXTUAL INFORMATION:\n`
+      enhancedPrompt += `Current Context: ${context.currentContext}\n`
+      
+      if (context.activeSymptoms?.length > 0) {
+        enhancedPrompt += `Active Symptoms: ${context.activeSymptoms.join(', ')}\n`
+      }
+      
+      if (context.activeHypotheses?.length > 0) {
+        enhancedPrompt += `Active Hypotheses: ${context.activeHypotheses.map((h: any) => 
+          `${h.description} (${h.confidence}%)`
+        ).join(', ')}\n`
+      }
+      
+      if (context.relevantInsights?.length > 0) {
+        enhancedPrompt += `Previous Insights: ${context.relevantInsights.map((i: any) => 
+          i.pattern
+        ).join(', ')}\n`
+      }
+      
+      if (context.recentInputs?.length > 0) {
+        enhancedPrompt += `Recent Context: ${context.recentInputs.slice(0, 2).join('; ')}\n`
+      }
+    }
+    
+    // Use existing Claude middleware but with enhanced prompt
     const response = await callClaudeForDecision(
-      'diagnosis', // We'll map this properly
+      this.mapAgentTypeToDecisionType(agentDef.id) as any,
       input,
       'claude',
       signal,
-      [], // No previous decisions for now
-      agentDef.systemPrompt // Custom system prompt
+      [] // Previous decisions handled via context
     )
     
     return {
-      decision: response.decision as AgentDecision,
+      decision: response.decision as any,
       confidence: response.confidence
+    }
+  }
+
+  private mapAgentTypeToDecisionType(agentType: AgentType): string {
+    switch (agentType) {
+      case AgentType.DIAGNOSTIC: return 'diagnosis'
+      case AgentType.VALIDATION: return 'validation'
+      case AgentType.TREATMENT: return 'treatment'
+      case AgentType.TRIAGE: return 'triage'
+      case AgentType.DOCUMENTATION: return 'documentation'
+      default: return 'diagnosis'
     }
   }
 

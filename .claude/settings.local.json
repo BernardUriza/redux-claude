@@ -18,7 +18,9 @@
       "Bash(npm ls:*)",
       "Bash(powershell:*)",
       "Bash(taskkill:*)",
-      "WebFetch(domain:dev.to)"
+      "WebFetch(domain:dev.to)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 30s npm run build:*)"
     ],
     "deny": [],
     "ask": []
