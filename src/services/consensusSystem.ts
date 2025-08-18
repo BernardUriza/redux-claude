@@ -91,7 +91,7 @@ export class MultiAgentConsensusSystem {
 
     return {
       agentType: decision.agentType,
-      vote: decision.decision,
+      vote: decision, // Pass the full DecisionResult as vote
       confidence: decision.confidence,
       reasoning: this.extractReasoning(decision),
       weight

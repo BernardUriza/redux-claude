@@ -8,9 +8,18 @@ import {
   Goal, 
   SelfAssessment,
   VotingRound,
-  LearningUpdate
+  LearningUpdate,
+  MedicalConsensus,
+  CognitiveInsights
 } from '@/types/cognitive'
 import { cognitiveOrchestrator } from '@/services/cognitiveOrchestrator'
+
+interface HealthMetrics {
+  score: number
+  status: 'excellent' | 'good' | 'fair' | 'poor'
+  issues: string[]
+  lastUpdated: number
+}
 
 interface CognitiveState {
   // Estado cognitivo
@@ -22,15 +31,15 @@ interface CognitiveState {
   
   // Resultados de procesamiento
   lastDecisions: DecisionResult[]
-  lastConsensus: VotingRound | null
-  lastInsights: any
+  lastConsensus: MedicalConsensus | null
+  lastInsights: CognitiveInsights | null
   
   // Métricas de salud
   overallHealth: number
-  memoryHealth: any
-  learningHealth: any
-  consensusHealth: any
-  pipelineHealth: any
+  memoryHealth: HealthMetrics | null
+  learningHealth: HealthMetrics | null
+  consensusHealth: HealthMetrics | null
+  pipelineHealth: HealthMetrics | null
   
   // Eventos cognitivos
   recentEvents: CognitiveEvent[]
@@ -56,10 +65,10 @@ const initialState: CognitiveState = {
   lastConsensus: null,
   lastInsights: null,
   overallHealth: 0.5,
-  memoryHealth: {},
-  learningHealth: {},
-  consensusHealth: {},
-  pipelineHealth: {},
+  memoryHealth: null,
+  learningHealth: null,
+  consensusHealth: null,
+  pipelineHealth: null,
   recentEvents: [],
   isProcessing: false,
   error: null
@@ -109,10 +118,10 @@ const cognitiveSlice = createSlice({
     
     updateSystemHealth: (state, action: PayloadAction<{
       overallHealth: number
-      memoryHealth: any
-      learningHealth: any
-      consensusHealth: any
-      pipelineHealth: any
+      memoryHealth: HealthMetrics
+      learningHealth: HealthMetrics
+      consensusHealth: HealthMetrics
+      pipelineHealth: HealthMetrics
     }>) => {
       state.overallHealth = action.payload.overallHealth
       state.memoryHealth = action.payload.memoryHealth

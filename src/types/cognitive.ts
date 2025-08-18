@@ -117,14 +117,14 @@ export interface VotingRound {
   question: string
   participants: AgentVote[]
   consensusReached: boolean
-  finalDecision?: any
+  finalDecision?: DecisionResult
   confidence: number
   timestamp: number
 }
 
 export interface AgentVote {
   agentType: AgentType
-  vote: any
+  vote: DecisionResult
   confidence: number
   reasoning: string
   weight: number // based on agent expertise and past performance
@@ -207,7 +207,7 @@ export interface OptimizationResult {
 export interface ExecutionCondition {
   type: 'confidence' | 'context' | 'previous_result' | 'time_constraint'
   operator: 'gt' | 'lt' | 'eq' | 'contains' | 'matches'
-  value: any
+  value: string | number | boolean
   action: 'skip' | 'include' | 'replace'
 }
 
@@ -249,7 +249,7 @@ export interface SelfAssessment {
 export interface CognitiveEvent {
   type: CognitiveEventType
   timestamp: number
-  data: any
+  data: Record<string, unknown>
   impact: 'low' | 'medium' | 'high'
   requiresAttention: boolean
 }
@@ -262,6 +262,90 @@ export enum CognitiveEventType {
   ANOMALY_DETECTED = 'anomaly_detected',
   CONFIDENCE_THRESHOLD_CROSSED = 'confidence_threshold_crossed',
   KNOWLEDGE_GAP_IDENTIFIED = 'knowledge_gap_identified'
+}
+
+// ============= MEDICAL DECISION INTERFACES =============
+export interface MedicalConsensus {
+  finalDecision: MedicalDecision
+  confidence: number
+  agentsInvolved: AgentType[]
+  votingHistory: AgentVote[]
+  reasoning: string[]
+}
+
+export interface MedicalDecision {
+  diagnosis?: DiagnosticDecision
+  triage?: TriageDecision
+  validation?: ValidationDecision
+  treatment?: TreatmentDecision
+  documentation?: DocumentationDecision
+}
+
+export interface DiagnosticDecision {
+  primaryDiagnosis: string
+  differentials: Differential[]
+  confidence: number
+  supportingEvidence: string[]
+}
+
+export interface Differential {
+  diagnosis: string
+  probability: number
+  reasoning: string[]
+}
+
+export interface TriageDecision {
+  priority: 'critical' | 'urgent' | 'standard' | 'low'
+  recommendedTimeframe: string
+  reasoningFactors: string[]
+}
+
+export interface ValidationDecision {
+  validationResults: ValidationResult[]
+  overallConfidence: number
+  flaggedConcerns: string[]
+}
+
+export interface ValidationResult {
+  aspect: string
+  status: 'validated' | 'needs_review' | 'invalid'
+  confidence: number
+  reasoning: string
+}
+
+export interface TreatmentDecision {
+  primaryTreatment: TreatmentPlan
+  alternativePlans: TreatmentPlan[]
+  contraindications: string[]
+}
+
+export interface TreatmentPlan {
+  medications: Medication[]
+  procedures: string[]
+  followUpInstructions: string[]
+  expectedOutcome: string
+}
+
+export interface Medication {
+  name: string
+  dosage: string
+  frequency: string
+  duration: string
+  instructions: string[]
+}
+
+export interface DocumentationDecision {
+  summary: string
+  keyFindings: string[]
+  recommendations: string[]
+  followUpRequired: boolean
+}
+
+export interface CognitiveInsights {
+  pattern: string
+  recommendation: string
+  confidence: number
+  learnings: string[]
 }
 
 // ============= CONFIGURACIÓN COGNITIVA =============

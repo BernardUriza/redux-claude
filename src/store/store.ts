@@ -1,17 +1,15 @@
 // src/store/store.ts
-// Creado por Bernard Orozco
+// Sistema Cognitivo Médico - Bernard Orozco
 import { configureStore } from '@reduxjs/toolkit'
 import chatReducer from './chatSlice'
-import decisionsReducer from './decisionsSlice'
-import agentCircuitBreakersReducer from './agentCircuitBreakers'
 import cognitiveReducer from './cognitiveSlice'
+import agentCircuitBreakersReducer from './agentCircuitBreakers'
 
 export const store = configureStore({
   reducer: {
     chat: chatReducer,
-    decisions: decisionsReducer,
-    agentCircuitBreakers: agentCircuitBreakersReducer,
-    cognitive: cognitiveReducer
+    cognitive: cognitiveReducer,
+    agentCircuitBreakers: agentCircuitBreakersReducer
   }
 })
 

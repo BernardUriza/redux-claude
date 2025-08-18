@@ -1,9 +1,9 @@
 // src/app/page.tsx
-// Creado por Bernard Orozco
+// Sistema Cognitivo Médico Corporativo 2025 - Bernard Orozco
 'use client'
 
-import { GatewayDashboard } from '@/components/GatewayDashboard'
+import { CognitiveDashboard } from '@/components/CognitiveDashboard'
 
 export default function Home() {
-  return <GatewayDashboard />
+  return <CognitiveDashboard />
 }

@@ -97,7 +97,7 @@ export class CognitiveOrchestrator {
     this.emitEvent({
       type: CognitiveEventType.PIPELINE_ADAPTED,
       timestamp: Date.now(),
-      data: pipelineRecommendation,
+      data: { recommendation: pipelineRecommendation.recommendedTemplate, confidence: pipelineRecommendation.confidence },
       impact: 'medium',
       requiresAttention: false
     })
@@ -130,7 +130,7 @@ export class CognitiveOrchestrator {
         this.emitEvent({
           type: CognitiveEventType.LEARNING_MILESTONE,
           timestamp: Date.now(),
-          data: learningUpdate,
+          data: { agentType: learningUpdate.agentType, newPriority: learningUpdate.newPriority },
           impact: 'low',
           requiresAttention: false
         })
@@ -150,7 +150,7 @@ export class CognitiveOrchestrator {
         this.emitEvent({
           type: CognitiveEventType.CONSENSUS_ACHIEVED,
           timestamp: Date.now(),
-          data: consensusResult,
+          data: { consensus: consensusResult.consensusReached, confidence: consensusResult.confidence },
           impact: 'medium',
           requiresAttention: false
         })
@@ -390,7 +390,10 @@ export class CognitiveOrchestrator {
       this.emitEvent({
         type: CognitiveEventType.PIPELINE_ADAPTED,
         timestamp: Date.now(),
-        data: optimization,
+        data: { 
+          improvementsCount: optimization.improvements.length,
+          expectedLatencyGain: optimization.expectedGains.latency
+        },
         impact: 'high',
         requiresAttention: true
       })
