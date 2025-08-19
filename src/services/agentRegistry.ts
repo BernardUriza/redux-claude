@@ -166,7 +166,7 @@ SOAP Guidelines:
 - Objective: Measurable, observable findings
 - Assessment: Clinical reasoning, diagnosis
 - Plan: Specific, actionable next steps`,
-    enabled: false, // Disabled by default - can be enabled
+    enabled: true, // Enabled for cognitive system
     priority: 5,
     expectedLatency: 2200,
     timeout: 10000,

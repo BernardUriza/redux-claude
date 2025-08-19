@@ -12,7 +12,7 @@ import {
   MedicalConsensus,
   CognitiveInsights
 } from '@/types/cognitive'
-import { cognitiveOrchestrator } from '@/services/cognitiveOrchestrator'
+// Dynamic import to avoid circular dependency
 
 interface HealthMetrics {
   score: number
@@ -78,6 +78,9 @@ const initialState: CognitiveState = {
 export const processCognitively = createAsyncThunk(
   'cognitive/process',
   async (input: string) => {
+    // Dynamic import to avoid circular dependency
+    const { cognitiveOrchestrator } = await import('@/services/cognitiveOrchestrator')
+    
     const result = await cognitiveOrchestrator.processWithCognition(input)
     const cognitiveState = cognitiveOrchestrator.getCognitiveState()
     const systemHealth = cognitiveOrchestrator.getSystemHealth()
