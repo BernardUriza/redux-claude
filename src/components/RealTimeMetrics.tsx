@@ -21,42 +21,74 @@ const MetricCard = ({ title, value, subtitle, icon, color, trend, trendValue }: 
   const getTrendIcon = () => {
     switch (trend) {
       case 'up':
-        return <span className="text-emerald-400">↗️</span>
+        return (
+          <div className="flex items-center space-x-1 text-emerald-400">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
+            <span className="text-xs font-medium">{trendValue}</span>
+          </div>
+        )
       case 'down':
-        return <span className="text-red-400">↘️</span>
+        return (
+          <div className="flex items-center space-x-1 text-red-400">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span className="text-xs font-medium">{trendValue}</span>
+          </div>
+        )
       default:
-        return <span className="text-slate-400">➡️</span>
+        return (
+          <div className="flex items-center space-x-1 text-slate-400">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+            </svg>
+            <span className="text-xs font-medium">{trendValue}</span>
+          </div>
+        )
     }
   }
 
   return (
-    <div className={`bg-gradient-to-br ${color} bg-opacity-10 backdrop-blur-sm rounded-xl p-4 border border-opacity-20 border-slate-600 hover:border-opacity-40 transition-all duration-300`}>
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-xl">{icon}</div>
+    <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-xl rounded-xl p-4 border border-slate-600/40 hover:border-slate-500/60 transition-all duration-300 hover:shadow-lg hover:shadow-slate-950/20 group">
+      
+      {/* Compact Header with Icon and Trend */}
+      <div className="flex items-center justify-between mb-3">
+        <div className={`w-10 h-10 bg-gradient-to-br ${color} rounded-xl flex items-center justify-center text-lg shadow-md transition-transform duration-300 group-hover:scale-105`}>
+          {icon}
+        </div>
         {trend && trendValue && (
-          <div className="flex items-center space-x-1 text-xs">
+          <div className="flex items-center">
             {getTrendIcon()}
-            <span className="text-slate-400">{trendValue}</span>
           </div>
         )}
       </div>
       
-      <div className="text-2xl font-bold text-white mb-1">{value}</div>
-      <div className="text-sm text-slate-300 mb-1">{title}</div>
-      <div className="text-xs text-slate-400">{subtitle}</div>
+      {/* Compact Main Metric */}
+      <div className="mb-3">
+        <div className="text-2xl font-bold text-white mb-1 tracking-tight">{value}</div>
+        <h4 className="text-sm font-semibold text-slate-200 mb-1 line-clamp-1">{title}</h4>
+        <p className="text-xs text-slate-400 leading-tight line-clamp-2">{subtitle}</p>
+      </div>
       
-      {/* Animated progress bar based on value */}
-      <div className="mt-3 w-full bg-slate-700 rounded-full h-1">
-        <div 
-          className={`bg-gradient-to-r ${color.replace('from-', 'from-').replace('to-', 'to-')} h-1 rounded-full transition-all duration-1000`}
-          style={{ 
-            width: typeof value === 'string' && value.includes('%') 
-              ? value 
-              : typeof value === 'number' 
-              ? `${Math.min(value, 100)}%` 
-              : '0%' 
-          }}
-        />
+      {/* Compact Progress Bar */}
+      <div className="mt-3">
+        <div className="w-full bg-slate-700/50 rounded-full h-1.5 overflow-hidden">
+          <div 
+            className={`bg-gradient-to-r ${color} h-1.5 rounded-full transition-all duration-1000 shadow-sm relative overflow-hidden`}
+            style={{ 
+              width: typeof value === 'string' && value.includes('%') 
+                ? value 
+                : typeof value === 'number' 
+                ? `${Math.min(value, 100)}%` 
+                : '0%' 
+            }}
+          >
+            {/* Animated shine effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse" />
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -73,30 +105,38 @@ const SystemStatus = ({ status, message }: SystemStatusProps) => {
       case 'optimal':
         return {
           color: 'from-emerald-500 to-teal-500',
-          icon: '🟢',
-          text: 'text-emerald-400',
-          bg: 'bg-emerald-500/10 border-emerald-500/30'
+          icon: '✅',
+          text: 'text-emerald-300',
+          bg: 'from-emerald-950/40 to-teal-950/40',
+          border: 'border-emerald-500/30',
+          pulse: 'shadow-emerald-500/20'
         }
       case 'good':
         return {
           color: 'from-blue-500 to-cyan-500',
           icon: '🔵',
-          text: 'text-blue-400',
-          bg: 'bg-blue-500/10 border-blue-500/30'
+          text: 'text-blue-300',
+          bg: 'from-blue-950/40 to-cyan-950/40',
+          border: 'border-blue-500/30',
+          pulse: 'shadow-blue-500/20'
         }
       case 'warning':
         return {
           color: 'from-yellow-500 to-orange-500',
-          icon: '🟡',
-          text: 'text-yellow-400',
-          bg: 'bg-yellow-500/10 border-yellow-500/30'
+          icon: '⚠️',
+          text: 'text-yellow-300',
+          bg: 'from-yellow-950/40 to-orange-950/40',
+          border: 'border-yellow-500/30',
+          pulse: 'shadow-yellow-500/20'
         }
       case 'critical':
         return {
           color: 'from-red-500 to-pink-500',
-          icon: '🔴',
-          text: 'text-red-400',
-          bg: 'bg-red-500/10 border-red-500/30'
+          icon: '🚨',
+          text: 'text-red-300',
+          bg: 'from-red-950/40 to-pink-950/40',
+          border: 'border-red-500/30',
+          pulse: 'shadow-red-500/20'
         }
     }
   }
@@ -104,13 +144,23 @@ const SystemStatus = ({ status, message }: SystemStatusProps) => {
   const config = getStatusConfig()
 
   return (
-    <div className={`${config.bg} backdrop-blur-sm rounded-xl p-4 border`}>
-      <div className="flex items-center space-x-3">
-        <div className="text-lg">{config.icon}</div>
-        <div>
-          <h4 className={`font-semibold ${config.text} capitalize`}>Sistema {status}</h4>
-          <p className="text-sm text-slate-300">{message}</p>
+    <div className={`bg-gradient-to-r ${config.bg} backdrop-blur-xl rounded-2xl p-5 border ${config.border} shadow-xl ${config.pulse}`}>
+      <div className="flex items-center space-x-4">
+        <div className={`w-12 h-12 bg-gradient-to-br ${config.color} rounded-2xl flex items-center justify-center text-xl shadow-lg`}>
+          {config.icon}
         </div>
+        <div className="flex-1">
+          <h4 className={`text-lg font-bold ${config.text} capitalize mb-1`}>
+            Sistema {status === 'optimal' ? 'Óptimo' : status === 'good' ? 'Operativo' : status === 'warning' ? 'Alerta' : 'Crítico'}
+          </h4>
+          <p className="text-sm text-slate-300 leading-relaxed">{message}</p>
+        </div>
+        {status === 'optimal' && (
+          <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50" />
+        )}
+        {status === 'critical' && (
+          <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse shadow-lg shadow-red-400/50" />
+        )}
       </div>
     </div>
   )
@@ -184,17 +234,17 @@ export const RealTimeMetrics = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       
       {/* System Status Banner */}
       <SystemStatus {...getSystemStatus()} />
       
-      {/* Real-time metrics grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Key Performance Metrics - Single Column Layout for Better Readability */}
+      <div className="space-y-4">
         <MetricCard
           title="Confianza Diagnóstica"
           value={`${Math.round(systemMetrics.confidence)}%`}
-          subtitle="Ciclo actual"
+          subtitle="Nivel de certeza del análisis médico actual"
           icon="🎯"
           color="from-blue-500 to-cyan-500"
           trend={systemMetrics.confidence > 80 ? 'up' : systemMetrics.confidence > 60 ? 'stable' : 'down'}
@@ -202,23 +252,26 @@ export const RealTimeMetrics = () => {
         />
         
         <MetricCard
-          title="Ciclos Completados"
-          value={systemMetrics.cycles}
-          subtitle={`de ${iterativeState.totalCycles || 3} máximo`}
+          title="Progreso Iterativo"
+          value={`${systemMetrics.cycles}/${iterativeState.totalCycles || 3}`}
+          subtitle="Ciclos de análisis completados"
           icon="🔄"
           color="from-purple-500 to-indigo-500"
           trend="up"
-          trendValue="+1"
+          trendValue={`Ciclo ${systemMetrics.cycles}`}
         />
-        
+      </div>
+
+      {/* System Performance Metrics - Compact Grid */}
+      <div className="grid grid-cols-1 gap-3">
         <MetricCard
-          title="Tiempo Procesamiento"
-          value={`${Math.round(systemMetrics.processingTime)}ms`}
-          subtitle="Total acumulado"
-          icon="⚡"
+          title="Consenso Médico"
+          value={`${systemMetrics.consensusRate}%`}
+          subtitle="Acuerdo entre especialistas"
+          icon="🤝"
           color="from-emerald-500 to-teal-500"
-          trend={systemMetrics.processingTime < 2000 ? 'up' : 'down'}
-          trendValue="+240ms"
+          trend="up"
+          trendValue="+5%"
         />
         
         <MetricCard
@@ -230,74 +283,51 @@ export const RealTimeMetrics = () => {
           trend="stable"
           trendValue="3/5"
         />
-      </div>
-
-      {/* Secondary metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <MetricCard
-          title="Consenso Médico"
-          value={`${systemMetrics.consensusRate}%`}
-          subtitle="Entre especialistas"
-          icon="🤝"
-          color="from-pink-500 to-rose-500"
-          trend="up"
-          trendValue="+5%"
-        />
-        
-        <MetricCard
-          title="Salud del Sistema"
-          value={`${systemMetrics.systemHealth}%`}
-          subtitle="Estado general"
-          icon="💚"
-          color="from-emerald-500 to-green-500"
-          trend="up"
-          trendValue="+1%"
-        />
         
         <MetricCard
           title="Tiempo Respuesta"
           value={`${Math.round(systemMetrics.responseTime)}ms`}
-          subtitle="Latencia promedio"
-          icon="📡"
+          subtitle="Latencia del sistema"
+          icon="⚡"
           color="from-slate-500 to-gray-500"
           trend={systemMetrics.responseTime < 1500 ? 'up' : 'down'}
           trendValue="+50ms"
-        />
-        
-        <MetricCard
-          title="Calidad SOAP"
-          value={`${Math.round(systemMetrics.qualityScore)}%`}
-          subtitle="Validación automática"
-          icon="📋"
-          color="from-violet-500 to-purple-500"
-          trend="up"
-          trendValue="+1.2%"
         />
       </div>
 
       {/* Streaming Progress */}
       {isStreaming && (
-        <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl p-4 border border-slate-600/30">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-              <h4 className="text-sm font-semibold text-white">Análisis en Progreso</h4>
+        <div className="bg-gradient-to-r from-blue-950/40 to-purple-950/40 backdrop-blur-xl rounded-2xl p-6 border border-blue-500/30 shadow-xl shadow-blue-500/20">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-4">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-white">Análisis en Progreso</h4>
+                <p className="text-sm text-blue-300">Motor iterativo procesando caso médico</p>
+              </div>
             </div>
-            <span className="text-sm text-slate-400">{Math.round(streamingProgress)}%</span>
+            <div className="text-right">
+              <span className="text-2xl font-bold text-white">{Math.round(streamingProgress)}%</span>
+              <p className="text-xs text-slate-400">Completado</p>
+            </div>
           </div>
           
-          <div className="w-full bg-slate-700 rounded-full h-2">
+          <div className="w-full bg-slate-700/50 rounded-full h-3 mb-3 overflow-hidden">
             <div 
-              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300 shadow-lg relative overflow-hidden"
               style={{ width: `${streamingProgress}%` }}
-            />
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse" />
+            </div>
           </div>
           
-          <p className="text-xs text-slate-400 mt-2">
-            {streamingProgress < 30 ? 'Validando caso clínico...' :
-             streamingProgress < 60 ? 'Ejecutando ciclos diagnósticos...' :
-             streamingProgress < 90 ? 'Consultando agentes especializados...' :
-             'Finalizando análisis SOAP...'}
+          <p className="text-sm text-slate-300 leading-relaxed">
+            {streamingProgress < 30 ? '🔍 Validando información clínica del paciente...' :
+             streamingProgress < 60 ? '⚙️ Ejecutando ciclos de análisis diagnóstico...' :
+             streamingProgress < 90 ? '👥 Consultando especialistas del panel médico...' :
+             '✅ Finalizando validación SOAP y consenso médico...'}
           </p>
         </div>
       )}

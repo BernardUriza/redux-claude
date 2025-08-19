@@ -28,6 +28,11 @@ export class MedicalContentValidator {
     'corazón', 'pulmón', 'hígado', 'riñón', 'cerebro', 'estómago', 'intestino',
     'piel', 'hueso', 'músculo', 'sangre', 'presión', 'arterial',
     
+    // Dermatológicos
+    'lesiones', 'eritematosas', 'pruriginosas', 'pliegues', 'antecubitales', 'poplíteos',
+    'liquenificación', 'excoriaciones', 'rascado', 'alérgica', 'rinitis', 'psoriasis',
+    'cremas', 'dermatitis', 'eczema', 'atópica',
+    
     // Psicológicos/Psiquiátricos
     'depresión', 'ansiedad', 'estrés', 'insomnio', 'trastorno', 'estado', 'ánimo',
     'psicológico', 'emocional', 'mental', 'comportamiento', 'conducta',
@@ -42,18 +47,21 @@ export class MedicalContentValidator {
 
   // Patrones de casos clínicos válidos
   private readonly medicalPatterns = [
-    /paciente\s+(masculino|femenino|de|con|presenta)/i,
+    /paciente\s+(masculino|femenino|femenina|masculina|de|con|presenta)/i,
     /años?\s+(presenta|refiere|acude|consulta)/i,
     /historia\s+de/i,
-    /antecedentes?\s+(de|médicos?|familiares?)/i,
+    /antecedentes?\s+(de|médicos?|familiares?|personal)/i,
     /síntomas?\s+(de|como|incluyen?)/i,
     /dolor\s+(en|de|abdominal|torácico|cefálico)/i,
-    /presenta?\s+(cuadro|sintomatología|clínica)/i,
+    /presenta?\s+(cuadro|sintomatología|clínica|lesiones?)/i,
     /diagnóstico\s+(de|diferencial|principal)/i,
     /tratamiento\s+(con|de|farmacológico)/i,
     /examen\s+físico/i,
     /signos?\s+vitales?/i,
-    /laboratorios?\s+(muestran?|revelan?|reportan?)/i
+    /laboratorios?\s+(muestran?|revelan?|reportan?)/i,
+    /lesiones?\s+(eritematosas?|pruriginosas?)/i,
+    /(empeoran?|mejoran?)\s+con/i,
+    /desde\s+hace\s+\d+\s+(días?|meses?|años?)/i
   ]
 
   // Patrones que NO son médicos
@@ -116,14 +124,14 @@ export class MedicalContentValidator {
       score += 30
     }
 
-    // Penalización por falta de contexto médico
+    // Penalización más suave por falta de contexto médico
     if (!this.hasAgeGenderContext(cleanText)) {
-      score -= 15
+      score -= 10  // Reducido de 15 a 10
     }
 
     const confidence = Math.min(score / 100, 0.98)
 
-    if (confidence < 0.4) {
+    if (confidence < 0.3) {  // Reducido de 0.4 a 0.3
       return {
         isValid: false,
         confidence: 1 - confidence,
@@ -158,7 +166,7 @@ export class MedicalContentValidator {
    */
   private hasAgeGenderContext(text: string): boolean {
     const agePattern = /\d+\s*años?/i
-    const genderPattern = /(masculino|femenino|hombre|mujer|varón|paciente\s+(de|con))/i
+    const genderPattern = /(masculino|femenino|femenina|masculina|hombre|mujer|varón|paciente\s+(masculino|femenino|femenina|masculina|de|con))/i
     
     return agePattern.test(text) || genderPattern.test(text)
   }
@@ -266,7 +274,7 @@ export class MedicalQualityValidator {
     )
 
     return {
-      isValid: confidence > 0.6,
+      isValid: confidence > 0.5, // Reducido de 0.6 a 0.5
       confidence,
       medicalTermsFound: medicalTerms,
       missingCriticalData: missingData,
@@ -343,7 +351,7 @@ export class MedicalQualityValidator {
       missing.push('Edad del paciente')
     }
 
-    if (!cleanText.match(/(masculino|femenino|hombre|mujer)/i)) {
+    if (!cleanText.match(/(masculino|femenino|femenina|masculina|hombre|mujer)/i)) {
       missing.push('Género del paciente')
     }
 
@@ -351,11 +359,12 @@ export class MedicalQualityValidator {
       missing.push('Cronología/duración de síntomas')
     }
 
-    if (!cleanText.match(/(antecedentes?|historia\s+(de|médica|familiar))/i)) {
-      missing.push('Antecedentes médicos')
-    }
+    // Hacer antecedentes opcional - no crítico
+    // if (!cleanText.match(/(antecedentes?|historia\s+(de|médica|familiar))/i)) {
+    //   missing.push('Antecedentes médicos')
+    // }
 
-    if (!cleanText.match(/(síntomas?|dolor|presenta|refiere|molestias?)/i)) {
+    if (!cleanText.match(/(síntomas?|dolor|presenta|refiere|molestias?|lesiones?)/i)) {
       missing.push('Sintomatología clara')
     }
 

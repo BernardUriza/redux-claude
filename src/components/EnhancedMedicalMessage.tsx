@@ -3,7 +3,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import type { MedicalMessage } from '@redux-claude/cognitive-core'
 
@@ -150,6 +150,18 @@ const IterativeMetrics = ({ content }: { content: string }) => {
 
 export const EnhancedMedicalMessage = ({ message, isStreaming = false }: MedicalMessageProps) => {
   const [copied, setCopied] = useState(false)
+  const [clientTimeString, setClientTimeString] = useState('')
+  
+  // Fix hydration mismatch by formatting timestamp only on client
+  useEffect(() => {
+    setClientTimeString(
+      new Date(message.timestamp).toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      })
+    )
+  }, [message.timestamp])
 
   const copyToClipboard = async () => {
     try {
@@ -235,11 +247,7 @@ export const EnhancedMedicalMessage = ({ message, isStreaming = false }: Medical
 
           {/* Timestamp */}
           <span className="text-sm text-gray-500 ml-auto">
-            {new Date(message.timestamp).toLocaleTimeString('es-ES', {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit'
-            })}
+            {clientTimeString || '--:--:--'}
           </span>
         </div>
 

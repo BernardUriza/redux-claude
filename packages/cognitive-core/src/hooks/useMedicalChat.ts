@@ -33,7 +33,8 @@ export const useMedicalChat = () => {
     streaming, 
     currentSession, 
     isLoading, 
-    error 
+    error,
+    iterativeState 
   } = useSelector((state: RootState) => state.medicalChat)
 
   const sendMedicalQuery = useCallback(async (message: string, requestId?: string) => {
@@ -43,8 +44,11 @@ export const useMedicalChat = () => {
       dispatch(clearError())
 
       // Si es una respuesta a solicitud de información adicional, procesar diferente
-      if (requestId) {
-        return await handleAdditionalInfoResponse(requestId, message)
+      if (requestId || iterativeState.awaitingAdditionalInfo) {
+        const actualRequestId = requestId || iterativeState.pendingInfoRequestId
+        if (actualRequestId) {
+          return await handleAdditionalInfoResponse(actualRequestId, message)
+        }
       }
 
       // VALIDACIÓN MÉDICA AVANZADA
@@ -166,7 +170,7 @@ ${validationResult.missingCriticalData?.map(data => `- ${data}`).join('\n') || '
       dispatch(stopStreaming({ error: errorMessage }))
       dispatch(setError(errorMessage))
     }
-  }, [dispatch, streaming.isActive, currentSession.id, medicalValidator, diagnosticEngine, infoService])
+  }, [dispatch, streaming.isActive, currentSession.id, medicalValidator, diagnosticEngine, infoService, iterativeState.awaitingAdditionalInfo, iterativeState.pendingInfoRequestId])
 
   // Función auxiliar para manejar solicitudes de información adicional
   const handleAdditionalInfoRequest = async (request: AdditionalInfoRequest, messageId: string) => {
@@ -189,6 +193,15 @@ ${validationResult.missingCriticalData?.map(data => `- ${data}`).join('\n') || '
   // Función auxiliar para manejar respuestas de información adicional
   const handleAdditionalInfoResponse = async (requestId: string, additionalData: string) => {
     console.log(`📝 Procesando información adicional para solicitud: ${requestId}`)
+    
+    // Agregar mensaje del usuario
+    dispatch(addMessage({ content: additionalData, type: 'user' }))
+    
+    // Limpiar estado de información adicional pendiente
+    dispatch(updateIterativeState({
+      awaitingAdditionalInfo: false,
+      pendingInfoRequestId: undefined
+    }))
     
     const response = infoService.processInfoResponse(requestId, additionalData)
     

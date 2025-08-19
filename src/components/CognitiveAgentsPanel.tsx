@@ -101,33 +101,33 @@ const AgentCard = ({ agent, isHighlighted }: AgentCardProps) => {
   const statusColor = getStatusColor(agent.status)
 
   return (
-    <div className={`relative bg-gradient-to-br ${colorGradient} bg-opacity-10 backdrop-blur-sm rounded-xl p-4 border transition-all duration-300 ${
+    <div className={`relative bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-xl rounded-2xl p-5 border transition-all duration-300 ${
       isHighlighted 
-        ? 'border-blue-400 shadow-lg shadow-blue-500/20 scale-105' 
-        : 'border-slate-600/30 hover:border-slate-500/50'
+        ? 'border-blue-400/50 shadow-2xl shadow-blue-500/20 ring-1 ring-blue-400/30' 
+        : 'border-slate-600/40 hover:border-slate-500/60 hover:shadow-xl hover:shadow-slate-950/30'
     }`}>
       
       {/* Agent Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-3">
-          <div className={`w-10 h-10 bg-gradient-to-br ${colorGradient} rounded-xl flex items-center justify-center text-lg`}>
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center space-x-4">
+          <div className={`w-12 h-12 bg-gradient-to-br ${colorGradient} rounded-2xl flex items-center justify-center text-xl shadow-lg`}>
             {getAgentIcon(agent.specialty)}
           </div>
-          <div>
-            <h4 className="text-sm font-semibold text-white">{agent.name}</h4>
-            <p className="text-xs text-slate-400 capitalize">{agent.specialty.replace('_', ' ')}</p>
+          <div className="flex-1">
+            <h4 className="text-base font-semibold text-white mb-1">{agent.name}</h4>
+            <p className="text-sm text-slate-400 capitalize font-medium">{agent.specialty.replace('_', ' ')}</p>
           </div>
         </div>
         
-        <div className={`px-2 py-1 rounded-full text-xs font-medium border ${statusColor}`}>
+        <div className={`px-3 py-1.5 rounded-xl text-sm font-medium border ${statusColor} whitespace-nowrap`}>
           {agent.status === 'consulting' && (
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-2">
               <div className="w-2 h-2 border border-purple-400 border-t-transparent rounded-full animate-spin" />
               <span>Consultando</span>
             </div>
           )}
           {agent.status === 'active' && (
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
               <span>Activo</span>
             </div>
@@ -138,14 +138,14 @@ const AgentCard = ({ agent, isHighlighted }: AgentCardProps) => {
       </div>
 
       {/* Confidence Bar */}
-      <div className="mb-3">
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-xs text-slate-400">Confianza</span>
-          <span className="text-xs text-white font-medium">{Math.round(agent.confidence * 100)}%</span>
+      <div className="mb-4">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm text-slate-400 font-medium">Nivel de Confianza</span>
+          <span className="text-sm text-white font-bold">{Math.round(agent.confidence * 100)}%</span>
         </div>
-        <div className="w-full bg-slate-700 rounded-full h-1.5">
+        <div className="w-full bg-slate-700/50 rounded-full h-2">
           <div 
-            className={`bg-gradient-to-r ${colorGradient} h-1.5 rounded-full transition-all duration-500`}
+            className={`bg-gradient-to-r ${colorGradient} h-2 rounded-full transition-all duration-500 shadow-sm`}
             style={{ width: `${Math.round(agent.confidence * 100)}%` }}
           />
         </div>
@@ -153,16 +153,20 @@ const AgentCard = ({ agent, isHighlighted }: AgentCardProps) => {
 
       {/* Insights */}
       {agent.insights.length > 0 && (
-        <div className="mb-3">
-          <p className="text-xs text-slate-400 mb-2">Insights:</p>
-          <div className="space-y-1">
+        <div className="mb-4">
+          <p className="text-sm text-slate-400 mb-3 font-medium">Insights Clínicos:</p>
+          <div className="space-y-2">
             {agent.insights.slice(0, 2).map((insight, idx) => (
-              <p key={idx} className="text-xs text-slate-300 bg-slate-800/30 rounded px-2 py-1">
-                • {insight}
-              </p>
+              <div key={idx} className="bg-slate-800/50 backdrop-blur-sm rounded-lg px-3 py-2 border border-slate-700/30">
+                <p className="text-sm text-slate-200 leading-relaxed">• {insight}</p>
+              </div>
             ))}
             {agent.insights.length > 2 && (
-              <p className="text-xs text-slate-500 px-2">+{agent.insights.length - 2} insights más</p>
+              <div className="text-center">
+                <span className="text-sm text-slate-500 bg-slate-800/30 px-3 py-1 rounded-full">
+                  +{agent.insights.length - 2} insights adicionales
+                </span>
+              </div>
             )}
           </div>
         </div>
@@ -170,16 +174,17 @@ const AgentCard = ({ agent, isHighlighted }: AgentCardProps) => {
 
       {/* Recommendation */}
       {agent.recommendation && (
-        <div className="bg-slate-900/50 rounded-lg p-2">
-          <p className="text-xs text-slate-400 mb-1">Recomendación:</p>
-          <p className="text-xs text-white">{agent.recommendation}</p>
+        <div className="bg-gradient-to-r from-blue-950/30 to-purple-950/30 backdrop-blur-sm rounded-xl p-4 border border-blue-700/20 mb-3">
+          <p className="text-sm text-blue-300 mb-2 font-medium">💡 Recomendación:</p>
+          <p className="text-sm text-slate-200 leading-relaxed">{agent.recommendation}</p>
         </div>
       )}
 
       {/* Consultation Time */}
       {agent.consultationTime && (
-        <div className="mt-2 pt-2 border-t border-slate-700">
-          <p className="text-xs text-slate-500">Tiempo: {agent.consultationTime}ms</p>
+        <div className="flex items-center justify-between pt-3 border-t border-slate-700/50">
+          <span className="text-sm text-slate-500">Tiempo de consulta:</span>
+          <span className="text-sm text-slate-300 font-medium">{agent.consultationTime}ms</span>
         </div>
       )}
     </div>
@@ -260,58 +265,82 @@ export const CognitiveAgentsPanel = () => {
   const completedAgents = agents.filter(agent => agent.status === 'completed')
 
   return (
-    <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl p-4 border border-slate-600/30 mb-4">
+    <div className="space-y-6">
       
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-            <span className="text-white text-xs">🧠</span>
+      {/* Enhanced Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/25">
+            <span className="text-white text-lg">🧠</span>
           </div>
-          <h3 className="text-lg font-semibold text-white">Orquestador Cognitivo</h3>
+          <div>
+            <h3 className="text-xl font-bold text-white">Orquestador Cognitivo</h3>
+            <p className="text-sm text-slate-400">Sistema de Consulta Multi-Especialista</p>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-slate-400">
-            {activeAgents.length} agentes activos
-          </span>
-          <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
+        <div className="flex items-center space-x-3">
+          <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 backdrop-blur-sm rounded-xl px-4 py-2 border border-purple-700/20">
+            <span className="text-sm text-purple-300 font-medium">
+              {activeAgents.length} agentes activos
+            </span>
+          </div>
+          <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse shadow-lg shadow-purple-400/50" />
         </div>
       </div>
 
-      {/* Consensus Meter */}
-      <div className="mb-4 bg-slate-900/30 rounded-lg p-3">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm text-slate-400">Consenso Médico</span>
-          <span className="text-sm font-semibold text-white">{consensusData.percentage}%</span>
+      {/* Enhanced Consensus Meter */}
+      <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-600/40">
+        <div className="flex justify-between items-center mb-4">
+          <h4 className="text-lg font-semibold text-white">Consenso Médico</h4>
+          <div className="flex items-center space-x-2">
+            <span className="text-2xl font-bold text-white">{consensusData.percentage}%</span>
+            <div className={`w-3 h-3 rounded-full ${
+              consensusData.percentage > 80 ? 'bg-emerald-400' :
+              consensusData.percentage > 60 ? 'bg-yellow-400' : 'bg-red-400'
+            } animate-pulse`} />
+          </div>
         </div>
-        <div className="w-full bg-slate-700 rounded-full h-2 mb-2">
+        
+        <div className="w-full bg-slate-700/50 rounded-full h-3 mb-4">
           <div 
-            className={`h-2 rounded-full transition-all duration-500 ${
+            className={`h-3 rounded-full transition-all duration-500 shadow-lg ${
               consensusData.percentage > 80 
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-500/30'
                 : consensusData.percentage > 60
-                ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
-                : 'bg-gradient-to-r from-red-500 to-pink-500'
+                ? 'bg-gradient-to-r from-yellow-500 to-orange-500 shadow-yellow-500/30'
+                : 'bg-gradient-to-r from-red-500 to-pink-500 shadow-red-500/30'
             }`}
             style={{ width: `${consensusData.percentage}%` }}
           />
         </div>
         
-        {consensusData.agreements.length > 0 && (
-          <div className="text-xs text-emerald-400">
-            ✅ Acuerdos: {consensusData.agreements.join(', ')}
-          </div>
-        )}
-        
-        {consensusData.conflictingPoints.length > 0 && (
-          <div className="text-xs text-yellow-400 mt-1">
-            ⚠️ En discusión: {consensusData.conflictingPoints.join(', ')}
-          </div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {consensusData.agreements.length > 0 && (
+            <div className="bg-emerald-950/30 rounded-xl p-4 border border-emerald-700/20">
+              <h5 className="text-sm font-medium text-emerald-300 mb-2">✅ Puntos de Acuerdo</h5>
+              <ul className="space-y-1">
+                {consensusData.agreements.map((agreement, idx) => (
+                  <li key={idx} className="text-sm text-emerald-200 leading-relaxed">• {agreement}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {consensusData.conflictingPoints.length > 0 && (
+            <div className="bg-yellow-950/30 rounded-xl p-4 border border-yellow-700/20">
+              <h5 className="text-sm font-medium text-yellow-300 mb-2">⚠️ En Discusión</h5>
+              <ul className="space-y-1">
+                {consensusData.conflictingPoints.map((point, idx) => (
+                  <li key={idx} className="text-sm text-yellow-200 leading-relaxed">• {point}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Agents Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {/* Enhanced Agents Layout - Single Column for Better Readability */}
+      <div className="space-y-4">
         {agents.map((agent, index) => (
           <AgentCard
             key={agent.id}
@@ -321,24 +350,31 @@ export const CognitiveAgentsPanel = () => {
         ))}
       </div>
 
-      {/* Summary Stats */}
-      <div className="mt-4 pt-3 border-t border-slate-700">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-lg font-bold text-white">{completedAgents.length}</p>
-            <p className="text-xs text-slate-400">Consultados</p>
+      {/* Enhanced Summary Stats */}
+      <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-600/40">
+        <h4 className="text-lg font-semibold text-white mb-4">Resumen de Consulta</h4>
+        <div className="grid grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-lg shadow-emerald-500/25">
+              <span className="text-white text-xl font-bold">{completedAgents.length}</span>
+            </div>
+            <p className="text-sm text-slate-400 font-medium">Especialistas Consultados</p>
           </div>
-          <div>
-            <p className="text-lg font-bold text-white">
-              {Math.round(agents.reduce((sum, agent) => sum + agent.confidence, 0) / agents.length * 100)}%
-            </p>
-            <p className="text-xs text-slate-400">Confianza Promedio</p>
+          <div className="text-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-lg shadow-blue-500/25">
+              <span className="text-white text-xl font-bold">
+                {Math.round(agents.reduce((sum, agent) => sum + agent.confidence, 0) / agents.length * 100)}%
+              </span>
+            </div>
+            <p className="text-sm text-slate-400 font-medium">Confianza Promedio</p>
           </div>
-          <div>
-            <p className="text-lg font-bold text-white">
-              {Math.round(agents.reduce((sum, agent) => sum + (agent.consultationTime || 0), 0) / 1000)}s
-            </p>
-            <p className="text-xs text-slate-400">Tiempo Total</p>
+          <div className="text-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-lg shadow-orange-500/25">
+              <span className="text-white text-xl font-bold">
+                {Math.round(agents.reduce((sum, agent) => sum + (agent.consultationTime || 0), 0) / 1000)}s
+              </span>
+            </div>
+            <p className="text-sm text-slate-400 font-medium">Tiempo Total</p>
           </div>
         </div>
       </div>

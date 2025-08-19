@@ -205,6 +205,8 @@ const AgentDecision = ({ decision }: { decision: any }) => {
 // Main Cognitive Dashboard Component
 export const CognitiveDashboard = () => {
   const [input, setInput] = useState('')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true) // Colapsado por defecto
+  const [activeMetricsTab, setActiveMetricsTab] = useState<'overview' | 'clinical' | 'agents' | 'system'>('overview')
   
   const { 
     messages, 
@@ -348,76 +350,112 @@ export const CognitiveDashboard = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex">
-      {/* Sidebar */}
-      <div className="w-64 bg-gray-950 border-r border-gray-800 flex flex-col">
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-800">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white text-sm font-bold">🏥</span>
+    <div className="h-screen bg-gray-900 text-white flex overflow-hidden">
+      {/* Enhanced Collapsible Sidebar */}
+      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gradient-to-b from-gray-950 to-slate-950 border-r border-slate-700/50 flex flex-col transition-all duration-300 ease-in-out backdrop-blur-xl`}>
+        {/* Enhanced Sidebar Header */}
+        <div className="p-4 border-b border-slate-700/50">
+          <div className="flex items-center justify-between">
+            <div className={`flex items-center space-x-3 ${sidebarCollapsed ? 'justify-center' : ''}`}>
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                <span className="text-white text-sm font-bold">🏥</span>
+              </div>
+              {!sidebarCollapsed && (
+                <div>
+                  <h1 className="text-lg font-semibold text-white">Medical AI</h1>
+                  <p className="text-xs text-slate-400">Cognitive Assistant</p>
+                </div>
+              )}
             </div>
-            <div>
-              <h1 className="text-lg font-semibold text-white">Medical AI</h1>
-              <p className="text-xs text-gray-400">Cognitive Assistant</p>
-            </div>
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors duration-200 text-slate-400 hover:text-white"
+              title={sidebarCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+            >
+              <svg className={`w-4 h-4 transition-transform duration-200 ${sidebarCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
           </div>
         </div>
 
-        {/* New Chat Button */}
+        {/* Enhanced New Chat Button */}
         <div className="p-4">
           <button 
             onClick={() => setInput('')}
-            className="w-full flex items-center space-x-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 transition-colors"
+            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl border border-emerald-500/30 transition-all duration-300 shadow-lg shadow-emerald-600/25 hover:shadow-emerald-600/40`}
+            title={sidebarCollapsed ? "Nueva consulta" : ""}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span className="text-sm">New consultation</span>
+            <div className="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            {!sidebarCollapsed && <span className="text-sm font-medium text-white">New consultation</span>}
           </button>
         </div>
 
-        {/* System Status */}
+        {/* Enhanced System Status */}
         <div className="px-4 py-2">
-          <div className="bg-gray-800 rounded-lg p-3">
-            <div className="flex items-center space-x-2 mb-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-xs text-gray-300">System Online</span>
-            </div>
-            <div className="space-y-1 text-xs text-gray-400">
-              <div className="flex justify-between">
-                <span>Confidence:</span>
-                <span>{cognitiveMetrics.systemConfidence}%</span>
+          <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-xl rounded-xl p-3 border border-slate-600/30">
+            {!sidebarCollapsed ? (
+              <>
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  <span className="text-xs text-slate-300 font-medium">System Online</span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between text-slate-400">
+                    <span>Confidence:</span>
+                    <span className="text-emerald-400 font-medium">{cognitiveMetrics.systemConfidence}%</span>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Agents:</span>
+                    <span className="text-blue-400 font-medium">5/5 active</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center space-y-2">
+                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                <span className="text-xs text-emerald-400 font-bold">{cognitiveMetrics.systemConfidence}%</span>
               </div>
-              <div className="flex justify-between">
-                <span>Agents:</span>
-                <span>5/5 active</span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Navigation */}
+        {/* Enhanced Navigation */}
         <div className="flex-1 p-4">
-          <nav className="space-y-1">
-            <a href="#" className="flex items-center space-x-2 px-3 py-2 text-gray-300 hover:bg-gray-800 rounded-lg">
-              <span className="text-sm">💊 Treatment Plans</span>
+          <nav className="space-y-2">
+            <a href="#" className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white group`} title={sidebarCollapsed ? "Treatment Plans" : ""}>
+              <span className="text-lg">💊</span>
+              {!sidebarCollapsed && <span className="text-sm font-medium">Treatment Plans</span>}
             </a>
-            <a href="#" className="flex items-center space-x-2 px-3 py-2 text-gray-300 hover:bg-gray-800 rounded-lg">
-              <span className="text-sm">🔍 Diagnostics</span>
+            <a href="#" className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white group`} title={sidebarCollapsed ? "Diagnostics" : ""}>
+              <span className="text-lg">🔍</span>
+              {!sidebarCollapsed && <span className="text-sm font-medium">Diagnostics</span>}
             </a>
-            <a href="#" className="flex items-center space-x-2 px-3 py-2 text-gray-300 hover:bg-gray-800 rounded-lg">
-              <span className="text-sm">📊 Analytics</span>
+            <a href="#" className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white group`} title={sidebarCollapsed ? "Analytics" : ""}>
+              <span className="text-lg">📊</span>
+              {!sidebarCollapsed && <span className="text-sm font-medium">Analytics</span>}
             </a>
           </nav>
         </div>
 
-        {/* Bottom Info */}
-        <div className="p-4 border-t border-gray-800">
-          <div className="text-xs text-gray-500">
-            <p>Built by Bernard Orozco</p>
-            <p>Powered by Claude AI</p>
-          </div>
+        {/* Enhanced Bottom Info */}
+        <div className="p-4 border-t border-slate-700/50">
+          {!sidebarCollapsed ? (
+            <div className="text-xs text-slate-500 space-y-1">
+              <p className="font-medium text-slate-400">Built by Bernard Orozco</p>
+              <p>Powered by Claude AI</p>
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-xs">🤖</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -457,46 +495,198 @@ export const CognitiveDashboard = () => {
           </div>
         </div>
 
-        {/* Main Content with Enhanced Panels */}
-        <div className="flex-1 flex">
+        {/* Main Content with Enhanced Panels - 40/60 Proportion */}
+        <div className={`flex-1 grid grid-cols-1 ${sidebarCollapsed ? 'lg:grid-cols-[40%_60%]' : 'lg:grid-cols-[35%_65%]'} min-h-0 transition-all duration-300`}>
           
-          {/* Left Panel - Metrics and Progress */}
-          <div className="w-80 bg-slate-900/50 border-r border-gray-800 p-4 overflow-y-auto custom-scrollbar">
-            {/* Medicina Defensiva - Indicador de Urgencia */}
-            {urgencyData.level !== 'low' || messages.length > 0 ? (
-              urgencyData.level === 'critical' || urgencyData.level === 'high' ? (
-                <UrgencyIndicator urgencyData={urgencyData} className="mb-4" />
-              ) : (
-                <CompactUrgencyIndicator urgencyData={urgencyData} className="mb-4" />
-              )
-            ) : null}
+          {/* Enhanced Right Panel - Medical Metrics with Optimal Spacing */}
+          <div className="bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/80 backdrop-blur-md border-r lg:border-r border-b lg:border-b-0 border-slate-700/50 p-4 shadow-2xl shadow-slate-950/50 order-2 lg:order-1 flex flex-col h-full overflow-hidden">
             
-            <RealTimeMetrics />
-            <IterativeDiagnosticProgress />
-            <CognitiveAgentsPanel />
+            {/* Medical Dashboard Header with Navigation */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/25">
+                    <span className="text-white text-xs">📊</span>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Panel Médico</h2>
+                    <p className="text-xs text-slate-400">Sistema Cognitivo v2.0</p>
+                  </div>
+                </div>
+                
+                {/* Quick Actions */}
+                <div className="flex items-center space-x-1">
+                  <button className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors" title="Actualizar métricas">
+                    <svg className="w-3.5 h-3.5 text-slate-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                  <button className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors" title="Configurar panel">
+                    <svg className="w-3.5 h-3.5 text-slate-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              {/* Quick Stats Overview - More Compact */}
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-lg p-2 border border-emerald-500/20">
+                  <div className="text-sm font-bold text-emerald-400">{cognitiveMetrics.systemConfidence}%</div>
+                  <div className="text-xs text-emerald-300">Sistema</div>
+                </div>
+                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg p-2 border border-blue-500/20">
+                  <div className="text-sm font-bold text-blue-400">5/5</div>
+                  <div className="text-xs text-blue-300">Agentes</div>
+                </div>
+                <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg p-2 border border-orange-500/20">
+                  <div className="text-sm font-bold text-orange-400">{messages.length}</div>
+                  <div className="text-xs text-orange-300">Consultas</div>
+                </div>
+              </div>
+              
+              {/* Navigation Tabs - More Compact */}
+              <div className="flex space-x-1 bg-slate-800/30 rounded-lg p-1">
+                {[
+                  { id: 'overview', label: 'Resumen', icon: '📋' },
+                  { id: 'clinical', label: 'Clínico', icon: '🩺' },
+                  { id: 'agents', label: 'Agentes', icon: '🤖' },
+                  { id: 'system', label: 'Sistema', icon: '⚙️' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveMetricsTab(tab.id as any)}
+                    className={`flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      activeMetricsTab === tab.id
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                        : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
+                    }`}
+                  >
+                    <span className="text-xs">{tab.icon}</span>
+                    <span className="hidden sm:inline text-xs">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Optimized Content Container with Tab-Based Navigation */}
+            <div className="flex-1 overflow-y-auto overscroll-contain min-h-0 pr-2">
+              
+              {/* RESUMEN - Vista General */}
+              {activeMetricsTab === 'overview' && (
+                <div className="space-y-4">
+                  {/* Estado Crítico - Siempre visible en resumen */}
+                  {urgencyData.level !== 'low' || messages.length > 0 ? (
+                    <section>
+                      {urgencyData.level === 'critical' || urgencyData.level === 'high' ? (
+                        <UrgencyIndicator urgencyData={urgencyData} className="rounded-xl border border-red-500/20 shadow-lg shadow-red-500/10" />
+                      ) : (
+                        <CompactUrgencyIndicator urgencyData={urgencyData} className="rounded-xl border border-slate-600/30 shadow-lg shadow-slate-950/20" />
+                      )}
+                    </section>
+                  ) : null}
+                  
+                  {/* Métricas Clave */}
+                  <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/60 backdrop-blur-xl rounded-xl border border-slate-600/30 p-4 shadow-xl shadow-slate-950/30">
+                    <RealTimeMetrics />
+                  </div>
+                </div>
+              )}
+              
+              {/* CLÍNICO - Información Médica */}
+              {activeMetricsTab === 'clinical' && (
+                <div className="space-y-4">
+                  {urgencyData.level !== 'low' || messages.length > 0 ? (
+                    <section>
+                      <div className="flex items-center space-x-2 mb-3">
+                        <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
+                        <h3 className="text-xs font-semibold text-red-300 uppercase tracking-wider">Estado Médico Crítico</h3>
+                      </div>
+                      {urgencyData.level === 'critical' || urgencyData.level === 'high' ? (
+                        <UrgencyIndicator urgencyData={urgencyData} className="rounded-xl border border-red-500/20 shadow-lg shadow-red-500/10" />
+                      ) : (
+                        <CompactUrgencyIndicator urgencyData={urgencyData} className="rounded-xl border border-slate-600/30 shadow-lg shadow-slate-950/20" />
+                      )}
+                    </section>
+                  ) : (
+                    <div className="bg-gradient-to-r from-emerald-950/40 to-teal-950/40 backdrop-blur-xl rounded-xl p-4 border border-emerald-500/30">
+                      <div className="text-center">
+                        <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <span className="text-lg">🩺</span>
+                        </div>
+                        <h3 className="text-sm font-semibold text-emerald-300 mb-2">Sistema Médico Estable</h3>
+                        <p className="text-xs text-slate-400">No hay alertas médicas activas.</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="bg-gradient-to-br from-blue-950/20 to-indigo-950/30 backdrop-blur-xl rounded-xl border border-blue-700/20 p-4 shadow-xl shadow-blue-950/20">
+                    <IterativeDiagnosticProgress />
+                  </div>
+                </div>
+              )}
+              
+              {/* AGENTES - Orquestador Cognitivo */}
+              {activeMetricsTab === 'agents' && (
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-purple-950/20 to-violet-950/30 backdrop-blur-xl rounded-xl border border-purple-700/20 p-4 shadow-xl shadow-purple-950/20">
+                    <CognitiveAgentsPanel />
+                  </div>
+                </div>
+              )}
+              
+              {/* SISTEMA - Métricas Técnicas */}
+              {activeMetricsTab === 'system' && (
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/60 backdrop-blur-xl rounded-xl border border-slate-600/30 p-4 shadow-xl shadow-slate-950/30">
+                    <RealTimeMetrics />
+                  </div>
+                  
+                  {/* Información adicional del sistema */}
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="bg-gradient-to-r from-orange-950/40 to-red-950/40 backdrop-blur-xl rounded-lg p-3 border border-orange-500/30">
+                      <h4 className="text-sm font-semibold text-orange-300 mb-2">Estado del Servidor</h4>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                        <span className="text-xs text-slate-300">Conectado y operativo</span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-blue-950/40 to-purple-950/40 backdrop-blur-xl rounded-lg p-3 border border-blue-500/30">
+                      <h4 className="text-sm font-semibold text-blue-300 mb-2">Versión del Sistema</h4>
+                      <span className="text-xs text-slate-300">Motor Iterativo + Orquestador Cognitivo v2.0</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           
           {/* Center Chat Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex flex-col h-full bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 order-1 lg:order-2 overflow-hidden">
             {/* Chat Messages Area */}
-            <div className="flex-1 overflow-y-auto bg-gray-900 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-transparent via-gray-900/20 to-transparent min-h-0">
             {messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <div className="text-center px-6">
-                  <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">🛡️</span>
+                <div className="text-center px-8 py-12">
+                  <div className="w-20 h-20 bg-gradient-to-br from-slate-700/80 to-slate-800/90 backdrop-blur-xl rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-slate-950/50 border border-slate-600/30">
+                    <span className="text-3xl">🛡️</span>
                   </div>
-                  <p className="text-gray-400 text-sm">Sistema de Medicina Defensiva Activado</p>
-                  <p className="text-gray-500 text-xs mt-2">
-                    Diagnósticos priorizados por <strong>gravedad</strong> sobre probabilidad
+                  <h3 className="text-slate-200 text-lg font-semibold mb-3">
+                    Sistema de Medicina Defensiva Activado
+                  </h3>
+                  <p className="text-slate-400 text-sm mb-4 max-w-md mx-auto leading-relaxed">
+                    Diagnósticos priorizados por <strong className="text-slate-300">gravedad</strong> sobre probabilidad
                   </p>
-                  <p className="text-gray-500 text-xs mt-1">
-                    Describe tu caso médico para análisis SOAP completo
-                  </p>
+                  <div className="bg-gradient-to-r from-blue-950/30 to-purple-950/30 backdrop-blur-xl rounded-xl p-4 border border-blue-700/20 shadow-xl shadow-blue-950/20 max-w-lg mx-auto">
+                    <p className="text-slate-300 text-xs leading-relaxed">
+                      💡 Describe tu caso médico para análisis SOAP completo con validación defensiva
+                    </p>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-gray-900">
+              <div className="relative">
                 {messages.map((message, idx) => {
                   const isLastMessage = idx === messages.length - 1
                   const messageIsStreaming = isLastMessage && isStreaming && message.type === 'assistant'
@@ -511,22 +701,27 @@ export const CognitiveDashboard = () => {
                 })}
                 
                 {(isLoading || isStreaming) && (
-                  <div className="border-b border-gray-800 bg-gray-800/30">
-                    <div className="max-w-4xl mx-auto px-6 py-6">
-                      <div className="flex space-x-4">
+                  <div className="border-b border-slate-700/50 bg-gradient-to-r from-slate-800/20 to-slate-900/30 backdrop-blur-md">
+                    <div className="max-w-4xl mx-auto px-8 py-8">
+                      <div className="flex space-x-6">
                         <div className="flex-shrink-0">
-                          <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium">🤖</span>
+                          <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-violet-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-purple-600/25 border border-purple-500/30">
+                            <span className="text-lg font-medium">🤖</span>
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-white mb-4">Medical AI</div>
+                          <div className="text-base font-semibold text-slate-100 mb-4">Medical AI</div>
                           {false ? (
-                            <div>Streaming...</div>
+                            <div className="text-slate-300">Streaming...</div>
                           ) : (
-                            <div className="flex items-center space-x-2 text-gray-400">
-                              <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                              <span className="text-sm">Analyzing medical case...</span>
+                            <div className="flex items-center space-x-3">
+                              <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                              <span className="text-sm text-slate-300 font-medium">Analyzing medical case...</span>
+                              <div className="flex space-x-1">
+                                <div className="w-1 h-1 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: '0ms'}} />
+                                <div className="w-1 h-1 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: '150ms'}} />
+                                <div className="w-1 h-1 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: '300ms'}} />
+                              </div>
                             </div>
                           )}
                         </div>
@@ -540,54 +735,64 @@ export const CognitiveDashboard = () => {
             )}
           </div>
           
-          {/* Nueva Sesión */}
-          {messages.length > 1 && (
-            <div className="border-t border-gray-800 px-6 py-3 bg-gray-800/50">
-              <button
-                onClick={() => newSession()}
-                className="text-sm text-gray-400 hover:text-white flex items-center gap-2 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Nueva consulta médica
-              </button>
-            </div>
-          )}
-
-          {/* Input Form */}
-          <div className="border-t border-gray-800 bg-gray-900 px-6 py-4">
-            <form onSubmit={handleSubmit} className="flex space-x-3">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Describe el caso clínico aquí... Ej: Paciente de 45 años presenta dolor torácico..."
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
-                  disabled={isLoading || isStreaming}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isLoading || !input.trim()}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Analyzing</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Send</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          {/* Fixed Bottom Section */}
+          <div className="flex-shrink-0">
+            {/* Nueva Sesión */}
+            {messages.length > 1 && (
+              <div className="border-t border-slate-700/50 px-8 py-4 bg-gradient-to-r from-slate-800/30 to-slate-900/40 backdrop-blur-md">
+                <button
+                  onClick={() => newSession()}
+                  className="text-sm text-slate-400 hover:text-slate-100 flex items-center gap-3 transition-all duration-300 group hover:bg-slate-700/30 px-4 py-2 rounded-xl border border-transparent hover:border-slate-600/30"
+                >
+                  <div className="w-5 h-5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:shadow-emerald-500/40 transition-all duration-300">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                  </>
-                )}
-              </button>
-            </form>
+                  </div>
+                  <span className="font-medium">Nueva consulta médica</span>
+                </button>
+              </div>
+            )}
+
+            {/* Input Form */}
+            <div className="border-t border-slate-700/50 bg-gradient-to-r from-slate-950/80 to-slate-900/90 backdrop-blur-xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
+                <div className="flex-1">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="Describe el caso clínico aquí... Ej: Paciente de 45 años presenta dolor torácico..."
+                      className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-slate-800/60 to-slate-700/60 backdrop-blur-xl border border-slate-600/40 rounded-xl sm:rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 text-slate-100 placeholder-slate-400 shadow-xl shadow-slate-950/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                      disabled={isLoading || isStreaming}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-2xl pointer-events-none opacity-0 transition-opacity duration-300 peer-focus:opacity-100" />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={isLoading || !input.trim()}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-700 disabled:to-slate-800 disabled:cursor-not-allowed text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 shadow-xl shadow-blue-600/25 hover:shadow-blue-600/40 disabled:shadow-slate-800/25 border border-blue-500/30 disabled:border-slate-600/30 backdrop-blur-xl text-sm sm:text-base min-w-[100px] sm:min-w-[120px]"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Analyzing</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Send</span>
+                      <div className="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                      </div>
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
