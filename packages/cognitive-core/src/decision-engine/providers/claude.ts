@@ -20,6 +20,15 @@ export class ClaudeAdapter implements ProviderAdapter {
     userPrompt: string, 
     signal?: AbortSignal
   ): Promise<{ content: string; success: boolean; error?: string }> {
+    return this.makeStreamingRequest(systemPrompt, userPrompt, signal)
+  }
+
+  async makeStreamingRequest(
+    systemPrompt: string, 
+    userPrompt: string, 
+    signal?: AbortSignal,
+    onChunk?: (chunk: string) => void
+  ): Promise<{ content: string; success: boolean; error?: string }> {
     if (!this.isAvailable) {
       return {
         content: '',
@@ -40,32 +49,47 @@ export class ClaudeAdapter implements ProviderAdapter {
         throw new Error('Request aborted')
       }
 
-      const response = await anthropic.messages.create({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 1000,
-        temperature: 0.3,
-        system: systemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: userPrompt
+      if (onChunk) {
+        // Streaming mode
+        const stream = await anthropic.messages.create({
+          model: 'claude-3-haiku-20240307',
+          max_tokens: 1000,
+          temperature: 0.3,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }],
+          stream: true
+        })
+
+        let fullContent = ''
+        for await (const chunk of stream) {
+          if (signal?.aborted) throw new Error('Request aborted')
+          
+          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text') {
+            const text = chunk.delta.text
+            fullContent += text
+            onChunk(text)
           }
-        ]
-      })
-
-      const content = response.content[0]
-      if (content.type !== 'text') {
-        return {
-          content: '',
-          success: false,
-          error: 'Unexpected response format from Claude'
         }
+
+        return { content: fullContent, success: true }
+      } else {
+        // Non-streaming mode
+        const response = await anthropic.messages.create({
+          model: 'claude-3-haiku-20240307',
+          max_tokens: 1000,
+          temperature: 0.3,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }]
+        })
+
+        const content = response.content[0]
+        if (content.type !== 'text') {
+          return { content: '', success: false, error: 'Unexpected response format' }
+        }
+
+        return { content: content.text, success: true }
       }
 
-      return {
-        content: content.text,
-        success: true
-      }
 
     } catch (error) {
       if (signal?.aborted) {

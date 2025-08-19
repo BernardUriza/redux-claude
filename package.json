@@ -1,13 +1,21 @@
 {
   "name": "redux-claude",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Plataforma médica con IA para clínicas latinoamericanas",
+  "author": "Bernard Orozco",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "npm run build:core && next dev",
+    "build": "npm run build:core && next build",
+    "build:core": "cd packages/cognitive-core && npm run build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint && npm run lint:core",
+    "lint:core": "cd packages/cognitive-core && npm run lint",
+    "clean": "rm -rf .next && npm run clean:core",
+    "clean:core": "cd packages/cognitive-core && npm run clean"
   },
   "repository": {
     "type": "git",
@@ -21,20 +29,20 @@
   },
   "homepage": "https://github.com/BernardUriza/redux-claude#readme",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.60.0",
-    "@reduxjs/toolkit": "^2.8.2",
+    "@redux-claude/cognitive-core": "workspace:*",
     "@tailwindcss/postcss": "^4.1.12",
     "@tailwindcss/vite": "^4.1.12",
-    "@types/node": "^24.3.0",
-    "@types/react": "^19.1.10",
-    "@types/react-dom": "^19.1.7",
     "next": "^15.4.6",
     "postcss": "^8.5.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-markdown": "^10.1.0",
-    "react-redux": "^9.2.0",
-    "tailwindcss": "^4.0.0",
+    "tailwindcss": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
     "typescript": "^5.9.2"
   }
 }

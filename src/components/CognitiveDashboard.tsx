@@ -4,11 +4,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { useCognitiveChat } from '@/hooks/useCognitiveChat'
-import { useCognitiveStreaming } from '@/hooks/useCognitiveStreaming'
-import { StreamingProgress } from './StreamingProgress'
-import type { MedicalConsensus, CognitiveInsights } from '@/types/cognitive'
-import type { DecisionResult } from '@/types/agents'
+import { useMedicalChat } from '@/hooks/useMedicalChat'
 
 // Medical Corporate Color Palette 2025
 const theme = {
@@ -159,55 +155,8 @@ const CognitiveStatusPanel = ({ metrics }: { metrics: CognitiveMetrics }) => (
   </div>
 )
 
-// Consensus Result Component
-const ConsensusResult = ({ consensus }: { consensus: MedicalConsensus }) => (
-  <div className="bg-gradient-to-r from-emerald-900/30 to-teal-900/30 backdrop-blur-sm rounded-xl p-4 border border-emerald-500/20 mb-4">
-    <div className="flex items-center justify-between mb-3">
-      <div className="flex items-center space-x-2">
-        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-        <span className="font-semibold text-emerald-300">Consensus Achieved</span>
-      </div>
-      <span className="text-sm text-emerald-400 font-medium">{consensus.confidence}%</span>
-    </div>
-    <div className="bg-slate-900/80 rounded-lg p-3 border border-slate-700">
-      <pre className="text-xs text-emerald-300 overflow-auto">
-        {JSON.stringify(consensus.finalDecision, null, 2)}
-      </pre>
-    </div>
-  </div>
-)
-
-// Insights Component
-const InsightsPanel = ({ insights }: { insights: CognitiveInsights }) => (
-  <div className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 backdrop-blur-sm rounded-xl p-4 border border-purple-500/20 mb-4">
-    <div className="flex items-center justify-between mb-3">
-      <div className="flex items-center space-x-2">
-        <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
-        <span className="font-semibold text-purple-300">AI Insights</span>
-      </div>
-      <span className="text-sm text-purple-400 font-medium">{insights.confidence}%</span>
-    </div>
-    <div className="space-y-2 text-sm">
-      <div>
-        <span className="text-purple-400 font-medium">Pattern:</span>
-        <span className="text-slate-200 ml-2">{insights.pattern}</span>
-      </div>
-      <div>
-        <span className="text-purple-400 font-medium">Recommendation:</span>
-        <span className="text-slate-200 ml-2">{insights.recommendation}</span>
-      </div>
-      {insights.learnings && insights.learnings.map((learning: string, idx: number) => (
-        <div key={idx} className="text-xs text-purple-200/80 flex items-start">
-          <span className="text-purple-400 mr-2">•</span>
-          <span>{learning}</span>
-        </div>
-      ))}
-    </div>
-  </div>
-)
-
-// Agent Decision Component
-const AgentDecision = ({ decision }: { decision: DecisionResult }) => {
+// Agent Decision Component  
+const AgentDecision = ({ decision }: { decision: any }) => {
   const getAgentColor = (agentType: string) => {
     switch (agentType) {
       case 'diagnostic': return 'blue'
@@ -256,20 +205,9 @@ export const CognitiveDashboard = () => {
     messages, 
     isLoading, 
     sendMessage,
-    lastCognitiveResult,
-    lastConsensus,
-    lastInsights,
-    systemConfidence,
-    overallHealth
-  } = useCognitiveChat()
-  
-  const {
-    steps,
-    isStreaming,
-    startStreaming,
-    stopStreaming,
-    progressPercentage
-  } = useCognitiveStreaming()
+    clearMessages,
+    error
+  } = useMedicalChat()
   
   const chatEndRef = useRef<HTMLDivElement>(null)
   
@@ -277,11 +215,11 @@ export const CognitiveDashboard = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
   
-  // Real cognitive metrics
+  // Cognitive metrics (simulated for now)
   const cognitiveMetrics = {
-    systemConfidence: Math.round((systemConfidence || 0.5) * 100),
-    overallHealth: Math.round((overallHealth || 0.5) * 100),
-    consensusRate: lastConsensus ? lastConsensus.confidence : 75,
+    systemConfidence: 85,
+    overallHealth: 92,
+    consensusRate: 75,
     memoryLoad: 0.3,
     learningProgress: 85,
     activeDebates: 0,
@@ -298,17 +236,8 @@ export const CognitiveDashboard = () => {
     const messageToSend = input
     setInput('')
     
-    try {
-      // Iniciar streaming visual
-      startStreaming(messageToSend)
-      
-      // Enviar mensaje para procesamiento cognitivo
-      await sendMessage(messageToSend)
-      
-    } catch (error) {
-      console.error('Cognitive processing failed:', error)
-      stopStreaming()
-    }
+    // Enviar mensaje usando cognitive-core
+    await sendMessage(messageToSend)
   }
   
   return (
@@ -488,11 +417,8 @@ export const CognitiveDashboard = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium text-white mb-4">Medical AI</div>
-                          {isStreaming ? (
-                            <StreamingProgress 
-                              steps={steps}
-                              progressPercentage={progressPercentage}
-                            />
+                          {false ? (
+                            <div>Streaming...</div>
                           ) : (
                             <div className="flex items-center space-x-2 text-gray-400">
                               <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />

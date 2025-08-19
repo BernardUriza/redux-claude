@@ -22,7 +22,10 @@
       "Bash(npx tsc:*)",
       "Bash(timeout 30s npm run build:*)",
       "Bash(grep:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(sed:*)",
+      "Bash(next dev:*)"
     ],
     "deny": [],
     "ask": []

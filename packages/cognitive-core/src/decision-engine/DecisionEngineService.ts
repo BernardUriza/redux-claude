@@ -8,8 +8,8 @@ import { LocalAdapter } from './providers/local'
 import type { Domain, Provider, DecisionResponse } from './core/types'
 
 class DecisionEngineService {
-  private engine: DecisionEngine
-  private initialized = false
+  public engine: DecisionEngine
+  public initialized = false
 
   constructor() {
     this.engine = new DecisionEngine({
@@ -21,7 +21,7 @@ class DecisionEngineService {
     })
   }
 
-  private async initialize(): Promise<void> {
+  public async initialize(): Promise<void> {
     if (this.initialized) return
 
     try {
@@ -177,7 +177,7 @@ class DecisionEngineService {
     }
   }
 
-  private mapLegacyDecisionType(legacyType: string): string {
+  public mapLegacyDecisionType(legacyType: string): string {
     // Map old decision types to new ones
     const typeMap: Record<string, string> = {
       'diagnosis': 'diagnosis',
