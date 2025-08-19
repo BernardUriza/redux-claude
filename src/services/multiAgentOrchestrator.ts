@@ -10,7 +10,7 @@ import {
   AgentStatus
 } from '@/types/agents'
 import { AGENT_REGISTRY, getEnabledAgents, getAgentDefinition, isAgentEnabled } from './agentRegistry'
-// Removed decisionalMiddleware import - using Anthropic SDK directly
+import { callClaudeForDecision, mapAgentTypeToDecisionType } from './decisionalMiddleware'
 import { nanoid } from '@reduxjs/toolkit'
 import { store } from '@/store/store'
 import { 
@@ -153,7 +153,7 @@ export class MultiAgentOrchestrator {
     }
   }
 
-  // Call Claude with agent-specific system prompt and context
+  // Call Claude using decisional middleware with context
   private async callAgentSpecificClaude(
     agentDef: AgentDefinition,
     input: string,
@@ -161,217 +161,50 @@ export class MultiAgentOrchestrator {
     context?: any
   ): Promise<{ decision: AgentDecision, confidence: number }> {
     try {
-      // Dynamic import to avoid bundle bloat
-      const Anthropic = (await import('@anthropic-ai/sdk')).default
-      const anthropic = new Anthropic({
-        apiKey: process.env.NEXT_PUBLIC_CLAUDE_API_KEY!,
-        dangerouslyAllowBrowser: true 
-      })
-      
       if (signal?.aborted) {
         throw new Error('Request aborted')
       }
 
-      // Enhanced system prompt with contextual information
-      let enhancedPrompt = agentDef.systemPrompt
+      // Map agent type to decision type
+      const decisionType = mapAgentTypeToDecisionType(agentDef.id)
+      
+      // Prepare context for the middleware
+      const middlewareContext: Record<string, unknown> = {}
       
       if (context) {
-        enhancedPrompt += `\n\n## CONTEXTUAL INFORMATION:\n`
-        enhancedPrompt += `Current Context: ${context.currentContext}\n`
-        
-        if (context.activeSymptoms?.length > 0) {
-          enhancedPrompt += `Active Symptoms: ${context.activeSymptoms.join(', ')}\n`
-        }
-        
-        if (context.activeHypotheses?.length > 0) {
-          enhancedPrompt += `Active Hypotheses: ${context.activeHypotheses.map((h: any) => 
-            `${h.description} (${h.confidence}%)`
-          ).join(', ')}\n`
-        }
-        
-        if (context.relevantInsights?.length > 0) {
-          enhancedPrompt += `Previous Insights: ${context.relevantInsights.map((i: any) => 
-            i.pattern
-          ).join(', ')}\n`
-        }
-        
-        if (context.recentInputs?.length > 0) {
-          enhancedPrompt += `Recent Context: ${context.recentInputs.slice(0, 2).join('; ')}\n`
-        }
+        middlewareContext.currentContext = context.currentContext
+        middlewareContext.activeSymptoms = context.activeSymptoms
+        middlewareContext.activeHypotheses = context.activeHypotheses
+        middlewareContext.relevantInsights = context.relevantInsights
+        middlewareContext.recentInputs = context.recentInputs
       }
-
-      // Add agent-specific JSON format requirements
-      enhancedPrompt += this.getAgentJsonFormat(agentDef.id)
       
-      const response = await anthropic.messages.create({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 800,
-        system: enhancedPrompt,
-        messages: [{ role: 'user', content: input }],
-        temperature: 0.3
-      })
-
-      const content = response.content[0]
-      if (content.type !== 'text') {
-        throw new Error('Unexpected response format from Claude')
-      }
-
-      // Parse JSON response
-      let decision: AgentDecision
-      try {
-        decision = JSON.parse(content.text.trim())
-      } catch (parseError) {
-        console.warn(`JSON parse error for ${agentDef.id}, using fallback`)
-        decision = this.createMockDecision(agentDef.id, input)
+      // Call the decisional middleware
+      const response = await callClaudeForDecision(
+        decisionType,
+        input,
+        'claude', // Use Claude provider
+        signal,
+        [], // Previous decisions will be handled by cognitive system
+        middlewareContext
+      )
+      
+      if (!response.success && response.error) {
+        console.warn(`Decisional middleware warning for ${agentDef.id}:`, response.error)
       }
       
       return {
-        decision,
-        confidence: Math.min(95, Math.max(70, 85)) // Good confidence for real API
+        decision: response.decision,
+        confidence: response.confidence
       }
       
     } catch (error) {
-      console.warn(`Claude API failed for ${agentDef.id}:`, error)
-      
-      // Fallback to mock decision
-      const mockDecision = this.createMockDecision(agentDef.id, input)
-      
-      return {
-        decision: mockDecision,
-        confidence: 0.30 // Lower confidence for fallback
-      }
+      console.error(`Agent orchestrator error for ${agentDef.id}:`, error)
+      throw error // Let the caller handle the error
     }
   }
 
-  // Get agent-specific JSON format requirements
-  private getAgentJsonFormat(agentType: AgentType): string {
-    switch (agentType) {
-      case AgentType.DIAGNOSTIC:
-        return `\n\nRETURN ONLY JSON with this exact structure:
-{
-  "differentials": [{"condition": "string", "icd10": "string", "probability": 0.0-1.0, "evidence": ["string"]}],
-  "tests_recommended": ["string"],
-  "red_flags": ["string"],
-  "urgency_level": 1-5,
-  "next_steps": ["string"],
-  "clinical_reasoning": "string"
-}`
-
-      case AgentType.TRIAGE:
-        return `\n\nRETURN ONLY JSON with this exact structure:
-{
-  "acuity_level": 1-5,
-  "disposition": "immediate|urgent|standard|routine",
-  "time_to_physician": "string",
-  "required_resources": ["string"],
-  "warning_signs": ["string"],
-  "estimated_wait": "string"
-}`
-
-      case AgentType.VALIDATION:
-        return `\n\nRETURN ONLY JSON with this exact structure:
-{
-  "valid": true|false,
-  "concerns": ["string"],
-  "risk_assessment": {"level": "low|medium|high|critical", "factors": ["string"]},
-  "requires_human_review": true|false,
-  "recommendations": ["string"],
-  "contraindications": ["string"]
-}`
-
-      case AgentType.TREATMENT:
-        return `\n\nRETURN ONLY JSON with this exact structure:
-{
-  "medications": [{"name": "string", "dose": "string", "frequency": "string", "duration": "string"}],
-  "procedures": ["string"],
-  "lifestyle_modifications": ["string"],
-  "monitoring_plan": ["string"],
-  "follow_up_schedule": "string"
-}`
-
-      case AgentType.DOCUMENTATION:
-        return `\n\nRETURN ONLY JSON with this exact structure:
-{
-  "soap": {
-    "subjective": "string",
-    "objective": "string", 
-    "assessment": "string",
-    "plan": "string"
-  },
-  "icd10_codes": ["string"],
-  "billing_codes": ["string"],
-  "follow_up_required": true|false,
-  "documentation_quality": "complete|incomplete|needs_review"
-}`
-
-      default:
-        return `\n\nRETURN ONLY valid JSON format.`
-    }
-  }
-
-  private createMockDecision(agentType: AgentType, input: string): any {
-    // Create appropriate mock decision based on agent type
-    switch (agentType) {
-      case AgentType.DIAGNOSTIC:
-        return {
-          differentials: [
-            { condition: 'Preliminary diagnosis', icd10: 'R00.0', probability: 0.7, evidence: ['symptom analysis'] }
-          ],
-          tests_recommended: ['Basic assessment'],
-          red_flags: [],
-          urgency_level: 3,
-          next_steps: ['Further evaluation']
-        }
-      case AgentType.TRIAGE:
-        return {
-          acuity_level: 3,
-          disposition: 'standard',
-          time_to_physician: '1hour',
-          required_resources: ['standard care'],
-          warning_signs: []
-        }
-      case AgentType.VALIDATION:
-        return {
-          valid: true,
-          concerns: [],
-          risk_assessment: { level: 'low' as const, factors: [] },
-          requires_human_review: false,
-          recommendations: ['Proceed as planned']
-        }
-      case AgentType.TREATMENT:
-        return {
-          medications: [],
-          procedures: ['Standard care'],
-          lifestyle_modifications: [],
-          monitoring_plan: ['Regular follow-up']
-        }
-      case AgentType.DOCUMENTATION:
-        return {
-          soap: {
-            subjective: 'Patient presents with...',
-            objective: 'Assessment findings...',
-            assessment: 'Clinical impression...',
-            plan: 'Treatment plan...'
-          },
-          icd10_codes: [],
-          billing_codes: [],
-          follow_up_required: true
-        }
-      default:
-        return {}
-    }
-  }
-
-  private mapAgentTypeToDecisionType(agentType: AgentType): string {
-    switch (agentType) {
-      case AgentType.DIAGNOSTIC: return 'diagnosis'
-      case AgentType.VALIDATION: return 'validation'
-      case AgentType.TREATMENT: return 'treatment'
-      case AgentType.TRIAGE: return 'triage'
-      case AgentType.DOCUMENTATION: return 'documentation'
-      default: return 'diagnosis'
-    }
-  }
+  // Removed redundant methods - now handled by decisionalMiddleware
 
   // Execute parallel agent calls
   async executeParallelAgents(
