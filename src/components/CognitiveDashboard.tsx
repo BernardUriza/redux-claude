@@ -336,67 +336,103 @@ export const CognitiveDashboard = () => {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
-          {/* Chat Panel */}
-          <div className="bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-slate-600/30">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
-                <span className="text-lg">💬</span>
+          {/* Chat Panel - Claude.ai Style */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            {/* Chat Header */}
+            <div className="bg-white border-b border-gray-200 px-6 py-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">🏥</span>
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Medical AI Assistant</h2>
+                  <p className="text-sm text-gray-500">Cognitive medical analysis powered by Claude</p>
+                </div>
               </div>
-              <h2 className="text-xl font-semibold text-slate-200">Medical Consultation</h2>
             </div>
             
             {/* Chat Messages */}
-            <div className="h-96 overflow-y-auto bg-slate-900/50 rounded-xl p-4 mb-4 border border-slate-700/50 custom-scrollbar">
+            <div className="h-96 overflow-y-auto bg-white">
               {messages.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-slate-400">
-                  <div className="text-center">
-                    <div className="text-4xl mb-3">🩺</div>
-                    <p className="text-sm">Ready for cognitive medical analysis...</p>
+                <div className="flex items-center justify-center h-full text-gray-400">
+                  <div className="text-center px-6">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-2xl">🩺</span>
+                    </div>
+                    <p className="text-gray-600 text-sm">Ready for medical consultation...</p>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-0">
                   {messages.map((msg, idx) => (
-                    <div key={idx} className={`${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                      <div className={`inline-block p-4 rounded-xl max-w-[85%] ${
-                        msg.role === 'user' 
-                          ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white' 
-                          : 'bg-slate-800/80 text-slate-200 border border-slate-600/30'
-                      }`}>
-                        <div className="text-sm leading-relaxed">
-                          {msg.role === 'assistant' ? (
-                            <ReactMarkdown 
-                              components={{
-                                h1: ({children}) => <h1 className="text-xl font-bold mb-3 text-cyan-300">{children}</h1>,
-                                h2: ({children}) => <h2 className="text-lg font-bold mb-2 text-cyan-300">{children}</h2>,
-                                h3: ({children}) => <h3 className="text-base font-semibold mb-2 text-blue-300">{children}</h3>,
-                                p: ({children}) => <p className="mb-2 text-slate-200">{children}</p>,
-                                ul: ({children}) => <ul className="mb-2 ml-4 space-y-1">{children}</ul>,
-                                li: ({children}) => <li className="text-slate-200 list-disc">{children}</li>,
-                                strong: ({children}) => <strong className="font-semibold text-cyan-300">{children}</strong>,
-                                em: ({children}) => <em className="italic text-slate-300">{children}</em>,
-                                code: ({children}) => <code className="bg-slate-700 px-1 py-0.5 rounded text-cyan-300 text-xs">{children}</code>,
-                                hr: () => <hr className="my-3 border-slate-600" />
-                              }}
-                            >
-                              {msg.content}
-                            </ReactMarkdown>
-                          ) : (
-                            <div className="whitespace-pre-wrap">
-                              {msg.content}
+                    <div key={idx} className={`border-b border-gray-100 message-appear ${msg.role === 'assistant' ? 'bg-gray-50' : 'bg-white'}`}>
+                      <div className="max-w-4xl mx-auto px-6 py-6">
+                        <div className="flex space-x-4">
+                          {/* Avatar */}
+                          <div className="flex-shrink-0">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                              msg.role === 'user' 
+                                ? 'bg-blue-100 text-blue-600' 
+                                : 'bg-orange-100 text-orange-600'
+                            }`}>
+                              <span className="text-sm font-medium">
+                                {msg.role === 'user' ? '👨‍⚕️' : '🤖'}
+                              </span>
                             </div>
-                          )}
+                          </div>
+                          
+                          {/* Message Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-900 mb-1">
+                              {msg.role === 'user' ? 'Doctor' : 'Medical AI'}
+                            </div>
+                            <div className="prose prose-sm max-w-none">
+                              {msg.role === 'assistant' ? (
+                                <ReactMarkdown 
+                                  components={{
+                                    h1: ({children}) => <h1 className="text-xl font-bold mb-4 text-gray-900 border-b border-gray-200 pb-2">{children}</h1>,
+                                    h2: ({children}) => <h2 className="text-lg font-bold mb-3 text-gray-900">{children}</h2>,
+                                    h3: ({children}) => <h3 className="text-base font-semibold mb-2 text-gray-800">{children}</h3>,
+                                    p: ({children}) => <p className="mb-3 text-gray-700 leading-relaxed">{children}</p>,
+                                    ul: ({children}) => <ul className="mb-3 ml-6 space-y-1">{children}</ul>,
+                                    li: ({children}) => <li className="text-gray-700 list-disc">{children}</li>,
+                                    strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                                    em: ({children}) => <em className="italic text-gray-600">{children}</em>,
+                                    code: ({children}) => <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">{children}</code>,
+                                    hr: () => <hr className="my-4 border-gray-200" />,
+                                    blockquote: ({children}) => <blockquote className="border-l-4 border-orange-200 pl-4 my-3 text-gray-600 italic">{children}</blockquote>
+                                  }}
+                                >
+                                  {msg.content}
+                                </ReactMarkdown>
+                              ) : (
+                                <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                  {msg.content}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   ))}
                   
                   {isLoading && (
-                    <div className="text-left">
-                      <div className="inline-block p-4 bg-slate-800/80 rounded-xl border border-slate-600/30">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-                          <span className="text-slate-300 text-sm">Processing cognitive analysis...</span>
+                    <div className="border-b border-gray-100 bg-gray-50">
+                      <div className="max-w-4xl mx-auto px-6 py-6">
+                        <div className="flex space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-medium">🤖</span>
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-900 mb-1">Medical AI</div>
+                            <div className="flex items-center space-x-2 text-gray-500">
+                              <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                              <span className="text-sm">Analyzing medical case...</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -408,32 +444,39 @@ export const CognitiveDashboard = () => {
             </div>
             
             {/* Input Form */}
-            <form onSubmit={handleSubmit} className="bg-slate-800/50 rounded-xl p-4 border border-slate-600/30">
-              <div className="flex space-x-3">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Describe medical symptoms or request analysis..."
-                  className="flex-1 p-3 bg-slate-900/70 border border-slate-600 rounded-lg focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-slate-200 placeholder-slate-400"
-                  disabled={isLoading}
-                />
+            <div className="border-t border-gray-200 bg-white px-6 py-4">
+              <form onSubmit={handleSubmit} className="flex space-x-3">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Describe the medical case here..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500 bg-white"
+                    disabled={isLoading}
+                  />
+                </div>
                 <button
                   type="submit"
                   disabled={isLoading || !input.trim()}
-                  className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
                 >
                   {isLoading ? (
-                    <div className="flex items-center space-x-2">
+                    <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Processing</span>
-                    </div>
+                      <span>Analyzing</span>
+                    </>
                   ) : (
-                    'Analyze'
+                    <>
+                      <span>Send</span>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    </>
                   )}
                 </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
           
           {/* Cognitive Results Panel */}
@@ -488,15 +531,40 @@ export const CognitiveDashboard = () => {
           width: 6px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgb(30 41 59 / 0.3);
+          background: rgb(243 244 246);
           border-radius: 3px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgb(51 65 85 / 0.7);
+          background: rgb(209 213 219);
           border-radius: 3px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgb(71 85 105 / 0.9);
+          background: rgb(156 163 175);
+        }
+        
+        /* Claude.ai-style message animations */
+        .message-appear {
+          animation: messageSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes messageSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        /* Better prose styling */
+        .prose h1 {
+          border-bottom: 2px solid #f97316;
+        }
+        
+        .prose code {
+          font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
         }
       `}</style>
     </div>
