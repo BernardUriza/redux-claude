@@ -27,7 +27,7 @@ class DecisionEngineService {
     try {
       // Register medical domain strategy
       const medicalStrategy = new MedicalStrategy()
-      this.engine.registerStrategy('medical', medicalStrategy)
+      this.engine.registerStrategy('medical', medicalStrategy as any)
 
       // Register Claude adapter
       const claudeAdapter = new ClaudeAdapter()

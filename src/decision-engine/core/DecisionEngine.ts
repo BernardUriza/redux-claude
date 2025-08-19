@@ -135,7 +135,7 @@ export class DecisionEngine {
       
       return {
         success: false,
-        decision: fallbackDecision,
+        decision: fallbackDecision as TDecision,
         confidence: 0,
         latency: Date.now() - startTime,
         provider: targetProvider,
