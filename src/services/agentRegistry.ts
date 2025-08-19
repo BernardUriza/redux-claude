@@ -173,6 +173,28 @@ SOAP Guidelines:
     retryCount: 1,
     color: '#F59E0B', // amber
     icon: '📝'
+  },
+
+  [AgentType.RESPONSE_QUALITY]: {
+    id: AgentType.RESPONSE_QUALITY,
+    name: 'Response Quality Agent',
+    description: 'Análisis y mejora de calidad de respuestas médicas',
+    systemPrompt: `You are a medical response quality specialist that analyzes and improves medical AI responses.
+    
+Your role is to:
+- Ensure language consistency between doctor and AI
+- Maintain medical professionalism
+- Verify clinical completeness
+- Respect cultural context
+
+Always improve responses to be professional, complete, and contextually appropriate.`,
+    enabled: true,
+    priority: 6,
+    expectedLatency: 800,
+    timeout: 5000,
+    retryCount: 1,
+    color: '#10B981', // green
+    icon: '✅'
   }
 }
 

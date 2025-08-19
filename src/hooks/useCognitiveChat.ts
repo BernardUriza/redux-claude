@@ -229,7 +229,7 @@ async function generateCognitiveResponse(cognitiveResult: CognitiveResult, userI
       }
     })
     
-    if (qualityResult.success && qualityResult.decision?.should_improve && qualityResult.decision.improved_response) {
+    if (qualityResult.success && 'decision' in qualityResult && qualityResult.decision?.should_improve && qualityResult.decision.improved_response) {
       // Usar la respuesta mejorada
       return qualityResult.decision.improved_response.improved_response
     }

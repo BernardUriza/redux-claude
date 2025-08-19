@@ -1,9 +1,7 @@
 // src/agents/ResponseQualityAgent.ts
 // Agente de Calidad y Mejora de Respuestas Médicas - Bernard Orozco
 
-import { BaseAgent } from './BaseAgent'
-import { DecisionResult } from '@/types/agents'
-import { BaseDecisionRequest } from '@/types/requests'
+import { BaseAgent, SimpleDecisionRequest } from './BaseAgent'
 
 interface QualityAssessment {
   language_consistency: {
@@ -54,7 +52,7 @@ export class ResponseQualityAgent extends BaseAgent<ResponseQualityDecision> {
     super('response_quality', 'ResponseQualityAgent v2.0')
   }
 
-  async makeDecision(request: BaseDecisionRequest): Promise<DecisionResult<ResponseQualityDecision>> {
+  async makeDecision(request: SimpleDecisionRequest) {
     try {
       // Extraer contexto de la conversación
       const context = this.extractConversationContext(request)
@@ -79,27 +77,22 @@ export class ResponseQualityAgent extends BaseAgent<ResponseQualityDecision> {
         confidence: this.calculateConfidence(qualityAssessment)
       }
 
-      return {
-        agentType: 'response_quality',
-        success: true,
+      return this.createSuccessResponse(
         decision,
-        confidence: decision.confidence,
-        processingTimeMs: Date.now() - request.timestamp,
-        reasoning: this.generateReasoning(qualityAssessment, needsImprovement)
-      }
+        decision.confidence,
+        request.timestamp,
+        this.generateReasoning(qualityAssessment, needsImprovement)
+      )
 
     } catch (error) {
-      return {
-        agentType: 'response_quality',
-        success: false,
-        error: `Error en agente de calidad: ${error}`,
-        confidence: 0,
-        processingTimeMs: Date.now() - request.timestamp
-      }
+      return this.createErrorResponse(
+        `Error en agente de calidad: ${error}`,
+        request.timestamp
+      )
     }
   }
 
-  private extractConversationContext(request: BaseDecisionRequest) {
+  private extractConversationContext(request: SimpleDecisionRequest) {
     // Simular extracción del contexto - en implementación real usaría el request
     return {
       doctor_message: request.context?.user_input || '',
@@ -155,7 +148,8 @@ export class ResponseQualityAgent extends BaseAgent<ResponseQualityDecision> {
   private assessMedicalProfessionalism(context: any) {
     const response = context.ai_response
     
-    const emojiCount = (response.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu) || []).length
+    // Usar versión simplificada para compatibilidad
+    const emojiCount = (response.match(/[\u2600-\u27BF]|[\uD800-\uDBFF][\uDC00-\uDFFF]/g) || []).length
     
     let score = 100
     
@@ -294,7 +288,8 @@ export class ResponseQualityAgent extends BaseAgent<ResponseQualityDecision> {
       original_response: context.ai_response,
       improved_response: improvedResponse,
       improvements_made: improvements,
-      quality_score: Math.min(100, finalScore)
+      quality_score: Math.min(100, finalScore),
+      assessment
     }
   }
 
@@ -463,7 +458,7 @@ export class ResponseQualityAgent extends BaseAgent<ResponseQualityDecision> {
   }
 
   private detectCommunicationStyle(text: string): string {
-    if (/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]/gu.test(text)) {
+    if (/[\u2600-\u27BF]|[\uD800-\uDBFF][\uDC00-\uDFFF]/.test(text)) {
       return 'informal'
     }
     if (/\b(evaluación|diagnóstico|plan|assessment|diagnosis)\b/gi.test(text)) {
@@ -492,7 +487,7 @@ export class ResponseQualityAgent extends BaseAgent<ResponseQualityDecision> {
 
   private improveProfessionalism(response: string): string {
     // Remover emojis
-    let improved = response.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+    let improved = response.replace(/[\u2600-\u27BF]|[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
     
     // Remover metadatos del sistema
     improved = improved.replace(/procesamiento cognitivo:.*$/gim, '')

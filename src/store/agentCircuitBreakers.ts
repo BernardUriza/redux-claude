@@ -55,25 +55,28 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.TRIAGE]: createInitialCircuitBreaker({ maxFailures: 2, cooldownMs: 15000 }), // More strict for triage
     [AgentType.VALIDATION]: createInitialCircuitBreaker({ maxFailures: 4, cooldownMs: 45000 }),
     [AgentType.TREATMENT]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 60000 }),
-    [AgentType.DOCUMENTATION]: createInitialCircuitBreaker({ maxFailures: 5, cooldownMs: 90000 }) // More lenient
+    [AgentType.DOCUMENTATION]: createInitialCircuitBreaker({ maxFailures: 5, cooldownMs: 90000 }), // More lenient
+    [AgentType.RESPONSE_QUALITY]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 20000 })
   },
   metrics: {
     [AgentType.DIAGNOSTIC]: createInitialMetrics(),
     [AgentType.TRIAGE]: createInitialMetrics(),
     [AgentType.VALIDATION]: createInitialMetrics(),
     [AgentType.TREATMENT]: createInitialMetrics(),
-    [AgentType.DOCUMENTATION]: createInitialMetrics()
+    [AgentType.DOCUMENTATION]: createInitialMetrics(),
+    [AgentType.RESPONSE_QUALITY]: createInitialMetrics()
   },
   agentStatuses: {
     [AgentType.DIAGNOSTIC]: AgentStatus.READY,
     [AgentType.TRIAGE]: AgentStatus.READY,
     [AgentType.VALIDATION]: AgentStatus.READY,
     [AgentType.TREATMENT]: AgentStatus.READY,
-    [AgentType.DOCUMENTATION]: AgentStatus.READY // Enabled for cognitive system
+    [AgentType.DOCUMENTATION]: AgentStatus.READY, // Enabled for cognitive system
+    [AgentType.RESPONSE_QUALITY]: AgentStatus.READY
   },
   globalState: {
-    totalAgents: 5,
-    activeAgents: 5, // All 5 agents enabled
+    totalAgents: 6,
+    activeAgents: 6, // All 6 agents enabled
     failedAgents: 0,
     avgSystemLatency: 0,
     lastHealthCheck: Date.now()
