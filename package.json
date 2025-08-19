@@ -2,7 +2,7 @@
   "name": "redux-claude",
   "version": "1.0.0",
   "description": "Plataforma médica con IA para clínicas latinoamericanas",
-  "author": "Bernard Orozco",
+  "author": "",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -15,14 +15,15 @@
     "lint": "next lint && npm run lint:core",
     "lint:core": "cd packages/cognitive-core && npm run lint",
     "clean": "rm -rf .next && npm run clean:core",
-    "clean:core": "cd packages/cognitive-core && npm run clean"
+    "clean:core": "cd packages/cognitive-core && npm run clean",
+    "export": "npm run build && next export",
+    "netlify-build": "npm run build:core && next build && next export"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BernardUriza/redux-claude.git"
   },
   "keywords": [],
-  "author": "",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/BernardUriza/redux-claude/issues"
@@ -32,6 +33,7 @@
     "@redux-claude/cognitive-core": "workspace:*",
     "@tailwindcss/postcss": "^4.1.12",
     "@tailwindcss/vite": "^4.1.12",
+    "lightningcss": "^1.30.1",
     "next": "^15.4.6",
     "postcss": "^8.5.6",
     "react": "^19.1.1",

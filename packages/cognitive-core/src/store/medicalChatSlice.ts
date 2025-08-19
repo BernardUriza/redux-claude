@@ -2,7 +2,112 @@
 // Creado por Bernard Orozco
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { DiagnosticCycle } from '../types/medical'
+import { DiagnosticCycle, SOAPAnalysis } from '../types/medical'
+
+// === FASE 4: Nuevas Interfaces para Redux Médico Completo ===
+
+export interface SubjectiveData {
+  chiefComplaint: string
+  presentIllness: string
+  medicalHistory: string[]
+  familyHistory: string[]
+  socialHistory: string
+  allergies: string[]
+  medications: string[]
+}
+
+export interface ObjectiveFindings {
+  vitalSigns: {
+    temperature?: string
+    bloodPressure?: string
+    heartRate?: string
+    respiratoryRate?: string
+    oxygenSaturation?: string
+  }
+  physicalExam: {
+    general?: string
+    head?: string
+    cardiovascular?: string
+    respiratory?: string
+    abdominal?: string
+    neurological?: string
+    dermatological?: string
+  }
+  diagnosticStudies: string[]
+}
+
+export interface DifferentialDiagnosis {
+  primaryDiagnosis: string
+  differentials: Array<{
+    diagnosis: string
+    probability: number
+    gravityScore: number
+    reasoning: string
+  }>
+  reasoning: string
+  confidence: number
+}
+
+export interface TreatmentPlan {
+  immediate: string[]
+  medications: Array<{
+    name: string
+    dose: string
+    frequency: string
+    duration: string
+  }>
+  followUp: {
+    timeframe: string
+    instructions: string[]
+  }
+  referrals: string[]
+  studies: string[]
+  patientEducation: string[]
+  redFlags: string[]
+}
+
+export interface SOAPStructure {
+  subjetivo: SubjectiveData
+  objetivo: ObjectiveFindings
+  analisis: DifferentialDiagnosis
+  plan: TreatmentPlan
+  timestamp: number
+  confidence: number
+}
+
+export interface PhysicianNote {
+  id: string
+  timestamp: number
+  content: string
+  type: 'clinical' | 'administrative' | 'followup'
+  physicianId: string
+}
+
+export interface Reminder {
+  id: string
+  type: 'followup' | 'medication' | 'study' | 'referral'
+  description: string
+  dueDate: number
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  completed: boolean
+}
+
+export interface AuditLog {
+  id: string
+  timestamp: number
+  action: string
+  userId: string
+  details: Record<string, any>
+  sessionId: string
+}
+
+export interface MedicalSession {
+  physicianNotes: PhysicianNote[]
+  followUpReminders: Reminder[]
+  legalTraceability: AuditLog[]
+  startTime: number
+  lastActivity: number
+}
 
 export interface MedicalMessage {
   id: string
@@ -35,6 +140,7 @@ export interface IterativeState {
   awaitingAdditionalInfo: boolean
 }
 
+// === FASE 4: Estado Redux Médico Completo ===
 export interface MedicalChatState {
   messages: MedicalMessage[]
   streaming: StreamingState
@@ -44,6 +150,19 @@ export interface MedicalChatState {
     startedAt: number
   }
   iterativeState: IterativeState
+  
+  // NUEVO: Estructura SOAP Completa
+  currentCase: {
+    soap: SOAPStructure | null
+    cycles: DiagnosticCycle[]
+    confidence: number
+    urgencyLevel: 'low' | 'medium' | 'high' | 'critical'
+    lastUpdated: number
+  }
+  
+  // NUEVO: Sesión Médica
+  session: MedicalSession
+  
   isLoading: boolean
   error?: string
 }
@@ -100,6 +219,25 @@ Describa el caso clínico. El sistema analizará iterativamente hasta alcanzar a
     processingTimeMs: 0,
     awaitingAdditionalInfo: false
   },
+  
+  // NUEVO: Estructura SOAP Completa
+  currentCase: {
+    soap: null,
+    cycles: [],
+    confidence: 0,
+    urgencyLevel: 'low',
+    lastUpdated: 0
+  },
+  
+  // NUEVO: Sesión Médica
+  session: {
+    physicianNotes: [],
+    followUpReminders: [],
+    legalTraceability: [],
+    startTime: Date.now(),
+    lastActivity: Date.now()
+  },
+  
   isLoading: false
 }
 
@@ -242,11 +380,143 @@ const medicalChatSlice = createSlice({
     setAwaitingAdditionalInfo: (state, action: PayloadAction<{ requestId: string; awaiting: boolean }>) => {
       state.iterativeState.awaitingAdditionalInfo = action.payload.awaiting
       state.iterativeState.pendingInfoRequestId = action.payload.awaiting ? action.payload.requestId : undefined
+    },
+
+    // === FASE 4: NUEVAS ACCIONES REDUX MÉDICO COMPLETO ===
+    
+    // Manejo de estructura SOAP completa
+    updateSOAPStructure: (state, action: PayloadAction<SOAPStructure>) => {
+      state.currentCase.soap = action.payload
+      state.currentCase.confidence = action.payload.confidence
+      state.currentCase.lastUpdated = Date.now()
+      
+      // Actualizar actividad de sesión
+      state.session.lastActivity = Date.now()
+      
+      // Agregar log de auditoría
+      state.session.legalTraceability.push({
+        id: `audit_${Date.now()}`,
+        timestamp: Date.now(),
+        action: 'UPDATE_SOAP',
+        userId: 'system',
+        details: { 
+          confidence: action.payload.confidence,
+          primaryDiagnosis: action.payload.analisis.primaryDiagnosis
+        },
+        sessionId: state.currentSession.id
+      })
+    },
+
+    updateSOAPSection: (state, action: PayloadAction<{ 
+      section: 'subjetivo' | 'objetivo' | 'analisis' | 'plan'; 
+      data: any 
+    }>) => {
+      if (state.currentCase.soap) {
+        state.currentCase.soap[action.payload.section] = action.payload.data
+        state.currentCase.lastUpdated = Date.now()
+      }
+    },
+
+    // Manejo de urgencia
+    updateUrgencyLevel: (state, action: PayloadAction<'low' | 'medium' | 'high' | 'critical'>) => {
+      state.currentCase.urgencyLevel = action.payload
+      
+      // Agregar log crítico si es urgencia alta
+      if (action.payload === 'critical' || action.payload === 'high') {
+        state.session.legalTraceability.push({
+          id: `urgent_${Date.now()}`,
+          timestamp: Date.now(),
+          action: 'URGENCY_ESCALATED',
+          userId: 'system',
+          details: { urgencyLevel: action.payload },
+          sessionId: state.currentSession.id
+        })
+      }
+    },
+
+    // Manejo de notas médicas
+    addPhysicianNote: (state, action: PayloadAction<Omit<PhysicianNote, 'id' | 'timestamp'>>) => {
+      const note: PhysicianNote = {
+        id: `note_${Date.now()}`,
+        timestamp: Date.now(),
+        ...action.payload
+      }
+      state.session.physicianNotes.push(note)
+      state.session.lastActivity = Date.now()
+    },
+
+    updatePhysicianNote: (state, action: PayloadAction<{ id: string; updates: Partial<PhysicianNote> }>) => {
+      const noteIndex = state.session.physicianNotes.findIndex(note => note.id === action.payload.id)
+      if (noteIndex !== -1) {
+        state.session.physicianNotes[noteIndex] = {
+          ...state.session.physicianNotes[noteIndex],
+          ...action.payload.updates
+        }
+      }
+    },
+
+    // Manejo de recordatorios
+    addReminder: (state, action: PayloadAction<Omit<Reminder, 'id'>>) => {
+      const reminder: Reminder = {
+        id: `reminder_${Date.now()}`,
+        ...action.payload
+      }
+      state.session.followUpReminders.push(reminder)
+    },
+
+    updateReminder: (state, action: PayloadAction<{ id: string; updates: Partial<Reminder> }>) => {
+      const reminderIndex = state.session.followUpReminders.findIndex(r => r.id === action.payload.id)
+      if (reminderIndex !== -1) {
+        state.session.followUpReminders[reminderIndex] = {
+          ...state.session.followUpReminders[reminderIndex],
+          ...action.payload.updates
+        }
+      }
+    },
+
+    completeReminder: (state, action: PayloadAction<string>) => {
+      const reminderIndex = state.session.followUpReminders.findIndex(r => r.id === action.payload)
+      if (reminderIndex !== -1) {
+        state.session.followUpReminders[reminderIndex].completed = true
+        
+        // Agregar log de auditoría
+        state.session.legalTraceability.push({
+          id: `reminder_completed_${Date.now()}`,
+          timestamp: Date.now(),
+          action: 'REMINDER_COMPLETED',
+          userId: 'system',
+          details: { reminderId: action.payload },
+          sessionId: state.currentSession.id
+        })
+      }
+    },
+
+    // Reset de caso médico
+    resetCurrentCase: (state) => {
+      state.currentCase = {
+        soap: null,
+        cycles: [],
+        confidence: 0,
+        urgencyLevel: 'low',
+        lastUpdated: 0
+      }
+    },
+
+    // Reset de sesión médica
+    resetMedicalSession: (state) => {
+      state.session = {
+        physicianNotes: [],
+        followUpReminders: [],
+        legalTraceability: [],
+        startTime: Date.now(),
+        lastActivity: Date.now()
+      }
     }
   }
 })
 
 export const {
+  // Acciones existentes
   addMessage,
   updateMessage,
   clearMessages,
@@ -260,7 +530,19 @@ export const {
   addDiagnosticCycle,
   updateIterativeState,
   resetIterativeState,
-  setAwaitingAdditionalInfo
+  setAwaitingAdditionalInfo,
+  
+  // FASE 4: Nuevas acciones Redux médico completo
+  updateSOAPStructure,
+  updateSOAPSection,
+  updateUrgencyLevel,
+  addPhysicianNote,
+  updatePhysicianNote,
+  addReminder,
+  updateReminder,
+  completeReminder,
+  resetCurrentCase,
+  resetMedicalSession
 } = medicalChatSlice.actions
 
 export default medicalChatSlice.reducer

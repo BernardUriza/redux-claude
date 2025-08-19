@@ -4,6 +4,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import type { MedicalMessage } from '@redux-claude/cognitive-core'
 
 interface SpecializedAgent {
   id: string
@@ -42,6 +43,12 @@ const getAgentIcon = (specialty: string) => {
     case 'medicina_emergencia':
     case 'emergency_medicine':
       return '🚑'
+    case 'dermatologia':
+    case 'dermatology':
+      return '🩻'
+    case 'alergologia':
+    case 'allergology':
+      return '🌿'
     default:
       return '👨‍⚕️'
   }
@@ -73,6 +80,12 @@ const getSpecialtyColor = (specialty: string) => {
     case 'medicina_emergencia':
     case 'emergency_medicine':
       return 'from-red-600 to-orange-600'
+    case 'dermatologia':
+    case 'dermatology':
+      return 'from-amber-500 to-orange-500'
+    case 'alergologia':
+    case 'allergology':
+      return 'from-emerald-500 to-green-500'
     default:
       return 'from-blue-500 to-cyan-500'
   }
@@ -191,52 +204,123 @@ const AgentCard = ({ agent, isHighlighted }: AgentCardProps) => {
   )
 }
 
-export const CognitiveAgentsPanel = () => {
-  const [agents, setAgents] = useState<SpecializedAgent[]>([
-    {
-      id: 'general',
-      name: 'Dr. Médico General',
-      specialty: 'medicina_general',
-      confidence: 0.85,
+interface CognitiveAgentsPanelProps {
+  lastMessage?: MedicalMessage
+  isActive?: boolean
+}
+
+// Función para generar agentes basados en el análisis SOAP real
+const generateAgentsFromSOAP = (message?: MedicalMessage): SpecializedAgent[] => {
+  if (!message || message.type !== 'assistant') {
+    return []
+  }
+
+  const content = message.content.toLowerCase()
+  const confidence = message.confidence || 0.5
+  const agents: SpecializedAgent[] = []
+
+  // Agente de Medicina General (siempre presente)
+  agents.push({
+    id: 'general',
+    name: 'Dr. Medicina General',
+    specialty: 'medicina_general',
+    confidence: confidence,
+    status: 'completed',
+    insights: [
+      'Análisis SOAP completo realizado',
+      'Evaluación clínica estructurada según NOM-004'
+    ],
+    recommendation: 'Seguimiento según plan establecido',
+    consultationTime: Math.round(Math.random() * 1000 + 800)
+  })
+
+  // Detectar especialidades necesarias basadas en el contenido
+  if (content.includes('dermatitis') || content.includes('lesion') || content.includes('piel') || content.includes('eritema')) {
+    agents.push({
+      id: 'dermato',
+      name: 'Dr. Dermatólogo',
+      specialty: 'dermatologia',
+      confidence: Math.min(confidence + 0.1, 0.95),
       status: 'completed',
       insights: [
-        'Cuadro clínico compatible con síndrome metabólico',
-        'Factores de riesgo cardiovascular presentes'
+        'Patrón dermatológico identificado',
+        'Tratamiento tópico recomendado'
       ],
-      recommendation: 'Evaluación cardiovascular integral y seguimiento endocrinológico',
-      consultationTime: 1240
-    },
-    {
+      recommendation: 'Manejo dermatológico especializado',
+      consultationTime: Math.round(Math.random() * 800 + 600)
+    })
+  }
+
+  if (content.includes('alergia') || content.includes('rinitis') || content.includes('atópica')) {
+    agents.push({
+      id: 'alergologia',
+      name: 'Dr. Alergólogo',
+      specialty: 'alergologia',
+      confidence: Math.min(confidence + 0.05, 0.9),
+      status: 'consulting',
+      insights: [
+        'Componente alérgico presente',
+        'Pruebas alérgicas recomendadas'
+      ],
+      consultationTime: Math.round(Math.random() * 600 + 400)
+    })
+  }
+
+  if (content.includes('cardio') || content.includes('presión') || content.includes('corazón')) {
+    agents.push({
       id: 'cardio',
       name: 'Dr. Cardiólogo',
       specialty: 'cardiologia',
-      confidence: 0.92,
-      status: 'consulting',
-      insights: [
-        'Perfil lipídico alterado sugiere dislipidemia mixta',
-        'Presión arterial borderline requiere monitoreo'
-      ],
-      consultationTime: 890
-    },
-    {
-      id: 'endo',
-      name: 'Dr. Endocrinólogo',
-      specialty: 'endocrinologia',
-      confidence: 0.78,
+      confidence: Math.min(confidence + 0.08, 0.92),
       status: 'active',
       insights: [
-        'HbA1c elevada indica pre-diabetes',
-        'IMC sugiere obesidad grado I'
-      ]
-    }
-  ])
+        'Evaluación cardiovascular indicada',
+        'Factores de riesgo presentes'
+      ],
+      consultationTime: Math.round(Math.random() * 900 + 700)
+    })
+  }
 
+  return agents
+}
+
+// Función para generar consenso basado en agentes
+const generateConsensusFromAgents = (agents: SpecializedAgent[]) => {
+  if (agents.length === 0) {
+    return {
+      achieved: false,
+      percentage: 0,
+      conflictingPoints: ['No hay análisis disponible'],
+      agreements: []
+    }
+  }
+
+  const avgConfidence = agents.reduce((sum, agent) => sum + agent.confidence, 0) / agents.length
+  const completedAgents = agents.filter(a => a.status === 'completed')
+  
+  return {
+    achieved: avgConfidence > 0.8 && completedAgents.length >= 2,
+    percentage: Math.round(avgConfidence * 100),
+    conflictingPoints: avgConfidence < 0.7 ? ['Requiere más evaluación', 'Diagnóstico por confirmar'] : [],
+    agreements: completedAgents.length > 0 ? ['Análisis clínico completo', 'Plan de tratamiento establecido'] : []
+  }
+}
+
+export const CognitiveAgentsPanel = ({ lastMessage, isActive = false }: CognitiveAgentsPanelProps) => {
+  const [agents, setAgents] = useState<SpecializedAgent[]>([])
   const [consensusData, setConsensusData] = useState({
     achieved: false,
-    percentage: 72,
-    conflictingPoints: ['Prioridad de tratamiento', 'Necesidad de estudios adicionales'],
-    agreements: ['Diagnóstico de síndrome metabólico', 'Necesidad de cambios de estilo de vida']
+    percentage: 0,
+    conflictingPoints: [] as string[],
+    agreements: [] as string[]
   })
+
+  // Actualizar agentes cuando cambie el mensaje
+  useEffect(() => {
+    const newAgents = generateAgentsFromSOAP(lastMessage)
+    setAgents(newAgents)
+    setConsensusData(generateConsensusFromAgents(newAgents))
+  }, [lastMessage])
 
   // Simular progreso de consulta
   useEffect(() => {

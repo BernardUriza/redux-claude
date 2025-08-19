@@ -102,6 +102,31 @@ export class IterativeDiagnosticEngine {
       cyclePrompt
     )
 
+    // Verificar si hay error de configuración
+    if (!response.success && response.error === 'API_KEY_NOT_CONFIGURED') {
+      // Retornar análisis especial que contenga el mensaje de configuración
+      return {
+        id: cycleId,
+        cycleNumber,
+        timestamp: startTime,
+        latency: Date.now() - startTime,
+        caseData,
+        analysis: {
+          subjetivo: '## ⚠️ Configuración Requerida',
+          objetivo: response.content, // Contiene las instrucciones completas
+          diagnostico_principal: 'Configuración de API Key pendiente',
+          diagnosticos_diferenciales: ['Configurar NEXT_PUBLIC_CLAUDE_API_KEY'],
+          plan_tratamiento: 'Seguir las instrucciones mostradas para configurar Claude API',
+          confianza_global: 0,
+          datos_adicionales_necesarios: []
+        },
+        confidence: 0,
+        qualityScore: 0,
+        insights: ['Sistema requiere configuración de API Key'],
+        nextSteps: ['Configurar Claude API Key', 'Reiniciar servidor', 'Probar nuevamente']
+      }
+    }
+
     const endTime = Date.now()
     const latency = endTime - startTime
 
@@ -212,32 +237,55 @@ Responde EXCLUSIVAMENTE en este formato:
   }
 
   private parseClaudeResponse(response: string): SOAPAnalysis {
-    // Parser básico - se puede mejorar con regex más sofisticados
+    console.log('🔍 Respuesta de Claude recibida:', response.substring(0, 500) + '...')
+    
+    // Parser más flexible para diferentes formatos de respuesta
     const sections = {
-      subjetivo: this.extractSection(response, 'S - SUBJETIVO', 'O - OBJETIVO'),
-      objetivo: this.extractSection(response, 'O - OBJETIVO', 'A - ANÁLISIS'),
-      analisis: this.extractSection(response, 'A - ANÁLISIS', 'P - PLAN'),
-      plan: this.extractSection(response, 'P - PLAN', 'DATOS ADICIONALES')
+      subjetivo: this.extractSection(response, 'S - SUBJETIVO', 'O - OBJETIVO') || 
+                 this.extractSection(response, 'SUBJETIVO', 'OBJETIVO') ||
+                 this.extractSection(response, '**S**', '**O**') ||
+                 this.extractSectionFallback(response, 'subjetivo'),
+      objetivo: this.extractSection(response, 'O - OBJETIVO', 'A - ANÁLISIS') ||
+                this.extractSection(response, 'OBJETIVO', 'ANÁLISIS') ||
+                this.extractSection(response, '**O**', '**A**') ||
+                this.extractSectionFallback(response, 'objetivo'),
+      analisis: this.extractSection(response, 'A - ANÁLISIS', 'P - PLAN') ||
+                this.extractSection(response, 'ANÁLISIS', 'PLAN') ||
+                this.extractSection(response, '**A**', '**P**') ||
+                this.extractSectionFallback(response, 'análisis'),
+      plan: this.extractSection(response, 'P - PLAN', 'DATOS ADICIONALES') ||
+            this.extractSection(response, 'PLAN', '') ||
+            this.extractSection(response, '**P**', '') ||
+            this.extractSectionFallback(response, 'plan')
     }
 
+    console.log('📝 Secciones extraídas:', {
+      subjetivo: sections.subjetivo?.substring(0, 100) + '...',
+      objetivo: sections.objetivo?.substring(0, 100) + '...',
+      analisis: sections.analisis?.substring(0, 100) + '...',
+      plan: sections.plan?.substring(0, 100) + '...'
+    })
+
     // Extraer diagnóstico principal
-    const diagnostico_principal = this.extractDiagnosticoPrincipal(sections.analisis)
-    const diagnosticos_diferenciales = this.extractDiagnosticosDiferenciales(sections.analisis)
+    const diagnostico_principal = this.extractDiagnosticoPrincipal(sections.analisis) ||
+                                 this.extractDiagnosticoPrincipal(response)
+    const diagnosticos_diferenciales = this.extractDiagnosticosDiferenciales(sections.analisis) ||
+                                      this.extractDiagnosticosDiferenciales(response)
 
     return {
-      subjetivo: sections.subjetivo,
-      objetivo: sections.objetivo,
-      diagnostico_principal,
-      diagnosticos_diferenciales,
-      plan_tratamiento: sections.plan,
-      confianza_global: this.extractConfianza(sections.analisis),
+      subjetivo: sections.subjetivo || 'Información subjetiva del paciente disponible en caso clínico.',
+      objetivo: sections.objetivo || 'Hallazgos objetivos a documentar durante exploración física.',
+      diagnostico_principal: diagnostico_principal || 'Diagnóstico por determinar tras evaluación completa',
+      diagnosticos_diferenciales: diagnosticos_diferenciales?.length > 0 ? diagnosticos_diferenciales : ['Diagnósticos diferenciales por evaluar'],
+      plan_tratamiento: sections.plan || 'Plan de tratamiento por establecer según diagnóstico definitivo.',
+      confianza_global: this.extractConfianza(sections.analisis) || this.extractConfianza(response) || 0.5,
       datos_adicionales_necesarios: this.extractDatosAdicionales(response)
     }
   }
 
   private extractSection(text: string, startMarker: string, endMarker: string): string {
     const startIndex = text.indexOf(startMarker)
-    const endIndex = text.indexOf(endMarker)
+    const endIndex = endMarker ? text.indexOf(endMarker) : -1
     
     if (startIndex === -1) return ''
     
@@ -247,9 +295,57 @@ Responde EXCLUSIVAMENTE en este formato:
     return text.substring(start, end).trim()
   }
 
+  private extractSectionFallback(text: string, sectionType: string): string {
+    // Fallback para extraer secciones cuando los marcadores estándar fallan
+    const patterns = {
+      subjetivo: [
+        /(?:motivo.*consulta|presenta|refiere)[\s\S]*?(?=objetivo|hallazgos|examen|$)/i,
+        /(?:historia.*actual|evolución)[\s\S]*?(?=objetivo|hallazgos|examen|$)/i
+      ],
+      objetivo: [
+        /(?:examen.*físico|hallazgos|signos.*vitales)[\s\S]*?(?=análisis|diagnóstico|impresión|$)/i,
+        /(?:exploración|inspección|palpación)[\s\S]*?(?=análisis|diagnóstico|impresión|$)/i
+      ],
+      análisis: [
+        /(?:diagnóstico|impresión|análisis)[\s\S]*?(?=plan|tratamiento|manejo|$)/i,
+        /(?:diferencial|presuntivo)[\s\S]*?(?=plan|tratamiento|manejo|$)/i
+      ],
+      plan: [
+        /(?:plan|tratamiento|manejo|recomendaciones)[\s\S]*$/i,
+        /(?:medicamentos|terapia|seguimiento)[\s\S]*$/i
+      ]
+    }
+    
+    const sectionPatterns = patterns[sectionType as keyof typeof patterns] || []
+    
+    for (const pattern of sectionPatterns) {
+      const match = text.match(pattern)
+      if (match && match[0].length > 20) {
+        return match[0].trim()
+      }
+    }
+    
+    return ''
+  }
+
   private extractDiagnosticoPrincipal(analisisText: string): string {
-    const match = analisisText.match(/\*\*Diagnóstico Principal:\*\*\s*(.+?)(?=\n|\*\*|$)/i)
-    return match ? match[1].trim() : 'No especificado'
+    const patterns = [
+      /\*\*Diagnóstico Principal:\*\*\s*(.+?)(?=\n|\*\*|$)/i,
+      /Diagnóstico Principal:?\s*(.+?)(?=\n|Diagnósticos|$)/i,
+      /Impresión diagnóstica:?\s*(.+?)(?=\n|Diagnósticos|$)/i,
+      /Diagnóstico presuntivo:?\s*(.+?)(?=\n|Diagnósticos|$)/i,
+      /Principal:?\s*(.+?)(?=\n|Diferencial|$)/i,
+      /(?:dermatitis|eczema|psoriasis|alergia)[\w\s]+/i
+    ]
+    
+    for (const pattern of patterns) {
+      const match = analisisText.match(pattern)
+      if (match && match[1] && match[1].trim().length > 3) {
+        return match[1].trim()
+      }
+    }
+    
+    return ''
   }
 
   private extractDiagnosticosDiferenciales(analisisText: string): string[] {
@@ -284,29 +380,81 @@ Responde EXCLUSIVAMENTE en este formato:
   }
 
   private needsMoreData(analysis: SOAPAnalysis): boolean {
-    // Lógica para determinar si necesita más datos
-    const hasLowConfidence = (analysis.confianza_global || 0) < 0.6
-    const hasInsufficientSubjective = (analysis.subjetivo?.length || 0) < 50
-    const hasInsufficientObjective = (analysis.objetivo?.length || 0) < 30
-    const needsAdditionalData = (analysis.datos_adicionales_necesarios?.length || 0) > 2
+    // Lógica más permisiva para determinar si necesita más datos
+    const hasVeryLowConfidence = (analysis.confianza_global || 0) < 0.4  // Reducido de 0.6 a 0.4
+    const hasInsufficientSubjective = (analysis.subjetivo?.length || 0) < 30  // Reducido de 50 a 30
+    const hasInsufficientObjective = (analysis.objetivo?.length || 0) < 20   // Reducido de 30 a 20
+    const hasCriticalDataNeeds = (analysis.datos_adicionales_necesarios?.length || 0) > 3  // Aumentado de 2 a 3
 
-    return hasLowConfidence && (hasInsufficientSubjective || hasInsufficientObjective || needsAdditionalData)
+    // Solo pedir información adicional si realmente es crítico
+    return hasVeryLowConfidence && hasInsufficientSubjective && hasInsufficientObjective
   }
 
   private createAdditionalInfoRequest(analysis: SOAPAnalysis, currentCycle: number): AdditionalInfoRequest {
+    // Generar preguntas específicas basadas en lo que falta
+    const specificQuestions = this.generateSpecificQuestions(analysis)
+    const specificActions = this.generateSpecificActions(analysis)
+
     return {
       type: 'additional_info_needed',
       currentCycle,
       confidence: analysis.confianza_global || 0,
-      questions: analysis.datos_adicionales_necesarios || [],
+      questions: specificQuestions.length > 0 ? specificQuestions : analysis.datos_adicionales_necesarios || [],
       partialAnalysis: analysis,
-      nextActions: [
+      nextActions: specificActions.length > 0 ? specificActions : [
         'Proporcionar información adicional solicitada',
         'Confirmar datos demográficos si faltan',
         'Especificar cronología de síntomas',
         'Incluir antecedentes médicos relevantes'
       ]
     }
+  }
+
+  private generateSpecificQuestions(analysis: SOAPAnalysis): string[] {
+    const questions: string[] = []
+    
+    // Analizar qué información específica falta
+    if (!analysis.subjetivo || analysis.subjetivo.length < 30) {
+      questions.push('¿Puede describir con más detalle los síntomas que presenta el paciente?')
+      questions.push('¿Cuándo comenzaron exactamente los síntomas y cómo han evolucionado?')
+    }
+    
+    if (!analysis.objetivo || analysis.objetivo.length < 20) {
+      questions.push('¿Qué hallazgos específicos se encontraron en el examen físico?')
+      questions.push('¿Cuáles son los signos vitales del paciente?')
+    }
+    
+    // Preguntas contextuales basadas en el contenido
+    const content = `${analysis.subjetivo || ''} ${analysis.objetivo || ''}`.toLowerCase()
+    
+    if (content.includes('lesion') || content.includes('dermat')) {
+      questions.push('¿Cuáles son las características exactas de las lesiones (tamaño, distribución, textura)?')
+      questions.push('¿Hay factores que mejoran o empeoran las lesiones?')
+    }
+    
+    if (content.includes('dolor')) {
+      questions.push('¿Puede caracterizar mejor el dolor (intensidad 1-10, tipo, irradiación)?')
+    }
+    
+    return questions
+  }
+
+  private generateSpecificActions(analysis: SOAPAnalysis): string[] {
+    const actions: string[] = []
+    
+    if (!analysis.subjetivo || analysis.subjetivo.length < 30) {
+      actions.push('Ampliar descripción de síntomas y historia clínica')
+    }
+    
+    if (!analysis.objetivo || analysis.objetivo.length < 20) {
+      actions.push('Proporcionar hallazgos de examen físico y signos vitales')
+    }
+    
+    if (!analysis.diagnostico_principal || analysis.diagnostico_principal === 'No especificado') {
+      actions.push('Incluir cualquier impresión diagnóstica preliminar si existe')
+    }
+    
+    return actions
   }
 
   private calculateCycleConfidence(cycle: DiagnosticCycle): number {

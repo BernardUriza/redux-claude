@@ -1,10 +1,118 @@
 # 🏥 Redux Claude - Sistema Médico AI de Nueva Generación
 
+[![Deploy Status](https://api.netlify.com/api/v1/badges/your-site-id/deploy-status)](https://app.netlify.com/sites/your-site-name/deploys)
+
 *Creado por Bernard Orozco*
 
-## 🚀 La Revolución Médica Digital
+## 🚀 Demo en Vivo
+
+🌐 **[Ver Demo](https://redux-claude-medical.netlify.app)** - Experiencia médica AI en tiempo real
+
+## 📖 Descripción
 
 Redux Claude es una plataforma médica avanzada que combina **streaming en tiempo real**, **validación inteligente** y **arquitectura modular** para crear la experiencia médica más avanzada de 2025.
+
+### ✨ Características Principales
+
+- 🔄 **Streaming en tiempo real** con Claude AI
+- 🛡️ **Validación médica inteligente** (150+ términos especializados)
+- 📋 **Interface médica profesional** con dark mode
+- 🏗️ **Arquitectura monorepo escalable**
+- 📱 **Responsive design** para dispositivos médicos
+- 📋 **Copy-to-clipboard** para diagnósticos
+
+## 🚀 Inicio Rápido
+
+### 📋 Prerrequisitos
+
+- Node.js 18+ 
+- npm o yarn
+- Claude API Key (Anthropic)
+
+### ⚡ Instalación
+
+```bash
+# Clonar el repositorio
+git clone https://github.com/BernardUriza/redux-claude.git
+cd redux-claude
+
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+cp .env.example .env.local
+# Edita .env.local con tu ANTHROPIC_API_KEY
+```
+
+### 🔑 Variables de Entorno
+
+```bash
+# .env.local
+ANTHROPIC_API_KEY=your_claude_api_key_here
+NEXT_PUBLIC_APP_NAME="Redux Claude Medical"
+NEXT_PUBLIC_APP_VERSION="1.0.0"
+```
+
+### 🏃‍♂️ Ejecutar en Desarrollo
+
+```bash
+# Construir el core package
+npm run build:core
+
+# Iniciar servidor de desarrollo
+npm run dev
+```
+
+Visita [http://localhost:3000](http://localhost:3000) para ver la aplicación.
+
+### 🏗️ Build para Producción
+
+```bash
+# Build completo
+npm run build
+
+# Iniciar servidor de producción
+npm start
+```
+
+## 🌐 Despliegue en Netlify
+
+### Método 1: Desde GitHub (Recomendado)
+
+1. **Conecta tu repositorio:**
+   - Ve a [Netlify](https://netlify.com)
+   - Haz clic en "New site from Git"
+   - Conecta tu repositorio de GitHub
+
+2. **Configuración de Build:**
+   ```
+   Build command: npm run build
+   Publish directory: .next
+   ```
+
+3. **Variables de Entorno:**
+   - `ANTHROPIC_API_KEY`: Tu Claude API key
+   - `NEXT_PUBLIC_APP_NAME`: "Redux Claude Medical"
+
+### Método 2: Deploy Manual
+
+```bash
+# Instalar Netlify CLI
+npm install -g netlify-cli
+
+# Build y deploy
+npm run build
+netlify deploy --prod --dir=.next
+```
+
+### 🔧 Configuración Netlify
+
+El proyecto incluye configuración automática para Netlify con soporte para:
+- ✅ Next.js 15 con App Router
+- ✅ Monorepo con workspaces
+- ✅ Variables de entorno
+- ✅ Redirects para SPA
+- ✅ Headers de seguridad
 
 ---
 

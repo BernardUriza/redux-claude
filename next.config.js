@@ -7,6 +7,26 @@ const nextConfig = {
   
   experimental: {
     externalDir: true
+  },
+
+  // Netlify deployment optimization
+  output: 'export',
+  trailingSlash: true,
+  images: {
+    unoptimized: true
+  },
+
+  // Environment variables for build
+  env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
+  },
+
+  // Disable server-side features for static export
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: false,
   }
 }
 

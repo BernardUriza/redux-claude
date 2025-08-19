@@ -222,38 +222,63 @@ export class SOAPProcessor {
   // 🔍 MÉTODOS DE EXTRACCIÓN Y ANÁLISIS
 
   private extractChiefComplaint(input: string): string {
-    // Buscar patrones de motivo de consulta
+    // Buscar patrones de motivo de consulta - patrones más flexibles
     const patterns = [
-      /motivo.*consulta.*?:?\s*([^.]+)/i,
-      /presenta.*?:?\s*([^.]+)/i,
-      /refiere.*?:?\s*([^.]+)/i,
-      /acude.*por.*?:?\s*([^.]+)/i
+      /motivo.*consulta:?\s*(.+?)(?:\.|$)/i,
+      /presenta\s+(.+?)(?:\s+desde|\s+en|\s+por|\.|$)/i,
+      /refiere\s+(.+?)(?:\s+desde|\s+en|\s+por|\.|$)/i,
+      /acude.*por\s+(.+?)(?:\.|$)/i,
+      /paciente.*presenta\s+(.+?)(?:\s+desde|\s+en|\s+por|\.|$)/i
     ]
     
     for (const pattern of patterns) {
       const match = input.match(pattern)
-      if (match) return match[1].trim()
+      if (match && match[1].trim().length > 10) {
+        return match[1].trim()
+      }
+    }
+    
+    // Si no encuentra patrones específicos, tomar los primeros síntomas mencionados
+    const symptomMatch = input.match(/(lesiones?|dolor|fiebre|molestias?|síntomas?)\s+.{20,}/i)
+    if (symptomMatch) {
+      return symptomMatch[0].substring(0, 100) + (symptomMatch[0].length > 100 ? '...' : '')
     }
     
     return 'Paciente acude por evaluación médica'
   }
 
   private extractPresentIllness(input: string): string {
-    // Extraer historia de enfermedad actual
+    // Extraer historia de enfermedad actual - patrones más amplios
     const historyPatterns = [
-      /historia.*actual.*?:?\s*([^.]+)/i,
-      /enfermedad.*actual.*?:?\s*([^.]+)/i,
-      /desde.*hace.*?([^.]+)/i,
-      /evolución.*?:?\s*([^.]+)/i
+      /historia.*actual:?\s*(.+?)(?:\.|$)/i,
+      /enfermedad.*actual:?\s*(.+?)(?:\.|$)/i,
+      /desde\s+hace\s+(.+?)(?:\.|$)/i,
+      /evolución:?\s*(.+?)(?:\.|$)/i,
+      /empeoran?\s+(con|por)\s+(.+?)(?:\.|$)/i,
+      /mejoran?\s+(con|por)\s+(.+?)(?:\.|$)/i
     ]
     
     let historia = ''
-    for (const pattern of historyPatterns) {
-      const match = input.match(pattern)
-      if (match) historia += match[1].trim() + '. '
+    
+    // Extraer duración específica
+    const duracionMatch = input.match(/desde\s+hace\s+(\d+\s+\w+)/i)
+    if (duracionMatch) {
+      historia += `Cuadro de ${duracionMatch[1]} de evolución. `
     }
     
-    return historia || 'Historia de enfermedad actual por completar durante consulta'
+    // Extraer factores modificadores
+    const factorsMatch = input.match(/(empeoran?|mejoran?)\s+(con|por)\s+([^.]+)/i)
+    if (factorsMatch) {
+      historia += `Síntomas ${factorsMatch[1]} ${factorsMatch[2]} ${factorsMatch[3]}. `
+    }
+    
+    // Extraer características de las lesiones/síntomas
+    const lesionMatch = input.match(/lesiones?\s+([^.]+?)(?:\s+en|\s+desde|\.|$)/i)
+    if (lesionMatch) {
+      historia += `Lesiones ${lesionMatch[1]}. `
+    }
+    
+    return historia.trim() || 'Historia de enfermedad actual por documentar durante consulta'
   }
 
   private extractMedicalHistory(input: string): SOAPData['subjetivo']['antecedentes'] {
@@ -267,32 +292,56 @@ export class SOAPProcessor {
 
   private extractPersonalHistory(input: string): string[] {
     const antecedentes: string[] = []
-    const patterns = [
-      /antecedent.*personal.*?:?\s*([^.]+)/i,
+    
+    // Patrones para antecedentes específicos
+    const specificPatterns = [
+      /antecedent.*personal.*de\s+([^.,]+)/i,
+      /(rinitis\s+alérgica)/i,
+      /(dermatitis\s+atópica)/i,
+      /(asma)/i,
       /(hipertens[ií]ón|diabetes|tabaquismo|alcoholismo)/gi,
-      /(cirugía|operación|hospitalización)/gi
+      /(cirugía|operación|hospitalización)/gi,
+      /(alergia.*a.*)/i
     ]
     
-    patterns.forEach(pattern => {
+    specificPatterns.forEach(pattern => {
       const matches = input.match(pattern)
-      if (matches) antecedentes.push(...matches)
+      if (matches) {
+        if (Array.isArray(matches)) {
+          antecedentes.push(...matches.slice(1).filter(m => m))
+        } else {
+          antecedentes.push(matches)
+        }
+      }
     })
     
     return antecedentes.length > 0 ? antecedentes : ['Sin antecedentes patológicos conocidos']
   }
 
   private extractFamilyHistory(input: string): string[] {
+    const familiares: string[] = []
+    
+    // Patrones más específicos para antecedentes familiares
     const patterns = [
-      /antecedent.*familiar.*?:?\s*([^.]+)/i,
-      /padre.*?([^.]+)/i,
-      /madre.*?([^.]+)/i,
-      /familia.*?([^.]+)/i
+      /antecedent.*familiar.*de\s+([^.,]+)/i,
+      /familiar\s+de\s+([^.,]+)/i,
+      /padre.*con\s+([^.,]+)/i,
+      /madre.*con\s+([^.,]+)/i,
+      /familia.*historia.*de\s+([^.,]+)/i,
+      /(psoriasis)/i,
+      /(dermatitis)/i,
+      /(diabetes)/i,
+      /(hipertensión)/i
     ]
     
-    const familiares: string[] = []
     patterns.forEach(pattern => {
       const match = input.match(pattern)
-      if (match) familiares.push(match[1].trim())
+      if (match && match[1]) {
+        familiares.push(match[1].trim())
+      } else if (match && match[0] && !match[1]) {
+        // Para patrones como /psoriasis/ que no tienen grupos de captura
+        familiares.push(match[0])
+      }
     })
     
     return familiares.length > 0 ? familiares : ['Sin antecedentes familiares relevantes']

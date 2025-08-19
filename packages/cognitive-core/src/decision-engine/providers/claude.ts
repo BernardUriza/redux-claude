@@ -30,10 +30,38 @@ export class ClaudeAdapter implements ProviderAdapter {
     onChunk?: (chunk: string) => void
   ): Promise<{ content: string; success: boolean; error?: string }> {
     if (!this.isAvailable) {
+      console.error('❌ Claude API Key no configurada')
       return {
-        content: '',
+        content: `## ⚠️ Configuración Requerida
+
+**La API de Claude no está configurada**
+
+Para que el sistema médico funcione correctamente, necesitas:
+
+### 🔑 **Configurar API Key de Claude**
+
+1. **Obtener API Key:**
+   - Visita: https://console.anthropic.com/
+   - Crea una cuenta o inicia sesión
+   - Ve a "API Keys" y genera una nueva key
+
+2. **Configurar en tu proyecto:**
+   - Crea un archivo \`.env.local\` en la raíz del proyecto
+   - Agrega: \`NEXT_PUBLIC_CLAUDE_API_KEY=tu_api_key_aquí\`
+   - Reinicia el servidor de desarrollo
+
+### 💡 **Ejemplo de .env.local:**
+\`\`\`
+NEXT_PUBLIC_CLAUDE_API_KEY=sk-ant-api03-xxxxxxxxxxxxx
+\`\`\`
+
+### 🔄 **Después de configurar:**
+- Reinicia el servidor: \`npm run dev\`
+- Prueba nuevamente tu consulta médica
+
+🏥 **El sistema está listo, solo necesita la conexión a Claude para generar análisis médicos completos.**`,
         success: false,
-        error: 'Claude API key not available'
+        error: 'API_KEY_NOT_CONFIGURED'
       }
     }
 

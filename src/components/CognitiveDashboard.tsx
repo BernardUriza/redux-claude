@@ -10,6 +10,9 @@ import { IterativeDiagnosticProgress } from './IterativeDiagnosticProgress'
 import { CognitiveAgentsPanel } from './CognitiveAgentsPanel'
 import { RealTimeMetrics } from './RealTimeMetrics'
 import { UrgencyIndicator, CompactUrgencyIndicator, type UrgencyData } from './UrgencyIndicator'
+import { SOAPDisplay } from './SOAPDisplay'
+import { FollowUpTracker } from './FollowUpTracker'
+import { MedicalNotes } from './MedicalNotes'
 
 // Medical Corporate Color Palette 2025
 const theme = {
@@ -206,7 +209,8 @@ const AgentDecision = ({ decision }: { decision: any }) => {
 export const CognitiveDashboard = () => {
   const [input, setInput] = useState('')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true) // Colapsado por defecto
-  const [activeMetricsTab, setActiveMetricsTab] = useState<'overview' | 'clinical' | 'agents' | 'system'>('overview')
+  const [activeMetricsTab, setActiveMetricsTab] = useState<'overview' | 'clinical' | 'soap' | 'followup' | 'notes' | 'agents' | 'system'>('overview')
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
   
   const { 
     messages, 
@@ -337,6 +341,9 @@ export const CognitiveDashboard = () => {
       }
     }
   }, [messages])
+
+  // Get last message for components
+  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : undefined
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -350,9 +357,75 @@ export const CognitiveDashboard = () => {
   }
   
   return (
-    <div className="h-screen bg-gray-900 text-white flex overflow-hidden">
-      {/* Enhanced Collapsible Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gradient-to-b from-gray-950 to-slate-950 border-r border-slate-700/50 flex flex-col transition-all duration-300 ease-in-out backdrop-blur-xl`}>
+    <div className="h-screen bg-gray-900 text-white flex overflow-hidden relative">
+      {/* Mobile Menu Overlay */}
+      {showMobileMenu && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={() => setShowMobileMenu(false)}>
+          <div className="absolute top-0 left-0 w-80 h-full bg-gradient-to-b from-gray-950 to-slate-950 border-r border-slate-700/50 flex flex-col backdrop-blur-xl transform transition-transform duration-300" onClick={e => e.stopPropagation()}>
+            {/* Mobile Menu Header */}
+            <div className="p-4 border-b border-slate-700/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                    <span className="text-white text-sm font-bold">🏥</span>
+                  </div>
+                  <div>
+                    <h1 className="text-lg font-semibold text-white">Medical AI</h1>
+                    <p className="text-xs text-slate-400">Cognitive Assistant</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMobileMenu(false)}
+                  className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors duration-200 text-slate-400 hover:text-white"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Menu Content */}
+            <div className="flex-1 p-4">
+              <div className="space-y-3">
+                <button className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white">
+                  <span className="text-lg">💊</span>
+                  <span className="text-sm font-medium">Treatment Plans</span>
+                </button>
+                <button className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white">
+                  <span className="text-lg">🔍</span>
+                  <span className="text-sm font-medium">Diagnostics</span>
+                </button>
+                <button className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white">
+                  <span className="text-lg">📊</span>
+                  <span className="text-sm font-medium">Analytics</span>
+                </button>
+              </div>
+
+              {/* System Status in Mobile */}
+              <div className="mt-6 bg-gradient-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-xl rounded-xl p-4 border border-slate-600/30">
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  <span className="text-sm text-slate-300 font-medium">System Online</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-slate-400">
+                    <span>Confidence:</span>
+                    <span className="text-emerald-400 font-medium">{cognitiveMetrics.systemConfidence}%</span>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Agents:</span>
+                    <span className="text-blue-400 font-medium">5/5 active</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Collapsible Sidebar - Hidden on mobile */}
+      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gradient-to-b from-gray-950 to-slate-950 border-r border-slate-700/50 flex flex-col transition-all duration-300 ease-in-out backdrop-blur-xl hidden lg:flex`}>
         {/* Enhanced Sidebar Header */}
         <div className="p-4 border-b border-slate-700/50">
           <div className="flex items-center justify-between">
@@ -461,33 +534,45 @@ export const CognitiveDashboard = () => {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Enhanced Chat Header */}
-        <div className="bg-gradient-to-r from-gray-900 to-slate-900 border-b border-gray-800 px-6 py-4">
+        {/* Enhanced Chat Header - Mobile Optimized */}
+        <div className="bg-gradient-to-r from-gray-900 to-slate-900 border-b border-gray-800 px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white text-lg">🧠</span>
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="lg:hidden p-2 hover:bg-slate-800/50 rounded-lg transition-colors text-slate-400 hover:text-white"
+                title="Menu"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-base sm:text-lg">🧠</span>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Redux Claude Medical AI</h2>
-                <p className="text-sm text-gray-400">Motor Iterativo + Orquestador Cognitivo v2.0</p>
+                <h2 className="text-lg sm:text-xl font-bold text-white">Medical AI</h2>
+                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">Motor Iterativo + Orquestador Cognitivo v2.0</p>
+                <p className="text-xs text-gray-400 sm:hidden">Sistema Cognitivo</p>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="px-3 py-1 bg-emerald-900/30 border border-emerald-700 rounded-full">
+            <div className="flex items-center space-x-1 sm:space-x-3">
+              <div className="px-2 sm:px-3 py-1 bg-emerald-900/30 border border-emerald-700 rounded-full hidden sm:block">
                 <span className="text-xs text-emerald-400 font-medium">Sistema Optimizado</span>
               </div>
-              <div className="px-3 py-1 bg-purple-900/30 border border-purple-700 rounded-full">
-                <span className="text-xs text-purple-400 font-medium">Fase 3: Medicina Defensiva</span>
+              <div className="px-2 sm:px-3 py-1 bg-purple-900/30 border border-purple-700 rounded-full">
+                <span className="text-xs text-purple-400 font-medium">Fase 3</span>
               </div>
               {urgencyData.level !== 'low' && (
-                <div className={`px-3 py-1 rounded-full border ${
+                <div className={`px-2 sm:px-3 py-1 rounded-full border ${
                   urgencyData.level === 'critical' ? 'bg-red-900/30 border-red-700 text-red-400' :
                   urgencyData.level === 'high' ? 'bg-orange-900/30 border-orange-700 text-orange-400' :
                   'bg-yellow-900/30 border-yellow-700 text-yellow-400'
                 }`}>
                   <span className="text-xs font-medium">
-                    🚨 Urgencia: {urgencyData.level.toUpperCase()}
+                    🚨 {urgencyData.level.toUpperCase()}
                   </span>
                 </div>
               )}
@@ -495,11 +580,11 @@ export const CognitiveDashboard = () => {
           </div>
         </div>
 
-        {/* Main Content with Enhanced Panels - 40/60 Proportion */}
-        <div className={`flex-1 grid grid-cols-1 ${sidebarCollapsed ? 'lg:grid-cols-[40%_60%]' : 'lg:grid-cols-[35%_65%]'} min-h-0 transition-all duration-300`}>
+        {/* Main Content with Enhanced Panels - Mobile First Design */}
+        <div className={`flex-1 grid grid-cols-1 lg:grid-cols-[35%_65%] min-h-0 transition-all duration-300`}>
           
-          {/* Enhanced Right Panel - Medical Metrics with Optimal Spacing */}
-          <div className="bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/80 backdrop-blur-md border-r lg:border-r border-b lg:border-b-0 border-slate-700/50 p-4 shadow-2xl shadow-slate-950/50 order-2 lg:order-1 flex flex-col h-full overflow-hidden">
+          {/* Enhanced Right Panel - Hidden on mobile, visible on desktop */}
+          <div className="bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/80 backdrop-blur-md border-r lg:border-r border-b lg:border-b-0 border-slate-700/50 p-4 shadow-2xl shadow-slate-950/50 order-2 lg:order-1 flex-col h-full overflow-hidden hidden lg:flex">
             
             {/* Medical Dashboard Header with Navigation */}
             <div className="mb-6">
@@ -550,6 +635,9 @@ export const CognitiveDashboard = () => {
                 {[
                   { id: 'overview', label: 'Resumen', icon: '📋' },
                   { id: 'clinical', label: 'Clínico', icon: '🩺' },
+                  { id: 'soap', label: 'SOAP', icon: '📄' },
+                  { id: 'followup', label: 'Seguimiento', icon: '📅' },
+                  { id: 'notes', label: 'Notas', icon: '📝' },
                   { id: 'agents', label: 'Agentes', icon: '🤖' },
                   { id: 'system', label: 'Sistema', icon: '⚙️' }
                 ].map((tab) => (
@@ -626,11 +714,41 @@ export const CognitiveDashboard = () => {
                 </div>
               )}
               
+              {/* SOAP - Análisis Estructurado */}
+              {activeMetricsTab === 'soap' && (
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-blue-950/20 to-indigo-950/30 backdrop-blur-xl rounded-xl border border-blue-700/20 p-4 shadow-xl shadow-blue-950/20">
+                    <SOAPDisplay />
+                  </div>
+                </div>
+              )}
+              
+              {/* SEGUIMIENTO - Recordatorios y Notas */}
+              {activeMetricsTab === 'followup' && (
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-green-950/20 to-emerald-950/30 backdrop-blur-xl rounded-xl border border-green-700/20 p-4 shadow-xl shadow-green-950/20">
+                    <FollowUpTracker />
+                  </div>
+                </div>
+              )}
+              
+              {/* NOTAS - Notas Médicas con Trazabilidad */}
+              {activeMetricsTab === 'notes' && (
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-amber-950/20 to-orange-950/30 backdrop-blur-xl rounded-xl border border-amber-700/20 p-4 shadow-xl shadow-amber-950/20">
+                    <MedicalNotes />
+                  </div>
+                </div>
+              )}
+              
               {/* AGENTES - Orquestador Cognitivo */}
               {activeMetricsTab === 'agents' && (
                 <div className="space-y-4">
                   <div className="bg-gradient-to-br from-purple-950/20 to-violet-950/30 backdrop-blur-xl rounded-xl border border-purple-700/20 p-4 shadow-xl shadow-purple-950/20">
-                    <CognitiveAgentsPanel />
+                    <CognitiveAgentsPanel 
+                      lastMessage={lastMessage} 
+                      isActive={isStreaming}
+                    />
                   </div>
                 </div>
               )}
@@ -662,23 +780,23 @@ export const CognitiveDashboard = () => {
             </div>
           </div>
           
-          {/* Center Chat Area */}
-          <div className="flex flex-col h-full bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 order-1 lg:order-2 overflow-hidden">
+          {/* Center Chat Area - Full width on mobile */}
+          <div className="flex flex-col h-full bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 order-1 lg:order-2 overflow-hidden col-span-1 lg:col-span-1">
             {/* Chat Messages Area */}
             <div className="flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-transparent via-gray-900/20 to-transparent min-h-0">
             {messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <div className="text-center px-8 py-12">
-                  <div className="w-20 h-20 bg-gradient-to-br from-slate-700/80 to-slate-800/90 backdrop-blur-xl rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-slate-950/50 border border-slate-600/30">
-                    <span className="text-3xl">🛡️</span>
+                <div className="text-center px-4 sm:px-8 py-8 sm:py-12">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-slate-700/80 to-slate-800/90 backdrop-blur-xl rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-2xl shadow-slate-950/50 border border-slate-600/30">
+                    <span className="text-2xl sm:text-3xl">🛡️</span>
                   </div>
-                  <h3 className="text-slate-200 text-lg font-semibold mb-3">
+                  <h3 className="text-slate-200 text-base sm:text-lg font-semibold mb-2 sm:mb-3">
                     Sistema de Medicina Defensiva Activado
                   </h3>
-                  <p className="text-slate-400 text-sm mb-4 max-w-md mx-auto leading-relaxed">
+                  <p className="text-slate-400 text-sm mb-3 sm:mb-4 max-w-md mx-auto leading-relaxed">
                     Diagnósticos priorizados por <strong className="text-slate-300">gravedad</strong> sobre probabilidad
                   </p>
-                  <div className="bg-gradient-to-r from-blue-950/30 to-purple-950/30 backdrop-blur-xl rounded-xl p-4 border border-blue-700/20 shadow-xl shadow-blue-950/20 max-w-lg mx-auto">
+                  <div className="bg-gradient-to-r from-blue-950/30 to-purple-950/30 backdrop-blur-xl rounded-xl p-3 sm:p-4 border border-blue-700/20 shadow-xl shadow-blue-950/20 max-w-sm sm:max-w-lg mx-auto">
                     <p className="text-slate-300 text-xs leading-relaxed">
                       💡 Describe tu caso médico para análisis SOAP completo con validación defensiva
                     </p>
@@ -702,21 +820,21 @@ export const CognitiveDashboard = () => {
                 
                 {(isLoading || isStreaming) && (
                   <div className="border-b border-slate-700/50 bg-gradient-to-r from-slate-800/20 to-slate-900/30 backdrop-blur-md">
-                    <div className="max-w-4xl mx-auto px-8 py-8">
-                      <div className="flex space-x-6">
+                    <div className="max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
+                      <div className="flex space-x-4 sm:space-x-6">
                         <div className="flex-shrink-0">
-                          <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-violet-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-purple-600/25 border border-purple-500/30">
-                            <span className="text-lg font-medium">🤖</span>
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-600 to-violet-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-purple-600/25 border border-purple-500/30">
+                            <span className="text-base sm:text-lg font-medium">🤖</span>
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-base font-semibold text-slate-100 mb-4">Medical AI</div>
+                          <div className="text-sm sm:text-base font-semibold text-slate-100 mb-3 sm:mb-4">Medical AI</div>
                           {false ? (
                             <div className="text-slate-300">Streaming...</div>
                           ) : (
-                            <div className="flex items-center space-x-3">
-                              <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                              <span className="text-sm text-slate-300 font-medium">Analyzing medical case...</span>
+                            <div className="flex items-center space-x-2 sm:space-x-3">
+                              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                              <span className="text-xs sm:text-sm text-slate-300 font-medium">Analyzing medical case...</span>
                               <div className="flex space-x-1">
                                 <div className="w-1 h-1 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: '0ms'}} />
                                 <div className="w-1 h-1 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: '150ms'}} />
