@@ -1,6 +1,6 @@
 // src/services/decisionalMiddleware.ts
-// Middleware para decisiones con Claude API - Bernard Orozco
-// Separación de responsabilidades: Este servicio maneja solo las llamadas a Claude
+// Middleware híbrido para decisiones - Bernard Orozco
+// Mantiene compatibilidad pero usa la nueva arquitectura por debajo
 
 import { 
   AgentType, 
@@ -12,7 +12,9 @@ import {
   DocumentationDecision 
 } from '@/types/agents'
 
-// Tipos para el middleware
+import { decisionEngineService } from '@/decision-engine/DecisionEngineService'
+
+// Tipos para el middleware (mantenidos para compatibilidad)
 export type DecisionType = 'diagnosis' | 'validation' | 'treatment' | 'triage' | 'documentation'
 export type ProviderType = 'claude' | 'openai' | 'local'
 
@@ -35,9 +37,50 @@ export interface DecisionResponse {
 }
 
 /**
- * Función principal para llamar a Claude con decisiones específicas del agente
+ * Función principal HÍBRIDA - Usa la nueva arquitectura por debajo
+ * Mantiene compatibilidad total con el código existente
  */
 export async function callClaudeForDecision(
+  type: DecisionType,
+  input: string,
+  provider: ProviderType = 'claude',
+  signal?: AbortSignal,
+  previousDecisions?: AgentDecision[],
+  context?: Record<string, unknown>
+): Promise<DecisionResponse> {
+  const startTime = Date.now()
+
+  try {
+    // 🚀 Usar la nueva arquitectura por debajo
+    const response = await decisionEngineService.processLegacyDecision(
+      type,
+      input,
+      provider,
+      signal,
+      previousDecisions,
+      context
+    )
+
+    return {
+      decision: response.decision,
+      confidence: response.confidence,
+      latency: Date.now() - startTime,
+      provider: provider as ProviderType,
+      success: response.success,
+      error: response.error
+    }
+
+  } catch (error) {
+    // Fallback al método legacy si hay error
+    console.warn('New engine failed, falling back to legacy method:', error)
+    return callClaudeForDecisionLegacy(type, input, provider, signal, previousDecisions, context)
+  }
+}
+
+/**
+ * Método legacy mantenido como fallback
+ */
+async function callClaudeForDecisionLegacy(
   type: DecisionType,
   input: string,
   provider: ProviderType = 'claude',
