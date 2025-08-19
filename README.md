@@ -120,218 +120,291 @@ El proyecto incluye configuración automática para Netlify con soporte para:
 
 ```mermaid
 graph TB
-    subgraph "🏥 Frontend Medical UI"
-        A[CognitiveDashboard] --> B[MedicalMessage Component]
-        B --> C[Streaming Display]
-        C --> D[Copy to Clipboard]
+    subgraph "🖥️ Frontend Layer"
+        A[CognitiveDashboard] --> B[EnhancedMedicalMessage]
+        A --> C[CognitiveAgentsPanel]
+        A --> D[IterativeDiagnosticProgress]
+        A --> E[UrgencyIndicator]
+        A --> F[SOAPDisplay]
+        A --> G[FollowUpTracker]
+        A --> H[MedicalNotes]
+        A --> I[RealTimeMetrics]
     end
     
-    subgraph "🧠 Cognitive Core Engine"
-        E[useMedicalChat Hook] --> F[MedicalValidator]
-        F --> G[Redux Store]
-        G --> H[ClaudeAdapter]
+    subgraph "🧠 Cognitive Core Package"
+        J[useMedicalChat Hook] --> K[MedicalContentValidator]
+        J --> L[DefensiveMedicineValidator]
+        J --> M[UrgencyClassifier]
+        K --> N[Redux Store]
+        L --> N
+        M --> N
+        N --> O[ClaudeAdapter]
+        N --> P[StreamingService]
     end
     
-    subgraph "🛡️ Validation Layer"
-        I[Input Analysis] --> J{Medical Content?}
-        J -->|Yes| K[Process Medical Case]
-        J -->|No| L[Educational Rejection]
+    subgraph "🏗️ Decision Engine"
+        Q[DecisionEngineService] --> R[IterativeDiagnosticEngine]
+        R --> S[SOAPProcessor]
+        R --> T[SOAPResolver]
+        S --> U[AdditionalInfoService]
     end
     
-    subgraph "⚡ Claude Streaming"
-        M[SystemPrompt] --> N[Claude SDK]
-        N --> O[Real-time Chunks]
-        O --> P[Progressive Display]
+    subgraph "⚡ Real-time Processing"
+        V[Claude API] --> W[Streaming Chunks]
+        W --> X[Progressive Display]
+        X --> Y[Copy to Clipboard]
     end
     
-    A --> E
-    E --> I
-    K --> M
-    O --> G
-    H --> N
+    A --> J
+    J --> Q
+    O --> V
+    Q --> O
+    W --> N
     
     style A fill:#1e293b,stroke:#3b82f6,color:#fff
-    style E fill:#0f172a,stroke:#06b6d4,color:#fff
-    style F fill:#dc2626,stroke:#ef4444,color:#fff
-    style N fill:#059669,stroke:#10b981,color:#fff
+    style J fill:#0f172a,stroke:#06b6d4,color:#fff
+    style Q fill:#7c3aed,stroke:#5b21b6,color:#fff
+    style V fill:#059669,stroke:#10b981,color:#fff
 ```
 
 ---
 
-## 🔄 Flujo de Validación Médica Inteligente
+## 🛡️ Sistema de Medicina Defensiva (FASE 3)
 
 ```mermaid
 flowchart TD
-    A[👨‍⚕️ Doctor Input] --> B{📝 Length > 10 chars?}
-    B -->|No| C[❌ Too Short]
-    B -->|Yes| D{🚫 Non-Medical Pattern?}
+    A[👨‍⚕️ Input Médico] --> B[MedicalContentValidator]
+    B --> C{Contenido Médico Válido?}
     
-    D -->|Yes| E[❌ Reject: Programming/Entertainment/etc]
-    D -->|No| F{🏥 Medical Terms Found?}
+    C -->|No| D[DefensiveMedicineValidator]
+    D --> E[Guía Educativa + Redirección]
     
-    F -->|No| G[❌ Insufficient Medical Context]
-    F -->|Yes| H{👤 Age/Gender Context?}
+    C -->|Sí| F[UrgencyClassifier]
+    F --> G{Nivel de Urgencia}
     
-    H -->|No| I{📋 Clinical Structure?}
-    H -->|Yes| J[✅ Valid Medical Case]
+    G -->|Crítico| H[🚨 PROTOCOLO EMERGENCIA]
+    G -->|Alto| I[⚠️ REFERENCIA URGENTE]
+    G -->|Medio| J[📋 EVALUACIÓN PRIORITARIA]
+    G -->|Bajo| K[📅 SEGUIMIENTO RUTINARIO]
     
-    I -->|No| K[⚠️ Needs More Context]
-    I -->|Yes| J
+    H --> L[IterativeDiagnosticEngine]
+    I --> L
+    J --> L
+    K --> L
     
-    C --> L[📚 Educational Response]
-    E --> M[🔄 Redirect to Medical Focus]
-    G --> N[📝 Format Guidance]
-    K --> O[👥 Demographic Request]
-    J --> P[🚀 Process with Claude AI]
+    L --> M[SOAPProcessor]
+    M --> N[SOAPResolver]
+    N --> O[DecisionEngineService]
     
-    L --> Q[💡 Show Example Format]
-    M --> R[🎯 Medical Domain Only]
-    N --> S[📋 Clinical Structure Guide]
-    O --> T[🏥 Complete Case Template]
-    P --> U[⚡ Real-time Streaming Response]
+    O --> P[ClaudeAdapter]
+    P --> Q[🤖 Claude AI Analysis]
+    Q --> R[StreamingService]
+    R --> S[⚡ Real-time SOAP Response]
+    
+    S --> T[UrgencyIndicator Display]
+    S --> U[SOAPDisplay]
+    S --> V[FollowUpTracker]
+    S --> W[MedicalNotes]
     
     style A fill:#3b82f6,stroke:#1e40af,color:#fff
-    style J fill:#059669,stroke:#047857,color:#fff
-    style P fill:#7c3aed,stroke:#5b21b6,color:#fff
-    style U fill:#f59e0b,stroke:#d97706,color:#fff
+    style H fill:#dc2626,stroke:#b91c1c,color:#fff
+    style I fill:#f59e0b,stroke:#d97706,color:#fff
+    style L fill:#7c3aed,stroke:#5b21b6,color:#fff
+    style S fill:#059669,stroke:#047857,color:#fff
 ```
 
 ---
 
-## ⚡ Streaming Architecture en Tiempo Real
+## ⚡ Monorepo + Streaming Architecture
 
 ```mermaid
 sequenceDiagram
-    participant D as 👨‍⚕️ Doctor
-    participant UI as 🖥️ Frontend
-    participant V as 🛡️ Validator
-    participant R as 📚 Redux Store
-    participant C as 🤖 Claude SDK
-    participant S as 📺 Streaming Display
+    participant U as 👨‍⚕️ Usuario
+    participant CD as 🖥️ CognitiveDashboard
+    participant CH as 🧠 useMedicalChat Hook
+    participant CC as 📦 Cognitive Core
+    participant DE as 🏗️ DecisionEngine
+    participant CA as 🤖 ClaudeAdapter
+    participant SS as ⚡ StreamingService
+    participant RS as 📚 Redux Store
     
-    D->>UI: Submit Medical Case
-    UI->>V: Validate Content
+    U->>CD: Input médico
+    CD->>CH: sendMedicalQuery()
+    CH->>CC: MedicalContentValidator
     
-    alt Invalid Medical Content
-        V->>R: Store Rejection Message
-        R->>S: Display Educational Guide
-    else Valid Medical Case
-        V->>R: Create Empty Assistant Message
-        R->>UI: Show Streaming Indicator
-        
-        UI->>C: Send to Claude SDK
-        Note over C: Processing Medical Analysis
+    alt Contenido Inválido
+        CC->>RS: Store rejection
+        RS->>CD: Display educational guide
+    else Contenido Válido
+        CC->>CC: UrgencyClassifier
+        CC->>DE: Process with IterativeDiagnosticEngine
+        DE->>CA: Send to Claude API
         
         loop Real-time Streaming
-            C->>R: Stream Chunk
-            R->>S: Update Message Content
-            S->>D: Progressive Display
+            CA->>SS: Stream chunk
+            SS->>RS: Update state
+            RS->>CD: Progressive display
+            CD->>U: Real-time updates
         end
         
-        C->>R: Complete Streaming
-        R->>S: Final Medical Analysis
-        S->>D: Show Copy Button
+        CA->>DE: Complete analysis
+        DE->>CC: SOAPProcessor + SOAPResolver
+        CC->>RS: Final SOAP structure
+        RS->>CD: Display complete analysis
+        CD->>U: Show copy button + urgency indicators
     end
     
-    Note over D,S: 🏥 Complete Medical Evaluation with Copy-to-Clipboard
+    Note over U,CD: 🏥 Sistema completo con medicina defensiva
 ```
 
 ---
 
-## 🏗️ Arquitectura Monorepo Modular
+## 🏗️ Estructura Monorepo Modular
 
 ```mermaid
-graph LR
-    subgraph "📦 Root Workspace"
-        A[package.json] --> B[next.config.js]
-        B --> C[tsconfig.json]
+graph TB
+    subgraph "📂 Redux Claude Root"
+        A[package.json<br/>Workspace Config] --> B[next.config.js<br/>Export + Netlify]
+        A --> C[netlify.toml<br/>Deploy Config]
+        A --> D[tsconfig.json<br/>TypeScript]
     end
     
-    subgraph "🧠 packages/cognitive-core"
-        D[DecisionEngine] --> E[ClaudeAdapter]
-        E --> F[MedicalValidator]
-        F --> G[Redux Store]
-        G --> H[useMedicalChat Hook]
+    subgraph "📦 packages/cognitive-core"
+        E[🧠 Decision Engine] --> F[🤖 ClaudeAdapter]
+        F --> G[🛡️ Validators]
+        G --> H[📚 Redux Store]
+        H --> I[🔗 Hooks]
+        
+        J[🏥 SOAP Processing] --> K[📋 SOAPProcessor]
+        K --> L[🔍 SOAPResolver]
+        
+        M[⚡ Streaming] --> N[📡 StreamingService]
+        N --> O[🔄 Real-time Updates]
     end
     
     subgraph "🎨 src/components"
-        I[CognitiveDashboard] --> J[MedicalMessage]
-        J --> K[Dark Mode Theme]
+        P[CognitiveDashboard] --> Q[EnhancedMedicalMessage]
+        P --> R[CognitiveAgentsPanel]
+        P --> S[IterativeDiagnosticProgress]
+        P --> T[UrgencyIndicator]
+        P --> U[SOAPDisplay]
+        P --> V[FollowUpTracker]
+        P --> W[MedicalNotes]
+        P --> X[RealTimeMetrics]
     end
     
-    subgraph "🔧 Core Features"
-        L[Real-time Streaming] --> M[Medical Validation]
-        M --> N[Copy to Clipboard]
-        N --> O[Professional UI/UX]
+    subgraph "🌐 Deployment"
+        Y[Static Export] --> Z[Netlify CDN]
+        Z --> AA[Global Distribution]
     end
     
-    subgraph "🚀 Output"
-        P[Medical Analysis] --> Q[Diagnostic Reports]
-        Q --> R[Treatment Plans]
-        R --> S[Copy-Ready Format]
-    end
+    A --> E
+    E --> P
+    P --> Y
     
-    A --> D
-    D --> I
-    I --> L
-    L --> P
-    
-    style D fill:#0f172a,stroke:#06b6d4,color:#fff
-    style I fill:#1e293b,stroke:#3b82f6,color:#fff
-    style L fill:#7c3aed,stroke:#5b21b6,color:#fff
-    style P fill:#059669,stroke:#047857,color:#fff
+    style E fill:#0f172a,stroke:#06b6d4,color:#fff
+    style P fill:#1e293b,stroke:#3b82f6,color:#fff
+    style Y fill:#059669,stroke:#047857,color:#fff
+    style Z fill:#f59e0b,stroke:#d97706,color:#fff
 ```
 
 ---
 
-## 🎯 Características Revolucionarias
+## 🎯 Características del Sistema
 
-### ⚡ **Streaming en Tiempo Real**
-- Respuestas médicas generándose palabra por palabra
-- Claude SDK integrado con streaming nativo
-- Actualizaciones progresivas en Redux
-- Experiencia médica inmersiva
+### 🛡️ **Sistema de Medicina Defensiva (FASE 3)**
+- **DefensiveMedicineValidator**: Valida contenido médico profesional
+- **UrgencyClassifier**: Clasifica urgencia por gravedad sobre probabilidad
+- **UrgencyIndicator**: Alertas visuales críticas/altas/medias/bajas
+- **ProtocoloEmergencia**: Activación automática para casos críticos
 
-### 🛡️ **Validación Médica Inteligente**
-- 150+ términos médicos especializados
-- Detección automática de consultas no médicas
-- Mensajes educativos para redirección
-- Mantiene foco profesional exclusivo
+### ⚡ **Motor Iterativo + Orquestador Cognitivo**
+- **IterativeDiagnosticEngine**: Procesamiento diagnóstico iterativo
+- **DecisionEngineService**: Orquestación de decisiones médicas
+- **SOAPProcessor + SOAPResolver**: Análisis SOAP estructurado automático
+- **AdditionalInfoService**: Solicitud inteligente de información adicional
 
-### 📋 **UX Médica Profesional**
-- Botón copiar diagnósticos al portapapeles
-- Dark mode médico corporativo 2025
-- Componentes modulares y reutilizables
-- Indicadores de streaming en tiempo real
+### 🧠 **Cognitive Core Package Completo**
+- **useMedicalChat Hook**: Gestión completa del chat médico
+- **Redux Store Médico**: Estado predictible con tipos médicos específicos
+- **ClaudeAdapter**: Integración nativa con Claude AI
+- **StreamingService**: Streaming en tiempo real palabra por palabra
 
-### 🏗️ **Arquitectura Escalable**
-- Monorepo con workspaces de Next.js 15
-- Principios SOLID aplicados rigurosamente
-- TypeScript con tipos médicos específicos
-- Redux Toolkit para estado predictible
+### 📱 **Interface Médica Profesional**
+- **CognitiveDashboard**: Panel principal multi-pestaña responsive
+- **EnhancedMedicalMessage**: Mensajes médicos con copy-to-clipboard
+- **IterativeDiagnosticProgress**: Progreso diagnóstico en tiempo real
+- **CognitiveAgentsPanel**: Panel de agentes cognitivos activos
+- **FollowUpTracker**: Seguimiento de recordatorios médicos
+- **MedicalNotes**: Notas médicas con trazabilidad completa
 
----
-
-## 🚀 Tecnologías de Vanguardia
-
-- **Next.js 15** - Framework React de última generación
-- **Claude SDK** - IA médica con streaming nativo
-- **Redux Toolkit** - Gestión de estado profesional
-- **TypeScript** - Tipado fuerte para seguridad médica
-- **Tailwind CSS** - Diseño médico responsivo
-- **React Markdown** - Renderizado de diagnósticos
-- **Monorepo Architecture** - Modularidad empresarial
+### 🌐 **Deploy Production-Ready**
+- **Next.js 15 Static Export**: Optimizado para Netlify
+- **Monorepo Workspaces**: Gestión modular de dependencias
+- **Headers de Seguridad**: CSP, CORS, XSS protection
+- **Environment Variables**: Configuración segura de API keys
 
 ---
 
-## 🏥 Casos de Uso Médico
+## 🚀 Stack Tecnológico
 
-✅ **Análisis de Casos Clínicos Complejos**  
-✅ **Diagnósticos Diferenciales en Tiempo Real**  
-✅ **Planes Terapéuticos Estructurados**  
-✅ **Evaluaciones Psicológicas y Psiquiátricas**  
-✅ **Documentación SOAP Automatizada**  
-✅ **Educación Médica Interactiva**
+### 🏗️ **Framework & Build**
+- **Next.js 15** con App Router y Static Export
+- **TypeScript 5.9** con tipos médicos específicos
+- **Monorepo Workspaces** para arquitectura modular
+- **Netlify** deployment con headers de seguridad
+
+### 🧠 **AI & Cognitive**
+- **@anthropic-ai/sdk** - Claude AI con streaming nativo
+- **Custom Decision Engine** - Motor de decisiones médicas
+- **Defensive Medicine System** - Medicina defensiva integrada
+- **SOAP Processing Engine** - Análisis SOAP automático
+
+### 📊 **State Management**
+- **Redux Toolkit** con middleware médico personalizado
+- **React-Redux** para conectores de componentes
+- **Streaming State Updates** - Actualizaciones en tiempo real
+- **Medical Chat Slice** - Estado específico para medicina
+
+### 🎨 **UI/UX Framework**
+- **Tailwind CSS v4** con Lightning CSS
+- **React Markdown** para renderizado de diagnósticos
+- **Corporate Medical Theme** - Diseño médico profesional 2025
+- **Responsive Mobile-First** - Optimizado para dispositivos médicos
+
+### 🔧 **Development Tools**
+- **Workspace Configuration** - npm workspaces
+- **TypeScript Build Pipeline** - Transpilación automática
+- **ESLint + Prettier** - Calidad de código médico
+- **Hot Reload Development** - Desarrollo iterativo rápido
+
+---
+
+## 🏥 Casos de Uso Implementados
+
+### 🛡️ **Medicina Defensiva**
+✅ **Clasificación Automática de Urgencias** - Sistema de triage inteligente  
+✅ **Protocolos de Emergencia** - Activación automática para casos críticos  
+✅ **Diagnósticos por Gravedad** - Priorización defensiva sobre probabilidad  
+✅ **Alertas Visuales Médicas** - Indicadores críticos/altos/medios/bajos  
+
+### 📋 **Análisis SOAP Estructurado**
+✅ **SOAP Automático** - Procesamiento completo de casos médicos  
+✅ **Documentación Médica** - Generación automática de notas clínicas  
+✅ **Seguimiento de Pacientes** - Recordatorios y notas con trazabilidad  
+✅ **Copy-to-Clipboard** - Exportación directa de diagnósticos  
+
+### 🧠 **Motor Cognitivo Avanzado**
+✅ **Diagnósticos Iterativos** - Procesamiento en múltiples ciclos  
+✅ **Análisis en Tiempo Real** - Streaming progresivo de respuestas  
+✅ **Orquestación de Agentes** - Panel de agentes cognitivos coordinados  
+✅ **Validación Médica Inteligente** - Filtros profesionales automáticos  
+
+### 📱 **Interface Médica Corporativa**
+✅ **Dashboard Responsivo** - Multi-pestaña optimizado para medicina  
+✅ **Métricas en Tiempo Real** - Monitoreo del sistema cognitivo  
+✅ **Dark Mode Médico** - Tema profesional corporativo 2025  
+✅ **Mobile-First Design** - Optimizado para dispositivos médicos
 
 ---
 

@@ -13,6 +13,7 @@ import { UrgencyIndicator, CompactUrgencyIndicator, type UrgencyData } from './U
 import { SOAPDisplay } from './SOAPDisplay'
 import { FollowUpTracker } from './FollowUpTracker'
 import { MedicalNotes } from './MedicalNotes'
+import { useMobileInteractions } from '../hooks/useMobileInteractions'
 
 // Medical Corporate Color Palette 2025
 const theme = {
@@ -211,6 +212,11 @@ export const CognitiveDashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true) // Colapsado por defecto
   const [activeMetricsTab, setActiveMetricsTab] = useState<'overview' | 'clinical' | 'soap' | 'followup' | 'notes' | 'agents' | 'system'>('overview')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showMobileFab, setShowMobileFab] = useState(false)
+  const [keyboardVisible, setKeyboardVisible] = useState(false)
+  
+  // Mobile interactions hook
+  const { state: mobileState, triggerHaptic, addTouchFeedback, setupGestureDetection } = useMobileInteractions()
   
   const { 
     messages, 
@@ -345,6 +351,69 @@ export const CognitiveDashboard = () => {
   // Get last message for components
   const lastMessage = messages.length > 0 ? messages[messages.length - 1] : undefined
   
+  // Refs for mobile interactions
+  const tabsRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  
+  // Mobile keyboard detection
+  useEffect(() => {
+    if (!mobileState.isMobile) return
+    
+    const handleResize = () => {
+      const windowHeight = window.innerHeight
+      const screenHeight = window.screen.height
+      const keyboardHeight = screenHeight - windowHeight
+      
+      setKeyboardVisible(keyboardHeight > 100)
+    }
+    
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [mobileState.isMobile])
+  
+  // Show/hide mobile FAB based on scroll and messages
+  useEffect(() => {
+    if (!mobileState.isMobile) {
+      setShowMobileFab(false)
+      return
+    }
+    
+    setShowMobileFab(messages.length > 0 && !isLoading && !isStreaming)
+  }, [mobileState.isMobile, messages.length, isLoading, isStreaming])
+  
+  // Setup swipe gestures for tab navigation
+  useEffect(() => {
+    if (!tabsRef.current || !mobileState.isMobile) return
+    
+    const cleanup = setupGestureDetection(tabsRef.current, (gesture) => {
+      if (gesture.type === 'swipe-left' || gesture.type === 'swipe-right') {
+        triggerHaptic('light')
+        
+        const tabs = ['overview', 'clinical', 'soap', 'followup', 'notes', 'agents', 'system']
+        const currentIndex = tabs.indexOf(activeMetricsTab)
+        
+        if (gesture.type === 'swipe-left' && currentIndex < tabs.length - 1) {
+          setActiveMetricsTab(tabs[currentIndex + 1] as any)
+        } else if (gesture.type === 'swipe-right' && currentIndex > 0) {
+          setActiveMetricsTab(tabs[currentIndex - 1] as any)
+        }
+      }
+    }, { enableSwipe: true, enableLongPress: false, enableDoubleTap: false })
+    
+    return cleanup
+  }, [activeMetricsTab, mobileState.isMobile, setupGestureDetection, triggerHaptic])
+  
+  // Mobile-specific input handling
+  const handleMobileInputFocus = () => {
+    if (mobileState.isMobile) {
+      triggerHaptic('light')
+      // Scroll input into view after keyboard appears
+      setTimeout(() => {
+        inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 300)
+    }
+  }
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || isLoading || isStreaming) return
@@ -356,8 +425,22 @@ export const CognitiveDashboard = () => {
     await sendMedicalQuery(messageToSend)
   }
   
+  // Handle mobile FAB actions
+  const handleMobileFab = () => {
+    triggerHaptic('medium')
+    if (mobileState.isMobile) {
+      inputRef.current?.focus()
+      inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+  
+  const handleNewSession = () => {
+    triggerHaptic('light')
+    newSession()
+  }
+  
   return (
-    <div className="h-screen bg-gray-900 text-white flex overflow-hidden relative">
+    <div className={`h-screen bg-gray-900 text-white flex overflow-hidden relative ${mobileState.isMobile ? 'safe-area-top safe-area-bottom' : ''} ${keyboardVisible ? 'keyboard-resize' : ''}`}>
       {/* Mobile Menu Overlay */}
       {showMobileMenu && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={() => setShowMobileMenu(false)}>
@@ -388,15 +471,33 @@ export const CognitiveDashboard = () => {
             {/* Mobile Menu Content */}
             <div className="flex-1 p-4">
               <div className="space-y-3">
-                <button className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white">
+                <button 
+                  className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white touch-feedback touch-target"
+                  onClick={() => {
+                    triggerHaptic('light')
+                    setShowMobileMenu(false)
+                  }}
+                >
                   <span className="text-lg">💊</span>
                   <span className="text-sm font-medium">Treatment Plans</span>
                 </button>
-                <button className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white">
+                <button 
+                  className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white touch-feedback touch-target"
+                  onClick={() => {
+                    triggerHaptic('light')
+                    setShowMobileMenu(false)
+                  }}
+                >
                   <span className="text-lg">🔍</span>
                   <span className="text-sm font-medium">Diagnostics</span>
                 </button>
-                <button className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white">
+                <button 
+                  className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white touch-feedback touch-target"
+                  onClick={() => {
+                    triggerHaptic('light')
+                    setShowMobileMenu(false)
+                  }}
+                >
                   <span className="text-lg">📊</span>
                   <span className="text-sm font-medium">Analytics</span>
                 </button>
@@ -540,8 +641,11 @@ export const CognitiveDashboard = () => {
             <div className="flex items-center space-x-3 sm:space-x-4">
               {/* Mobile Menu Button */}
               <button
-                onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="lg:hidden p-2 hover:bg-slate-800/50 rounded-lg transition-colors text-slate-400 hover:text-white"
+                onClick={() => {
+                  triggerHaptic('light')
+                  setShowMobileMenu(!showMobileMenu)
+                }}
+                className="lg:hidden p-2 hover:bg-slate-800/50 rounded-lg transition-colors text-slate-400 hover:text-white touch-feedback touch-target"
                 title="Menu"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -630,8 +734,8 @@ export const CognitiveDashboard = () => {
                 </div>
               </div>
               
-              {/* Navigation Tabs - More Compact */}
-              <div className="flex space-x-1 bg-slate-800/30 rounded-lg p-1">
+              {/* Navigation Tabs - More Compact with Swipe Support */}
+              <div ref={tabsRef} className={`flex space-x-1 bg-slate-800/30 rounded-lg p-1 ${mobileState.isMobile ? 'swipe-indicator' : ''}`}>
                 {[
                   { id: 'overview', label: 'Resumen', icon: '📋' },
                   { id: 'clinical', label: 'Clínico', icon: '🩺' },
@@ -643,8 +747,11 @@ export const CognitiveDashboard = () => {
                 ].map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveMetricsTab(tab.id as any)}
-                    className={`flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    onClick={() => {
+                      triggerHaptic('light')
+                      setActiveMetricsTab(tab.id as any)
+                    }}
+                    className={`flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 touch-feedback touch-target ${
                       activeMetricsTab === tab.id
                         ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
                         : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
@@ -655,6 +762,13 @@ export const CognitiveDashboard = () => {
                   </button>
                 ))}
               </div>
+              
+              {/* Mobile Swipe Hint */}
+              {mobileState.isMobile && (
+                <div className="text-center mt-2">
+                  <span className="text-xs text-slate-500">← Swipe to navigate tabs →</span>
+                </div>
+              )}
             </div>
             
             {/* Optimized Content Container with Tab-Based Navigation */}
@@ -783,7 +897,7 @@ export const CognitiveDashboard = () => {
           {/* Center Chat Area - Full width on mobile */}
           <div className="flex flex-col h-full bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 order-1 lg:order-2 overflow-hidden col-span-1 lg:col-span-1">
             {/* Chat Messages Area */}
-            <div className="flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-transparent via-gray-900/20 to-transparent min-h-0">
+            <div className={`flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-transparent via-gray-900/20 to-transparent min-h-0 ${mobileState.isMobile ? 'mobile-scroll' : ''}`}>
             {messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center px-4 sm:px-8 py-8 sm:py-12">
@@ -810,11 +924,15 @@ export const CognitiveDashboard = () => {
                   const messageIsStreaming = isLastMessage && isStreaming && message.type === 'assistant'
                   
                   return (
-                    <EnhancedMedicalMessage
+                    <div 
                       key={message.id || idx}
-                      message={message}
-                      isStreaming={messageIsStreaming}
-                    />
+                      className={`${mobileState.isMobile ? 'mobile-padding mobile-spacing' : ''}`}
+                    >
+                      <EnhancedMedicalMessage
+                        message={message}
+                        isStreaming={messageIsStreaming}
+                      />
+                    </div>
                   )
                 })}
                 
@@ -859,8 +977,8 @@ export const CognitiveDashboard = () => {
             {messages.length > 1 && (
               <div className="border-t border-slate-700/50 px-8 py-4 bg-gradient-to-r from-slate-800/30 to-slate-900/40 backdrop-blur-md">
                 <button
-                  onClick={() => newSession()}
-                  className="text-sm text-slate-400 hover:text-slate-100 flex items-center gap-3 transition-all duration-300 group hover:bg-slate-700/30 px-4 py-2 rounded-xl border border-transparent hover:border-slate-600/30"
+                  onClick={handleNewSession}
+                  className={`text-sm text-slate-400 hover:text-slate-100 flex items-center gap-3 transition-all duration-300 group hover:bg-slate-700/30 px-4 py-2 rounded-xl border border-transparent hover:border-slate-600/30 ${mobileState.isMobile ? 'touch-feedback touch-target' : ''}`}
                 >
                   <div className="w-5 h-5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:shadow-emerald-500/40 transition-all duration-300">
                     <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -873,17 +991,22 @@ export const CognitiveDashboard = () => {
             )}
 
             {/* Input Form */}
-            <div className="border-t border-slate-700/50 bg-gradient-to-r from-slate-950/80 to-slate-900/90 backdrop-blur-xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className={`border-t border-slate-700/50 bg-gradient-to-r from-slate-950/80 to-slate-900/90 backdrop-blur-xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6 ${mobileState.isMobile ? 'safe-area-bottom' : ''} ${keyboardVisible ? 'keyboard-padding' : ''}`}>
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
                 <div className="flex-1">
                   <div className="relative">
                     <input
+                      ref={inputRef}
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder="Describe el caso clínico aquí... Ej: Paciente de 45 años presenta dolor torácico..."
-                      className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-slate-800/60 to-slate-700/60 backdrop-blur-xl border border-slate-600/40 rounded-xl sm:rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 text-slate-100 placeholder-slate-400 shadow-xl shadow-slate-950/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                      onFocus={handleMobileInputFocus}
+                      placeholder={mobileState.isMobile ? "Describe tu caso médico..." : "Describe el caso clínico aquí... Ej: Paciente de 45 años presenta dolor torácico..."}
+                      className={`w-full px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-slate-800/60 to-slate-700/60 backdrop-blur-xl border border-slate-600/40 rounded-xl sm:rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 text-slate-100 placeholder-slate-400 shadow-xl shadow-slate-950/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${mobileState.isMobile ? 'touch-feedback' : ''}`}
                       disabled={isLoading || isStreaming}
+                      autoComplete="off"
+                      autoCapitalize="sentences"
+                      autoCorrect="on"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-2xl pointer-events-none opacity-0 transition-opacity duration-300 peer-focus:opacity-100" />
                   </div>
@@ -891,11 +1014,12 @@ export const CognitiveDashboard = () => {
                 <button
                   type="submit"
                   disabled={isLoading || !input.trim()}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-700 disabled:to-slate-800 disabled:cursor-not-allowed text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 shadow-xl shadow-blue-600/25 hover:shadow-blue-600/40 disabled:shadow-slate-800/25 border border-blue-500/30 disabled:border-slate-600/30 backdrop-blur-xl text-sm sm:text-base min-w-[100px] sm:min-w-[120px]"
+                  className={`bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-700 disabled:to-slate-800 disabled:cursor-not-allowed text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 shadow-xl shadow-blue-600/25 hover:shadow-blue-600/40 disabled:shadow-slate-800/25 border border-blue-500/30 disabled:border-slate-600/30 backdrop-blur-xl text-sm sm:text-base min-w-[100px] sm:min-w-[120px] ${mobileState.isMobile ? 'touch-feedback touch-target' : ''}`}
+                  onClick={() => mobileState.isMobile && triggerHaptic('light')}
                 >
                   {isLoading ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className={`${mobileState.isMobile ? 'mobile-loading' : 'w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'}`} />
                       <span>Analyzing</span>
                     </>
                   ) : (
@@ -914,6 +1038,18 @@ export const CognitiveDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Floating Action Button */}
+      {showMobileFab && mobileState.isMobile && (
+        <button
+          onClick={handleMobileFab}
+          className="mobile-fab touch-feedback lg:hidden"
+          title="Quick Input"
+          aria-label="Quick input for medical case"
+        >
+          ✍️
+        </button>
+      )}
     </div>
       
       <style jsx>{`

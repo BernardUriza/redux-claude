@@ -6,6 +6,8 @@ import { DiagnosticCycle, SOAPAnalysis } from '../types/medical'
 
 // === FASE 4: Nuevas Interfaces para Redux Médico Completo ===
 
+export type UrgencyLevel = 'low' | 'medium' | 'high' | 'critical'
+
 export interface SubjectiveData {
   chiefComplaint: string
   presentIllness: string
@@ -79,8 +81,11 @@ export interface PhysicianNote {
   id: string
   timestamp: number
   content: string
-  type: 'clinical' | 'administrative' | 'followup'
+  type: 'clinical' | 'administrative' | 'legal' | 'observation'
+  category: string
+  priority: 'low' | 'medium' | 'high' | 'critical'
   physicianId: string
+  physicianName: string
 }
 
 export interface Reminder {
@@ -156,7 +161,7 @@ export interface MedicalChatState {
     soap: SOAPStructure | null
     cycles: DiagnosticCycle[]
     confidence: number
-    urgencyLevel: 'low' | 'medium' | 'high' | 'critical'
+    urgencyLevel: UrgencyLevel
     lastUpdated: number
   }
   
@@ -418,7 +423,7 @@ const medicalChatSlice = createSlice({
     },
 
     // Manejo de urgencia
-    updateUrgencyLevel: (state, action: PayloadAction<'low' | 'medium' | 'high' | 'critical'>) => {
+    updateUrgencyLevel: (state, action: PayloadAction<UrgencyLevel>) => {
       state.currentCase.urgencyLevel = action.payload
       
       // Agregar log crítico si es urgencia alta

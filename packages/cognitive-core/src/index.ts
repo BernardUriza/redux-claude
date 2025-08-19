@@ -44,6 +44,35 @@ export type {
   DiagnosticResult 
 } from './types/medical'
 
+// === FASE 4: REDUX MÉDICO COMPLETO ===
+// Tipos
+export type { 
+  SubjectiveData, 
+  ObjectiveFindings, 
+  DifferentialDiagnosis, 
+  TreatmentPlan, 
+  SOAPStructure, 
+  PhysicianNote, 
+  Reminder, 
+  AuditLog, 
+  MedicalSession,
+  UrgencyLevel
+} from './store/medicalChatSlice'
+
+// Acciones Redux
+export { 
+  updateSOAPStructure,
+  updateSOAPSection,
+  updateUrgencyLevel,
+  addPhysicianNote,
+  updatePhysicianNote,
+  addReminder,
+  updateReminder,
+  completeReminder,
+  resetCurrentCase,
+  resetMedicalSession
+} from './store/medicalChatSlice'
+
 // === STREAMING ===
 export { StreamingService } from './streaming'
 export type { StreamingChunk } from './streaming'

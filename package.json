@@ -16,8 +16,8 @@
     "lint:core": "cd packages/cognitive-core && npm run lint",
     "clean": "rm -rf .next && npm run clean:core",
     "clean:core": "cd packages/cognitive-core && npm run clean",
-    "export": "npm run build && next export",
-    "netlify-build": "npm run build:core && next build && next export"
+    "export": "npm run build",
+    "netlify-build": "npm run build:core && next build"
   },
   "repository": {
     "type": "git",
