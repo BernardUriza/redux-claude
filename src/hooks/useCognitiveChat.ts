@@ -7,6 +7,7 @@ import { RootState, AppDispatch } from '@/store/store'
 import { addUserMessage, addAssistantMessage, setError } from '@/store/chatSlice'
 import { processCognitively } from '@/store/cognitiveSlice'
 import { cognitiveOrchestrator } from '@/services/cognitiveOrchestrator'
+import { ResponseQualityAgent } from '@/agents/ResponseQualityAgent'
 import type { MedicalDecision, Differential, Medication } from '@/types/cognitive'
 import type { DecisionResult, DiagnosticDecision, TriageDecision, ValidationDecision, TreatmentDecision } from '@/types/agents'
 
@@ -26,7 +27,7 @@ export const useCognitiveChat = () => {
       const cognitiveResult = await dispatch(processCognitively(message)).unwrap()
       
       // 3. Generar respuesta coherente basada en cognición
-      const response = generateCognitiveResponse(cognitiveResult)
+      const response = await generateCognitiveResponse(cognitiveResult, message)
       
       // 4. Agregar respuesta del asistente
       dispatch(addAssistantMessage(response))
@@ -68,7 +69,7 @@ interface CognitiveResult {
 }
 
 // Generar respuesta coherente basada en resultados cognitivos
-function generateCognitiveResponse(cognitiveResult: CognitiveResult): string {
+async function generateCognitiveResponse(cognitiveResult: CognitiveResult, userInput: string = ''): Promise<string> {
   const { decisions, consensus, memory, insights } = cognitiveResult
   
   let response = ""
@@ -213,6 +214,28 @@ function generateCognitiveResponse(cognitiveResult: CognitiveResult): string {
   
   if (consensus && consensus.reached) {
     response += `*Consenso multi-agente alcanzado*\n`
+  }
+  
+  // 9. Aplicar agente de calidad y mejora de respuesta
+  try {
+    const qualityAgent = new ResponseQualityAgent()
+    const qualityResult = await qualityAgent.makeDecision({
+      timestamp: Date.now(),
+      context: {
+        user_input: userInput,
+        current_response: response,
+        conversation_history: [],
+        cognitive_result: cognitiveResult
+      }
+    })
+    
+    if (qualityResult.success && qualityResult.decision?.should_improve && qualityResult.decision.improved_response) {
+      // Usar la respuesta mejorada
+      return qualityResult.decision.improved_response.improved_response
+    }
+  } catch (error) {
+    console.warn('Error en agente de calidad:', error)
+    // Continuar con la respuesta original si hay error
   }
   
   return response

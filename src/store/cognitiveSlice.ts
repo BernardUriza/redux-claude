@@ -5,6 +5,7 @@ import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit'
 import { DecisionResult } from '@/types/agents'
 import { 
   CognitiveEvent, 
+  CognitiveEventType,
   Goal, 
   SelfAssessment,
   VotingRound,
@@ -145,6 +146,25 @@ const cognitiveSlice = createSlice({
     
     clearCognitiveEvents: (state) => {
       state.recentEvents = []
+    },
+    
+    emitProcessingStep: (state, action: PayloadAction<{
+      step: string
+      type: 'diagnostic' | 'triage' | 'validation' | 'treatment' | 'memory' | 'consensus'
+      status: 'started' | 'completed' | 'error'
+      confidence?: number
+    }>) => {
+      const event: CognitiveEvent = {
+        type: CognitiveEventType.PROCESSING_STEP,
+        timestamp: Date.now(),
+        data: action.payload,
+        impact: 'low' as const,
+        requiresAttention: false
+      }
+      state.recentEvents.unshift(event)
+      if (state.recentEvents.length > 50) {
+        state.recentEvents.pop()
+      }
     }
   },
   extraReducers: (builder) => {
@@ -186,7 +206,8 @@ export const {
   addCognitiveEvent,
   updateSystemHealth,
   updateGoalProgress,
-  clearCognitiveEvents
+  clearCognitiveEvents,
+  emitProcessingStep
 } = cognitiveSlice.actions
 
 export default cognitiveSlice.reducer

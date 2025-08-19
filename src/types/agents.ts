@@ -5,7 +5,8 @@ export enum AgentType {
   VALIDATION = 'validation', 
   DOCUMENTATION = 'documentation',
   TREATMENT = 'treatment',
-  TRIAGE = 'triage'
+  TRIAGE = 'triage',
+  RESPONSE_QUALITY = 'response_quality'
 }
 
 export enum AgentStatus {

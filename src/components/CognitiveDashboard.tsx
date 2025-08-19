@@ -5,6 +5,8 @@
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useCognitiveChat } from '@/hooks/useCognitiveChat'
+import { useCognitiveStreaming } from '@/hooks/useCognitiveStreaming'
+import { StreamingProgress } from './StreamingProgress'
 import type { MedicalConsensus, CognitiveInsights } from '@/types/cognitive'
 import type { DecisionResult } from '@/types/agents'
 
@@ -261,6 +263,14 @@ export const CognitiveDashboard = () => {
     overallHealth
   } = useCognitiveChat()
   
+  const {
+    steps,
+    isStreaming,
+    startStreaming,
+    stopStreaming,
+    progressPercentage
+  } = useCognitiveStreaming()
+  
   const chatEndRef = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
@@ -285,244 +295,255 @@ export const CognitiveDashboard = () => {
     e.preventDefault()
     if (!input.trim() || isLoading) return
     
+    const messageToSend = input
+    setInput('')
+    
     try {
-      await sendMessage(input)
+      // Iniciar streaming visual
+      startStreaming(messageToSend)
+      
+      // Enviar mensaje para procesamiento cognitivo
+      await sendMessage(messageToSend)
+      
     } catch (error) {
       console.error('Cognitive processing failed:', error)
+      stopStreaming()
     }
-    
-    setInput('')
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      {/* Medical Grid Background */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDEwIDAgTCAwIDAgMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDMwLCA0MSwgNTksIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30" />
-      
-      {/* Subtle animated elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}} />
-      </div>
-      
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">🧠</span>
+    <div className="min-h-screen bg-gray-900 text-white flex">
+      {/* Sidebar */}
+      <div className="w-64 bg-gray-950 border-r border-gray-800 flex flex-col">
+        {/* Sidebar Header */}
+        <div className="p-4 border-b border-gray-800">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white text-sm font-bold">🏥</span>
             </div>
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-300 via-blue-300 to-slate-300 bg-clip-text text-transparent">
-                Cognitive Medical AI
-              </h1>
-              <p className="text-slate-400 text-sm">Advanced Multi-Agent Diagnostic System</p>
+              <h1 className="text-lg font-semibold text-white">Medical AI</h1>
+              <p className="text-xs text-gray-400">Cognitive Assistant</p>
             </div>
-          </div>
-          
-          <div className="inline-flex items-center space-x-2 px-4 py-2 bg-slate-800/50 backdrop-blur-sm rounded-full border border-slate-600/30">
-            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-            <span className="text-sm text-slate-300">System Online</span>
-            <span className="text-xs text-slate-500">v2.0</span>
           </div>
         </div>
-        
-        {/* Cognitive Health Metrics */}
-        <CognitiveHealthMetrics metrics={cognitiveMetrics} />
-        
-        {/* Status Panel */}
-        <CognitiveStatusPanel metrics={cognitiveMetrics} />
-        
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* Chat Panel - Claude.ai Style */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            {/* Chat Header */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">🏥</span>
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Medical AI Assistant</h2>
-                  <p className="text-sm text-gray-500">Cognitive medical analysis powered by Claude</p>
-                </div>
+
+        {/* New Chat Button */}
+        <div className="p-4">
+          <button 
+            onClick={() => setInput('')}
+            className="w-full flex items-center space-x-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span className="text-sm">New consultation</span>
+          </button>
+        </div>
+
+        {/* System Status */}
+        <div className="px-4 py-2">
+          <div className="bg-gray-800 rounded-lg p-3">
+            <div className="flex items-center space-x-2 mb-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              <span className="text-xs text-gray-300">System Online</span>
+            </div>
+            <div className="space-y-1 text-xs text-gray-400">
+              <div className="flex justify-between">
+                <span>Confidence:</span>
+                <span>{cognitiveMetrics.systemConfidence}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Agents:</span>
+                <span>5/5 active</span>
               </div>
             </div>
-            
-            {/* Chat Messages */}
-            <div className="h-96 overflow-y-auto bg-white">
-              {messages.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-400">
-                  <div className="text-center px-6">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-2xl">🩺</span>
-                    </div>
-                    <p className="text-gray-600 text-sm">Ready for medical consultation...</p>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex-1 p-4">
+          <nav className="space-y-1">
+            <a href="#" className="flex items-center space-x-2 px-3 py-2 text-gray-300 hover:bg-gray-800 rounded-lg">
+              <span className="text-sm">💊 Treatment Plans</span>
+            </a>
+            <a href="#" className="flex items-center space-x-2 px-3 py-2 text-gray-300 hover:bg-gray-800 rounded-lg">
+              <span className="text-sm">🔍 Diagnostics</span>
+            </a>
+            <a href="#" className="flex items-center space-x-2 px-3 py-2 text-gray-300 hover:bg-gray-800 rounded-lg">
+              <span className="text-sm">📊 Analytics</span>
+            </a>
+          </nav>
+        </div>
+
+        {/* Bottom Info */}
+        <div className="p-4 border-t border-gray-800">
+          <div className="text-xs text-gray-500">
+            <p>Built by Bernard Orozco</p>
+            <p>Powered by Claude AI</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Chat Header */}
+        <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">🤖</span>
+              </div>
+              <div>
+                <h2 className="text-lg font-medium text-white">Medical AI Assistant</h2>
+                <p className="text-sm text-gray-400">Multi-agent cognitive analysis system</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="px-3 py-1 bg-green-900/30 border border-green-700 rounded-full">
+                <span className="text-xs text-green-400">Online</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content - Solo Chat */}
+        <div className="flex-1 flex flex-col">
+          
+          {/* Chat Messages Area */}
+          <div className="flex-1 overflow-y-auto bg-gray-900 custom-scrollbar">
+            {messages.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center px-6">
+                  <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl">🩺</span>
                   </div>
+                  <p className="text-gray-400 text-sm">Ready for medical consultation...</p>
+                  <p className="text-gray-500 text-xs mt-2">Describe your medical case to get started</p>
                 </div>
-              ) : (
-                <div className="space-y-0">
-                  {messages.map((msg, idx) => (
-                    <div key={idx} className={`border-b border-gray-100 message-appear ${msg.role === 'assistant' ? 'bg-gray-50' : 'bg-white'}`}>
-                      <div className="max-w-4xl mx-auto px-6 py-6">
-                        <div className="flex space-x-4">
-                          {/* Avatar */}
-                          <div className="flex-shrink-0">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                              msg.role === 'user' 
-                                ? 'bg-blue-100 text-blue-600' 
-                                : 'bg-orange-100 text-orange-600'
-                            }`}>
-                              <span className="text-sm font-medium">
-                                {msg.role === 'user' ? '👨‍⚕️' : '🤖'}
-                              </span>
-                            </div>
+              </div>
+            ) : (
+              <div className="space-y-0">
+                {messages.map((msg, idx) => (
+                  <div key={idx} className={`border-b border-gray-800 message-appear ${msg.role === 'assistant' ? 'bg-gray-800/30' : 'bg-gray-900'}`}>
+                    <div className="max-w-4xl mx-auto px-6 py-6">
+                      <div className="flex space-x-4">
+                        {/* Avatar */}
+                        <div className="flex-shrink-0">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            msg.role === 'user' 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-purple-600 text-white'
+                          }`}>
+                            <span className="text-sm font-medium">
+                              {msg.role === 'user' ? '👨‍⚕️' : '🤖'}
+                            </span>
                           </div>
-                          
-                          {/* Message Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 mb-1">
-                              {msg.role === 'user' ? 'Doctor' : 'Medical AI'}
-                            </div>
-                            <div className="prose prose-sm max-w-none">
-                              {msg.role === 'assistant' ? (
-                                <ReactMarkdown 
-                                  components={{
-                                    h1: ({children}) => <h1 className="text-xl font-bold mb-4 text-gray-900 border-b border-gray-200 pb-2">{children}</h1>,
-                                    h2: ({children}) => <h2 className="text-lg font-bold mb-3 text-gray-900">{children}</h2>,
-                                    h3: ({children}) => <h3 className="text-base font-semibold mb-2 text-gray-800">{children}</h3>,
-                                    p: ({children}) => <p className="mb-3 text-gray-700 leading-relaxed">{children}</p>,
-                                    ul: ({children}) => <ul className="mb-3 ml-6 space-y-1">{children}</ul>,
-                                    li: ({children}) => <li className="text-gray-700 list-disc">{children}</li>,
-                                    strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                                    em: ({children}) => <em className="italic text-gray-600">{children}</em>,
-                                    code: ({children}) => <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">{children}</code>,
-                                    hr: () => <hr className="my-4 border-gray-200" />,
-                                    blockquote: ({children}) => <blockquote className="border-l-4 border-orange-200 pl-4 my-3 text-gray-600 italic">{children}</blockquote>
-                                  }}
-                                >
-                                  {msg.content}
-                                </ReactMarkdown>
-                              ) : (
-                                <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                                  {msg.content}
-                                </div>
-                              )}
-                            </div>
+                        </div>
+                        
+                        {/* Message Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white mb-2">
+                            {msg.role === 'user' ? 'Doctor' : 'Medical AI'}
+                          </div>
+                          <div className="prose prose-invert prose-sm max-w-none">
+                            {msg.role === 'assistant' ? (
+                              <ReactMarkdown 
+                                components={{
+                                  h1: ({children}) => <h1 className="text-xl font-bold mb-4 text-white border-b border-gray-700 pb-2">{children}</h1>,
+                                  h2: ({children}) => <h2 className="text-lg font-bold mb-3 text-blue-300">{children}</h2>,
+                                  h3: ({children}) => <h3 className="text-base font-semibold mb-2 text-blue-200">{children}</h3>,
+                                  p: ({children}) => <p className="mb-3 text-gray-300 leading-relaxed">{children}</p>,
+                                  ul: ({children}) => <ul className="mb-3 ml-6 space-y-1">{children}</ul>,
+                                  li: ({children}) => <li className="text-gray-300 list-disc">{children}</li>,
+                                  strong: ({children}) => <strong className="font-semibold text-white">{children}</strong>,
+                                  em: ({children}) => <em className="italic text-gray-400">{children}</em>,
+                                  code: ({children}) => <code className="bg-gray-800 px-2 py-1 rounded text-sm font-mono text-blue-300">{children}</code>,
+                                  hr: () => <hr className="my-4 border-gray-700" />,
+                                  blockquote: ({children}) => <blockquote className="border-l-4 border-blue-500 pl-4 my-3 text-gray-400 italic">{children}</blockquote>
+                                }}
+                              >
+                                {msg.content}
+                              </ReactMarkdown>
+                            ) : (
+                              <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+                                {msg.content}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                  
-                  {isLoading && (
-                    <div className="border-b border-gray-100 bg-gray-50">
-                      <div className="max-w-4xl mx-auto px-6 py-6">
-                        <div className="flex space-x-4">
-                          <div className="flex-shrink-0">
-                            <div className="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-medium">🤖</span>
-                            </div>
+                  </div>
+                ))}
+                
+                {isLoading && (
+                  <div className="border-b border-gray-800 bg-gray-800/30">
+                    <div className="max-w-4xl mx-auto px-6 py-6">
+                      <div className="flex space-x-4">
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium">🤖</span>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 mb-1">Medical AI</div>
-                            <div className="flex items-center space-x-2 text-gray-500">
-                              <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white mb-4">Medical AI</div>
+                          {isStreaming ? (
+                            <StreamingProgress 
+                              steps={steps}
+                              progressPercentage={progressPercentage}
+                            />
+                          ) : (
+                            <div className="flex items-center space-x-2 text-gray-400">
+                              <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
                               <span className="text-sm">Analyzing medical case...</span>
                             </div>
-                          </div>
+                          )}
                         </div>
                       </div>
                     </div>
-                  )}
-                  
-                  <div ref={chatEndRef} />
-                </div>
-              )}
-            </div>
-            
-            {/* Input Form */}
-            <div className="border-t border-gray-200 bg-white px-6 py-4">
-              <form onSubmit={handleSubmit} className="flex space-x-3">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Describe the medical case here..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500 bg-white"
-                    disabled={isLoading}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isLoading || !input.trim()}
-                  className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Analyzing</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Send</span>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                    </>
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
-          
-          {/* Cognitive Results Panel */}
-          <div className="bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-slate-600/30">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-lg flex items-center justify-center">
-                <span className="text-lg">🔮</span>
+                  </div>
+                )}
+                
+                <div ref={chatEndRef} />
               </div>
-              <h2 className="text-xl font-semibold text-slate-200">Cognitive Analysis</h2>
-            </div>
-            
-            <div className="h-96 overflow-y-auto custom-scrollbar">
-              {isLoading && (
-                <div className="bg-cyan-900/20 rounded-xl p-4 border border-cyan-500/20 mb-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-cyan-300">Running cognitive analysis...</span>
-                  </div>
-                </div>
-              )}
-              
-              {lastConsensus && <ConsensusResult consensus={lastConsensus} />}
-              {lastInsights && <InsightsPanel insights={lastInsights} />}
-              
-              {lastCognitiveResult && lastCognitiveResult.length > 0 ? (
-                <div className="space-y-3">
-                  {lastCognitiveResult.map((decision: DecisionResult) => (
-                    <AgentDecision key={decision.id} decision={decision} />
-                  ))}
-                </div>
-              ) : !isLoading && (
-                <div className="flex items-center justify-center h-32 text-slate-500">
-                  <div className="text-center">
-                    <div className="text-3xl mb-2">🧠</div>
-                    <p className="text-sm">Ready for cognitive processing</p>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
           </div>
           
-        </div>
-        
-        {/* Footer */}
-        <div className="text-center mt-12 text-slate-500 text-sm">
-          <p>Created by <span className="text-cyan-400 font-medium">Bernard Orozco</span> • Cognitive Medical AI System</p>
+          {/* Input Form */}
+          <div className="border-t border-gray-800 bg-gray-900 px-6 py-4">
+            <form onSubmit={handleSubmit} className="flex space-x-3">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Describe the medical case here..."
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
+                  disabled={isLoading}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isLoading || !input.trim()}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Analyzing</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Send</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
       
@@ -531,15 +552,15 @@ export const CognitiveDashboard = () => {
           width: 6px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgb(243 244 246);
+          background: rgb(31 41 55);
           border-radius: 3px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgb(209 213 219);
+          background: rgb(75 85 99);
           border-radius: 3px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgb(156 163 175);
+          background: rgb(107 114 128);
         }
         
         /* Claude.ai-style message animations */

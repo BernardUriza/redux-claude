@@ -261,7 +261,8 @@ export enum CognitiveEventType {
   PIPELINE_ADAPTED = 'pipeline_adapted',
   ANOMALY_DETECTED = 'anomaly_detected',
   CONFIDENCE_THRESHOLD_CROSSED = 'confidence_threshold_crossed',
-  KNOWLEDGE_GAP_IDENTIFIED = 'knowledge_gap_identified'
+  KNOWLEDGE_GAP_IDENTIFIED = 'knowledge_gap_identified',
+  PROCESSING_STEP = 'processing_step'
 }
 
 // ============= MEDICAL DECISION INTERFACES =============
