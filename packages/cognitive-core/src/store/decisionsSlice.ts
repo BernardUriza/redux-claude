@@ -7,8 +7,8 @@ import {
   ProviderType, 
   DecisionStatus,
   CircuitBreakerState 
-} from '@/types/decisional'
-import { AuditEntry } from '@/types/audit'
+} from '../types/decisional'
+import { AuditEntry } from '../types/audit'
 
 const initialCircuitBreaker: CircuitBreakerState = {
   isOpen: false,

@@ -1,7 +1,7 @@
 // src/agents/BaseAgent.ts
 // Clase base para todos los agentes - Bernard Orozco
 
-import { DecisionResult, AgentType } from '@/types/agents'
+import { DecisionResult, AgentType } from '../types/agents'
 
 // Interface simplificada para requests básicos
 export interface SimpleDecisionRequest {

@@ -9,8 +9,8 @@ import {
   CognitiveEvent,
   CognitiveEventType,
   CognitiveConfig
-} from '@/types/cognitive'
-import { AgentType, DecisionResult } from '@/types/agents'
+} from '../types/cognitive'
+import { AgentType, DecisionResult } from '../types/agents'
 import { nanoid } from '@reduxjs/toolkit'
 import { contextualMemory } from './contextualMemory'
 import { reinforcementLearning } from './reinforcementLearning'

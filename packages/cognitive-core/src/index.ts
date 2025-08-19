@@ -19,6 +19,10 @@ export type { MedicalValidationResult } from './utils/medicalValidator'
 // === HOOKS ===
 export { useMedicalChat } from './hooks/useMedicalChat'
 
+// === SOAP PROCESSING ===
+export { SOAPResolver } from './soap/SOAPResolver'
+export type { SOAPResult, SOAPSection, AgentPersonalityResult } from './soap/SOAPResolver'
+
 // === MEDICAL TYPES ===
 export type { MedicalMessage } from './store/medicalChatSlice'
 

@@ -7,8 +7,8 @@ import {
   AgentVote,
   Debate,
   Argument
-} from '@/types/cognitive'
-import { AgentType, DecisionResult } from '@/types/agents'
+} from '../types/cognitive'
+import { AgentType, DecisionResult } from '../types/agents'
 import { nanoid } from '@reduxjs/toolkit'
 import { reinforcementLearning } from './reinforcementLearning'
 

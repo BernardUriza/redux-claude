@@ -8,11 +8,11 @@ import {
   AgentDecision,
   CircuitBreakerState,
   AgentStatus
-} from '@/types/agents'
+} from '../types/agents'
 import { AGENT_REGISTRY, getEnabledAgents, getAgentDefinition, isAgentEnabled } from './agentRegistry'
 import { callClaudeForDecision, mapAgentTypeToDecisionType } from './decisionalMiddleware'
 import { nanoid } from '@reduxjs/toolkit'
-import { store } from '@/store/store'
+import { store } from '../store/store'
 // Simplified imports
 import { contextualMemory } from './contextualMemory'
 import { reinforcementLearning } from './reinforcementLearning'

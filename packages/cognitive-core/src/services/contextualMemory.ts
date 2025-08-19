@@ -9,8 +9,8 @@ import {
   SemanticInsight,
   PatientContext,
   Hypothesis
-} from '@/types/cognitive'
-import { DecisionResult, AgentType } from '@/types/agents'
+} from '../types/cognitive'
+import { DecisionResult, AgentType } from '../types/agents'
 import { nanoid } from '@reduxjs/toolkit'
 
 export class ContextualMemorySystem {

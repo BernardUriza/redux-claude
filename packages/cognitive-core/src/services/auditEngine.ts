@@ -1,7 +1,7 @@
 // src/services/auditEngine.ts
 // Creado por Bernard Orozco
-import { AuditEntry, AuditLevel, AuditCategory, SessionAudit } from '@/types/audit'
-import { DecisionItem, DecisionType, DecisionStatus } from '@/types/decisional'
+import { AuditEntry, AuditLevel, AuditCategory, SessionAudit } from '../types/audit'
+import { DecisionItem, DecisionType, DecisionStatus } from '../types/decisional'
 import { nanoid } from '@reduxjs/toolkit'
 
 export class MedicalAuditEngine {

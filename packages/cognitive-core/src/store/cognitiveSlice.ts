@@ -2,7 +2,7 @@
 // Redux Slice para Sistema Cognitivo - Bernard Orozco
 
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit'
-import { DecisionResult } from '@/types/agents'
+import { DecisionResult } from '../types/agents'
 import { 
   CognitiveEvent, 
   CognitiveEventType,
@@ -12,7 +12,7 @@ import {
   LearningUpdate,
   MedicalConsensus,
   CognitiveInsights
-} from '@/types/cognitive'
+} from '../types/cognitive'
 // Dynamic import to avoid circular dependency
 
 interface HealthMetrics {

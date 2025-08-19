@@ -8,7 +8,7 @@ import {
   AgentMetrics,
   AgentCircuitBreaker,
   CircuitBreakerConfig
-} from '@/types/agents'
+} from '../types/agents'
 
 const defaultCircuitBreakerConfig: CircuitBreakerConfig = {
   maxFailures: 3,

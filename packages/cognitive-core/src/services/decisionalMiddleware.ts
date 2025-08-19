@@ -10,9 +10,9 @@ import {
   TreatmentDecision, 
   TriageDecision, 
   DocumentationDecision 
-} from '@/types/agents'
+} from '../types/agents'
 
-import { decisionEngineService } from '@/decision-engine/DecisionEngineService'
+import { decisionEngineService } from '../decision-engine/DecisionEngineService'
 
 // Tipos para el middleware (mantenidos para compatibilidad)
 export type DecisionType = 'diagnosis' | 'validation' | 'treatment' | 'triage' | 'documentation'

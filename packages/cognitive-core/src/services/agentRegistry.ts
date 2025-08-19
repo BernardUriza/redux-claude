@@ -1,6 +1,6 @@
 // src/services/agentRegistry.ts
 // Creado por Bernard Orozco
-import { AgentType, AgentDefinition } from '@/types/agents'
+import { AgentType, AgentDefinition } from '../types/agents'
 
 export const AGENT_REGISTRY: Record<AgentType, AgentDefinition> = {
   [AgentType.DIAGNOSTIC]: {

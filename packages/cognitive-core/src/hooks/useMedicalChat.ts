@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { ClaudeAdapter } from '../decision-engine/providers/claude'
 import { MedicalContentValidator } from '../utils/medicalValidator'
+import { SOAPResolver } from '../soap/SOAPResolver'
 import { 
   addMessage, 
   startStreaming, 
@@ -20,6 +21,7 @@ export const useMedicalChat = () => {
   const dispatch = useDispatch<AppDispatch>()
   const [claudeAdapter] = useState(() => new ClaudeAdapter())
   const [medicalValidator] = useState(() => new MedicalContentValidator())
+  const [soapResolver] = useState(() => new SOAPResolver())
   
   const { 
     messages, 
@@ -91,60 +93,78 @@ export const useMedicalChat = () => {
       // Iniciar streaming en Redux
       dispatch(startStreaming({ messageId: assistantMessageId }))
 
-      // Prompt médico profesional
-      const systemPrompt = `Eres un especialista médico AI. Proporciona análisis clínico profesional estructurado.
-
-Estructura tu respuesta así:
-## 🏥 EVALUACIÓN CLÍNICA
-
-**Diagnóstico Principal:**
-[Diagnóstico más probable]
-
-**Diagnósticos Diferenciales:**
-- [Opción 1]
-- [Opción 2] 
-- [Opción 3]
-
-**Plan Terapéutico:**
-*Tratamiento inmediato:*
-- [Medicación específica con dosis]
-- [Medidas de soporte]
-
-*Seguimiento:*
-- [Plan de seguimiento]
-- [Criterios de derivación]
-
-**Estudios Complementarios:**
-- [Estudios necesarios]
-
-Responde en español, sin emojis adicionales, formato profesional médico.`
-
-      // STREAMING REAL con Claude SDK
-      let fullContent = ''
-      console.log('🚀 Iniciando streaming con prompt:', systemPrompt.substring(0, 100))
+      // 🧠 PROCESAMIENTO SOAP MULTI-AGENTE
+      console.log('🧠 Iniciando análisis SOAP multi-agente...')
       
-      const result = await claudeAdapter.makeStreamingRequest(
-        systemPrompt,
-        message,
-        undefined, // signal
-        (chunk: string) => {
-          console.log('📝 Chunk recibido:', chunk)
-          fullContent += chunk
-          // Actualizar contenido en tiempo real
-          dispatch(updateStreamingProgress({
-            progress: Math.min(95, (fullContent.length / 1000) * 100),
-            content: fullContent
-          }))
-        }
-      )
+      // Stream del proceso completo
+      let soapContent = ''
+      let progressStep = 0
+      const totalSteps = 4 // S, O, A, P
       
-      console.log('✅ Streaming completado. Resultado:', result)
-      console.log('📄 Contenido final:', fullContent)
+      // Función para streamear progreso del SOAP
+      const streamSOAPProgress = (section: string, content: string) => {
+        progressStep++
+        soapContent += `\n\n## ${section}\n\n${content}`
+        
+        dispatch(updateStreamingProgress({
+          progress: Math.min(95, (progressStep / totalSteps) * 100),
+          content: soapContent
+        }))
+      }
+
+      // Resolver SOAP con agentes multi-máscara
+      const soapResult = await soapResolver.resolveSOAP(message)
+      
+      // Streamear cada sección SOAP progresivamente
+      streamSOAPProgress('S - SUBJETIVO', soapResult.soap.subjetivo)
+      await new Promise(resolve => setTimeout(resolve, 500)) // Simular tiempo de procesamiento
+      
+      streamSOAPProgress('O - OBJETIVO', soapResult.soap.objetivo)
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      streamSOAPProgress('A - ANÁLISIS', soapResult.soap.analisis)
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      streamSOAPProgress('P - PLAN', soapResult.soap.plan)
+      
+      // Agregar información NOM-004 formal
+      soapContent += `\n\n---\n\n## 📋 EXPEDIENTE CLÍNICO NOM-004-SSA3-2012\n\n`
+      soapContent += `**🏥 Diagnóstico principal:** ${soapResult.soapFormal.soap.analisis.diagnosticoPrincipal.condicion}\n`
+      soapContent += `**📊 CIE-10:** ${soapResult.soapFormal.soap.analisis.diagnosticoPrincipal.cie10}\n`
+      soapContent += `**⚡ Urgencia ESI:** ${soapResult.soapFormal.metadata.clasificacion.urgencia}/5\n`
+      soapContent += `**📈 Calidad normativa:** ${soapResult.soapFormal.metadata.calidad.cumplimientoNormativo}%\n\n`
+      
+      // Agregar metadata de agentes
+      soapContent += `## 🧠 ANÁLISIS MULTI-AGENTE\n\n`
+      soapContent += `**Versión:** ${soapResult.metadata.version}\n`
+      soapContent += `**Normativa compliant:** ${soapResult.metadata.normativaCompliant ? '✅ SÍ' : '❌ NO'}\n`
+      soapContent += `**Agentes participantes:** ${soapResult.metadata.agentsUsed.join(', ')}\n\n`
+      soapContent += `**Nivel de consenso:** ${Math.round(soapResult.metadata.consensusLevel * 100)}%\n\n`
+      soapContent += `**Tiempo de procesamiento:** ${soapResult.metadata.processingTime}ms\n\n`
+      
+      if (soapResult.metadata.warningFlags.length > 0) {
+        soapContent += `**⚠️ Alertas clínicas:**\n`
+        soapResult.metadata.warningFlags.forEach(flag => {
+          soapContent += `- ${flag}\n`
+        })
+        soapContent += '\n'
+      }
+      
+      // Agregar detalles de cada agente
+      soapContent += `### Contribuciones por Especialidad:\n\n`
+      soapResult.agentDecisions.forEach(agent => {
+        soapContent += `**${agent.agentName}** (${agent.sectionContribution.toUpperCase()})\n`
+        soapContent += `- Confianza: ${Math.round(agent.confidence * 100)}%\n`
+        soapContent += `- Enfoque: ${agent.reasoning}\n\n`
+      })
+
+      console.log('✅ SOAP completado. Resultado:', soapResult.metadata)
+      console.log('📄 Contenido SOAP final:', soapContent)
 
       // Completar streaming
       dispatch(completeStreaming({
-        finalContent: fullContent,
-        confidence: 0.85
+        finalContent: soapContent,
+        confidence: soapResult.confidence
       }))
 
     } catch (error) {

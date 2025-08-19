@@ -11,7 +11,7 @@ import {
   TreatmentDecision, 
   TriageDecision, 
   DocumentationDecision 
-} from '@/types/agents'
+} from '../types/agents'
 
 // This is a backup of the original decisionalMiddleware.ts
 // The original code was moved here for reference and rollback purposes

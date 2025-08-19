@@ -12,8 +12,8 @@ import {
   ExecutionCondition,
   ContextualMemory,
   PerformanceMetrics
-} from '@/types/cognitive'
-import { AgentType, DecisionResult } from '@/types/agents'
+} from '../types/cognitive'
+import { AgentType, DecisionResult } from '../types/agents'
 import { nanoid } from '@reduxjs/toolkit'
 import { reinforcementLearning } from './reinforcementLearning'
 import { contextualMemory } from './contextualMemory'

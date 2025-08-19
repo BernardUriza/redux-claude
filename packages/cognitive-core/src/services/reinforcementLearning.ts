@@ -6,9 +6,9 @@ import {
   PerformanceMetrics,
   RewardHistory,
   LearningUpdate
-} from '@/types/cognitive'
-import { AgentType, DecisionResult } from '@/types/agents'
-import { store } from '@/store/store'
+} from '../types/cognitive'
+import { AgentType, DecisionResult } from '../types/agents'
+import { store } from '../store/store'
 
 export class ReinforcementLearningSystem {
   private learning: ReinforcementLearning
