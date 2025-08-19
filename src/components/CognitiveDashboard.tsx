@@ -3,6 +3,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { useCognitiveChat } from '@/hooks/useCognitiveChat'
 import type { MedicalConsensus, CognitiveInsights } from '@/types/cognitive'
 import type { DecisionResult } from '@/types/agents'
@@ -362,8 +363,29 @@ export const CognitiveDashboard = () => {
                           ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white' 
                           : 'bg-slate-800/80 text-slate-200 border border-slate-600/30'
                       }`}>
-                        <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                          {msg.content}
+                        <div className="text-sm leading-relaxed">
+                          {msg.role === 'assistant' ? (
+                            <ReactMarkdown 
+                              components={{
+                                h1: ({children}) => <h1 className="text-xl font-bold mb-3 text-cyan-300">{children}</h1>,
+                                h2: ({children}) => <h2 className="text-lg font-bold mb-2 text-cyan-300">{children}</h2>,
+                                h3: ({children}) => <h3 className="text-base font-semibold mb-2 text-blue-300">{children}</h3>,
+                                p: ({children}) => <p className="mb-2 text-slate-200">{children}</p>,
+                                ul: ({children}) => <ul className="mb-2 ml-4 space-y-1">{children}</ul>,
+                                li: ({children}) => <li className="text-slate-200 list-disc">{children}</li>,
+                                strong: ({children}) => <strong className="font-semibold text-cyan-300">{children}</strong>,
+                                em: ({children}) => <em className="italic text-slate-300">{children}</em>,
+                                code: ({children}) => <code className="bg-slate-700 px-1 py-0.5 rounded text-cyan-300 text-xs">{children}</code>,
+                                hr: () => <hr className="my-3 border-slate-600" />
+                              }}
+                            >
+                              {msg.content}
+                            </ReactMarkdown>
+                          ) : (
+                            <div className="whitespace-pre-wrap">
+                              {msg.content}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

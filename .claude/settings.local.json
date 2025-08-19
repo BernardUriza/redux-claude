@@ -21,7 +21,8 @@
       "WebFetch(domain:dev.to)",
       "Bash(npx tsc:*)",
       "Bash(timeout 30s npm run build:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
