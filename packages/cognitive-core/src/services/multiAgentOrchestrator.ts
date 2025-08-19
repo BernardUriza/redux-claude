@@ -327,9 +327,9 @@ export class MultiAgentOrchestrator {
     failedAgents: number
   } {
     const state = store.getState()
-    const basic = state.basic
+    const medicalChat = state.medicalChat
     
-    // Simplified for now
+    // Calcular métricas basadas en estado médico
     return {
       totalAgents: 5,
       activeAgents: 5,

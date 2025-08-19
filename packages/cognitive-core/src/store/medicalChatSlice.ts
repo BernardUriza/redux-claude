@@ -88,11 +88,12 @@ const medicalChatSlice = createSlice({
   initialState,
   reducers: {
     // === MANEJO DE MENSAJES ===
-    addMessage: (state, action: PayloadAction<Omit<MedicalMessage, 'id' | 'timestamp'>>) => {
+    addMessage: (state, action: PayloadAction<Omit<MedicalMessage, 'id' | 'timestamp'> & { id?: string }>) => {
+      const { id, ...messageData } = action.payload
       const message: MedicalMessage = {
-        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: id || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         timestamp: Date.now(),
-        ...action.payload
+        ...messageData
       }
       state.messages.push(message)
     },

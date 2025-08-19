@@ -1,16 +1,17 @@
-// Store básico - Bernard Orozco
+// 🧠 Store Médico Completo - Creado por Bernard Orozco
 import { configureStore } from '@reduxjs/toolkit'
-
-const basicSlice = {
-  name: 'basic',
-  initialState: { value: 0 },
-  reducers: {}
-}
+import medicalChatReducer from './medicalChatSlice'
 
 export const store = configureStore({
   reducer: {
-    basic: (state = basicSlice.initialState) => state
-  }
+    medicalChat: medicalChatReducer
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['medicalChat/startStreaming', 'medicalChat/updateStreamingProgress']
+      }
+    })
 })
 
 export type RootState = ReturnType<typeof store.getState>

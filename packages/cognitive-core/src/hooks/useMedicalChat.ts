@@ -1,9 +1,9 @@
-// 🧠 Hook que conecta Streaming con Redux
-// Creado por Bernard Orozco
+// 🧠 Hook Médico con Streaming Real Claude SDK - Creado por Bernard Orozco
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { StreamingService } from '../streaming'
+import { ClaudeAdapter } from '../decision-engine/providers/claude'
+import { MedicalContentValidator } from '../utils/medicalValidator'
 import { 
   addMessage, 
   startStreaming, 
@@ -12,13 +12,14 @@ import {
   stopStreaming,
   startNewSession,
   setError,
-  clearError,
-  type RootState,
-  type AppDispatch
-} from '../store'
+  clearError
+} from '../store/medicalChatSlice'
+import type { RootState, AppDispatch } from '../store/store'
 
 export const useMedicalChat = () => {
   const dispatch = useDispatch<AppDispatch>()
+  const [claudeAdapter] = useState(() => new ClaudeAdapter())
+  const [medicalValidator] = useState(() => new MedicalContentValidator())
   
   const { 
     messages, 
@@ -28,12 +29,42 @@ export const useMedicalChat = () => {
     error 
   } = useSelector((state: RootState) => state.medicalChat)
 
-  const sendMedicalQuery = useCallback(async (message: string, apiKey?: string) => {
+  const sendMedicalQuery = useCallback(async (message: string) => {
     if (!message.trim() || streaming.isActive) return
 
     try {
       // Limpiar errores previos
       dispatch(clearError())
+
+      // VALIDACIÓN MÉDICA - Verificar que sea un caso clínico válido
+      const validationResult = medicalValidator.validateMedicalContent(message)
+      
+      if (!validationResult.isValid) {
+        console.log('❌ Consulta rechazada:', validationResult.rejectionReason)
+        
+        // Agregar mensaje del usuario (para contexto)
+        dispatch(addMessage({
+          content: message,
+          type: 'user'
+        }))
+
+        // Agregar mensaje de rechazo del sistema
+        const rejectionMessage = medicalValidator.generateRejectionMessage(validationResult)
+        dispatch(addMessage({
+          content: rejectionMessage,
+          type: 'assistant',
+          confidence: validationResult.confidence,
+          metadata: {
+            sessionId: currentSession.id,
+            isStreaming: false,
+            sectionType: 'education'
+          }
+        }))
+
+        return // Salir sin procesar la consulta
+      }
+
+      console.log('✅ Consulta médica válida. Confianza:', validationResult.confidence)
 
       // Agregar mensaje del usuario
       dispatch(addMessage({
@@ -41,8 +72,12 @@ export const useMedicalChat = () => {
         type: 'user'
       }))
 
-      // Crear mensaje del asistente vacío
+      // Crear mensaje del asistente vacío para streaming
+      const assistantMessageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      
+      // Agregar mensaje con ID específico
       dispatch(addMessage({
+        id: assistantMessageId,
         content: '',
         type: 'assistant',
         confidence: 0,
@@ -53,40 +88,64 @@ export const useMedicalChat = () => {
         }
       }))
 
-      // Obtener el ID del último mensaje (el del asistente)
-      const assistantMessageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
       // Iniciar streaming en Redux
       dispatch(startStreaming({ messageId: assistantMessageId }))
 
-      // Configurar streaming service
-      if (!apiKey) {
-        throw new Error('API key de Claude no configurada')
-      }
+      // Prompt médico profesional
+      const systemPrompt = `Eres un especialista médico AI. Proporciona análisis clínico profesional estructurado.
 
-      const streamingService = new StreamingService({
-        apiKey,
-        model: 'claude-3-haiku-20240307',
-        maxTokens: 2000,
-        temperature: 0.3
-      })
+Estructura tu respuesta así:
+## 🏥 EVALUACIÓN CLÍNICA
 
-      // Procesar stream
-      for await (const chunk of streamingService.streamMedicalEvaluation(message)) {
-        if (chunk.isComplete) {
-          // Stream completado
-          dispatch(completeStreaming({
-            finalContent: chunk.content,
-            confidence: chunk.confidence
-          }))
-        } else {
-          // Actualizar progreso
+**Diagnóstico Principal:**
+[Diagnóstico más probable]
+
+**Diagnósticos Diferenciales:**
+- [Opción 1]
+- [Opción 2] 
+- [Opción 3]
+
+**Plan Terapéutico:**
+*Tratamiento inmediato:*
+- [Medicación específica con dosis]
+- [Medidas de soporte]
+
+*Seguimiento:*
+- [Plan de seguimiento]
+- [Criterios de derivación]
+
+**Estudios Complementarios:**
+- [Estudios necesarios]
+
+Responde en español, sin emojis adicionales, formato profesional médico.`
+
+      // STREAMING REAL con Claude SDK
+      let fullContent = ''
+      console.log('🚀 Iniciando streaming con prompt:', systemPrompt.substring(0, 100))
+      
+      const result = await claudeAdapter.makeStreamingRequest(
+        systemPrompt,
+        message,
+        undefined, // signal
+        (chunk: string) => {
+          console.log('📝 Chunk recibido:', chunk)
+          fullContent += chunk
+          // Actualizar contenido en tiempo real
           dispatch(updateStreamingProgress({
-            progress: (chunk.confidence || 0) * 100,
-            content: chunk.content
+            progress: Math.min(95, (fullContent.length / 1000) * 100),
+            content: fullContent
           }))
         }
-      }
+      )
+      
+      console.log('✅ Streaming completado. Resultado:', result)
+      console.log('📄 Contenido final:', fullContent)
+
+      // Completar streaming
+      dispatch(completeStreaming({
+        finalContent: fullContent,
+        confidence: 0.85
+      }))
 
     } catch (error) {
       console.error('Error en medical chat:', error)
@@ -95,7 +154,7 @@ export const useMedicalChat = () => {
       dispatch(stopStreaming({ error: errorMessage }))
       dispatch(setError(errorMessage))
     }
-  }, [dispatch, streaming.isActive, currentSession.id])
+  }, [dispatch, streaming.isActive, currentSession.id, claudeAdapter, medicalValidator])
 
   const newSession = useCallback((patientId?: string) => {
     dispatch(startNewSession({ patientId }))

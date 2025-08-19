@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useMedicalChat } from '@redux-claude/cognitive-core'
+import { MedicalMessageComponent } from './MedicalMessage'
 
 // Medical Corporate Color Palette 2025
 const theme = {
@@ -204,8 +205,9 @@ export const CognitiveDashboard = () => {
   const { 
     messages, 
     isLoading, 
-    sendMessage,
-    clearMessages,
+    isStreaming,
+    sendMedicalQuery,
+    newSession,
     error
   } = useMedicalChat()
   
@@ -231,13 +233,13 @@ export const CognitiveDashboard = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
+    if (!input.trim() || isLoading || isStreaming) return
     
     const messageToSend = input
     setInput('')
     
-    // Enviar mensaje usando cognitive-core
-    await sendMessage(messageToSend)
+    // Enviar consulta médica con streaming real
+    await sendMedicalQuery(messageToSend)
   }
   
   return (
@@ -352,61 +354,21 @@ export const CognitiveDashboard = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-0">
-                {messages.map((msg, idx) => (
-                  <div key={idx} className={`border-b border-gray-800 message-appear ${msg.role === 'assistant' ? 'bg-gray-800/30' : 'bg-gray-900'}`}>
-                    <div className="max-w-4xl mx-auto px-6 py-6">
-                      <div className="flex space-x-4">
-                        {/* Avatar */}
-                        <div className="flex-shrink-0">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            msg.role === 'user' 
-                              ? 'bg-blue-600 text-white' 
-                              : 'bg-purple-600 text-white'
-                          }`}>
-                            <span className="text-sm font-medium">
-                              {msg.role === 'user' ? '👨‍⚕️' : '🤖'}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {/* Message Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-white mb-2">
-                            {msg.role === 'user' ? 'Doctor' : 'Medical AI'}
-                          </div>
-                          <div className="prose prose-invert prose-sm max-w-none">
-                            {msg.role === 'assistant' ? (
-                              <ReactMarkdown 
-                                components={{
-                                  h1: ({children}) => <h1 className="text-xl font-bold mb-4 text-white border-b border-gray-700 pb-2">{children}</h1>,
-                                  h2: ({children}) => <h2 className="text-lg font-bold mb-3 text-blue-300">{children}</h2>,
-                                  h3: ({children}) => <h3 className="text-base font-semibold mb-2 text-blue-200">{children}</h3>,
-                                  p: ({children}) => <p className="mb-3 text-gray-300 leading-relaxed">{children}</p>,
-                                  ul: ({children}) => <ul className="mb-3 ml-6 space-y-1">{children}</ul>,
-                                  li: ({children}) => <li className="text-gray-300 list-disc">{children}</li>,
-                                  strong: ({children}) => <strong className="font-semibold text-white">{children}</strong>,
-                                  em: ({children}) => <em className="italic text-gray-400">{children}</em>,
-                                  code: ({children}) => <code className="bg-gray-800 px-2 py-1 rounded text-sm font-mono text-blue-300">{children}</code>,
-                                  hr: () => <hr className="my-4 border-gray-700" />,
-                                  blockquote: ({children}) => <blockquote className="border-l-4 border-blue-500 pl-4 my-3 text-gray-400 italic">{children}</blockquote>
-                                }}
-                              >
-                                {msg.content}
-                              </ReactMarkdown>
-                            ) : (
-                              <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-                                {msg.content}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="bg-gray-900">
+                {messages.map((message, idx) => {
+                  const isLastMessage = idx === messages.length - 1
+                  const messageIsStreaming = isLastMessage && isStreaming && message.type === 'assistant'
+                  
+                  return (
+                    <MedicalMessageComponent
+                      key={message.id || idx}
+                      message={message}
+                      isStreaming={messageIsStreaming}
+                    />
+                  )
+                })}
                 
-                {isLoading && (
+                {(isLoading || isStreaming) && (
                   <div className="border-b border-gray-800 bg-gray-800/30">
                     <div className="max-w-4xl mx-auto px-6 py-6">
                       <div className="flex space-x-4">
@@ -436,6 +398,21 @@ export const CognitiveDashboard = () => {
             )}
           </div>
           
+          {/* Nueva Sesión */}
+          {messages.length > 1 && (
+            <div className="border-t border-gray-800 px-6 py-3 bg-gray-800/50">
+              <button
+                onClick={() => newSession()}
+                className="text-sm text-gray-400 hover:text-white flex items-center gap-2 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Nueva consulta médica
+              </button>
+            </div>
+          )}
+
           {/* Input Form */}
           <div className="border-t border-gray-800 bg-gray-900 px-6 py-4">
             <form onSubmit={handleSubmit} className="flex space-x-3">
@@ -444,9 +421,9 @@ export const CognitiveDashboard = () => {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Describe the medical case here..."
+                  placeholder="Describe el caso clínico aquí... Ej: Paciente de 45 años presenta dolor torácico..."
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
-                  disabled={isLoading}
+                  disabled={isLoading || isStreaming}
                 />
               </div>
               <button

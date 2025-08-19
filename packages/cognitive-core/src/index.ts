@@ -12,6 +12,10 @@ export type { RootState, AppDispatch } from './store/store'
 // === ADAPTERS ===
 export { ClaudeAdapter } from './decision-engine/providers/claude'
 
+// === VALIDATORS ===
+export { MedicalContentValidator } from './utils/medicalValidator'
+export type { MedicalValidationResult } from './utils/medicalValidator'
+
 // === HOOKS ===
 export { useMedicalChat } from './hooks/useMedicalChat'
 
