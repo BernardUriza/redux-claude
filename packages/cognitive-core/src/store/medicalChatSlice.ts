@@ -1,7 +1,8 @@
-// 🧠 Redux Slice para Chat Médico
+// 🧠 Redux Slice para Chat Médico Iterativo
 // Creado por Bernard Orozco
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { DiagnosticCycle } from '../types/medical'
 
 export interface MedicalMessage {
   id: string
@@ -24,6 +25,16 @@ export interface StreamingState {
   error?: string
 }
 
+export interface IterativeState {
+  diagnosticCycles: DiagnosticCycle[]
+  currentCycle: number
+  totalCycles: number
+  finalConfidence: number
+  processingTimeMs: number
+  pendingInfoRequestId?: string
+  awaitingAdditionalInfo: boolean
+}
+
 export interface MedicalChatState {
   messages: MedicalMessage[]
   streaming: StreamingState
@@ -32,6 +43,7 @@ export interface MedicalChatState {
     patientId?: string
     startedAt: number
   }
+  iterativeState: IterativeState
   isLoading: boolean
   error?: string
 }
@@ -40,29 +52,29 @@ const initialState: MedicalChatState = {
   messages: [
     {
       id: 'welcome_msg',
-      content: `## 🏥 Sistema Cognitivo Médico AI - Streaming Real Activado
+      content: `## 🏥 Sistema Médico AI - Motor Iterativo v2.0 Activado
 
-¡Bienvenido, doctor! Soy su asistente de IA médica avanzada con **streaming en tiempo real** y capacidades cognitivas multi-agente.
+¡Bienvenido, doctor! Soy su asistente médico con **análisis iterativo** y diagnósticos progresivos.
 
-### 🎯 **Funcionalidades Activadas:**
-- **Análisis Diagnóstico**: Evaluaciones diferenciales con streaming progresivo
-- **Clasificación de Urgencia**: Triage ESI automatizado  
-- **Validación Clínica**: Revisión de seguridad y calidad en tiempo real
-- **Planes de Tratamiento**: Recomendaciones terapéuticas generándose dinámicamente
-- **Documentación SOAP**: Notas médicas estructuradas con streaming
+### 🔬 **FUNCIONALIDADES ITERATIVAS:**
+- **Diagnóstico Iterativo**: Análisis médico en múltiples ciclos de validación
+- **Validación Inteligente**: Sistema SOAP con validación de calidad progresiva
+- **Información Adicional**: Solicita datos específicos cuando sea necesario
+- **Confianza Progresiva**: Confianza que aumenta con cada ciclo de análisis
+- **Medicina Defensiva**: Priorización por gravedad, no solo probabilidad
 
 ### 💬 **Para comenzar:**
-Describa el caso clínico completo: síntomas, antecedentes, examen físico, y cualquier información relevante del paciente.
+Describa el caso clínico. El sistema analizará iterativamente hasta alcanzar alta confianza diagnóstica.
 
-**Ejemplo**: *"Paciente femenina de 32 años presenta cefalea pulsátil de 2 días de duración, asociada a náuseas y fotofobia. Sin fiebre. Antecedente de migrañas ocasionales..."*
+**Ejemplo**: *"Paciente masculino 52 años, asintomático, acude para control. Laboratorios: glucosa 118 mg/dL, HbA1c 6.8%, colesterol total 245 mg/dL..."*
 
-### ⚡ **NUEVAS CARACTERÍSTICAS:**
-- ✅ **Streaming Real**: Ve las respuestas generándose palabra por palabra
-- ✅ **Claude SDK**: Conexión directa sin simulación 
-- ✅ **SOLID Architecture**: Código refactorizado para máximo rendimiento
-- ✅ **Monorepo**: Arquitectura modular y escalable
+### ⚡ **FASE 2 IMPLEMENTADA:**
+- ✅ **Motor Iterativo**: Análisis médico en ciclos progresivos
+- ✅ **Validación Avanzada**: Evaluación de calidad SOAP automática
+- ✅ **Información Adicional**: Solicita datos faltantes automáticamente
+- ✅ **Confianza Dinámica**: Métricas de confianza en tiempo real
 
-🚀 **Sistema listo para análisis médico con streaming progresivo activado.**`,
+🚀 **Sistema listo para diagnósticos iterativos con validación progresiva.**`,
       type: 'assistant',
       timestamp: Date.now(),
       confidence: 0.95,
@@ -79,6 +91,14 @@ Describa el caso clínico completo: síntomas, antecedentes, examen físico, y c
   currentSession: {
     id: `session_${Date.now()}`,
     startedAt: Date.now()
+  },
+  iterativeState: {
+    diagnosticCycles: [],
+    currentCycle: 0,
+    totalCycles: 0,
+    finalConfidence: 0,
+    processingTimeMs: 0,
+    awaitingAdditionalInfo: false
   },
   isLoading: false
 }
@@ -196,6 +216,32 @@ const medicalChatSlice = createSlice({
     clearError: (state) => {
       state.error = undefined
       state.streaming.error = undefined
+    },
+
+    // === MANEJO DE ESTADO ITERATIVO ===
+    addDiagnosticCycle: (state, action: PayloadAction<DiagnosticCycle>) => {
+      state.iterativeState.diagnosticCycles.push(action.payload)
+      state.iterativeState.currentCycle = action.payload.cycleNumber
+    },
+
+    updateIterativeState: (state, action: PayloadAction<Partial<IterativeState>>) => {
+      state.iterativeState = { ...state.iterativeState, ...action.payload }
+    },
+
+    resetIterativeState: (state) => {
+      state.iterativeState = {
+        diagnosticCycles: [],
+        currentCycle: 0,
+        totalCycles: 0,
+        finalConfidence: 0,
+        processingTimeMs: 0,
+        awaitingAdditionalInfo: false
+      }
+    },
+
+    setAwaitingAdditionalInfo: (state, action: PayloadAction<{ requestId: string; awaiting: boolean }>) => {
+      state.iterativeState.awaitingAdditionalInfo = action.payload.awaiting
+      state.iterativeState.pendingInfoRequestId = action.payload.awaiting ? action.payload.requestId : undefined
     }
   }
 })
@@ -210,7 +256,11 @@ export const {
   stopStreaming,
   startNewSession,
   setError,
-  clearError
+  clearError,
+  addDiagnosticCycle,
+  updateIterativeState,
+  resetIterativeState,
+  setAwaitingAdditionalInfo
 } = medicalChatSlice.actions
 
 export default medicalChatSlice.reducer

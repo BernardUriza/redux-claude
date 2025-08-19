@@ -13,8 +13,9 @@ export type { RootState, AppDispatch } from './store/store'
 export { ClaudeAdapter } from './decision-engine/providers/claude'
 
 // === VALIDATORS ===
-export { MedicalContentValidator } from './utils/medicalValidator'
-export type { MedicalValidationResult } from './utils/medicalValidator'
+export { MedicalContentValidator, MedicalQualityValidator } from './utils/medicalValidator'
+export type { BasicMedicalValidationResult } from './utils/medicalValidator'
+export type { MedicalValidationResult } from './types/medical'
 
 // === HOOKS ===
 export { useMedicalChat } from './hooks/useMedicalChat'
@@ -23,8 +24,19 @@ export { useMedicalChat } from './hooks/useMedicalChat'
 export { SOAPResolver } from './soap/SOAPResolver'
 export type { SOAPResult, SOAPSection, AgentPersonalityResult } from './soap/SOAPResolver'
 
+// === ITERATIVE ENGINE ===
+export { IterativeDiagnosticEngine } from './engine/IterativeDiagnosticEngine'
+export { AdditionalInfoService } from './services/AdditionalInfoService'
+
 // === MEDICAL TYPES ===
-export type { MedicalMessage } from './store/medicalChatSlice'
+export type { MedicalMessage, IterativeState } from './store/medicalChatSlice'
+export type { 
+  MedicalCase, 
+  SOAPAnalysis, 
+  DiagnosticCycle, 
+  AdditionalInfoRequest, 
+  DiagnosticResult 
+} from './types/medical'
 
 // === STREAMING ===
 export { StreamingService } from './streaming'

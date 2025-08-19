@@ -1,10 +1,12 @@
-// 🧠 Hook Médico con Streaming Real Claude SDK - Creado por Bernard Orozco
+// 🧠 Hook Médico con Motor Iterativo SOAP - Creado por Bernard Orozco
 
 import { useCallback, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { ClaudeAdapter } from '../decision-engine/providers/claude'
-import { MedicalContentValidator } from '../utils/medicalValidator'
-import { SOAPResolver } from '../soap/SOAPResolver'
+import { MedicalQualityValidator } from '../utils/medicalValidator'
+import { IterativeDiagnosticEngine } from '../engine/IterativeDiagnosticEngine'
+import { AdditionalInfoService, InfoRequestMessage } from '../services/AdditionalInfoService'
+import { MedicalCase, DiagnosticCycle, SOAPAnalysis, AdditionalInfoRequest } from '../types/medical'
 import { 
   addMessage, 
   startStreaming, 
@@ -13,15 +15,18 @@ import {
   stopStreaming,
   startNewSession,
   setError,
-  clearError
+  clearError,
+  addDiagnosticCycle,
+  updateIterativeState
 } from '../store/medicalChatSlice'
 import type { RootState, AppDispatch } from '../store/store'
 
 export const useMedicalChat = () => {
   const dispatch = useDispatch<AppDispatch>()
   const [claudeAdapter] = useState(() => new ClaudeAdapter())
-  const [medicalValidator] = useState(() => new MedicalContentValidator())
-  const [soapResolver] = useState(() => new SOAPResolver())
+  const [medicalValidator] = useState(() => new MedicalQualityValidator())
+  const [diagnosticEngine] = useState(() => new IterativeDiagnosticEngine(new ClaudeAdapter()))
+  const [infoService] = useState(() => new AdditionalInfoService())
   
   const { 
     messages, 
@@ -31,27 +36,38 @@ export const useMedicalChat = () => {
     error 
   } = useSelector((state: RootState) => state.medicalChat)
 
-  const sendMedicalQuery = useCallback(async (message: string) => {
+  const sendMedicalQuery = useCallback(async (message: string, requestId?: string) => {
     if (!message.trim() || streaming.isActive) return
 
     try {
-      // Limpiar errores previos
       dispatch(clearError())
 
-      // VALIDACIÓN MÉDICA - Verificar que sea un caso clínico válido
-      const validationResult = medicalValidator.validateMedicalContent(message)
+      // Si es una respuesta a solicitud de información adicional, procesar diferente
+      if (requestId) {
+        return await handleAdditionalInfoResponse(requestId, message)
+      }
+
+      // VALIDACIÓN MÉDICA AVANZADA
+      const validationResult = medicalValidator.validateMedicalCase(message)
       
       if (!validationResult.isValid) {
         console.log('❌ Consulta rechazada:', validationResult.rejectionReason)
         
-        // Agregar mensaje del usuario (para contexto)
-        dispatch(addMessage({
-          content: message,
-          type: 'user'
-        }))
+        dispatch(addMessage({ content: message, type: 'user' }))
 
-        // Agregar mensaje de rechazo del sistema
-        const rejectionMessage = medicalValidator.generateRejectionMessage(validationResult)
+        const rejectionMessage = `## ⚠️ Consulta No Válida
+
+**Razón:** ${validationResult.rejectionReason}
+**Confianza de validación:** ${Math.round(validationResult.confidence * 100)}%
+
+### 📋 Mejoras Sugeridas:
+${validationResult.suggestedImprovements?.map(improvement => `- ${improvement}`).join('\n') || 'Estructura el caso clínico apropiadamente'}
+
+### 🔍 Datos Críticos Faltantes:
+${validationResult.missingCriticalData?.map(data => `- ${data}`).join('\n') || 'Ninguno identificado'}
+
+**Por favor, reformula tu consulta con más contexto médico específico.**`
+
         dispatch(addMessage({
           content: rejectionMessage,
           type: 'assistant',
@@ -63,24 +79,28 @@ export const useMedicalChat = () => {
           }
         }))
 
-        return // Salir sin procesar la consulta
+        return
       }
 
-      console.log('✅ Consulta médica válida. Confianza:', validationResult.confidence)
+      console.log(`✅ Caso médico válido. Confianza: ${Math.round(validationResult.confidence * 100)}%`)
+      console.log(`🔬 Términos médicos encontrados: ${validationResult.medicalTermsFound?.length || 0}`)
 
       // Agregar mensaje del usuario
-      dispatch(addMessage({
-        content: message,
-        type: 'user'
-      }))
+      dispatch(addMessage({ content: message, type: 'user' }))
 
-      // Crear mensaje del asistente vacío para streaming
+      // Crear caso médico estructurado
+      const medicalCase: MedicalCase = {
+        id: `case_${Date.now()}`,
+        presentation: message,
+        context: `Caso clínico analizado con confianza inicial del ${Math.round(validationResult.confidence * 100)}%`
+      }
+
+      // Crear mensaje del asistente para streaming
       const assistantMessageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       
-      // Agregar mensaje con ID específico
       dispatch(addMessage({
         id: assistantMessageId,
-        content: '',
+        content: '## 🔬 Iniciando Análisis Médico Iterativo...\n\n*Procesando caso clínico con motor de diagnóstico avanzado*',
         type: 'assistant',
         confidence: 0,
         metadata: {
@@ -90,91 +110,194 @@ export const useMedicalChat = () => {
         }
       }))
 
-      // Iniciar streaming en Redux
       dispatch(startStreaming({ messageId: assistantMessageId }))
 
-      // 🧠 PROCESAMIENTO SOAP MULTI-AGENTE
-      console.log('🧠 Iniciando análisis SOAP multi-agente...')
-      
-      // Stream del proceso completo
-      let soapContent = ''
-      let progressStep = 0
-      const totalSteps = 4 // S, O, A, P
-      
-      // Función para streamear progreso del SOAP
-      const streamSOAPProgress = (section: string, content: string) => {
-        progressStep++
-        soapContent += `\n\n## ${section}\n\n${content}`
-        
-        dispatch(updateStreamingProgress({
-          progress: Math.min(95, (progressStep / totalSteps) * 100),
-          content: soapContent
-        }))
+      // 🔬 MOTOR ITERATIVO DE DIAGNÓSTICO
+      console.log('🔬 Iniciando proceso iterativo de diagnóstico...')
+
+      const result = await diagnosticEngine.processWithValidation(
+        medicalCase,
+        (cycle: DiagnosticCycle) => {
+          // Callback para actualizaciones de progreso en tiempo real
+          console.log(`📊 Ciclo ${cycle.cycleNumber} completado - Confianza: ${Math.round(cycle.confidence * 100)}%`)
+          
+          // Actualizar estado de Redux con el ciclo
+          dispatch(addDiagnosticCycle(cycle))
+          
+          // Actualizar contenido del streaming
+          const progressContent = buildProgressContent(cycle)
+          dispatch(updateStreamingProgress({
+            progress: Math.min(90, cycle.cycleNumber * 30),
+            content: progressContent
+          }))
+        }
+      )
+
+      // Verificar si necesita información adicional
+      if ('type' in result && result.type === 'additional_info_needed') {
+        await handleAdditionalInfoRequest(result as AdditionalInfoRequest, assistantMessageId)
+        return
       }
 
-      // Resolver SOAP con agentes multi-máscara
-      const soapResult = await soapResolver.resolveSOAP(message)
-      
-      // Streamear cada sección SOAP progresivamente
-      streamSOAPProgress('S - SUBJETIVO', soapResult.soap.subjetivo)
-      await new Promise(resolve => setTimeout(resolve, 500)) // Simular tiempo de procesamiento
-      
-      streamSOAPProgress('O - OBJETIVO', soapResult.soap.objetivo)
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      streamSOAPProgress('A - ANÁLISIS', soapResult.soap.analisis)
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      streamSOAPProgress('P - PLAN', soapResult.soap.plan)
-      
-      // Agregar información NOM-004 formal
-      soapContent += `\n\n---\n\n## 📋 EXPEDIENTE CLÍNICO NOM-004-SSA3-2012\n\n`
-      soapContent += `**🏥 Diagnóstico principal:** ${soapResult.soapFormal.soap.analisis.diagnosticoPrincipal.condicion}\n`
-      soapContent += `**📊 CIE-10:** ${soapResult.soapFormal.soap.analisis.diagnosticoPrincipal.cie10}\n`
-      soapContent += `**⚡ Urgencia ESI:** ${soapResult.soapFormal.metadata.clasificacion.urgencia}/5\n`
-      soapContent += `**📈 Calidad normativa:** ${soapResult.soapFormal.metadata.calidad.cumplimientoNormativo}%\n\n`
-      
-      // Agregar metadata de agentes
-      soapContent += `## 🧠 ANÁLISIS MULTI-AGENTE\n\n`
-      soapContent += `**Versión:** ${soapResult.metadata.version}\n`
-      soapContent += `**Normativa compliant:** ${soapResult.metadata.normativaCompliant ? '✅ SÍ' : '❌ NO'}\n`
-      soapContent += `**Agentes participantes:** ${soapResult.metadata.agentsUsed.join(', ')}\n\n`
-      soapContent += `**Nivel de consenso:** ${Math.round(soapResult.metadata.consensusLevel * 100)}%\n\n`
-      soapContent += `**Tiempo de procesamiento:** ${soapResult.metadata.processingTime}ms\n\n`
-      
-      if (soapResult.metadata.warningFlags.length > 0) {
-        soapContent += `**⚠️ Alertas clínicas:**\n`
-        soapResult.metadata.warningFlags.forEach(flag => {
-          soapContent += `- ${flag}\n`
-        })
-        soapContent += '\n'
-      }
-      
-      // Agregar detalles de cada agente
-      soapContent += `### Contribuciones por Especialidad:\n\n`
-      soapResult.agentDecisions.forEach(agent => {
-        soapContent += `**${agent.agentName}** (${agent.sectionContribution.toUpperCase()})\n`
-        soapContent += `- Confianza: ${Math.round(agent.confidence * 100)}%\n`
-        soapContent += `- Enfoque: ${agent.reasoning}\n\n`
-      })
+      // Es un análisis SOAP completo
+      const soapAnalysis = result as SOAPAnalysis
+      const finalContent = formatFinalSOAPAnalysis(soapAnalysis)
 
-      console.log('✅ SOAP completado. Resultado:', soapResult.metadata)
-      console.log('📄 Contenido SOAP final:', soapContent)
+      // Validar la calidad del análisis SOAP generado
+      const soapValidation = medicalValidator.validateSOAPAnalysis(soapAnalysis)
+      console.log(`📊 Calidad SOAP: ${Math.round(soapValidation.confidence * 100)}%`)
 
-      // Completar streaming
       dispatch(completeStreaming({
-        finalContent: soapContent,
-        confidence: soapResult.confidence
+        finalContent,
+        confidence: soapAnalysis.confianza_global || 0.8
+      }))
+
+      // Actualizar estado iterativo
+      dispatch(updateIterativeState({
+        totalCycles: soapAnalysis.ciclos_diagnosticos || 1,
+        finalConfidence: soapAnalysis.confianza_global || 0.8,
+        processingTimeMs: soapAnalysis.tiempo_total_analisis || 0
       }))
 
     } catch (error) {
-      console.error('Error en medical chat:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+      console.error('Error en motor iterativo:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Error en análisis médico'
       
       dispatch(stopStreaming({ error: errorMessage }))
       dispatch(setError(errorMessage))
     }
-  }, [dispatch, streaming.isActive, currentSession.id, claudeAdapter, medicalValidator])
+  }, [dispatch, streaming.isActive, currentSession.id, medicalValidator, diagnosticEngine, infoService])
+
+  // Función auxiliar para manejar solicitudes de información adicional
+  const handleAdditionalInfoRequest = async (request: AdditionalInfoRequest, messageId: string) => {
+    console.log(`❓ Información adicional requerida - Ciclo ${request.currentCycle}`)
+    
+    const infoMessage = infoService.formatInfoRequestMessage(request)
+    
+    dispatch(completeStreaming({
+      finalContent: infoMessage.content,
+      confidence: request.confidence
+    }))
+
+    // Almacenar el ID de la solicitud para futuras respuestas
+    dispatch(updateIterativeState({
+      pendingInfoRequestId: infoMessage.id,
+      awaitingAdditionalInfo: true
+    }))
+  }
+
+  // Función auxiliar para manejar respuestas de información adicional
+  const handleAdditionalInfoResponse = async (requestId: string, additionalData: string) => {
+    console.log(`📝 Procesando información adicional para solicitud: ${requestId}`)
+    
+    const response = infoService.processInfoResponse(requestId, additionalData)
+    
+    if (!response.success) {
+      dispatch(setError(response.error || 'Error procesando información adicional'))
+      return
+    }
+
+    // Continuar con el análisis usando el caso mejorado
+    const enhancedCase = response.enhancedCase!
+    
+    // Reiniciar el proceso iterativo con información adicional
+    const result = await diagnosticEngine.processWithValidation(enhancedCase)
+    
+    if ('type' in result && result.type === 'additional_info_needed') {
+      // Todavía necesita más información
+      await handleAdditionalInfoRequest(result as AdditionalInfoRequest, `followup_${Date.now()}`)
+      return
+    }
+
+    // Análisis completo
+    const soapAnalysis = result as SOAPAnalysis
+    const finalContent = formatFinalSOAPAnalysis(soapAnalysis, true) // Marcar como seguimiento
+
+    dispatch(addMessage({
+      content: finalContent,
+      type: 'assistant',
+      confidence: soapAnalysis.confianza_global || 0.8,
+      metadata: {
+        sessionId: currentSession.id,
+        isStreaming: false,
+        sectionType: 'diagnosis'
+      }
+    }))
+  }
+
+  // Función auxiliar para formatear progreso
+  const buildProgressContent = (cycle: DiagnosticCycle): string => {
+    return `## 🔬 Análisis Médico Iterativo - Ciclo ${cycle.cycleNumber}
+
+**⏱️ Tiempo de procesamiento:** ${cycle.latency}ms  
+**📊 Confianza del ciclo:** ${Math.round(cycle.confidence * 100)}%  
+**📈 Puntuación de calidad:** ${Math.round(cycle.qualityScore * 100)}%
+
+### Análisis Parcial:
+
+**🩺 SUBJETIVO:**
+${cycle.analysis.subjetivo || 'Procesando...'}
+
+**📋 OBJETIVO:**
+${cycle.analysis.objetivo || 'Procesando...'}
+
+**🔍 ANÁLISIS:**
+${cycle.analysis.diagnostico_principal ? `**Diagnóstico:** ${cycle.analysis.diagnostico_principal}` : 'Procesando...'}
+
+**💡 Insights del Ciclo:**
+${cycle.insights.map(insight => `- ${insight}`).join('\n')}
+
+---
+
+*Continuando análisis...*`
+  }
+
+  // Función auxiliar para formatear análisis SOAP final
+  const formatFinalSOAPAnalysis = (analysis: SOAPAnalysis, isFollowUp: boolean = false): string => {
+    const followUpText = isFollowUp ? '\n\n**📋 ANÁLISIS CON INFORMACIÓN ADICIONAL**\n' : ''
+    
+    return `${followUpText}
+## 🏥 EXPEDIENTE CLÍNICO COMPLETO
+
+### S - SUBJETIVO
+${analysis.subjetivo}
+
+### O - OBJETIVO  
+${analysis.objetivo}
+
+### A - ANÁLISIS
+**🎯 Diagnóstico Principal:** ${analysis.diagnostico_principal}
+
+**🔬 Diagnósticos Diferenciales:**
+${analysis.diagnosticos_diferenciales?.map((dx, i) => `${i + 1}. ${dx}`).join('\n') || 'No especificados'}
+
+### P - PLAN
+${analysis.plan_tratamiento}
+
+---
+
+## 📊 MÉTRICAS DEL ANÁLISIS
+
+**🎯 Confianza Global:** ${Math.round((analysis.confianza_global || 0.5) * 100)}%  
+**🔄 Ciclos Diagnósticos:** ${analysis.ciclos_diagnosticos || 1}  
+**⏱️ Tiempo Total:** ${analysis.tiempo_total_analisis || 0}ms
+
+${analysis.evolucion_diagnostica ? `
+**📈 Evolución Diagnóstica:**
+${analysis.evolucion_diagnostica.map(evol => 
+  `- Ciclo ${evol.ciclo}: ${evol.diagnostico} (${Math.round(evol.confianza * 100)}%)`
+).join('\n')}
+` : ''}
+
+${analysis.datos_adicionales_necesarios && analysis.datos_adicionales_necesarios.length > 0 ? `
+**📝 Información Adicional Considerada:**
+${analysis.datos_adicionales_necesarios.map(dato => `- ${dato}`).join('\n')}
+` : ''}
+
+---
+
+*🤖 Análisis generado por Motor Iterativo de Diagnóstico v2.0 - Creado por Bernard Orozco*`
+  }
 
   const newSession = useCallback((patientId?: string) => {
     dispatch(startNewSession({ patientId }))

@@ -136,7 +136,7 @@ export interface SOAPAnalysis {
  */
 export class SOAPProcessor {
   private version = '1.0.0'
-  private normativa = 'NOM-004-SSA3-2012'
+  private normativa: 'NOM-004-SSA3-2012' = 'NOM-004-SSA3-2012'
 
   /**
    * 🏥 Procesa caso clínico con estructura SOAP formal
@@ -332,7 +332,7 @@ export class SOAPProcessor {
   }
 
   private extractPersonalHistory(input: string): string[] {
-    const antecedentes = []
+    const antecedentes: string[] = []
     const patterns = [
       /antecedent.*personal.*?:?\s*([^.]+)/i,
       /(hipertens[ií]ón|diabetes|tabaquismo|alcoholismo)/gi,
@@ -355,7 +355,7 @@ export class SOAPProcessor {
       /familia.*?([^.]+)/i
     ]
     
-    const familiares = []
+    const familiares: string[] = []
     patterns.forEach(pattern => {
       const match = input.match(pattern)
       if (match) familiares.push(match[1].trim())
@@ -371,7 +371,7 @@ export class SOAPProcessor {
       /toma.*?:?\s*([^.]+)/i
     ]
     
-    const medicamentos = []
+    const medicamentos: string[] = []
     patterns.forEach(pattern => {
       const match = input.match(pattern)
       if (match) medicamentos.push(match[1].trim())
@@ -386,7 +386,7 @@ export class SOAPProcessor {
       /reaccion.*adversa.*?:?\s*([^.]+)/i
     ]
     
-    const alergias = []
+    const alergias: string[] = []
     patterns.forEach(pattern => {
       const match = input.match(pattern)
       if (match) alergias.push(match[1].trim())
@@ -408,7 +408,7 @@ export class SOAPProcessor {
       /trabajo/i
     ]
     
-    const contexto = []
+    const contexto: string[] = []
     socialPatterns.forEach(pattern => {
       if (pattern.test(input)) {
         contexto.push(pattern.source.replace(/[^a-zA-Z]/g, ''))
@@ -525,7 +525,7 @@ export class SOAPProcessor {
     subjetivo: SOAPData['subjetivo'],
     objetivo: SOAPData['objetivo']
   ): string[] {
-    const factores = []
+    const factores: string[] = []
     
     if (subjetivo.antecedentes.personales.some(a => /diabetes/i.test(a))) {
       factores.push('Diabetes mellitus')
@@ -542,7 +542,7 @@ export class SOAPProcessor {
     subjetivo: SOAPData['subjetivo'],
     objetivo: SOAPData['objetivo']
   ): string[] {
-    const redFlags = []
+    const redFlags: string[] = []
     
     const dangerPatterns = [
       /dolor.*torácico/i,
