@@ -20,7 +20,8 @@
       "Bash(taskkill:*)",
       "WebFetch(domain:dev.to)",
       "Bash(npx tsc:*)",
-      "Bash(timeout 30s npm run build:*)"
+      "Bash(timeout 30s npm run build:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

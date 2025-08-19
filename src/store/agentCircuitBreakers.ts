@@ -69,11 +69,11 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.TRIAGE]: AgentStatus.READY,
     [AgentType.VALIDATION]: AgentStatus.READY,
     [AgentType.TREATMENT]: AgentStatus.READY,
-    [AgentType.DOCUMENTATION]: AgentStatus.DISABLED // Disabled by default
+    [AgentType.DOCUMENTATION]: AgentStatus.READY // Enabled for cognitive system
   },
   globalState: {
     totalAgents: 5,
-    activeAgents: 4, // 4 enabled by default
+    activeAgents: 5, // All 5 agents enabled
     failedAgents: 0,
     avgSystemLatency: 0,
     lastHealthCheck: Date.now()

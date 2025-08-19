@@ -13,8 +13,8 @@ class DecisionEngineService {
 
   constructor() {
     this.engine = new DecisionEngine({
-      defaultProvider: 'local', // Use local provider by default to avoid CORS
-      fallbackProviders: ['claude'],
+      defaultProvider: 'claude', // Use Claude SDK with dangerouslyAllowBrowser
+      fallbackProviders: ['local'],
       timeout: 30000,
       maxRetries: 2,
       enableValidation: true
@@ -238,8 +238,8 @@ class DecisionEngineService {
   reset(): void {
     this.initialized = false
     this.engine = new DecisionEngine({
-      defaultProvider: 'local', // Use local provider by default to avoid CORS
-      fallbackProviders: ['claude'],
+      defaultProvider: 'claude', // Use Claude SDK with dangerouslyAllowBrowser
+      fallbackProviders: ['local'],
       timeout: 30000,
       maxRetries: 2,
       enableValidation: true

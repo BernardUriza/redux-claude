@@ -1,16 +1,14 @@
 // src/decision-engine/providers/claude.ts
-// Adaptador Claude simplificado - Bernard Orozco
+// Adaptador Claude usando SDK oficial - Bernard Orozco
 
 import type { ProviderAdapter } from '../core/types'
 
 export class ClaudeAdapter implements ProviderAdapter {
   readonly name = 'claude' as const
   private apiKey: string
-  private baseUrl: string
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || process.env.NEXT_PUBLIC_CLAUDE_API_KEY || ''
-    this.baseUrl = 'https://api.anthropic.com'
   }
 
   get isAvailable(): boolean {
@@ -31,51 +29,41 @@ export class ClaudeAdapter implements ProviderAdapter {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/v1/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': this.apiKey,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-3-haiku-20240307',
-          max_tokens: 1000,
-          temperature: 0.3,
-          system: systemPrompt,
-          messages: [
-            {
-              role: 'user',
-              content: userPrompt
-            }
-          ]
-        }),
-        signal
+      // Dynamic import del SDK de Anthropic (igual que el middleware original)
+      const Anthropic = (await import('@anthropic-ai/sdk')).default
+      const anthropic = new Anthropic({
+        apiKey: this.apiKey,
+        dangerouslyAllowBrowser: true // Permite uso desde browser
       })
 
-      if (!response.ok) {
-        const errorText = await response.text()
+      if (signal?.aborted) {
+        throw new Error('Request aborted')
+      }
+
+      const response = await anthropic.messages.create({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 1000,
+        temperature: 0.3,
+        system: systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: userPrompt
+          }
+        ]
+      })
+
+      const content = response.content[0]
+      if (content.type !== 'text') {
         return {
           content: '',
           success: false,
-          error: `Claude API error: ${response.status} - ${errorText}`
+          error: 'Unexpected response format from Claude'
         }
       }
 
-      const data = await response.json()
-      
-      if (!data.content || !Array.isArray(data.content) || data.content.length === 0) {
-        return {
-          content: '',
-          success: false,
-          error: 'Invalid response format from Claude'
-        }
-      }
-
-      const content = data.content[0]?.text || ''
-      
       return {
-        content,
+        content: content.text,
         success: true
       }
 
@@ -93,7 +81,7 @@ export class ClaudeAdapter implements ProviderAdapter {
       return {
         content: '',
         success: false,
-        error: `Claude request failed: ${errorMessage}`
+        error: `Claude SDK error: ${errorMessage}`
       }
     }
   }
