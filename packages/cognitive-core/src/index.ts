@@ -17,11 +17,16 @@ export { MedicalContentValidator, MedicalQualityValidator } from './utils/medica
 export type { BasicMedicalValidationResult } from './utils/medicalValidator'
 export type { MedicalValidationResult } from './types/medical'
 
+// === MEDICINA DEFENSIVA (FASE 3) ===
+export { DefensiveMedicineValidator, type UrgentPattern, type DefensiveDiagnosis } from './validators'
+export { UrgencyClassifier, type UrgencyAssessment, type TriageResult, type RiskFactor } from './classifiers'
+
 // === HOOKS ===
 export { useMedicalChat } from './hooks/useMedicalChat'
 
 // === SOAP PROCESSING ===
 export { SOAPResolver } from './soap/SOAPResolver'
+export { SOAPProcessor } from './soap/SOAPProcessor'
 export type { SOAPResult, SOAPSection, AgentPersonalityResult } from './soap/SOAPResolver'
 
 // === ITERATIVE ENGINE ===
@@ -32,7 +37,8 @@ export { AdditionalInfoService } from './services/AdditionalInfoService'
 export type { MedicalMessage, IterativeState } from './store/medicalChatSlice'
 export type { 
   MedicalCase, 
-  SOAPAnalysis, 
+  SOAPData,
+  SOAPAnalysis,
   DiagnosticCycle, 
   AdditionalInfoRequest, 
   DiagnosticResult 

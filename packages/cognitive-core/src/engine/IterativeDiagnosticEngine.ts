@@ -286,8 +286,8 @@ Responde EXCLUSIVAMENTE en este formato:
   private needsMoreData(analysis: SOAPAnalysis): boolean {
     // Lógica para determinar si necesita más datos
     const hasLowConfidence = (analysis.confianza_global || 0) < 0.6
-    const hasInsufficientSubjective = analysis.subjetivo.length < 50
-    const hasInsufficientObjective = analysis.objetivo.length < 30
+    const hasInsufficientSubjective = (analysis.subjetivo?.length || 0) < 50
+    const hasInsufficientObjective = (analysis.objetivo?.length || 0) < 30
     const needsAdditionalData = (analysis.datos_adicionales_necesarios?.length || 0) > 2
 
     return hasLowConfidence && (hasInsufficientSubjective || hasInsufficientObjective || needsAdditionalData)
@@ -459,7 +459,7 @@ A: ${analysis.diagnostico_principal}
 P: ${analysis.plan_tratamiento}
 
 DIAGNÓSTICOS DIFERENCIALES:
-${analysis.diagnosticos_diferenciales?.map((dx, i) => `${i + 1}. ${dx}`).join('\n') || 'No especificados'}
+${analysis.diagnosticos_diferenciales?.map((dx: string, i: number) => `${i + 1}. ${dx}`).join('\n') || 'No especificados'}
 
 SOLICITUD: Coordinar agentes especializados según contexto clínico para validación final y refinamiento diagnóstico.`
   }

@@ -20,24 +20,169 @@ export interface MedicalCase {
   }
 }
 
+// Importar tipos de medicina defensiva
+import type { UrgencyAssessment, TriageResult } from '../classifiers/UrgencyClassifier'
+
+// === DEFINICIONES SOAP COMPLETAS CON MEDICINA DEFENSIVA ===
+
+export interface SOAPData {
+  subjetivo: {
+    motivoConsulta: string
+    historiaActual: string
+    antecedentes: {
+      personales: string[]
+      familiares: string[]
+      medicamentos: string[]
+      alergias: string[]
+    }
+    revisionSistemas: string
+    contextoPsicosocial: string
+  }
+  objetivo: {
+    signosVitales: {
+      presionArterial?: string
+      frecuenciaCardiaca?: string
+      frecuenciaRespiratoria?: string
+      temperatura?: string
+      saturacionOxigeno?: string
+      peso?: string
+      talla?: string
+      imc?: string
+    }
+    exploracionFisica: {
+      aspecto: string
+      cabezaCuello: string
+      torax: string
+      abdomen: string
+      extremidades: string
+      neurologico: string
+      piel: string
+    }
+    estudiosComplementarios: {
+      laboratorios?: Record<string, string>
+      imagenes?: string[]
+      otros?: string[]
+    }
+  }
+  analisis: {
+    diagnosticoPrincipal: {
+      condicion: string
+      cie10: string
+      evidencia: string[]
+      probabilidad: number
+    }
+    diagnosticosDiferenciales: Array<{
+      condicion: string
+      cie10: string
+      evidencia: string[]
+      probabilidad: number
+      gravedad: 'baja' | 'moderada' | 'alta' | 'critica'
+      urgencia: 'no_urgente' | 'semi_urgente' | 'urgente' | 'emergencia'
+    }>
+    factoresRiesgo: string[]
+    senosPeligro: string[]
+    pronostico: {
+      inmediato: string
+      cortoplazo: string
+      largoplazo: string
+    }
+  }
+  plan: {
+    tratamientoFarmacologico: Array<{
+      medicamento: string
+      dosis: string
+      via: string
+      frecuencia: string
+      duracion: string
+      indicaciones: string
+      contraindicaciones: string[]
+    }>
+    tratamientoNoFarmacologico: string[]
+    estudiosAdicionales: Array<{
+      estudio: string
+      justificacion: string
+      urgencia: 'inmediato' | '24h' | '48h' | '1semana' | 'rutina'
+    }>
+    interconsultas: Array<{
+      especialidad: string
+      motivo: string
+      urgencia: 'inmediato' | 'urgente' | 'programado'
+    }>
+    seguimiento: {
+      proximaCita: string
+      criteriosAlarma: string[]
+      educacionPaciente: string[]
+      modificacionesEstiloVida: string[]
+    }
+    pronostico: string
+    certificaciones: {
+      incapacidad?: {
+        dias: number
+        tipo: 'temporal' | 'permanente'
+        actividades: string[]
+      }
+      defuncion?: boolean
+    }
+  }
+}
+
+/**
+ * 🏥 SOAP ANALYSIS COMPLETO - UNIFICADO Y PODEROSO
+ * 
+ * Versión única que incluye:
+ * - Estructura SOAP formal NOM-004-SSA3-2012
+ * - Sistema de Medicina Defensiva (Fase 3)
+ * - Métricas avanzadas de calidad
+ * - Compatibilidad hacia atrás con campos legacy
+ */
 export interface SOAPAnalysis {
-  // Secciones SOAP principales
-  subjetivo: string // Lo que dice el paciente
-  objetivo: string // Signos vitales, exploración física
-  diagnostico_principal: string // Diagnóstico más probable
-  diagnosticos_diferenciales: string[] // Lista de diagnósticos alternativos
-  plan_tratamiento: string // Plan terapéutico completo
+  // === NUEVO: ESTRUCTURA SOAP COMPLETA ===
+  soap?: SOAPData
   
-  // Métricas de confianza y calidad
-  confianza_global?: number // 0-1
+  // === NUEVO: MEDICINA DEFENSIVA ===
+  defensiveAssessment?: UrgencyAssessment
+  triageResult?: TriageResult
+  
+  // === METADATOS AVANZADOS ===
+  metadata?: {
+    version: string
+    normativa: 'NOM-004-SSA3-2012'
+    fechaAnalisis: string
+    profesionalResponsable: string
+    institucion: string
+    clasificacion: {
+      complejidad: 'baja' | 'media' | 'alta' | 'critica'
+      especialidad: string[]
+      urgencia: 1 | 2 | 3 | 4 | 5
+      riesgoVital: boolean
+    }
+    calidad: {
+      completitud: number // 0-100%
+      coherencia: number // 0-100%
+      seguridadClinica: number // 0-100%
+      cumplimientoNormativo: number // 0-100%
+      medicinaDefensiva: number // 0-100% - Medicina defensiva score
+    }
+    defensiveMedicine: {
+      urgentPatternsDetected: number
+      gravityPrioritization: boolean
+      redFlagsIdentified: string[]
+      immediateActionsRequired: boolean
+    }
+  }
+  
+  // === COMPATIBILIDAD LEGACY ===
+  // Campos para retrocompatibilidad con código existente
+  subjetivo?: string // Mapea a soap.subjetivo.motivoConsulta + soap.subjetivo.historiaActual
+  objetivo?: string // Versión simplificada de soap.objetivo
+  diagnostico_principal?: string // Mapea a soap.analisis.diagnosticoPrincipal.condicion
+  diagnosticos_diferenciales?: string[] // Versión simplificada de soap.analisis.diagnosticosDiferenciales
+  plan_tratamiento?: string // Versión simplificada del plan
+  confianza_global?: number // Mapea a metadata.calidad
   datos_adicionales_necesarios?: string[] // Lista de información faltante
-  
-  // Datos del proceso iterativo
   ciclos_diagnosticos?: number
   tiempo_total_analisis?: number
   evolucion_diagnostica?: DiagnosticEvolution[]
-  
-  // Análisis cognitivo del orquestador
   analisis_cognitivo?: {
     agentes_consultados: number
     consenso_alcanzado: boolean

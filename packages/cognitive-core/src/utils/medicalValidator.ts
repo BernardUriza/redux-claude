@@ -284,7 +284,7 @@ export class MedicalQualityValidator {
     let totalScore = 0
 
     // Evaluar sección Subjetivo
-    const subjectivoScore = this.evaluateSubjectivoSection(analysis.subjetivo)
+    const subjectivoScore = this.evaluateSubjectivoSection(analysis.subjetivo || '')
     totalScore += subjectivoScore * 0.25
 
     if (subjectivoScore < 0.6) {
@@ -292,7 +292,7 @@ export class MedicalQualityValidator {
     }
 
     // Evaluar sección Objetivo
-    const objetivoScore = this.evaluateObjetivoSection(analysis.objetivo)
+    const objetivoScore = this.evaluateObjetivoSection(analysis.objetivo || '')
     totalScore += objetivoScore * 0.25
 
     if (objetivoScore < 0.6) {
@@ -301,7 +301,7 @@ export class MedicalQualityValidator {
 
     // Evaluar Análisis diagnóstico
     const analisisScore = this.evaluateAnalysisSection(
-      analysis.diagnostico_principal,
+      analysis.diagnostico_principal || '',
       analysis.diagnosticos_diferenciales || []
     )
     totalScore += analisisScore * 0.3
@@ -311,7 +311,7 @@ export class MedicalQualityValidator {
     }
 
     // Evaluar Plan
-    const planScore = this.evaluatePlanSection(analysis.plan_tratamiento)
+    const planScore = this.evaluatePlanSection(analysis.plan_tratamiento || '')
     totalScore += planScore * 0.2
 
     if (planScore < 0.6) {
@@ -495,7 +495,7 @@ export class MedicalQualityValidator {
   }
 
   private extractMedicalTermsFromSOAP(analysis: SOAPAnalysis): string[] {
-    const allText = `${analysis.subjetivo} ${analysis.objetivo} ${analysis.diagnostico_principal} ${analysis.plan_tratamiento}`.toLowerCase()
+    const allText = `${analysis.subjetivo || ''} ${analysis.objetivo || ''} ${analysis.diagnostico_principal || ''} ${analysis.plan_tratamiento || ''}`.toLowerCase()
     const terms = this.contentValidator['medicalTerms']
     return terms.filter(term => allText.includes(term))
   }
@@ -505,12 +505,12 @@ export class MedicalQualityValidator {
     let coherence = 0.5
 
     // El diagnóstico principal debería estar relacionado con síntomas subjetivos
-    if (this.checkDiagnosisSymptomCoherence(analysis.diagnostico_principal, analysis.subjetivo)) {
+    if (this.checkDiagnosisSymptomCoherence(analysis.diagnostico_principal || '', analysis.subjetivo || '')) {
       coherence += 0.25
     }
 
     // El plan debería estar alineado con el diagnóstico
-    if (this.checkPlanDiagnosisAlignment(analysis.plan_tratamiento, analysis.diagnostico_principal)) {
+    if (this.checkPlanDiagnosisAlignment(analysis.plan_tratamiento || '', analysis.diagnostico_principal || '')) {
       coherence += 0.25
     }
 

@@ -3,7 +3,8 @@
 
 import { BaseAgent } from '../agents/BaseAgent'
 import { callClaudeForDecision } from '../services/decisionalMiddleware'
-import { SOAPProcessor, type SOAPAnalysis } from './SOAPProcessor'
+import { SOAPProcessor } from './SOAPProcessor'
+import type { SOAPAnalysis } from '../types/medical'
 import { SOAPPrompts } from './SOAPPrompts'
 import type { 
   DiagnosticDecision, 
@@ -85,7 +86,7 @@ export class SOAPResolver {
       // 🏥 FASE 1: Procesamiento SOAP Formal (NOM-004-SSA3-2012)
       console.log('📋 Generando estructura SOAP formal...')
       const soapFormalAnalysis = await this.soapProcessor.processCase(clinicalInput)
-      console.log(`✅ SOAP formal completado: ${soapFormalAnalysis.metadata.calidad.cumplimientoNormativo}% normativo`)
+      console.log(`✅ SOAP formal completado: ${soapFormalAnalysis.metadata?.calidad?.cumplimientoNormativo || 0}% normativo`)
 
       // 🎭 FASE 2: Procesamiento Multi-Agente (Enriquecimiento)
       // 📋 SECCIÓN S - SUBJETIVO (Family Medicine)
@@ -126,7 +127,7 @@ export class SOAPResolver {
           consensusLevel,
           warningFlags,
           version: 'v2.0-NOM-004',
-          normativaCompliant: soapFormalAnalysis.metadata.calidad.cumplimientoNormativo >= 90
+          normativaCompliant: (soapFormalAnalysis.metadata?.calidad?.cumplimientoNormativo || 0) >= 90
         }
       }
 

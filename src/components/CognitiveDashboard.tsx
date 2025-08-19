@@ -5,7 +5,11 @@
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useMedicalChat } from '@redux-claude/cognitive-core'
-import { MedicalMessageComponent } from './MedicalMessage'
+import { EnhancedMedicalMessage } from './EnhancedMedicalMessage'
+import { IterativeDiagnosticProgress } from './IterativeDiagnosticProgress'
+import { CognitiveAgentsPanel } from './CognitiveAgentsPanel'
+import { RealTimeMetrics } from './RealTimeMetrics'
+import { UrgencyIndicator, CompactUrgencyIndicator, type UrgencyData } from './UrgencyIndicator'
 
 // Medical Corporate Color Palette 2025
 const theme = {
@@ -230,6 +234,107 @@ export const CognitiveDashboard = () => {
     activeGoals: 3,
     knowledgeGaps: 2,
   }
+
+  // Sistema de Medicina Defensiva - Datos de urgencia
+  const [urgencyData, setUrgencyData] = useState<UrgencyData>({
+    level: 'low',
+    gravityScore: 3,
+    urgentPatterns: [],
+    immediateActions: [],
+    riskFactors: [],
+    timeToAction: 'Rutinario (< 24 horas)',
+    triageCategory: 'non-urgent',
+    specialistRequired: false
+  })
+
+  // Simular cambios de urgencia basados en el contenido del chat
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+      if (lastMessage.type === 'user') {
+        const input = lastMessage.content.toLowerCase()
+        
+        // Detectar patrones de alta urgencia
+        if (input.includes('dolor torácico') || input.includes('dolor pecho')) {
+          setUrgencyData({
+            level: 'critical',
+            gravityScore: 10,
+            urgentPatterns: [
+              'Dolor torácico - Descartar síndrome coronario agudo',
+              'Patrón compatible con emergencia cardiovascular'
+            ],
+            immediateActions: [
+              '🚨 ACTIVAR PROTOCOLO DE EMERGENCIA',
+              '📞 Contactar servicios de emergencia inmediatamente',
+              '💊 Considerar aspirina 300mg (si no contraindicado)',
+              '📋 ECG de 12 derivaciones STAT'
+            ],
+            riskFactors: [
+              'Síndrome coronario agudo potencial',
+              'Riesgo vital inmediato si IAM'
+            ],
+            timeToAction: 'Inmediato (< 15 min)',
+            triageCategory: 'resuscitation',
+            specialistRequired: true
+          })
+        } else if (input.includes('cefalea') || input.includes('dolor cabeza')) {
+          setUrgencyData({
+            level: 'high',
+            gravityScore: 8,
+            urgentPatterns: [
+              'Cefalea severa - Descartar hemorragia subaracnoidea',
+              'Patrón neurológico de riesgo'
+            ],
+            immediateActions: [
+              '🏥 Referir a urgencias hospitalarias',
+              '📋 Estudios complementarios STAT',
+              '👨‍⚕️ Interconsulta neurológica urgente'
+            ],
+            riskFactors: [
+              'Posible hemorragia intracraneal',
+              'Riesgo de deterioro neurológico'
+            ],
+            timeToAction: 'Urgente (< 1 hora)',
+            triageCategory: 'urgent',
+            specialistRequired: true
+          })
+        } else if (input.includes('fiebre') || input.includes('temperatura')) {
+          setUrgencyData({
+            level: 'medium',
+            gravityScore: 6,
+            urgentPatterns: [
+              'Síndrome febril - Evaluar sepsis'
+            ],
+            immediateActions: [
+              '🔬 Laboratorios y estudios dirigidos',
+              '💊 Tratamiento sintomático inmediato'
+            ],
+            riskFactors: [
+              'Posible proceso infeccioso'
+            ],
+            timeToAction: 'Prioritario (< 4 horas)',
+            triageCategory: 'semi-urgent',
+            specialistRequired: false
+          })
+        } else {
+          // Caso de baja urgencia
+          setUrgencyData({
+            level: 'low',
+            gravityScore: 3,
+            urgentPatterns: [],
+            immediateActions: [
+              '📅 Control médico en 24-48 horas',
+              '📚 Educación al paciente sobre signos de alarma'
+            ],
+            riskFactors: [],
+            timeToAction: 'Rutinario (< 24 horas)',
+            triageCategory: 'non-urgent',
+            specialistRequired: false
+          })
+        }
+      }
+    }
+  }, [messages])
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -318,39 +423,76 @@ export const CognitiveDashboard = () => {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Chat Header */}
-        <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
+        {/* Enhanced Chat Header */}
+        <div className="bg-gradient-to-r from-gray-900 to-slate-900 border-b border-gray-800 px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">🤖</span>
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-lg">🧠</span>
               </div>
               <div>
-                <h2 className="text-lg font-medium text-white">Medical AI Assistant</h2>
-                <p className="text-sm text-gray-400">Multi-agent cognitive analysis system</p>
+                <h2 className="text-xl font-bold text-white">Redux Claude Medical AI</h2>
+                <p className="text-sm text-gray-400">Motor Iterativo + Orquestador Cognitivo v2.0</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="px-3 py-1 bg-green-900/30 border border-green-700 rounded-full">
-                <span className="text-xs text-green-400">Online</span>
+            <div className="flex items-center space-x-3">
+              <div className="px-3 py-1 bg-emerald-900/30 border border-emerald-700 rounded-full">
+                <span className="text-xs text-emerald-400 font-medium">Sistema Optimizado</span>
               </div>
+              <div className="px-3 py-1 bg-purple-900/30 border border-purple-700 rounded-full">
+                <span className="text-xs text-purple-400 font-medium">Fase 3: Medicina Defensiva</span>
+              </div>
+              {urgencyData.level !== 'low' && (
+                <div className={`px-3 py-1 rounded-full border ${
+                  urgencyData.level === 'critical' ? 'bg-red-900/30 border-red-700 text-red-400' :
+                  urgencyData.level === 'high' ? 'bg-orange-900/30 border-orange-700 text-orange-400' :
+                  'bg-yellow-900/30 border-yellow-700 text-yellow-400'
+                }`}>
+                  <span className="text-xs font-medium">
+                    🚨 Urgencia: {urgencyData.level.toUpperCase()}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Main Content - Solo Chat */}
-        <div className="flex-1 flex flex-col">
+        {/* Main Content with Enhanced Panels */}
+        <div className="flex-1 flex">
           
-          {/* Chat Messages Area */}
-          <div className="flex-1 overflow-y-auto bg-gray-900 custom-scrollbar">
+          {/* Left Panel - Metrics and Progress */}
+          <div className="w-80 bg-slate-900/50 border-r border-gray-800 p-4 overflow-y-auto custom-scrollbar">
+            {/* Medicina Defensiva - Indicador de Urgencia */}
+            {urgencyData.level !== 'low' || messages.length > 0 ? (
+              urgencyData.level === 'critical' || urgencyData.level === 'high' ? (
+                <UrgencyIndicator urgencyData={urgencyData} className="mb-4" />
+              ) : (
+                <CompactUrgencyIndicator urgencyData={urgencyData} className="mb-4" />
+              )
+            ) : null}
+            
+            <RealTimeMetrics />
+            <IterativeDiagnosticProgress />
+            <CognitiveAgentsPanel />
+          </div>
+          
+          {/* Center Chat Area */}
+          <div className="flex-1 flex flex-col">
+            {/* Chat Messages Area */}
+            <div className="flex-1 overflow-y-auto bg-gray-900 custom-scrollbar">
             {messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center px-6">
                   <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">🩺</span>
+                    <span className="text-2xl">🛡️</span>
                   </div>
-                  <p className="text-gray-400 text-sm">Ready for medical consultation...</p>
-                  <p className="text-gray-500 text-xs mt-2">Describe your medical case to get started</p>
+                  <p className="text-gray-400 text-sm">Sistema de Medicina Defensiva Activado</p>
+                  <p className="text-gray-500 text-xs mt-2">
+                    Diagnósticos priorizados por <strong>gravedad</strong> sobre probabilidad
+                  </p>
+                  <p className="text-gray-500 text-xs mt-1">
+                    Describe tu caso médico para análisis SOAP completo
+                  </p>
                 </div>
               </div>
             ) : (
@@ -360,7 +502,7 @@ export const CognitiveDashboard = () => {
                   const messageIsStreaming = isLastMessage && isStreaming && message.type === 'assistant'
                   
                   return (
-                    <MedicalMessageComponent
+                    <EnhancedMedicalMessage
                       key={message.id || idx}
                       message={message}
                       isStreaming={messageIsStreaming}
@@ -449,6 +591,7 @@ export const CognitiveDashboard = () => {
           </div>
         </div>
       </div>
+    </div>
       
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {

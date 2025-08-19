@@ -1,129 +1,11 @@
-// 🏥 SOAP Processor - Implementación NOM-004-SSA3-2012
-// Creado por Bernard Orozco - Fase 1 del Plan de Migración
+// 🏥 SOAP Processor - Implementación NOM-004-SSA3-2012 + Medicina Defensiva
+// Creado por Bernard Orozco - Fase 3: Sistema de Medicina Defensiva Integrado
 
-export interface SOAPData {
-  subjetivo: {
-    motivoConsulta: string
-    historiaActual: string
-    antecedentes: {
-      personales: string[]
-      familiares: string[]
-      medicamentos: string[]
-      alergias: string[]
-    }
-    revisionSistemas: string
-    contextoPsicosocial: string
-  }
-  objetivo: {
-    signosVitales: {
-      presionArterial?: string
-      frecuenciaCardiaca?: string
-      frecuenciaRespiratoria?: string
-      temperatura?: string
-      saturacionOxigeno?: string
-      peso?: string
-      talla?: string
-      imc?: string
-    }
-    exploracionFisica: {
-      aspecto: string
-      cabezaCuello: string
-      torax: string
-      abdomen: string
-      extremidades: string
-      neurologico: string
-      piel: string
-    }
-    estudiosComplementarios: {
-      laboratorios?: Record<string, string>
-      imagenes?: string[]
-      otros?: string[]
-    }
-  }
-  analisis: {
-    diagnosticoPrincipal: {
-      condicion: string
-      cie10: string
-      evidencia: string[]
-      probabilidad: number
-    }
-    diagnosticosDiferenciales: Array<{
-      condicion: string
-      cie10: string
-      evidencia: string[]
-      probabilidad: number
-      gravedad: 'baja' | 'moderada' | 'alta' | 'critica'
-      urgencia: 'no_urgente' | 'semi_urgente' | 'urgente' | 'emergencia'
-    }>
-    factoresRiesgo: string[]
-    senosPeligro: string[]
-    pronostico: {
-      inmediato: string
-      cortoplazo: string
-      largoplazo: string
-    }
-  }
-  plan: {
-    tratamientoFarmacologico: Array<{
-      medicamento: string
-      dosis: string
-      via: string
-      frecuencia: string
-      duracion: string
-      indicaciones: string
-      contraindicaciones: string[]
-    }>
-    tratamientoNoFarmacologico: string[]
-    estudiosAdicionales: Array<{
-      estudio: string
-      justificacion: string
-      urgencia: 'inmediato' | '24h' | '48h' | '1semana' | 'rutina'
-    }>
-    interconsultas: Array<{
-      especialidad: string
-      motivo: string
-      urgencia: 'inmediato' | 'urgente' | 'programado'
-    }>
-    seguimiento: {
-      proximaCita: string
-      criteriosAlarma: string[]
-      educacionPaciente: string[]
-      modificacionesEstiloVida: string[]
-    }
-    pronostico: string
-    certificaciones: {
-      incapacidad?: {
-        dias: number
-        tipo: 'temporal' | 'permanente'
-        actividades: string[]
-      }
-      defuncion?: boolean
-    }
-  }
-}
+import { DefensiveMedicineValidator, UrgentPattern, DefensiveDiagnosis } from '../validators/DefensiveMedicineValidator'
+import { UrgencyClassifier, UrgencyAssessment, TriageResult } from '../classifiers/UrgencyClassifier'
 
-export interface SOAPAnalysis {
-  soap: SOAPData
-  metadata: {
-    version: string
-    normativa: 'NOM-004-SSA3-2012'
-    fechaAnalisis: string
-    profesionalResponsable: string
-    institucion: string
-    clasificacion: {
-      complejidad: 'baja' | 'media' | 'alta' | 'critica'
-      especialidad: string[]
-      urgencia: 1 | 2 | 3 | 4 | 5
-      riesgoVital: boolean
-    }
-    calidad: {
-      completitud: number // 0-100%
-      coherencia: number // 0-100%
-      seguridadClinica: number // 0-100%
-      cumplimientoNormativo: number // 0-100%
-    }
-  }
-}
+// Importar tipos desde types/medical.ts
+import type { SOAPData, SOAPAnalysis } from '../types/medical'
 
 /**
  * 📋 Procesador SOAP Formal según NOM-004-SSA3-2012
@@ -137,23 +19,57 @@ export interface SOAPAnalysis {
 export class SOAPProcessor {
   private version = '1.0.0'
   private normativa: 'NOM-004-SSA3-2012' = 'NOM-004-SSA3-2012'
+  private defensiveValidator: DefensiveMedicineValidator
+  private urgencyClassifier: UrgencyClassifier
+
+  constructor() {
+    this.defensiveValidator = new DefensiveMedicineValidator()
+    this.urgencyClassifier = new UrgencyClassifier()
+  }
 
   /**
-   * 🏥 Procesa caso clínico con estructura SOAP formal
+   * 🏥 Procesa caso clínico con estructura SOAP formal + Medicina Defensiva
    */
-  async processCase(clinicalInput: string): Promise<SOAPAnalysis> {
+  async processCase(
+    clinicalInput: string,
+    patientContext?: {
+      age?: number
+      gender?: string
+      comorbidities?: string[]
+      medications?: string[]
+      vitalSigns?: Record<string, any>
+    }
+  ): Promise<SOAPAnalysis> {
     const startTime = Date.now()
 
     try {
-      console.log('📋 Iniciando procesamiento SOAP formal NOM-004...')
+      console.log('🚨 Iniciando procesamiento SOAP + Medicina Defensiva...')
 
-      // Extraer y estructurar cada sección SOAP
+      // FASE 1: Evaluación de urgencia ANTES del procesamiento SOAP
+      const urgencyAssessment = await this.urgencyClassifier.assessUrgency(clinicalInput, patientContext)
+      const triageResult = this.urgencyClassifier.performTriage(urgencyAssessment)
+      
+      console.log(`🎯 Urgencia detectada: ${urgencyAssessment.overallLevel} (Gravedad máx: ${urgencyAssessment.maxGravityScore})`)
+      
+      // FASE 2: Extraer y estructurar cada sección SOAP (con contexto defensivo)
       const subjetivoData = await this.extractSubjectiveData(clinicalInput)
       const objetivoData = await this.inferObjectiveFindings(clinicalInput, subjetivoData)
-      const analisisData = await this.generateDifferentialDx(clinicalInput, subjetivoData, objetivoData)
-      const planData = await this.createTreatmentPlan(clinicalInput, subjetivoData, objetivoData, analisisData)
+      const analisisData = await this.generateDifferentialDx(
+        clinicalInput, 
+        subjetivoData, 
+        objetivoData, 
+        urgencyAssessment
+      )
+      const planData = await this.createTreatmentPlan(
+        clinicalInput, 
+        subjetivoData, 
+        objetivoData, 
+        analisisData,
+        urgencyAssessment,
+        triageResult
+      )
 
-      // Construir SOAP completo
+      // FASE 3: Construir SOAP completo con medicina defensiva
       const soapData: SOAPData = {
         subjetivo: subjetivoData,
         objetivo: objetivoData,
@@ -161,31 +77,41 @@ export class SOAPProcessor {
         plan: planData
       }
 
-      // Calcular métricas de calidad
-      const calidad = this.calculateQualityMetrics(soapData)
-      const clasificacion = this.classifyCase(soapData)
+      // FASE 4: Calcular métricas de calidad (incluyendo medicina defensiva)
+      const calidad = this.calculateQualityMetrics(soapData, urgencyAssessment)
+      const clasificacion = this.classifyCase(soapData, urgencyAssessment)
 
       const analysis: SOAPAnalysis = {
         soap: soapData,
+        defensiveAssessment: urgencyAssessment,
+        triageResult,
         metadata: {
           version: this.version,
           normativa: this.normativa,
           fechaAnalisis: new Date().toISOString(),
-          profesionalResponsable: 'Sistema AI Médico - Redux Claude',
+          profesionalResponsable: 'Sistema AI Médico Defensivo - Redux Claude',
           institucion: 'Plataforma Digital de Salud',
           clasificacion,
-          calidad
+          calidad,
+          defensiveMedicine: {
+            urgentPatternsDetected: urgencyAssessment.identifiedPatterns.length,
+            gravityPrioritization: true,
+            redFlagsIdentified: urgencyAssessment.riskFactors.map(rf => rf.factor),
+            immediateActionsRequired: urgencyAssessment.immediateActions.length > 0
+          }
         }
       }
 
-      console.log(`✅ SOAP procesado en ${Date.now() - startTime}ms`)
-      console.log(`📊 Calidad: ${calidad.cumplimientoNormativo}% normativo`)
+      const processingTime = Date.now() - startTime
+      console.log(`✅ SOAP + Medicina Defensiva procesado en ${processingTime}ms`)
+      console.log(`🚨 Nivel de urgencia: ${urgencyAssessment.overallLevel.toUpperCase()}`)
+      console.log(`📊 Calidad defensiva: ${calidad.medicinaDefensiva}%`)
 
       return analysis
 
     } catch (error) {
-      console.error('❌ Error procesando SOAP:', error)
-      throw new Error(`SOAPProcessor failed: ${error}`)
+      console.error('❌ Error procesando SOAP con Medicina Defensiva:', error)
+      throw new Error(`SOAPProcessor with Defensive Medicine failed: ${error}`)
     }
   }
 
@@ -229,19 +155,25 @@ export class SOAPProcessor {
   }
 
   /**
-   * ⚕️ A - ANÁLISIS: Diagnóstico diferencial estructurado
+   * ⚕️ A - ANÁLISIS: Diagnóstico diferencial estructurado + Medicina Defensiva
    */
   private async generateDifferentialDx(
     input: string,
     subjetivo: SOAPData['subjetivo'],
-    objetivo: SOAPData['objetivo']
+    objetivo: SOAPData['objetivo'],
+    urgencyAssessment?: UrgencyAssessment
   ): Promise<SOAPData['analisis']> {
     
-    // Generar diagnóstico principal basado en evidencia
-    const diagnosticoPrincipal = this.generatePrimaryDiagnosis(input, subjetivo, objetivo)
+    // Generar diagnóstico principal basado en evidencia + medicina defensiva
+    const diagnosticoPrincipal = this.generatePrimaryDiagnosis(input, subjetivo, objetivo, urgencyAssessment)
     
-    // Diagnósticos diferenciales priorizados por gravedad (medicina defensiva)
-    const diagnosticosDiferenciales = this.generateDifferentialDiagnoses(input, subjetivo, objetivo)
+    // Diagnósticos diferenciales priorizados por GRAVEDAD (medicina defensiva)
+    const diagnosticosDiferenciales = this.generateDefensiveDifferentialDiagnoses(
+      input, 
+      subjetivo, 
+      objetivo, 
+      urgencyAssessment
+    )
     
     const factoresRiesgo = this.identifyRiskFactors(subjetivo, objetivo)
     const senosPeligro = this.identifyRedFlags(input, subjetivo, objetivo)
@@ -257,13 +189,15 @@ export class SOAPProcessor {
   }
 
   /**
-   * 📝 P - PLAN: Plan terapéutico integral NOM-004
+   * 📝 P - PLAN: Plan terapéutico integral NOM-004 + Medicina Defensiva
    */
   private async createTreatmentPlan(
     input: string,
     subjetivo: SOAPData['subjetivo'],
     objetivo: SOAPData['objetivo'],
-    analisis: SOAPData['analisis']
+    analisis: SOAPData['analisis'],
+    urgencyAssessment?: UrgencyAssessment,
+    triageResult?: TriageResult
   ): Promise<SOAPData['plan']> {
     
     const tratamientoFarmacologico = this.createPharmacologicalPlan(analisis)
@@ -482,11 +416,28 @@ export class SOAPProcessor {
   private generatePrimaryDiagnosis(
     input: string,
     subjetivo: SOAPData['subjetivo'],
-    objetivo: SOAPData['objetivo']
+    objetivo: SOAPData['objetivo'],
+    urgencyAssessment?: UrgencyAssessment
   ): SOAPData['analisis']['diagnosticoPrincipal'] {
     
-    // Lógica simple para diagnóstico principal
-    // En implementación real, usaría ML o reglas más complejas
+    // Si hay patrones urgentes identificados, priorizar diagnóstico de alta gravedad
+    if (urgencyAssessment && urgencyAssessment.identifiedPatterns.length > 0) {
+      const mostCriticalPattern = urgencyAssessment.identifiedPatterns
+        .sort((a, b) => b.gravityScore - a.gravityScore)[0]
+      
+      return {
+        condicion: mostCriticalPattern.criticalDifferentials[0] || 'Síndrome clínico crítico',
+        cie10: 'Z03.9', // En implementación real mapearía CIE-10 específicos
+        evidencia: [
+          'Patrón de síntomas compatible con urgencia médica',
+          `Gravedad score: ${mostCriticalPattern.gravityScore}/10`,
+          ...mostCriticalPattern.redFlags
+        ],
+        probabilidad: 0.6 // Baja probabilidad pero ALTA gravedad (medicina defensiva)
+      }
+    }
+    
+    // Diagnóstico estándar si no hay urgencia
     return {
       condicion: 'Síndrome clínico por definir',
       cie10: 'Z03.9',
@@ -495,13 +446,18 @@ export class SOAPProcessor {
     }
   }
 
-  private generateDifferentialDiagnoses(
+  /**
+   * 🚨 NUEVO: Genera diagnósticos diferenciales aplicando medicina defensiva
+   * Prioriza GRAVEDAD sobre PROBABILIDAD (70% vs 30%)
+   */
+  private generateDefensiveDifferentialDiagnoses(
     input: string,
     subjetivo: SOAPData['subjetivo'],
-    objetivo: SOAPData['objetivo']
+    objetivo: SOAPData['objetivo'],
+    urgencyAssessment?: UrgencyAssessment
   ): SOAPData['analisis']['diagnosticosDiferenciales'] {
     
-    return [
+    const baseDifferentials = [
       {
         condicion: 'Proceso infeccioso viral',
         cie10: 'B34.9',
@@ -519,6 +475,33 @@ export class SOAPProcessor {
         urgencia: 'semi_urgente' as const
       }
     ]
+
+    // Si hay assessment de urgencia, agregar diagnósticos críticos al inicio
+    if (urgencyAssessment && urgencyAssessment.identifiedPatterns.length > 0) {
+      const criticalDifferentials = urgencyAssessment.identifiedPatterns
+        .flatMap(pattern => pattern.criticalDifferentials.map(diff => ({
+          condicion: diff,
+          cie10: 'Z03.9', // En implementación real mapearía CIE-10 específicos
+          evidencia: [`Patrón de riesgo identificado: ${pattern.symptoms.join(', ')}`, ...pattern.redFlags],
+          probabilidad: 0.2, // BAJA probabilidad
+          gravedad: pattern.gravityScore >= 9 ? 'critica' as const : 'alta' as const, // ALTA gravedad
+          urgencia: pattern.timeToAction === 'immediate' ? 'emergencia' as const : 'urgente' as const
+        })))
+
+      // MEDICINA DEFENSIVA: Colocar diagnósticos críticos AL INICIO
+      return [...criticalDifferentials, ...baseDifferentials]
+    }
+
+    return baseDifferentials
+  }
+
+  private generateDifferentialDiagnoses(
+    input: string,
+    subjetivo: SOAPData['subjetivo'],
+    objetivo: SOAPData['objetivo']
+  ): SOAPData['analisis']['diagnosticosDiferenciales'] {
+    // Método legacy - mantener para compatibilidad
+    return this.generateDefensiveDifferentialDiagnoses(input, subjetivo, objetivo)
   }
 
   private identifyRiskFactors(
@@ -646,11 +629,15 @@ export class SOAPProcessor {
     }
   }
 
-  private calculateQualityMetrics(soap: SOAPData): SOAPAnalysis['metadata']['calidad'] {
+  private calculateQualityMetrics(
+    soap: SOAPData, 
+    urgencyAssessment?: UrgencyAssessment
+  ): NonNullable<SOAPAnalysis['metadata']>['calidad'] {
     let completitud = 0
     let coherencia = 0
     let seguridadClinica = 0
     let cumplimientoNormativo = 0
+    let medicinaDefensiva = 0
 
     // Evaluar completitud (25% por sección)
     if (soap.subjetivo.motivoConsulta) completitud += 25
@@ -659,37 +646,129 @@ export class SOAPProcessor {
     if (soap.plan.tratamientoFarmacologico.length > 0) completitud += 25
 
     // Coherencia básica
-    coherencia = 85 // Placeholder
+    coherencia = 85
 
-    // Seguridad clínica
+    // Seguridad clínica mejorada con medicina defensiva
     seguridadClinica = soap.analisis.senosPeligro.length === 0 ? 90 : 70
+    if (urgencyAssessment) {
+      // Bonificación por identificación de patrones urgentes
+      if (urgencyAssessment.identifiedPatterns.length > 0) seguridadClinica += 10
+      // Bonificación por acciones inmediatas definidas
+      if (urgencyAssessment.immediateActions.length > 0) seguridadClinica += 5
+      seguridadClinica = Math.min(seguridadClinica, 100)
+    }
 
     // Cumplimiento normativo NOM-004
-    cumplimientoNormativo = 95 // Estructura compliant
+    cumplimientoNormativo = 95
+
+    // NUEVO: Medicina Defensiva Score
+    if (urgencyAssessment) {
+      medicinaDefensiva = 0
+      
+      // +30 pts por identificación de patrones urgentes
+      if (urgencyAssessment.identifiedPatterns.length > 0) {
+        medicinaDefensiva += 30
+      }
+      
+      // +25 pts por priorización por gravedad
+      const hasHighGravityFirst = soap.analisis.diagnosticosDiferenciales[0]?.gravedad === 'critica' || 
+                                  soap.analisis.diagnosticosDiferenciales[0]?.gravedad === 'alta'
+      if (hasHighGravityFirst) {
+        medicinaDefensiva += 25
+      }
+      
+      // +20 pts por factores de riesgo identificados
+      if (urgencyAssessment.riskFactors.length > 0) {
+        medicinaDefensiva += 20
+      }
+      
+      // +15 pts por criterios de escalación definidos
+      if (urgencyAssessment.escalationCriteria.length > 0) {
+        medicinaDefensiva += 15
+      }
+      
+      // +10 pts por acciones inmediatas
+      if (urgencyAssessment.immediateActions.length > 0) {
+        medicinaDefensiva += 10
+      }
+      
+      medicinaDefensiva = Math.min(medicinaDefensiva, 100)
+    }
 
     return {
       completitud,
       coherencia,
       seguridadClinica,
-      cumplimientoNormativo
+      cumplimientoNormativo,
+      medicinaDefensiva
     }
   }
 
-  private classifyCase(soap: SOAPData): SOAPAnalysis['metadata']['clasificacion'] {
-    const urgencia = this.calculateUrgencyLevel(soap)
-    const complejidad = this.assessComplexity(soap)
-    const riesgoVital = this.assessVitalRisk(soap)
+  private classifyCase(
+    soap: SOAPData, 
+    urgencyAssessment?: UrgencyAssessment
+  ): NonNullable<SOAPAnalysis['metadata']>['clasificacion'] {
+    const urgencia = this.calculateUrgencyLevel(soap, urgencyAssessment)
+    const complejidad = this.assessComplexity(soap, urgencyAssessment)
+    const riesgoVital = this.assessVitalRisk(soap, urgencyAssessment)
+
+    // Determinar especialidades requeridas basado en medicina defensiva
+    const especialidad = this.determineSpecialties(soap, urgencyAssessment)
 
     return {
       complejidad,
-      especialidad: ['Medicina General'],
+      especialidad,
       urgencia,
       riesgoVital
     }
   }
 
-  private calculateUrgencyLevel(soap: SOAPData): 1 | 2 | 3 | 4 | 5 {
-    // ESI (Emergency Severity Index) simplificado
+  /**
+   * 🚨 NUEVO: Determina especialidades requeridas con medicina defensiva
+   */
+  private determineSpecialties(
+    soap: SOAPData, 
+    urgencyAssessment?: UrgencyAssessment
+  ): string[] {
+    const especialidades = ['Medicina General']
+
+    if (urgencyAssessment) {
+      urgencyAssessment.identifiedPatterns.forEach(pattern => {
+        pattern.criticalDifferentials.forEach(diff => {
+          if (diff.toLowerCase().includes('infarto') || diff.toLowerCase().includes('cardíaco')) {
+            if (!especialidades.includes('Cardiología')) especialidades.push('Cardiología')
+          }
+          if (diff.toLowerCase().includes('hemorragia') || diff.toLowerCase().includes('neurológico')) {
+            if (!especialidades.includes('Neurología')) especialidades.push('Neurología')
+          }
+          if (diff.toLowerCase().includes('apendicitis') || diff.toLowerCase().includes('abdominal')) {
+            if (!especialidades.includes('Cirugía General')) especialidades.push('Cirugía General')
+          }
+          if (diff.toLowerCase().includes('embolia') || diff.toLowerCase().includes('pulmonar')) {
+            if (!especialidades.includes('Medicina Interna')) especialidades.push('Medicina Interna')
+          }
+        })
+      })
+    }
+
+    return especialidades
+  }
+
+  private calculateUrgencyLevel(
+    soap: SOAPData, 
+    urgencyAssessment?: UrgencyAssessment
+  ): 1 | 2 | 3 | 4 | 5 {
+    // Medicina defensiva: Usar assessment de urgencia si disponible
+    if (urgencyAssessment) {
+      switch (urgencyAssessment.overallLevel) {
+        case 'critical': return 1 // Resucitación
+        case 'high': return 2 // Emergencia
+        case 'medium': return 3 // Urgente
+        default: return 4 // Semi-urgente
+      }
+    }
+
+    // ESI (Emergency Severity Index) simplificado - fallback
     const hasRedFlags = soap.analisis.senosPeligro.some(flag => 
       !flag.includes('No se identifican')
     )
@@ -698,16 +777,38 @@ export class SOAPProcessor {
     return 3 // Semi-urgente
   }
 
-  private assessComplexity(soap: SOAPData): 'baja' | 'media' | 'alta' | 'critica' {
-    const factorsCount = soap.analisis.factoresRiesgo.length + 
-                        soap.analisis.diagnosticosDiferenciales.length
+  private assessComplexity(
+    soap: SOAPData, 
+    urgencyAssessment?: UrgencyAssessment
+  ): 'baja' | 'media' | 'alta' | 'critica' {
+    let factorsCount = soap.analisis.factoresRiesgo.length + 
+                      soap.analisis.diagnosticosDiferenciales.length
+    
+    // Medicina defensiva: Incrementar complejidad si hay patrones urgentes
+    if (urgencyAssessment) {
+      factorsCount += urgencyAssessment.identifiedPatterns.length * 2
+      factorsCount += urgencyAssessment.riskFactors.length
+
+      if (urgencyAssessment.overallLevel === 'critical') return 'critica'
+      if (urgencyAssessment.maxGravityScore >= 8) return 'alta'
+    }
     
     if (factorsCount > 5) return 'alta'
     if (factorsCount > 2) return 'media'
     return 'baja'
   }
 
-  private assessVitalRisk(soap: SOAPData): boolean {
+  private assessVitalRisk(
+    soap: SOAPData, 
+    urgencyAssessment?: UrgencyAssessment
+  ): boolean {
+    // Medicina defensiva: Usar assessment de urgencia
+    if (urgencyAssessment) {
+      return urgencyAssessment.overallLevel === 'critical' || 
+             urgencyAssessment.maxGravityScore >= 9
+    }
+
+    // Evaluación estándar - fallback
     return soap.analisis.diagnosticosDiferenciales.some(dx => 
       dx.gravedad === 'critica' || dx.urgencia === 'emergencia'
     )
