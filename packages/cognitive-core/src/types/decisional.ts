@@ -1,6 +1,8 @@
 // src/types/decisional.ts
 // Creado por Bernard Orozco
 
+import { AuditEntry } from './audit'
+
 export enum ProviderType {
   CLAUDE = 'claude',
   OPENAI = 'openai', 
@@ -70,7 +72,7 @@ export type DecisionsState = {
   averageConfidence: number
   averageLatency: number
   circuitBreaker: Record<ProviderType, CircuitBreakerState>
-  auditEntries: import('@/types/audit').AuditEntry[]
+  auditEntries: AuditEntry[]
   sessionQuality: {
     clinicalCoherence: number
     safetyScore: number

@@ -155,8 +155,8 @@ const decisionsSlice = createSlice({
       state.auditEntries.push(...action.payload)
       
       // Update session quality based on audit entries
-      const critical = state.auditEntries.filter(e => e.level === 'critical').length
-      const warnings = state.auditEntries.filter(e => e.level === 'warning').length
+      const critical = state.auditEntries.filter((e: AuditEntry) => e.level === 'critical').length
+      const warnings = state.auditEntries.filter((e: AuditEntry) => e.level === 'warning').length
       const total = Math.max(state.totalProcessed, 1)
       
       state.sessionQuality.clinicalCoherence = Math.max(0, 100 - (critical * 50 / total) - (warnings * 20 / total))

@@ -3,6 +3,7 @@
 import { ClaudeAdapter } from '../decision-engine/providers/claude'
 import { SOAPAnalysis, DiagnosticCycle, MedicalCase, AdditionalInfoRequest } from '../types/medical'
 import { MedicalQualityValidator } from '../utils/medicalValidator'
+import { CognitiveOrchestrator } from '../services/cognitiveOrchestrator'
 
 interface DiagnosticEngineConfig {
   maxCycles: number
@@ -14,11 +15,13 @@ export class IterativeDiagnosticEngine {
   private cycles: DiagnosticCycle[] = []
   private claudeAdapter: ClaudeAdapter
   private validator: MedicalQualityValidator
+  private cognitiveOrchestrator: CognitiveOrchestrator
   private config: DiagnosticEngineConfig
 
   constructor(claudeAdapter?: ClaudeAdapter, config?: Partial<DiagnosticEngineConfig>) {
     this.claudeAdapter = claudeAdapter || new ClaudeAdapter()
     this.validator = new MedicalQualityValidator()
+    this.cognitiveOrchestrator = new CognitiveOrchestrator()
     this.config = {
       maxCycles: 3,
       confidenceThreshold: 0.85,
@@ -78,7 +81,7 @@ export class IterativeDiagnosticEngine {
     console.log(`\n✅ DIAGNÓSTICO COMPLETADO después de ${this.cycles.length} ciclos`)
     console.log(`📊 Confianza final: ${Math.round(globalConfidence * 100)}%`)
 
-    return this.finalizeSOAPAnalysis(this.cycles)
+    return await this.finalizeSOAPAnalysis(this.cycles)
   }
 
   private async runDiagnosticCycle(
@@ -386,14 +389,44 @@ Responde EXCLUSIVAMENTE en este formato:
     }
   }
 
-  private finalizeSOAPAnalysis(cycles: DiagnosticCycle[]): SOAPAnalysis {
+  private async finalizeSOAPAnalysis(cycles: DiagnosticCycle[]): Promise<SOAPAnalysis> {
     const lastCycle = cycles[cycles.length - 1]
     const finalAnalysis = lastCycle.analysis
+    const globalConfidence = this.calculateGlobalConfidence(cycles)
 
-    // Mejorar el análisis final con datos de todos los ciclos
+    console.log('🧠 ACTIVANDO ORQUESTADOR COGNITIVO PARA ANÁLISIS FINAL')
+    
+    // Si tenemos alta confianza, usar el orquestador cognitivo para refinar el análisis
+    if (globalConfidence >= 0.8) {
+      try {
+        // Crear input estructurado para el orquestador
+        const structuredInput = this.buildStructuredInputForOrchestrator(cycles, finalAnalysis)
+        
+        // Procesar con orquestador cognitivo (agentes especializados)
+        const cognitiveResult = await this.cognitiveOrchestrator.processWithCognition(structuredInput)
+        
+        console.log(`🎯 Orquestador activó ${cognitiveResult.decisions.length} agentes especializados`)
+        console.log(`📊 Consenso alcanzado: ${cognitiveResult.consensus ? 'SÍ' : 'NO'}`)
+        
+        // Mejorar análisis SOAP con insights cognitivos
+        const enhancedAnalysis = this.enhanceSOAPWithCognitiveInsights(
+          finalAnalysis, 
+          cognitiveResult, 
+          cycles
+        )
+        
+        return enhancedAnalysis
+        
+      } catch (error) {
+        console.warn('⚠️ Error en orquestador cognitivo, usando análisis básico:', error)
+        // Fallback al análisis básico si falla el orquestador
+      }
+    }
+
+    // Análisis básico sin orquestador cognitivo
     return {
       ...finalAnalysis,
-      confianza_global: this.calculateGlobalConfidence(cycles),
+      confianza_global: globalConfidence,
       ciclos_diagnosticos: cycles.length,
       tiempo_total_analisis: cycles.reduce((sum, cycle) => sum + (cycle.latency || 0), 0),
       evolucion_diagnostica: cycles.map((cycle, index) => ({
@@ -402,6 +435,76 @@ Responde EXCLUSIVAMENTE en este formato:
         confianza: cycle.confidence || 0
       }))
     }
+  }
+
+  /**
+   * Construye input estructurado para el orquestador basado en los ciclos diagnósticos
+   */
+  private buildStructuredInputForOrchestrator(cycles: DiagnosticCycle[], analysis: SOAPAnalysis): string {
+    const lastCycle = cycles[cycles.length - 1]
+    
+    return `CASO CLÍNICO PARA ANÁLISIS MULTI-AGENTE:
+
+INFORMACIÓN CLÍNICA BASE:
+${lastCycle.caseData.presentation}
+
+ANÁLISIS ITERATIVO PREVIO:
+- Ciclos completados: ${cycles.length}
+- Confianza alcanzada: ${Math.round(this.calculateGlobalConfidence(cycles) * 100)}%
+
+SOAP PRELIMINAR:
+S: ${analysis.subjetivo}
+O: ${analysis.objetivo}  
+A: ${analysis.diagnostico_principal}
+P: ${analysis.plan_tratamiento}
+
+DIAGNÓSTICOS DIFERENCIALES:
+${analysis.diagnosticos_diferenciales?.map((dx, i) => `${i + 1}. ${dx}`).join('\n') || 'No especificados'}
+
+SOLICITUD: Coordinar agentes especializados según contexto clínico para validación final y refinamiento diagnóstico.`
+  }
+
+  /**
+   * Mejora el análisis SOAP con insights del orquestador cognitivo
+   */
+  private enhanceSOAPWithCognitiveInsights(
+    baseAnalysis: SOAPAnalysis,
+    cognitiveResult: any,
+    cycles: DiagnosticCycle[]
+  ): SOAPAnalysis {
+    
+    // Extraer insights de las decisiones de agentes especializados
+    const specialistInsights = cognitiveResult.decisions
+      .filter((decision: any) => decision.confidence > 0.7)
+      .map((decision: any) => decision.content)
+      .join('\n\n')
+
+    // Mejorar cada sección con insights cognitivos
+    const enhancedSubjetivo = baseAnalysis.subjetivo + 
+      (specialistInsights ? `\n\n**Insights de Especialistas:**\n${specialistInsights}` : '')
+
+    const enhancedAnalysis = {
+      ...baseAnalysis,
+      subjetivo: enhancedSubjetivo,
+      confianza_global: Math.min(this.calculateGlobalConfidence(cycles) + 0.1, 1.0), // Bonus por orquestador
+      ciclos_diagnosticos: cycles.length,
+      tiempo_total_analisis: cycles.reduce((sum, cycle) => sum + (cycle.latency || 0), 0),
+      evolucion_diagnostica: cycles.map((cycle, index) => ({
+        ciclo: index + 1,
+        diagnostico: cycle.analysis?.diagnostico_principal || 'En proceso',
+        confianza: cycle.confidence || 0
+      })),
+      // Agregar metadata del orquestrador
+      analisis_cognitivo: {
+        agentes_consultados: cognitiveResult.decisions.length,
+        consenso_alcanzado: Boolean(cognitiveResult.consensus),
+        insights_memoria: cognitiveResult.memory?.shortTermMemory?.relevantContext || 'No disponible',
+        validacion_especializada: true
+      }
+    }
+
+    console.log('✅ Análisis SOAP mejorado con orquestador cognitivo')
+    return enhancedAnalysis
   }
 
   // Métodos públicos para acceso a datos

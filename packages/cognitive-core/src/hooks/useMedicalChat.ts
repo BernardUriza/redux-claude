@@ -294,9 +294,21 @@ ${analysis.datos_adicionales_necesarios && analysis.datos_adicionales_necesarios
 ${analysis.datos_adicionales_necesarios.map(dato => `- ${dato}`).join('\n')}
 ` : ''}
 
+${analysis.analisis_cognitivo ? `
+## 🧠 ANÁLISIS MULTI-AGENTE COGNITIVO
+
+**🎯 Agentes Especializados Consultados:** ${analysis.analisis_cognitivo.agentes_consultados}  
+**🤝 Consenso Alcanzado:** ${analysis.analisis_cognitivo.consenso_alcanzado ? '✅ SÍ' : '❌ NO'}  
+**🧩 Validación Especializada:** ${analysis.analisis_cognitivo.validacion_especializada ? '✅ ACTIVADA' : '❌ NO APLICADA'}
+
+**💭 Insights de Memoria Contextual:**
+${analysis.analisis_cognitivo.insights_memoria}
+
+` : ''}
+
 ---
 
-*🤖 Análisis generado por Motor Iterativo de Diagnóstico v2.0 - Creado por Bernard Orozco*`
+*🤖 Análisis generado por Motor Iterativo + Orquestador Cognitivo v2.0 - Creado por Bernard Orozco*`
   }
 
   const newSession = useCallback((patientId?: string) => {

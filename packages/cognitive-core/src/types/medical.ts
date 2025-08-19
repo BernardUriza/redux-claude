@@ -36,6 +36,14 @@ export interface SOAPAnalysis {
   ciclos_diagnosticos?: number
   tiempo_total_analisis?: number
   evolucion_diagnostica?: DiagnosticEvolution[]
+  
+  // Análisis cognitivo del orquestador
+  analisis_cognitivo?: {
+    agentes_consultados: number
+    consenso_alcanzado: boolean
+    insights_memoria: string
+    validacion_especializada: boolean
+  }
 }
 
 export interface DiagnosticEvolution {
