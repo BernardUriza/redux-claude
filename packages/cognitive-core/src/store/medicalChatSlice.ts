@@ -37,7 +37,41 @@ export interface MedicalChatState {
 }
 
 const initialState: MedicalChatState = {
-  messages: [],
+  messages: [
+    {
+      id: 'welcome_msg',
+      content: `## 🏥 Sistema Cognitivo Médico AI - Streaming Real Activado
+
+¡Bienvenido, doctor! Soy su asistente de IA médica avanzada con **streaming en tiempo real** y capacidades cognitivas multi-agente.
+
+### 🎯 **Funcionalidades Activadas:**
+- **Análisis Diagnóstico**: Evaluaciones diferenciales con streaming progresivo
+- **Clasificación de Urgencia**: Triage ESI automatizado  
+- **Validación Clínica**: Revisión de seguridad y calidad en tiempo real
+- **Planes de Tratamiento**: Recomendaciones terapéuticas generándose dinámicamente
+- **Documentación SOAP**: Notas médicas estructuradas con streaming
+
+### 💬 **Para comenzar:**
+Describa el caso clínico completo: síntomas, antecedentes, examen físico, y cualquier información relevante del paciente.
+
+**Ejemplo**: *"Paciente femenina de 32 años presenta cefalea pulsátil de 2 días de duración, asociada a náuseas y fotofobia. Sin fiebre. Antecedente de migrañas ocasionales..."*
+
+### ⚡ **NUEVAS CARACTERÍSTICAS:**
+- ✅ **Streaming Real**: Ve las respuestas generándose palabra por palabra
+- ✅ **Claude SDK**: Conexión directa sin simulación 
+- ✅ **SOLID Architecture**: Código refactorizado para máximo rendimiento
+- ✅ **Monorepo**: Arquitectura modular y escalable
+
+🚀 **Sistema listo para análisis médico con streaming progresivo activado.**`,
+      type: 'assistant',
+      timestamp: Date.now(),
+      confidence: 0.95,
+      metadata: {
+        sectionType: 'education',
+        isStreaming: false
+      }
+    }
+  ],
   streaming: {
     isActive: false,
     progress: 0

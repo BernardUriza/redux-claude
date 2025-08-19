@@ -5,6 +5,19 @@
 import { decisionEngineService } from './decision-engine/DecisionEngineService'
 export { decisionEngineService }
 
+// === STORE & STATE ===
+export { store } from './store/store'
+export type { RootState, AppDispatch } from './store/store'
+
+// === ADAPTERS ===
+export { ClaudeAdapter } from './decision-engine/providers/claude'
+
+// === HOOKS ===
+export { useMedicalChat } from './hooks/useMedicalChat'
+
+// === MEDICAL TYPES ===
+export type { MedicalMessage } from './store/medicalChatSlice'
+
 // === STREAMING ===
 export { StreamingService } from './streaming'
 export type { StreamingChunk } from './streaming'

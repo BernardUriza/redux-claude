@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { useMedicalChat } from '@/hooks/useMedicalChat'
+import { useMedicalChat } from '@redux-claude/cognitive-core'
 
 // Medical Corporate Color Palette 2025
 const theme = {

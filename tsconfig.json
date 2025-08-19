@@ -25,6 +25,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@redux-claude/cognitive-core": [
+        "./packages/cognitive-core/src/index"
+      ],
+      "@redux-claude/cognitive-core/*": [
+        "./packages/cognitive-core/src/*"
       ]
     },
     "target": "ES2017"

@@ -64,7 +64,7 @@ export class ClaudeAdapter implements ProviderAdapter {
         for await (const chunk of stream) {
           if (signal?.aborted) throw new Error('Request aborted')
           
-          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text') {
+          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
             const text = chunk.delta.text
             fullContent += text
             onChunk(text)
