@@ -95,28 +95,106 @@ export class IterativeDiagnosticEngine {
 
     console.log(`📝 Ejecutando agentes especializados (Ciclo ${cycleNumber})...`)
 
-    // Ejecutar agentes especializados en paralelo para mayor especificidad
-    const [primaryResponse, pharmacologyDetails, pediatricDetails, hospitalizationDetails, familyEducationDetails, objectiveValidation, defensiveDifferentials] = await Promise.all([
-      // Análisis SOAP principal
-      this.claudeAdapter.makeRequest(
+    // NUEVA ARQUITECTURA: Agentes especializados PRIMERO, luego SOAP integrado
+    let pharmacologyDetails, pediatricDetails, hospitalizationDetails, familyEducationDetails, objectiveValidation, defensiveDifferentials
+
+    try {
+      // PASO 1: Ejecutar agentes especializados PRIMERO
+      console.log('🚀 PASO 1: Ejecutando agentes especializados...')
+      const agentResults = await Promise.all([
+        // Agente de farmacología clínica
+        multiAgentOrchestrator.executeSingleAgent(AgentType.CLINICAL_PHARMACOLOGY, cyclePrompt).catch((error) => {
+          console.error('❌ Error en CLINICAL_PHARMACOLOGY:', error?.message || error)
+          return null
+        }),
+        // Agente especialista pediátrico
+        multiAgentOrchestrator.executeSingleAgent(AgentType.PEDIATRIC_SPECIALIST, cyclePrompt).catch((error) => {
+          console.error('❌ Error en PEDIATRIC_SPECIALIST:', error?.message || error)
+          return null
+        }),
+        // Agente criterios hospitalización
+        multiAgentOrchestrator.executeSingleAgent(AgentType.HOSPITALIZATION_CRITERIA, cyclePrompt).catch((error) => {
+          console.error('❌ Error en HOSPITALIZATION_CRITERIA:', error?.message || error)
+          return null
+        }),
+        // Agente educación familiar
+        multiAgentOrchestrator.executeSingleAgent(AgentType.FAMILY_EDUCATION, cyclePrompt).catch((error) => {
+          console.error('❌ Error en FAMILY_EDUCATION:', error?.message || error)
+          return null
+        }),
+        // Agente de validación objetiva
+        multiAgentOrchestrator.executeSingleAgent(AgentType.OBJECTIVE_VALIDATION, cyclePrompt).catch((error) => {
+          console.error('❌ Error en OBJECTIVE_VALIDATION:', error?.message || error)
+          return null
+        }),
+        // Agente de medicina defensiva
+        multiAgentOrchestrator.executeSingleAgent(AgentType.DEFENSIVE_DIFFERENTIAL, cyclePrompt).catch((error) => {
+          console.error('❌ Error en DEFENSIVE_DIFFERENTIAL:', error?.message || error)
+          return null
+        })
+      ])
+
+      console.log('✅ Agentes especializados completados')
+      
+      // Destructurar resultados de agentes
+      pharmacologyDetails = agentResults[0]
+      pediatricDetails = agentResults[1]
+      hospitalizationDetails = agentResults[2]
+      familyEducationDetails = agentResults[3]
+      objectiveValidation = agentResults[4]
+      defensiveDifferentials = agentResults[5]
+
+      // Logging detallado de resultados de agentes
+      console.log('🔍 Resultados de agentes especializados:')
+      console.log('- CLINICAL_PHARMACOLOGY:', pharmacologyDetails ? '✅ Éxito' : '❌ Fallo/Null')
+      if (pharmacologyDetails) {
+        console.log('  Data:', JSON.stringify(pharmacologyDetails, null, 2))
+      }
+      console.log('- PEDIATRIC_SPECIALIST:', pediatricDetails ? '✅ Éxito' : '❌ Fallo/Null')
+      if (pediatricDetails) {
+        console.log('  Data:', JSON.stringify(pediatricDetails, null, 2))
+      }
+      console.log('- HOSPITALIZATION_CRITERIA:', hospitalizationDetails ? '✅ Éxito' : '❌ Fallo/Null')
+      if (hospitalizationDetails) {
+        console.log('  Data:', JSON.stringify(hospitalizationDetails, null, 2))
+      }
+      console.log('- FAMILY_EDUCATION:', familyEducationDetails ? '✅ Éxito' : '❌ Fallo/Null')
+      console.log('- OBJECTIVE_VALIDATION:', objectiveValidation ? '✅ Éxito' : '❌ Fallo/Null')
+      console.log('- DEFENSIVE_DIFFERENTIAL:', defensiveDifferentials ? '✅ Éxito' : '❌ Fallo/Null')
+      
+      if (pharmacologyDetails) {
+        console.log('📊 CLINICAL_PHARMACOLOGY decision:', JSON.stringify(pharmacologyDetails.decision || {}, null, 2))
+      }
+
+      // PASO 2: Construir SOAP basado en resultados de agentes especializados
+      console.log('🚀 PASO 2: Construyendo SOAP integrado basado en agentes...')
+      const integratedPrompt = this.buildIntegratedSOAPPrompt(cycleNumber, cyclePrompt, {
+        pharmacology: pharmacologyDetails,
+        pediatric: pediatricDetails,
+        hospitalization: hospitalizationDetails,
+        familyEducation: familyEducationDetails,
+        objectiveValidation: objectiveValidation,
+        defensiveDifferential: defensiveDifferentials
+      })
+
+      const primaryResponse = await this.claudeAdapter.makeRequest(
+        integratedPrompt.systemPrompt,
+        integratedPrompt.userPrompt
+      )
+
+      const response = primaryResponse
+
+    } catch (error) {
+      console.error('❌ ERROR CRÍTICO en nueva arquitectura:', error)
+      
+      // Fallback - método antiguo
+      console.log('🔄 Fallback: Usando método antiguo...')
+      const primaryResponse = await this.claudeAdapter.makeRequest(
         this.buildSystemPrompt(cycleNumber),
         cyclePrompt
-      ),
-      // Agente de farmacología clínica
-      multiAgentOrchestrator.executeSingleAgent(AgentType.CLINICAL_PHARMACOLOGY, cyclePrompt).catch(() => null),
-      // Agente especialista pediátrico
-      multiAgentOrchestrator.executeSingleAgent(AgentType.PEDIATRIC_SPECIALIST, cyclePrompt).catch(() => null),
-      // Agente criterios hospitalización
-      multiAgentOrchestrator.executeSingleAgent(AgentType.HOSPITALIZATION_CRITERIA, cyclePrompt).catch(() => null),
-      // Agente educación familiar
-      multiAgentOrchestrator.executeSingleAgent(AgentType.FAMILY_EDUCATION, cyclePrompt).catch(() => null),
-      // Agente de validación objetiva
-      multiAgentOrchestrator.executeSingleAgent(AgentType.OBJECTIVE_VALIDATION, cyclePrompt).catch(() => null),
-      // Agente de medicina defensiva
-      multiAgentOrchestrator.executeSingleAgent(AgentType.DEFENSIVE_DIFFERENTIAL, cyclePrompt).catch(() => null)
-    ])
-
-    const response = primaryResponse
+      )
+      
+      const response = primaryResponse
 
     // Verificar si hay error en la respuesta
     if (!response.success) {
@@ -149,20 +227,21 @@ export class IterativeDiagnosticEngine {
     const endTime = Date.now()
     const latency = endTime - startTime
 
-    // Parsear respuesta SOAP principal
-    const baseAnalysis = this.parseClaudeResponse(response.content)
+    // Parsear respuesta SOAP principal (ya integrada con datos de agentes)
+    const analysis = this.parseClaudeResponse(response.content)
     
-    // Integrar resultados de agentes especializados
-    const analysis = this.integrateSpecializedAgentResults(
-      baseAnalysis, 
-      pharmacologyDetails,
-      pediatricDetails,
-      hospitalizationDetails,
-      familyEducationDetails,
-      objectiveValidation, 
-      defensiveDifferentials,
-      cyclePrompt
-    )
+    console.log('✅ SOAP integrado generado correctamente por Claude (sin patches)')
+    
+    // Agregar metadata de agentes consultados
+    analysis.validacion_agentes = {
+      farmacologia_clinica: Boolean(pharmacologyDetails?.success && pharmacologyDetails?.decision),
+      pediatria_especializada: Boolean(pediatricDetails?.success && pediatricDetails?.decision),
+      criterios_hospitalizacion: Boolean(hospitalizationDetails?.success && hospitalizationDetails?.decision),
+      educacion_familiar: Boolean(familyEducationDetails?.success && familyEducationDetails?.decision),
+      validacion_objetiva: Boolean(objectiveValidation?.success && objectiveValidation?.decision),
+      medicina_defensiva: Boolean(defensiveDifferentials?.success && defensiveDifferentials?.decision),
+      metodo: 'nueva_arquitectura_integrada'
+    }
 
     return {
       id: cycleId,
@@ -175,6 +254,132 @@ export class IterativeDiagnosticEngine {
       qualityScore: this.evaluateAnalysisQuality(analysis),
       insights: this.extractInsights(analysis),
       nextSteps: this.determineNextSteps(analysis, cycleNumber)
+    }
+  }
+
+  private buildIntegratedSOAPPrompt(
+    cycleNumber: number,
+    originalInput: string,
+    agentResults: {
+      pharmacology?: any,
+      pediatric?: any,
+      hospitalization?: any,
+      familyEducation?: any,
+      objectiveValidation?: any,
+      defensiveDifferential?: any
+    }
+  ): { systemPrompt: string, userPrompt: string } {
+    
+    // Extraer información específica de cada agente
+    let medicationInfo = ''
+    let pediatricInfo = ''
+    let dispositionInfo = ''
+    
+    // Farmacología - extraer medicación específica
+    if (agentResults.pharmacology?.success && agentResults.pharmacology?.decision) {
+      const pharmResult = agentResults.pharmacology.decision.result || agentResults.pharmacology.decision
+      
+      console.log('🔬 DEBUGGING - Farmacología Data:')
+      console.log('agentResults.pharmacology:', JSON.stringify(agentResults.pharmacology, null, 2))
+      console.log('pharmResult:', JSON.stringify(pharmResult, null, 2))
+      
+      let medication = null
+      
+      if (pharmResult.primary_medication) {
+        medication = pharmResult.primary_medication
+        console.log('✅ Found primary_medication:', medication)
+      } else if (pharmResult.P?.immediate_treatment?.medication) {
+        medication = pharmResult.P.immediate_treatment.medication
+        console.log('✅ Found P.immediate_treatment.medication:', medication)
+      } else if (pharmResult.P?.immediate_treatment?.primary_medication) {
+        medication = pharmResult.P.immediate_treatment.primary_medication
+        console.log('✅ Found P.immediate_treatment.primary_medication:', medication)
+      } else {
+        console.log('❌ NO medication found in pharmResult structure')
+      }
+      
+      if (medication) {
+        medicationInfo = `
+MEDICACIÓN ESPECÍFICA (del especialista en farmacología):
+- Antibiótico: ${medication.generic_name} ${medication.exact_dose} VO ${medication.frequency} x ${medication.duration}
+- Línea de tratamiento: ${medication.line_of_treatment}
+- Evidencia: Nivel ${medication.evidence_level}
+- NO usar antitusivos en neumonía pediátrica
+- Antipirético: paracetamol 15 mg/kg/dosis c/6-8h PRN fiebre >38.5°C`
+        console.log('✅ medicationInfo built:', medicationInfo)
+      } else {
+        console.log('❌ No medication extracted - medicationInfo will be empty')
+      }
+    } else {
+      console.log('❌ No pharmacology agent results found')
+    }
+
+    // Pediatría - consideraciones específicas
+    if (agentResults.pediatric?.success && agentResults.pediatric?.decision) {
+      const pedResult = agentResults.pediatric.decision.result || agentResults.pediatric.decision
+      
+      console.log('🔬 DEBUGGING - Pediatric Data:')
+      console.log('agentResults.pediatric:', JSON.stringify(agentResults.pediatric, null, 2))
+      console.log('pedResult:', JSON.stringify(pedResult, null, 2))
+      
+      if (pedResult.age_specific_considerations?.length > 0) {
+        pediatricInfo = `
+CONSIDERACIONES PEDIÁTRICAS (del especialista pediatra):
+- ${pedResult.age_specific_considerations.join('\n- ')}`
+        console.log('✅ pediatricInfo built:', pediatricInfo)
+      } else {
+        console.log('❌ No age_specific_considerations found')
+      }
+    } else {
+      console.log('❌ No pediatric agent results found')
+    }
+
+    // Hospitalización - disposición
+    if (agentResults.hospitalization?.success && agentResults.hospitalization?.decision) {
+      const hospResult = agentResults.hospitalization.decision.result || agentResults.hospitalization.decision
+      
+      console.log('🔬 DEBUGGING - Hospitalization Data:')
+      console.log('agentResults.hospitalization:', JSON.stringify(agentResults.hospitalization, null, 2))
+      console.log('hospResult:', JSON.stringify(hospResult, null, 2))
+      
+      let disposition = hospResult.disposition_recommendation || 'home'
+      dispositionInfo = `
+DISPOSICIÓN (del especialista en hospitalización):
+- Recomendación: ${disposition}`
+      console.log('✅ dispositionInfo built:', dispositionInfo)
+    } else {
+      console.log('❌ No hospitalization agent results found')
+    }
+
+    const systemPrompt = `Eres un médico especialista creando un análisis SOAP basado en las recomendaciones de especialistas médicos.
+
+DATOS DE ESPECIALISTAS CONSULTADOS:
+${medicationInfo}
+${pediatricInfo}  
+${dispositionInfo}
+
+INSTRUCCIONES CRÍTICAS:
+- USA EXACTAMENTE la medicación especificada por farmacología (dosis, frecuencia, duración)
+- NO cambies ni genericices las prescripciones específicas
+- NO uses "antibióticos de primera línea" - usa la prescripción EXACTA
+- NO incluyas antitusivos (contraindicados en neumonía pediátrica)
+- USA las consideraciones pediátricas específicas
+- USA la disposición recomendada por el especialista
+
+FORMATO REQUERIDO - SOAP:
+- S (Subjetivo): Síntomas reportados
+- O (Objetivo): Hallazgos del examen físico  
+- A (Análisis): Diagnóstico principal y diferenciales
+- P (Plan): USAR las prescripciones EXACTAS de los especialistas`
+
+    console.log('🔬 DEBUGGING - Final System Prompt:')
+    console.log(systemPrompt)
+    console.log('🔬 DEBUGGING - User Prompt:')
+    console.log(originalInput)
+
+    return {
+      systemPrompt,
+      userPrompt: originalInput
     }
   }
 
@@ -733,233 +938,6 @@ SOLICITUD: Coordinar agentes especializados según contexto clínico para valida
     return this.calculateGlobalConfidence(this.cycles)
   }
 
-  /**
-   * Integra resultados de agentes especializados en el análisis SOAP base
-   */
-  private integrateSpecializedAgentResults(
-    baseAnalysis: SOAPAnalysis,
-    pharmacologyDetails: any,
-    pediatricDetails: any,
-    hospitalizationDetails: any,
-    familyEducationDetails: any,
-    objectiveValidation: any,
-    defensiveDifferentials: any,
-    originalInput: string
-  ): SOAPAnalysis {
-    console.log('🔬 Integrando resultados de agentes especializados...')
-
-    let enhancedAnalysis = { ...baseAnalysis }
-
-    // 1. INTEGRAR FARMACOLOGÍA CLÍNICA
-    if (pharmacologyDetails?.success && pharmacologyDetails?.decision) {
-      const pharmacology = pharmacologyDetails.decision
-      let enhancedPlan = baseAnalysis.plan_tratamiento || ''
-      
-      if (pharmacology.primary_medication) {
-        const med = pharmacology.primary_medication
-        enhancedPlan += `\n\n### 💊 PRESCRIPCIÓN PRINCIPAL:\n**${med.generic_name}** (${med.brand_names?.join(', ') || 'marcas varias'})\n- Dosis: ${med.exact_dose}\n- Vía: ${med.route}\n- Frecuencia: ${med.frequency}\n- Duración: ${med.duration}\n- Línea: ${med.line_of_treatment}\n- Evidencia: Nivel ${med.evidence_level}`
-      }
-
-      if (pharmacology.alternative_medications?.length > 0) {
-        const alternatives = pharmacology.alternative_medications
-          .map((alt: any) => `**${alt.generic_name}**: ${alt.exact_dose} - ${alt.indication} (${alt.line_of_treatment} línea)`)
-          .join('\n- ')
-        enhancedPlan += `\n\n### 🔄 MEDICAMENTOS ALTERNATIVOS:\n- ${alternatives}`
-      }
-
-      if (pharmacology.contraindications?.length > 0) {
-        enhancedPlan += `\n\n### ⚠️ CONTRAINDICACIONES:\n- ${pharmacology.contraindications.join('\n- ')}`
-      }
-
-      if (pharmacology.monitoring_parameters?.length > 0) {
-        enhancedPlan += `\n\n### 📊 MONITOREO REQUERIDO:\n- ${pharmacology.monitoring_parameters.join('\n- ')}`
-      }
-
-      enhancedAnalysis.plan_tratamiento = enhancedPlan
-    }
-
-    // 2. INTEGRAR CONSIDERACIONES PEDIÁTRICAS
-    if (pediatricDetails?.success && pediatricDetails?.decision) {
-      const pediatric = pediatricDetails.decision
-      let enhancedObjetivo = baseAnalysis.objetivo || ''
-      
-      if (pediatric.age_specific_considerations?.length > 0) {
-        enhancedObjetivo += `\n\n### 👶 CONSIDERACIONES PEDIÁTRICAS:\n- ${pediatric.age_specific_considerations.join('\n- ')}`
-      }
-
-      if (pediatric.pediatric_red_flags?.length > 0) {
-        enhancedObjetivo += `\n\n### 🚨 RED FLAGS PEDIÁTRICAS:\n- ${pediatric.pediatric_red_flags.join('\n- ')}`
-      }
-
-      if (pediatric.weight_based_calculations?.estimated_weight_kg) {
-        enhancedObjetivo += `\n\n### 📏 CÁLCULOS PESO-EDAD:\n- Peso estimado: ${pediatric.weight_based_calculations.estimated_weight_kg} kg\n- Información dosis/kg: ${pediatric.weight_based_calculations.dose_per_kg || 'No especificada'}`
-      }
-
-      enhancedAnalysis.objetivo = enhancedObjetivo
-    }
-
-    // 3. INTEGRAR CRITERIOS HOSPITALIZACIÓN
-    if (hospitalizationDetails?.success && hospitalizationDetails?.decision) {
-      const hospitalization = hospitalizationDetails.decision
-      let enhancedPlan = enhancedAnalysis.plan_tratamiento || ''
-      
-      enhancedPlan += `\n\n### 🏥 EVALUACIÓN HOSPITALIZACIÓN:\n**Disposición recomendada:** ${hospitalization.disposition_recommendation}`
-
-      if (hospitalization.admission_criteria?.length > 0) {
-        enhancedPlan += `\n\n**Criterios de Ingreso:**\n- ${hospitalization.admission_criteria.join('\n- ')}`
-      }
-
-      if (hospitalization.discharge_criteria?.length > 0) {
-        enhancedPlan += `\n\n**Criterios de Alta:**\n- ${hospitalization.discharge_criteria.join('\n- ')}`
-      }
-
-      if (hospitalization.icu_criteria?.length > 0) {
-        enhancedPlan += `\n\n**Criterios UCI:**\n- ${hospitalization.icu_criteria.join('\n- ')}`
-      }
-
-      enhancedAnalysis.plan_tratamiento = enhancedPlan
-    }
-
-    // 4. INTEGRAR EDUCACIÓN FAMILIAR
-    if (familyEducationDetails?.success && familyEducationDetails?.decision) {
-      const familyEd = familyEducationDetails.decision
-      let enhancedPlan = enhancedAnalysis.plan_tratamiento || ''
-      
-      if (familyEd.warning_signs?.length > 0) {
-        enhancedPlan += `\n\n### ⚠️ SIGNOS DE ALARMA (regresar inmediatamente):\n- ${familyEd.warning_signs.join('\n- ')}`
-      }
-
-      if (familyEd.home_care_instructions?.length > 0) {
-        enhancedPlan += `\n\n### 🏠 CUIDADOS EN CASA:\n- ${familyEd.home_care_instructions.join('\n- ')}`
-      }
-
-      if (familyEd.medication_education?.length > 0) {
-        enhancedPlan += `\n\n### 💊 EDUCACIÓN MEDICAMENTOS:\n- ${familyEd.medication_education.join('\n- ')}`
-      }
-
-      if (familyEd.follow_up_instructions?.length > 0) {
-        enhancedPlan += `\n\n### 📅 SEGUIMIENTO:\n- ${familyEd.follow_up_instructions.join('\n- ')}`
-      }
-
-      enhancedAnalysis.plan_tratamiento = enhancedPlan
-    }
-
-    // 5. INTEGRAR VALIDACIÓN OBJETIVA
-    if (objectiveValidation?.success && objectiveValidation?.decision) {
-      const validation = objectiveValidation.decision
-      let enhancedObjetivo = baseAnalysis.objetivo || ''
-      
-      if (validation.missing_critical_data?.length > 0) {
-        enhancedObjetivo += `\n\n### ⚠️ DATOS CRÍTICOS FALTANTES:\n- ${validation.missing_critical_data.join('\n- ')}`
-      }
-
-      if (validation.recommended_studies?.length > 0) {
-        const urgentStudies = validation.recommended_studies
-          .filter((study: any) => study.urgency === 'immediate' || study.urgency === '24h')
-          .map((study: any) => `${study.study} (${study.urgency}) - ${study.justification}`)
-          .join('\n- ')
-        
-        if (urgentStudies) {
-          enhancedObjetivo += `\n\n### 🔬 ESTUDIOS REQUERIDOS:\n- ${urgentStudies}`
-        }
-      }
-
-      // Ajustar confianza basado en datos faltantes
-      if (validation.confidence_impact && validation.confidence_impact > 0.2) {
-        enhancedAnalysis.confianza_global = Math.max(
-          (enhancedAnalysis.confianza_global || 0.5) - validation.confidence_impact,
-          0.3
-        )
-      }
-
-      enhancedAnalysis.objetivo = enhancedObjetivo
-    }
-
-    // 6. INTEGRAR MEDICINA DEFENSIVA 
-    if (defensiveDifferentials?.success && defensiveDifferentials?.decision) {
-      const defensive = defensiveDifferentials.decision
-      
-      if (defensive.must_exclude_diagnoses?.length > 0) {
-        const mustExclude = defensive.must_exclude_diagnoses
-          .filter((dx: any) => dx.gravity_score >= 8)
-          .map((dx: any) => `${dx.condition} (Gravedad: ${dx.gravity_score}/10) - ${dx.exclusion_criteria.join(', ')}`)
-          .join('\n- ')
-        
-        if (mustExclude) {
-          enhancedAnalysis.diagnosticos_diferenciales = [
-            ...(enhancedAnalysis.diagnosticos_diferenciales || []),
-            `\n\n### 🛡️ DIAGNÓSTICOS DE EXCLUSIÓN OBLIGATORIA:\n- ${mustExclude}`
-          ]
-        }
-      }
-
-      if (defensive.red_flags_analysis?.critical_signs?.length > 0) {
-        let enhancedAnalisis = (baseAnalysis.plan_tratamiento || '') + 
-          `\n\n### 🚨 RED FLAGS IDENTIFICADAS:\n- ${defensive.red_flags_analysis.critical_signs.join('\n- ')}`
-        enhancedAnalysis.plan_tratamiento = enhancedAnalisis
-      }
-    }
-
-    // 7. RECALCULAR CONFIANZA GLOBAL DE MANERA CONSISTENTE
-    const baseConfidence = enhancedAnalysis.confianza_global || 0.5
-    
-    // Factores que afectan la confianza
-    let confidenceAdjustment = 0
-    
-    // Bonus por farmacología específica
-    if (pharmacologyDetails?.success && pharmacologyDetails?.decision?.primary_medication) {
-      confidenceAdjustment += 0.1
-    }
-    
-    // Bonus por consideraciones pediátricas
-    if (pediatricDetails?.success && pediatricDetails?.decision?.age_specific_considerations?.length > 0) {
-      confidenceAdjustment += 0.05
-    }
-    
-    // Bonus por criterios hospitalización evaluados
-    if (hospitalizationDetails?.success && hospitalizationDetails?.decision?.disposition_recommendation) {
-      confidenceAdjustment += 0.05
-    }
-    
-    // Bonus por educación familiar completa
-    if (familyEducationDetails?.success && familyEducationDetails?.decision?.warning_signs?.length > 0) {
-      confidenceAdjustment += 0.05
-    }
-    
-    // Penalización por datos críticos faltantes
-    if (objectiveValidation?.success && objectiveValidation?.decision?.missing_critical_data?.length > 0) {
-      const criticalMissing = objectiveValidation.decision.missing_critical_data.length
-      confidenceAdjustment -= Math.min(criticalMissing * 0.15, 0.4)
-    }
-    
-    // Bonus por medicina defensiva aplicada
-    if (defensiveDifferentials?.success && defensiveDifferentials?.decision?.must_exclude_diagnoses?.length > 0) {
-      confidenceAdjustment += 0.05
-    }
-    
-    // Calcular confianza final (nunca menor a 30%, nunca mayor a 95%)
-    const finalConfidence = Math.max(0.3, Math.min(0.95, baseConfidence + confidenceAdjustment))
-    
-    enhancedAnalysis.confianza_global = finalConfidence
-    
-    // Agregar metadata de validación
-    enhancedAnalysis.validacion_agentes = {
-      farmacologia_clinica: Boolean(pharmacologyDetails?.success && pharmacologyDetails?.decision),
-      pediatria_especializada: Boolean(pediatricDetails?.success && pediatricDetails?.decision),
-      criterios_hospitalizacion: Boolean(hospitalizationDetails?.success && hospitalizationDetails?.decision),
-      educacion_familiar: Boolean(familyEducationDetails?.success && familyEducationDetails?.decision),
-      validacion_objetiva: Boolean(objectiveValidation?.success && objectiveValidation?.decision),
-      medicina_defensiva: Boolean(defensiveDifferentials?.success && defensiveDifferentials?.decision),
-      confianza_ajustada: finalConfidence,
-      factores_confianza: {
-        base: baseConfidence,
-        ajuste: confidenceAdjustment,
-        datos_faltantes: objectiveValidation?.success && objectiveValidation?.decision?.missing_critical_data?.length || 0
-      }
-    }
-
-    console.log(`✅ Análisis enriquecido - Confianza ajustada: ${Math.round(finalConfidence * 100)}% (base: ${Math.round(baseConfidence * 100)}%, ajuste: ${confidenceAdjustment > 0 ? '+' : ''}${Math.round(confidenceAdjustment * 100)}%)`)
-    
-    return enhancedAnalysis
-  }
+  // Función eliminada: integrateSpecializedAgentResults() 
+  // Ahora usamos buildIntegratedSOAPPrompt() para que Claude genere directamente el resultado correcto
 }
