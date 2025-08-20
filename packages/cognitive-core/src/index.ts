@@ -90,7 +90,7 @@ export interface CognitiveCoreConfig {
  */
 export function initializeCognitiveCore(config: CognitiveCoreConfig = {}) {
   const {
-    claudeApiKey = process.env.NEXT_PUBLIC_CLAUDE_API_KEY,
+    claudeApiKey,
     environment = 'development',
     locale = 'es',
     medicalDomain = true

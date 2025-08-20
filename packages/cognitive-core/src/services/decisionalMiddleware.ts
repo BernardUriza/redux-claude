@@ -134,7 +134,7 @@ async function callClaudeAPI(request: DecisionRequest): Promise<Omit<DecisionRes
   // Dynamic import para evitar bundle bloat
   const Anthropic = (await import('@anthropic-ai/sdk')).default
   const anthropic = new Anthropic({
-    apiKey: process.env.NEXT_PUBLIC_CLAUDE_API_KEY!,
+    apiKey: process.env.CLAUDE_API_KEY!,
     dangerouslyAllowBrowser: true 
   })
   

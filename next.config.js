@@ -9,10 +9,9 @@ const nextConfig = {
     externalDir: true
   },
 
-  // Netlify deployment optimization
-  output: 'export',
+  // Netlify deployment with API routes
+  // Removed 'export' to enable API routes
   trailingSlash: true,
-  distDir: 'out',
   images: {
     unoptimized: true
   },

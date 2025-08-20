@@ -115,7 +115,7 @@ export class IterativeDiagnosticEngine {
           subjetivo: '## ⚠️ Configuración Requerida',
           objetivo: response.content, // Contiene las instrucciones completas
           diagnostico_principal: 'Configuración de API Key pendiente',
-          diagnosticos_diferenciales: ['Configurar NEXT_PUBLIC_CLAUDE_API_KEY'],
+          diagnosticos_diferenciales: ['Configurar CLAUDE_API_KEY en servidor'],
           plan_tratamiento: 'Seguir las instrucciones mostradas para configurar Claude API',
           confianza_global: 0,
           datos_adicionales_necesarios: []

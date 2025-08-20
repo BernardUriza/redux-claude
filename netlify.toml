@@ -1,7 +1,7 @@
 [build]
   base = "."
   command = "npm run build"
-  publish = "out"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -26,8 +26,11 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.anthropic.com;"
 
-# Redirects for SPA
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Next.js runtime
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["public/**", ".next/**"]
+
+# Essential Netlify plugin for Next.js
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

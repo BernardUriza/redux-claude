@@ -5,14 +5,14 @@ import type { ProviderAdapter } from '../core/types'
 
 export class ClaudeAdapter implements ProviderAdapter {
   readonly name = 'claude' as const
-  private apiKey: string
+  private useServerAPI: boolean
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.NEXT_PUBLIC_CLAUDE_API_KEY || ''
+    this.useServerAPI = typeof window !== 'undefined'
   }
 
   get isAvailable(): boolean {
-    return Boolean(this.apiKey)
+    return true
   }
 
   async makeRequest(
@@ -29,96 +29,128 @@ export class ClaudeAdapter implements ProviderAdapter {
     signal?: AbortSignal,
     onChunk?: (chunk: string) => void
   ): Promise<{ content: string; success: boolean; error?: string }> {
-    if (!this.isAvailable) {
-      console.error('❌ Claude API Key no configurada')
-      return {
-        content: `## ⚠️ Configuración Requerida
-
-**La API de Claude no está configurada**
-
-Para que el sistema médico funcione correctamente, necesitas:
-
-### 🔑 **Configurar API Key de Claude**
-
-1. **Obtener API Key:**
-   - Visita: https://console.anthropic.com/
-   - Crea una cuenta o inicia sesión
-   - Ve a "API Keys" y genera una nueva key
-
-2. **Configurar en tu proyecto:**
-   - Crea un archivo \`.env.local\` en la raíz del proyecto
-   - Agrega: \`NEXT_PUBLIC_CLAUDE_API_KEY=tu_api_key_aquí\`
-   - Reinicia el servidor de desarrollo
-
-### 💡 **Ejemplo de .env.local:**
-\`\`\`
-NEXT_PUBLIC_CLAUDE_API_KEY=sk-ant-api03-xxxxxxxxxxxxx
-\`\`\`
-
-### 🔄 **Después de configurar:**
-- Reinicia el servidor: \`npm run dev\`
-- Prueba nuevamente tu consulta médica
-
-🏥 **El sistema está listo, solo necesita la conexión a Claude para generar análisis médicos completos.**`,
-        success: false,
-        error: 'API_KEY_NOT_CONFIGURED'
-      }
-    }
-
     try {
-      // Dynamic import del SDK de Anthropic (igual que el middleware original)
-      const Anthropic = (await import('@anthropic-ai/sdk')).default
-      const anthropic = new Anthropic({
-        apiKey: this.apiKey,
-        dangerouslyAllowBrowser: true // Permite uso desde browser
-      })
+      if (this.useServerAPI) {
+        // Use server-side API route when in browser
+        if (onChunk) {
+          // Streaming mode via SSE
+          const response = await fetch('/api/claude', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ systemPrompt, userPrompt, stream: true }),
+            signal
+          })
 
-      if (signal?.aborted) {
-        throw new Error('Request aborted')
-      }
+          if (!response.ok) {
+            throw new Error(`API request failed: ${response.statusText}`)
+          }
 
-      if (onChunk) {
-        // Streaming mode
-        const stream = await anthropic.messages.create({
-          model: 'claude-3-haiku-20240307',
-          max_tokens: 1000,
-          temperature: 0.3,
-          system: systemPrompt,
-          messages: [{ role: 'user', content: userPrompt }],
-          stream: true
-        })
+          const reader = response.body?.getReader()
+          const decoder = new TextDecoder()
+          let fullContent = ''
 
-        let fullContent = ''
-        for await (const chunk of stream) {
-          if (signal?.aborted) throw new Error('Request aborted')
-          
-          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-            const text = chunk.delta.text
-            fullContent += text
-            onChunk(text)
+          if (reader) {
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) break
+
+              const chunk = decoder.decode(value)
+              const lines = chunk.split('\n')
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6)
+                  if (data === '[DONE]') continue
+                  
+                  try {
+                    const parsed = JSON.parse(data)
+                    if (parsed.text) {
+                      fullContent += parsed.text
+                      onChunk(parsed.text)
+                    }
+                  } catch {
+                    // Ignore parsing errors
+                  }
+                }
+              }
+            }
+          }
+
+          return { content: fullContent, success: true }
+        } else {
+          // Non-streaming mode
+          const response = await fetch('/api/claude', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ systemPrompt, userPrompt, stream: false }),
+            signal
+          })
+
+          if (!response.ok) {
+            const error = await response.json()
+            throw new Error(error.error || 'API request failed')
+          }
+
+          const result = await response.json()
+          return { content: result.content, success: true }
+        }
+      } else {
+        // Server-side: direct SDK usage (for SSR if needed)
+        const apiKey = process.env.CLAUDE_API_KEY
+        if (!apiKey) {
+          return {
+            content: '',
+            success: false,
+            error: 'Server API key not configured'
           }
         }
 
-        return { content: fullContent, success: true }
-      } else {
-        // Non-streaming mode
-        const response = await anthropic.messages.create({
-          model: 'claude-3-haiku-20240307',
-          max_tokens: 1000,
-          temperature: 0.3,
-          system: systemPrompt,
-          messages: [{ role: 'user', content: userPrompt }]
-        })
+        const Anthropic = (await import('@anthropic-ai/sdk')).default
+        const anthropic = new Anthropic({ apiKey })
 
-        const content = response.content[0]
-        if (content.type !== 'text') {
-          return { content: '', success: false, error: 'Unexpected response format' }
+        if (signal?.aborted) {
+          throw new Error('Request aborted')
         }
 
-        return { content: content.text, success: true }
+        if (onChunk) {
+          const stream = await anthropic.messages.create({
+            model: 'claude-3-haiku-20240307',
+            max_tokens: 1000,
+            temperature: 0.3,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: userPrompt }],
+            stream: true
+          })
+
+          let fullContent = ''
+          for await (const chunk of stream) {
+            if (signal?.aborted) throw new Error('Request aborted')
+            
+            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+              const text = chunk.delta.text
+              fullContent += text
+              onChunk(text)
+            }
+          }
+
+          return { content: fullContent, success: true }
+        } else {
+          const response = await anthropic.messages.create({
+            model: 'claude-3-haiku-20240307',
+            max_tokens: 1000,
+            temperature: 0.3,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: userPrompt }]
+          })
+
+          const content = response.content[0]
+          if (content.type !== 'text') {
+            return { content: '', success: false, error: 'Unexpected response format' }
+          }
+
+          return { content: content.text, success: true }
+        }
       }
-
-
     } catch (error) {
       if (signal?.aborted) {
         return {
@@ -133,7 +165,7 @@ NEXT_PUBLIC_CLAUDE_API_KEY=sk-ant-api03-xxxxxxxxxxxxx
       return {
         content: '',
         success: false,
-        error: `Claude SDK error: ${errorMessage}`
+        error: `Claude API error: ${errorMessage}`
       }
     }
   }
