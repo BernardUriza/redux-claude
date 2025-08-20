@@ -6,6 +6,8 @@ import type {
   BaseDecisionRequest, 
   ValidationResult 
 } from '../core/types'
+import { getAgentDefinition } from '../../services/agentRegistry'
+import { AgentType } from '../../types/agents'
 
 // Tipos específicos del dominio médico
 export interface DiagnosticDecision {
@@ -74,9 +76,30 @@ export type MedicalDecision =
 
 export class MedicalStrategy implements DomainStrategy<MedicalDecision> {
   readonly domain = 'medical' as const
-  readonly supportedTypes = ['diagnosis', 'triage', 'validation', 'treatment', 'documentation']
+  readonly supportedTypes = ['diagnosis', 'triage', 'validation', 'treatment', 'documentation', 'clinical_pharmacology', 'pediatric_specialist', 'hospitalization_criteria', 'family_education', 'objective_validation', 'defensive_differential']
 
   buildSystemPrompt(decisionType: string, request: BaseDecisionRequest): string {
+    // Para los nuevos tipos especializados, usar prompts del AGENT_REGISTRY
+    const agentTypeMap: Record<string, AgentType> = {
+      'clinical_pharmacology': AgentType.CLINICAL_PHARMACOLOGY,
+      'pediatric_specialist': AgentType.PEDIATRIC_SPECIALIST,
+      'hospitalization_criteria': AgentType.HOSPITALIZATION_CRITERIA,
+      'family_education': AgentType.FAMILY_EDUCATION,
+      'objective_validation': AgentType.OBJECTIVE_VALIDATION,
+      'defensive_differential': AgentType.DEFENSIVE_DIFFERENTIAL
+    }
+    
+    const agentType = agentTypeMap[decisionType]
+    if (agentType) {
+      try {
+        const agentDef = getAgentDefinition(agentType)
+        return agentDef.systemPrompt
+      } catch (error) {
+        console.warn(`Could not get agent definition for ${agentType}, using fallback`)
+      }
+    }
+    
+    // Fallback para tipos existentes
     const basePrompt = "You are a specialist medical AI assistant helping a licensed doctor."
     
     switch (decisionType) {
