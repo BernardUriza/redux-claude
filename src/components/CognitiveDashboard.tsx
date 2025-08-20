@@ -13,6 +13,7 @@ import { UrgencyIndicator, CompactUrgencyIndicator, type UrgencyData } from './U
 import { SOAPDisplay } from './SOAPDisplay'
 import { FollowUpTracker } from './FollowUpTracker'
 import { MedicalNotes } from './MedicalNotes'
+import { LoadingScreen } from './LoadingScreen'
 import { useMobileInteractions } from '../hooks/useMobileInteractions'
 
 // Medical Corporate Color Palette 2025
@@ -214,6 +215,8 @@ export const CognitiveDashboard = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showMobileFab, setShowMobileFab] = useState(false)
   const [keyboardVisible, setKeyboardVisible] = useState(false)
+  const [isAppLoading, setIsAppLoading] = useState(true)
+  const [showMainApp, setShowMainApp] = useState(false)
   
   // Mobile interactions hook
   const { state: mobileState, triggerHaptic, addTouchFeedback, setupGestureDetection } = useMobileInteractions()
@@ -355,6 +358,14 @@ export const CognitiveDashboard = () => {
   const tabsRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   
+  // Loading completion handler
+  const handleLoadingComplete = () => {
+    setIsAppLoading(false)
+    setTimeout(() => {
+      setShowMainApp(true)
+    }, 100) // Small delay for smooth transition
+  }
+  
   // Mobile keyboard detection
   useEffect(() => {
     if (!mobileState.isMobile) return
@@ -439,8 +450,13 @@ export const CognitiveDashboard = () => {
     newSession()
   }
   
+  // Show loading screen if app is loading
+  if (isAppLoading) {
+    return <LoadingScreen onLoadingComplete={handleLoadingComplete} duration={3000} />
+  }
+
   return (
-    <div className={`h-screen bg-gray-900 text-white flex overflow-hidden relative ${mobileState.isMobile ? 'safe-area-top safe-area-bottom' : ''} ${keyboardVisible ? 'keyboard-resize' : ''}`}>
+    <div className={`h-screen bg-gray-900 text-white flex overflow-hidden relative transition-opacity duration-500 ${showMainApp ? 'opacity-100' : 'opacity-0'} ${mobileState.isMobile ? 'safe-area-top safe-area-bottom' : ''} ${keyboardVisible ? 'keyboard-resize' : ''}`}>
       {/* Mobile Menu Overlay */}
       {showMobileMenu && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={() => setShowMobileMenu(false)}>
