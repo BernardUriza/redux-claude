@@ -370,6 +370,13 @@ INSTRUCCIONES CRÍTICAS:
 - USA las consideraciones pediátricas específicas
 - USA la disposición recomendada por el especialista
 
+🚨 MEDICINA DEFENSIVA - ESTUDIOS OBLIGATORIOS:
+- ESTERTORES/CREPITANTES → Radiografía tórax PA y lateral [SIEMPRE]
+- FIEBRE (>38°C) → Hemograma completo + PCR [SIEMPRE]
+- TOS + FIEBRE en niños → Saturación O2 + Rx tórax [SIEMPRE]
+- NUNCA digas "no requiere estudios" si hay síntomas respiratorios
+- SIEMPRE solicitar estudios confirmatorios en sospecha de neumonía
+
 FORMATO REQUERIDO - SOAP:
 - S (Subjetivo): Síntomas reportados
 - O (Objetivo): Hallazgos del examen físico  
@@ -480,7 +487,7 @@ Responde EXCLUSIVAMENTE en este formato:
 **Inmediato:** [Tratamiento ahora]
 **Seguimiento:** [Cuándo revisar - específico]
 **Derivación:** [Cuándo referir especialista]
-**Estudios:** [Qué estudios solicitar - prioridad]
+**Estudios:** [MEDICINA DEFENSIVA OBLIGATORIA - Para estertores/crepitantes: Rx tórax PA SIEMPRE. Para fiebre: Hemograma+PCR SIEMPRE. NUNCA digas "no requiere estudios" si hay síntomas respiratorios]
 **Confianza:** [0-100]%
 
 ## DATOS ADICIONALES NECESARIOS

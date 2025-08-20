@@ -241,13 +241,13 @@ export class DefensiveMedicineValidator {
     
     if (gravityScore >= 7) {
       actions.push('🏥 Referir a urgencias hospitalarias')
-      actions.push('📋 Estudios complementarios STAT')
+      actions.push('🔬 ESTUDIOS OBLIGATORIOS: Ver DiagnosticDecisionTree')
       actions.push('👨‍⚕️ Interconsulta especializada urgente')
     }
     
     if (gravityScore >= 5) {
       actions.push('📅 Control médico en 24-48 horas')
-      actions.push('🔬 Laboratorios y estudios dirigidos')
+      actions.push('🔬 ESTUDIOS OBLIGATORIOS: Ver DiagnosticDecisionTree')
       actions.push('💊 Tratamiento sintomático inmediato')
     }
     

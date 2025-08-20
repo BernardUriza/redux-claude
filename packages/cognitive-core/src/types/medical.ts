@@ -101,7 +101,7 @@ export interface SOAPData {
     estudiosAdicionales: Array<{
       estudio: string
       justificacion: string
-      urgencia: 'inmediato' | '24h' | '48h' | '1semana' | 'rutina'
+      urgencia: 'inmediato' | '2h' | '24h' | '48h' | '1semana' | 'rutina'
     }>
     interconsultas: Array<{
       especialidad: string

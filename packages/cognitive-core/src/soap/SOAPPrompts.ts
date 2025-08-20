@@ -178,8 +178,8 @@ ESTRUCTURA REQUERIDA (JSON):
   "estudiosAdicionales": [
     {
       "estudio": "Nombre del estudio o procedimiento",
-      "justificacion": "Razón médica para solicitarlo",
-      "urgencia": "inmediato|24h|48h|1semana|rutina"
+      "justificacion": "[MEDICINA DEFENSIVA OBLIGATORIA] Razón médica para solicitarlo",
+      "urgencia": "inmediato|2h|24h|48h|1semana|rutina"
     }
   ],
   "interconsultas": [
@@ -205,6 +205,17 @@ ESTRUCTURA REQUERIDA (JSON):
     "defuncion": false
   }
 }
+
+MEDICINA DEFENSIVA - ESTUDIOS OBLIGATORIOS (NO NEGOCIABLES):
+🚨 REGLAS FIJAS QUE DEBES APLICAR SIEMPRE:
+- ESTERTORES/CREPITANTES/RONCUS → Radiografía de tórax PA y lateral [OBLIGATORIA]
+- FIEBRE (>38°C) → Hemograma completo + PCR + VSG [OBLIGATORIOS] 
+- DOLOR TORÁCICO → ECG 12 derivaciones [OBLIGATORIO]
+- SOSPECHA NEUMONÍA → Rx tórax [SIEMPRE OBLIGATORIA]
+- NIÑO + FIEBRE + TOS → Saturación O2 + Rx tórax [OBLIGATORIOS]
+
+⚠️ NUNCA DIGAS "no requiere estudios" si hay síntomas respiratorios o fiebre.
+⚠️ MEDICINA DEFENSIVA = MEJOR SOBREDIAGNOSTICAR QUE SUBDIAGNOSTICAR.
 
 CRITERIOS DE SEGURIDAD:
 - Verificar dosis pediátricas/geriátricas apropiadas

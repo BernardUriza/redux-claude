@@ -281,6 +281,10 @@ export const SOAPDisplay = () => {
   const dispatch = useDispatch()
   const { currentCase } = useSelector((state: RootState) => state.medicalChat)
 
+  // 🔬 DEBUG: Log current case to see what's actually in the store
+  console.log('🔬 SOAPDisplay DEBUG - currentCase:', currentCase)
+  console.log('🔬 SOAPDisplay DEBUG - currentCase.soap:', currentCase.soap)
+
   const handleSectionEdit = (section: 'subjetivo' | 'objetivo' | 'analisis' | 'plan', data: any) => {
     dispatch(updateSOAPSection({ section, data }))
   }

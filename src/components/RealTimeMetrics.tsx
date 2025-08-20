@@ -210,6 +210,14 @@ export const RealTimeMetrics = () => {
   }, [iterativeState])
 
   const getSystemStatus = (): SystemStatusProps => {
+    // Si no hay casos médicos activos (confidence = 0 y no hay ciclos), mostrar estado standby
+    if (systemMetrics.confidence === 0 && systemMetrics.cycles === 0) {
+      return {
+        status: 'good',
+        message: 'Sistema listo para análisis médico'
+      }
+    }
+    
     if (systemMetrics.confidence > 90 && systemMetrics.systemHealth > 90) {
       return {
         status: 'optimal',

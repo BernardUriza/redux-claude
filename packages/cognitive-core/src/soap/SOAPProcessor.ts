@@ -3,6 +3,7 @@
 
 import { DefensiveMedicineValidator, UrgentPattern, DefensiveDiagnosis } from '../validators/DefensiveMedicineValidator'
 import { UrgencyClassifier, UrgencyAssessment, TriageResult } from '../classifiers/UrgencyClassifier'
+import { DiagnosticDecisionTree } from '../validators/DiagnosticDecisionTree'
 
 // Importar tipos desde types/medical.ts
 import type { SOAPData, SOAPAnalysis } from '../types/medical'
@@ -21,10 +22,12 @@ export class SOAPProcessor {
   private normativa: 'NOM-004-SSA3-2012' = 'NOM-004-SSA3-2012'
   private defensiveValidator: DefensiveMedicineValidator
   private urgencyClassifier: UrgencyClassifier
+  private decisionTree: DiagnosticDecisionTree
 
   constructor() {
     this.defensiveValidator = new DefensiveMedicineValidator()
     this.urgencyClassifier = new UrgencyClassifier()
+    this.decisionTree = new DiagnosticDecisionTree()
   }
 
   /**
@@ -628,18 +631,79 @@ export class SOAPProcessor {
   }
 
   private planAdditionalStudies(analisis: SOAPData['analisis']): SOAPData['plan']['estudiosAdicionales'] {
-    return [
-      {
-        estudio: 'Biometría hemática completa',
-        justificacion: 'Descartar proceso infeccioso',
-        urgencia: '24h' as const
-      },
-      {
-        estudio: 'Química sanguínea',
-        justificacion: 'Evaluación metabólica',
-        urgencia: '24h' as const
-      }
-    ]
+    // 💀 DECISION TREE BRUTAL - SIN AMBIGÜEDADES
+    // Extraer síntomas del diagnóstico principal y diferenciales
+    const diagnosticInfo = [
+      analisis.diagnosticoPrincipal.condicion,
+      ...analisis.diagnosticoPrincipal.evidencia,
+      ...analisis.diagnosticosDiferenciales.map(d => d.condicion),
+      ...analisis.factoresRiesgo,
+      ...analisis.senosPeligro
+    ].join(' ').toLowerCase()
+
+    // Para hallazgos físicos, usar los factores de riesgo y señales de peligro
+    const physicalFindings = [
+      ...analisis.senosPeligro,
+      ...analisis.factoresRiesgo
+    ].join(' ').toLowerCase()
+
+    // 🔍 EXTRAER HALLAZGOS CRÍTICOS
+    const symptomsArray = diagnosticInfo.split(' ').filter(s => s.length > 2)
+    const findingsArray = physicalFindings.split(' ').filter(f => f.length > 2)
+    
+    console.log('🔍 Síntomas para decision tree:', symptomsArray)
+    console.log('🔍 Hallazgos para decision tree:', findingsArray)
+
+    // 🚨 APLICAR DECISION TREE OBLIGATORIO
+    const requiredStudies = this.decisionTree.getRequiredStudies(
+      symptomsArray,
+      findingsArray,
+      undefined, // edad - pendiente implementar
+      'neumonía sospechosa' // contexto - se podría mejorar
+    )
+
+    const estudios: SOAPData['plan']['estudiosAdicionales'] = []
+
+    // ✅ ESTUDIOS OBLIGATORIOS (MEDICINA DEFENSIVA)
+    requiredStudies.mandatory.forEach(rule => {
+      estudios.push({
+        estudio: rule.study,
+        justificacion: `[MEDICINA DEFENSIVA] ${rule.justification}`,
+        urgencia: rule.urgency === 'stat' ? 'inmediato' : 
+                  rule.urgency === 'urgent' ? '2h' : '24h'
+      })
+    })
+
+    // 🟡 ESTUDIOS CONDICIONALES
+    requiredStudies.conditional.forEach(rule => {
+      estudios.push({
+        estudio: rule.study,
+        justificacion: `[CONDICIONAL] ${rule.justification}`,
+        urgencia: rule.urgency === 'stat' ? 'inmediato' : 
+                  rule.urgency === 'urgent' ? '2h' : '24h'
+      })
+    })
+
+    // 📋 SI NO HAY ESTUDIOS OBLIGATORIOS, BÁSICOS POR DEFECTO
+    if (estudios.length === 0) {
+      estudios.push(
+        {
+          estudio: 'Biometría hemática completa',
+          justificacion: 'Evaluación básica de proceso inflamatorio',
+          urgencia: '24h' as const
+        },
+        {
+          estudio: 'Química sanguínea básica',
+          justificacion: 'Evaluación metabólica general',
+          urgencia: '24h' as const
+        }
+      )
+    }
+
+    console.log(`🔬 ESTUDIOS GENERADOS: ${estudios.length} estudios planificados`)
+    estudios.forEach(e => console.log(`  - ${e.estudio} [${e.urgencia}]`))
+
+    return estudios
   }
 
   private planReferrals(analisis: SOAPData['analisis']): SOAPData['plan']['interconsultas'] {
