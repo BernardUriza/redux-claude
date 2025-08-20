@@ -7,7 +7,10 @@ export enum AgentType {
   TREATMENT = 'treatment',
   TRIAGE = 'triage',
   RESPONSE_QUALITY = 'response_quality',
-  THERAPEUTIC_SPECIFICITY = 'therapeutic_specificity',
+  CLINICAL_PHARMACOLOGY = 'clinical_pharmacology',
+  PEDIATRIC_SPECIALIST = 'pediatric_specialist', 
+  HOSPITALIZATION_CRITERIA = 'hospitalization_criteria',
+  FAMILY_EDUCATION = 'family_education',
   OBJECTIVE_VALIDATION = 'objective_validation',
   DEFENSIVE_DIFFERENTIAL = 'defensive_differential'
 }
@@ -83,27 +86,66 @@ export type TriageDecision = {
   warning_signs: string[]
 }
 
-export type TherapeuticSpecificityDecision = {
-  specific_medications: Array<{
+export type ClinicalPharmacologyDecision = {
+  primary_medication: {
     generic_name: string
     brand_names: string[]
-    exact_dose: string // e.g., "80-90 mg/kg/día"
+    exact_dose: string
     route: 'oral' | 'iv' | 'im' | 'topical' | 'inhaled' | 'sublingual'
-    frequency: string // e.g., "cada 8 horas"
-    duration: string // e.g., "7 días"
-    pediatric_dose?: string
-    geriatric_considerations?: string[]
-    contraindications: string[]
-    monitoring_required: string[]
+    frequency: string
+    duration: string
+    line_of_treatment: 'first' | 'second' | 'third'
+    evidence_level: 'A' | 'B' | 'C' | 'D'
+  }
+  alternative_medications: Array<{
+    generic_name: string
+    exact_dose: string
+    indication: string // cuando usar esta alternativa
+    line_of_treatment: 'first' | 'second' | 'third'
   }>
-  hospitalization_criteria: string[]
-  ambulatory_management: string[]
-  warning_signs_for_parents: string[]
-  symptomatic_management: Array<{
-    symptom: string
-    medication: string
-    dose: string
-  }>
+  contraindications: string[]
+  drug_interactions: string[]
+  monitoring_parameters: string[]
+  dose_adjustments: {
+    renal_impairment?: string
+    hepatic_impairment?: string
+    elderly?: string
+    pediatric_specific?: string
+  }
+}
+
+export type PediatricSpecialistDecision = {
+  age_specific_considerations: string[]
+  weight_based_calculations: {
+    estimated_weight_kg?: number
+    dose_per_kg: string
+    max_dose?: string
+  }
+  developmental_factors: string[]
+  pediatric_red_flags: string[]
+  growth_development_impact: string[]
+}
+
+export type HospitalizationCriteriaDecision = {
+  admission_criteria: string[]
+  discharge_criteria: string[]
+  observation_criteria: string[]
+  icu_criteria: string[]
+  risk_stratification: {
+    low_risk: string[]
+    moderate_risk: string[]
+    high_risk: string[]
+  }
+  disposition_recommendation: 'home' | 'observation' | 'admission' | 'icu'
+}
+
+export type FamilyEducationDecision = {
+  warning_signs: string[]
+  when_to_return: string[]
+  home_care_instructions: string[]
+  medication_education: string[]
+  follow_up_instructions: string[]
+  emergency_contacts: string[]
 }
 
 export type ObjectiveValidationDecision = {
@@ -151,7 +193,10 @@ export type AgentDecision =
   | DocumentationDecision 
   | TreatmentDecision 
   | TriageDecision
-  | TherapeuticSpecificityDecision
+  | ClinicalPharmacologyDecision
+  | PediatricSpecialistDecision
+  | HospitalizationCriteriaDecision
+  | FamilyEducationDecision
   | ObjectiveValidationDecision
   | DefensiveDifferentialDecision
 
