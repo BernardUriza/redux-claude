@@ -92,6 +92,9 @@ export class IterativeDiagnosticEngine {
 
     // Crear prompt específico para este ciclo
     const cyclePrompt = this.buildCyclePrompt(caseData, cycleNumber, this.cycles)
+    
+    // Crear prompt simple para agentes especializados (solo el caso, sin SOAP)
+    const agentPrompt = this.buildAgentPrompt(caseData, cycleNumber)
 
     console.log(`📝 Ejecutando agentes especializados (Ciclo ${cycleNumber})...`)
 
@@ -104,32 +107,32 @@ export class IterativeDiagnosticEngine {
       console.log('🚀 PASO 1: Ejecutando agentes especializados...')
       const agentResults = await Promise.all([
         // Agente de farmacología clínica
-        multiAgentOrchestrator.executeSingleAgent(AgentType.CLINICAL_PHARMACOLOGY, cyclePrompt).catch((error) => {
+        multiAgentOrchestrator.executeSingleAgent(AgentType.CLINICAL_PHARMACOLOGY, agentPrompt).catch((error) => {
           console.error('❌ Error en CLINICAL_PHARMACOLOGY:', error?.message || error)
           return null
         }),
         // Agente especialista pediátrico
-        multiAgentOrchestrator.executeSingleAgent(AgentType.PEDIATRIC_SPECIALIST, cyclePrompt).catch((error) => {
+        multiAgentOrchestrator.executeSingleAgent(AgentType.PEDIATRIC_SPECIALIST, agentPrompt).catch((error) => {
           console.error('❌ Error en PEDIATRIC_SPECIALIST:', error?.message || error)
           return null
         }),
         // Agente criterios hospitalización
-        multiAgentOrchestrator.executeSingleAgent(AgentType.HOSPITALIZATION_CRITERIA, cyclePrompt).catch((error) => {
+        multiAgentOrchestrator.executeSingleAgent(AgentType.HOSPITALIZATION_CRITERIA, agentPrompt).catch((error) => {
           console.error('❌ Error en HOSPITALIZATION_CRITERIA:', error?.message || error)
           return null
         }),
         // Agente educación familiar
-        multiAgentOrchestrator.executeSingleAgent(AgentType.FAMILY_EDUCATION, cyclePrompt).catch((error) => {
+        multiAgentOrchestrator.executeSingleAgent(AgentType.FAMILY_EDUCATION, agentPrompt).catch((error) => {
           console.error('❌ Error en FAMILY_EDUCATION:', error?.message || error)
           return null
         }),
         // Agente de validación objetiva
-        multiAgentOrchestrator.executeSingleAgent(AgentType.OBJECTIVE_VALIDATION, cyclePrompt).catch((error) => {
+        multiAgentOrchestrator.executeSingleAgent(AgentType.OBJECTIVE_VALIDATION, agentPrompt).catch((error) => {
           console.error('❌ Error en OBJECTIVE_VALIDATION:', error?.message || error)
           return null
         }),
         // Agente de medicina defensiva
-        multiAgentOrchestrator.executeSingleAgent(AgentType.DEFENSIVE_DIFFERENTIAL, cyclePrompt).catch((error) => {
+        multiAgentOrchestrator.executeSingleAgent(AgentType.DEFENSIVE_DIFFERENTIAL, agentPrompt).catch((error) => {
           console.error('❌ Error en DEFENSIVE_DIFFERENTIAL:', error?.message || error)
           return null
         })
@@ -286,6 +289,9 @@ export class IterativeDiagnosticEngine {
       if (pharmResult.primary_medication) {
         medication = pharmResult.primary_medication
         console.log('✅ Found primary_medication:', medication)
+      } else if (pharmResult.P?.immediate_treatment?.medication?.primary_medication) {
+        medication = pharmResult.P.immediate_treatment.medication.primary_medication
+        console.log('✅ Found P.immediate_treatment.medication.primary_medication:', medication)
       } else if (pharmResult.P?.immediate_treatment?.medication) {
         medication = pharmResult.P.immediate_treatment.medication
         console.log('✅ Found P.immediate_treatment.medication:', medication)
@@ -340,7 +346,7 @@ CONSIDERACIONES PEDIÁTRICAS (del especialista pediatra):
       console.log('agentResults.hospitalization:', JSON.stringify(agentResults.hospitalization, null, 2))
       console.log('hospResult:', JSON.stringify(hospResult, null, 2))
       
-      let disposition = hospResult.disposition_recommendation || 'home'
+      let disposition = hospResult.disposition_recommendation || hospResult.p?.disposition_recommendation || 'home'
       dispositionInfo = `
 DISPOSICIÓN (del especialista en hospitalización):
 - Recomendación: ${disposition}`
@@ -409,6 +415,20 @@ ANÁLISIS REFINADO - Mejora el análisis previo:
 - Incorpora insights del ciclo anterior
 - Ajusta diagnósticos diferenciales
 - Aumenta especificidad del plan terapéutico`
+  }
+
+  private buildAgentPrompt(caseData: MedicalCase, cycleNumber: number): string {
+    return `## CASO CLÍNICO PARA ANÁLISIS ESPECIALIZADO
+
+**Datos del Paciente:**
+${caseData.presentation}
+
+**Historia Clínica Disponible:**
+${caseData.history || 'Información limitada disponible'}
+
+**Contexto:** ${caseData.context || 'Consulta médica general'}
+
+Analiza este caso desde tu especialidad médica y proporciona tu evaluación específica.`
   }
 
   private buildCyclePrompt(caseData: MedicalCase, cycleNumber: number, previousCycles: DiagnosticCycle[]): string {
