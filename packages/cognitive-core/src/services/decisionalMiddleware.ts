@@ -9,13 +9,20 @@ import {
   ValidationDecision, 
   TreatmentDecision, 
   TriageDecision, 
-  DocumentationDecision 
+  DocumentationDecision,
+  ClinicalPharmacologyDecision,
+  PediatricSpecialistDecision,
+  HospitalizationCriteriaDecision,
+  FamilyEducationDecision,
+  ObjectiveValidationDecision,
+  DefensiveDifferentialDecision
 } from '../types/agents'
 
 import { decisionEngineService } from '../decision-engine/DecisionEngineService'
+import { getAgentDefinition } from './agentRegistry'
 
 // Tipos para el middleware (mantenidos para compatibilidad)
-export type DecisionType = 'diagnosis' | 'validation' | 'treatment' | 'triage' | 'documentation'
+export type DecisionType = 'diagnosis' | 'validation' | 'treatment' | 'triage' | 'documentation' | 'clinical_pharmacology' | 'pediatric_specialist' | 'hospitalization_criteria' | 'family_education' | 'objective_validation' | 'defensive_differential'
 export type ProviderType = 'claude' | 'openai' | 'local'
 
 export interface DecisionRequest {
@@ -211,6 +218,32 @@ function buildSystemPrompt(
  * System prompts específicos para cada agente
  */
 function getAgentSystemPrompt(type: DecisionType): string {
+  // Mapear DecisionType de vuelta a AgentType para usar el registry
+  const agentTypeMap: Record<DecisionType, AgentType> = {
+    'diagnosis': AgentType.DIAGNOSTIC,
+    'validation': AgentType.VALIDATION,
+    'treatment': AgentType.TREATMENT,
+    'triage': AgentType.TRIAGE,
+    'documentation': AgentType.DOCUMENTATION,
+    'clinical_pharmacology': AgentType.CLINICAL_PHARMACOLOGY,
+    'pediatric_specialist': AgentType.PEDIATRIC_SPECIALIST,
+    'hospitalization_criteria': AgentType.HOSPITALIZATION_CRITERIA,
+    'family_education': AgentType.FAMILY_EDUCATION,
+    'objective_validation': AgentType.OBJECTIVE_VALIDATION,
+    'defensive_differential': AgentType.DEFENSIVE_DIFFERENTIAL
+  }
+  
+  const agentType = agentTypeMap[type]
+  if (agentType) {
+    try {
+      const agentDef = getAgentDefinition(agentType)
+      return agentDef.systemPrompt
+    } catch (error) {
+      console.warn(`Could not get agent definition for ${agentType}, using fallback`)
+    }
+  }
+  
+  // Fallback to old prompts if agent definition not found
   switch (type) {
     case 'diagnosis':
       return `Eres un médico especialista en diagnóstico. Analiza los síntomas presentados y proporciona:
@@ -271,7 +304,17 @@ Asegura precisión, completitud y cumplimiento regulatorio.`
  * Requerimientos de formato JSON para cada tipo de agente
  */
 function getJsonFormatRequirements(type: DecisionType): string {
+  // Los prompts del AGENT_REGISTRY ya incluyen los formatos JSON específicos
+  // Solo necesitamos formatos para tipos que no están en el registry
   switch (type) {
+    case 'clinical_pharmacology':
+    case 'pediatric_specialist':
+    case 'hospitalization_criteria':
+    case 'family_education':
+    case 'objective_validation':
+    case 'defensive_differential':
+      // Estos ya tienen su formato JSON específico en el systemPrompt del registry
+      return ''
     case 'diagnosis':
       return `\n\nRETURN ONLY JSON with this exact structure:
 {
@@ -335,6 +378,18 @@ function getJsonFormatRequirements(type: DecisionType): string {
  */
 function validateDecisionStructure(decision: AgentDecision, type: DecisionType): void {
   switch (type) {
+    case 'clinical_pharmacology':
+    case 'pediatric_specialist':
+    case 'hospitalization_criteria':
+    case 'family_education':
+    case 'objective_validation':
+    case 'defensive_differential':
+      // Los agentes especializados tienen sus propias estructuras específicas
+      // Validación básica - solo verificar que es un objeto
+      if (!decision || typeof decision !== 'object') {
+        throw new Error(`Invalid ${type} decision structure`)
+      }
+      break
     case 'diagnosis':
       const diag = decision as DiagnosticDecision
       if (!diag.differentials || !Array.isArray(diag.differentials)) {
@@ -376,6 +431,15 @@ function calculateConfidence(decision: AgentDecision, type: DecisionType): numbe
   
   // Ajustar según completitud de la respuesta
   switch (type) {
+    case 'clinical_pharmacology':
+    case 'pediatric_specialist':
+    case 'hospitalization_criteria':
+    case 'family_education':
+    case 'objective_validation':
+    case 'defensive_differential':
+      // Para agentes especializados, usar confianza base alta ya que son específicos
+      baseConfidence += 15
+      break
     case 'diagnosis':
       const diag = decision as DiagnosticDecision
       if (diag.differentials?.length > 1) baseConfidence += 10
@@ -412,6 +476,65 @@ function calculateConfidence(decision: AgentDecision, type: DecisionType): numbe
  */
 function createFallbackDecision(type: DecisionType, input: string): AgentDecision {
   switch (type) {
+    case 'clinical_pharmacology':
+      return {
+        primary_medication: {
+          generic_name: "consultar_medico",
+          brand_names: [],
+          exact_dose: "según indicación médica",
+          route: "oral",
+          frequency: "según prescripción",
+          duration: "según prescripción",
+          line_of_treatment: "first",
+          evidence_level: "A"
+        },
+        alternative_medications: [],
+        contraindications: ["revisar con médico"],
+        drug_interactions: [],
+        monitoring_parameters: [],
+        dose_adjustments: {}
+      } as ClinicalPharmacologyDecision
+    case 'pediatric_specialist':
+      return {
+        age_specific_considerations: ["consultar pediatra"],
+        weight_based_calculations: { estimated_weight_kg: 0, dose_per_kg: "", max_dose: "" },
+        developmental_factors: [],
+        pediatric_red_flags: [],
+        growth_development_impact: []
+      } as PediatricSpecialistDecision
+    case 'hospitalization_criteria':
+      return {
+        admission_criteria: [],
+        discharge_criteria: [],
+        observation_criteria: [],
+        icu_criteria: [],
+        risk_stratification: { low_risk: [], moderate_risk: [], high_risk: [] },
+        disposition_recommendation: "home"
+      } as HospitalizationCriteriaDecision
+    case 'family_education':
+      return {
+        warning_signs: ["consultar médico si empeora"],
+        when_to_return: ["si síntomas empeoran"],
+        home_care_instructions: [],
+        medication_education: [],
+        follow_up_instructions: [],
+        emergency_contacts: []
+      } as FamilyEducationDecision
+    case 'objective_validation':
+      return {
+        missing_critical_data: ["requiere evaluación presencial"],
+        vital_signs_assessment: { saturation_required: true, respiratory_rate_needed: true, blood_pressure_concern: false, temperature_monitoring: true },
+        physical_exam_gaps: [],
+        recommended_studies: [],
+        confidence_impact: 0.5
+      } as ObjectiveValidationDecision
+    case 'defensive_differential':
+      return {
+        must_exclude_diagnoses: [],
+        gravity_vs_probability: [],
+        red_flags_analysis: { critical_signs: [], concerning_patterns: [], age_specific_concerns: [] },
+        disposition_recommendation: "routine_followup"
+      } as DefensiveDifferentialDecision
     case 'diagnosis':
       return {
         differentials: [
@@ -482,6 +605,12 @@ export function mapAgentTypeToDecisionType(agentType: AgentType): DecisionType {
     case AgentType.TREATMENT: return 'treatment'
     case AgentType.TRIAGE: return 'triage'
     case AgentType.DOCUMENTATION: return 'documentation'
+    case AgentType.CLINICAL_PHARMACOLOGY: return 'clinical_pharmacology'
+    case AgentType.PEDIATRIC_SPECIALIST: return 'pediatric_specialist'
+    case AgentType.HOSPITALIZATION_CRITERIA: return 'hospitalization_criteria'
+    case AgentType.FAMILY_EDUCATION: return 'family_education'
+    case AgentType.OBJECTIVE_VALIDATION: return 'objective_validation'
+    case AgentType.DEFENSIVE_DIFFERENTIAL: return 'defensive_differential'
     default: return 'diagnosis'
   }
 }
