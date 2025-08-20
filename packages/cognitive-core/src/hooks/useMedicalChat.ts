@@ -247,13 +247,20 @@ ${validationResult.missingCriticalData?.map(data => `- ${data}`).join('\n') || '
       }))
 
       // 🚀 CRITICAL FIX: Update SOAP structure for UI panel
+      console.log('🔬 DEBUG: About to map SOAP analysis to structure')
+      console.log('🔬 DEBUG: soapAnalysis object:', soapAnalysis)
+      
       const soapStructure = mapSOAPAnalysisToStructure(soapAnalysis)
+      console.log('🔬 DEBUG: Mapped SOAP structure:', soapStructure)
+      
       dispatch(updateSOAPStructure(soapStructure))
+      console.log('🔬 DEBUG: Dispatched updateSOAPStructure action')
       
       // Determine urgency level based on analysis
       const urgencyLevel: UrgencyLevel = soapAnalysis.confianza_global && soapAnalysis.confianza_global > 0.9 ? 'low' : 
                                         soapAnalysis.confianza_global && soapAnalysis.confianza_global > 0.7 ? 'medium' : 'high'
       dispatch(updateUrgencyLevel(urgencyLevel))
+      console.log('🔬 DEBUG: Set urgency level to:', urgencyLevel)
       
       console.log('✅ SOAP structure updated in Redux store for UI panel')
 
