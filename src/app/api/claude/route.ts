@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 
+// Configure Node.js to accept self-signed certificates (for corporate networks)
+if (typeof process !== 'undefined' && process.env.NODE_TLS_REJECT_UNAUTHORIZED !== '0') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+}
+
 export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.CLAUDE_API_KEY
@@ -75,8 +80,34 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     console.error('Claude API error:', error)
+    
+    // More detailed error handling
+    let errorMessage = 'Unknown error'
+    let errorDetails = ''
+    
+    if (error instanceof Error) {
+      errorMessage = error.message
+      errorDetails = error.stack || ''
+      
+      // Specific handling for common errors
+      if (error.message.includes('self-signed certificate')) {
+        errorMessage = 'SSL Certificate error - Corporate network detected'
+        errorDetails = 'Try setting NODE_TLS_REJECT_UNAUTHORIZED=0 in environment'
+      } else if (error.message.includes('Connection error')) {
+        errorMessage = 'Network connection failed'
+        errorDetails = 'Check internet connection and proxy settings'
+      } else if (error.message.includes('API key')) {
+        errorMessage = 'Invalid or missing API key'
+        errorDetails = 'Verify CLAUDE_API_KEY environment variable'
+      }
+    }
+    
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: errorMessage,
+        details: errorDetails,
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     )
   }

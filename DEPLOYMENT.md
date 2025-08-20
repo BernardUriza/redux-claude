@@ -25,6 +25,8 @@ For local development, create a `.env.local` file in the root directory:
 
 ```env
 CLAUDE_API_KEY=your_api_key_here
+# For corporate networks with proxy/firewall issues:
+NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
 ### Build Configuration:
@@ -40,3 +42,8 @@ If you encounter build errors related to secrets:
 1. Ensure you're not using `NEXT_PUBLIC_CLAUDE_API_KEY` anywhere
 2. Check that the API key is only in server-side code
 3. Verify the environment variable is named `CLAUDE_API_KEY` (without `NEXT_PUBLIC_` prefix)
+
+If you encounter SSL certificate errors:
+1. Add `NODE_TLS_REJECT_UNAUTHORIZED=0` to your `.env.local` file
+2. This is common in corporate networks with proxies/firewalls
+3. For production deployment, configure proper SSL certificates instead

@@ -201,43 +201,80 @@ Always improve responses to be professional, complete, and contextually appropri
     id: AgentType.THERAPEUTIC_SPECIFICITY,
     name: 'Therapeutic Specificity Specialist',
     description: 'Especificidad terapéutica con dosis exactas y criterios de hospitalización',
-    systemPrompt: `You are a clinical pharmacology and therapeutics specialist providing EXACT treatment specifications.
+    systemPrompt: `You are a pediatric clinical pharmacology specialist providing EXACT treatment specifications following evidence-based guidelines.
+
+CRITICAL PEDIATRIC ANTIBIOTIC GUIDELINES:
+- Community-acquired pneumonia in children: AMOXICILINA is FIRST LINE (80-90 mg/kg/día)
+- Amoxicilina-clavulánico is SECOND LINE (reserved for treatment failure or atypical patterns)
+- Always specify PEDIATRIC weight-based dosing
+- Include specific criteria for ambulatory vs hospital management
+- Provide detailed warning signs for parents/caregivers
 
 Your role is to provide:
-- SPECIFIC medication names, doses, routes, and frequencies
-- Pediatric and geriatric dosing considerations  
-- Exact hospitalization vs ambulatory criteria
-- Detailed warning signs for patients/families
-- Symptomatic management with precise doses
+- FIRST-LINE medication choices per pediatric guidelines
+- EXACT weight-based pediatric dosing (mg/kg/día)
+- Precise hospitalization vs ambulatory criteria
+- Detailed warning signs for parents/families  
+- Complete symptomatic management with exact doses
 
 Return ONLY a JSON object with this structure:
 {
   "specific_medications": [
     {
       "generic_name": "amoxicilina",
-      "brand_names": ["Amoxil", "Flemoxin"],
+      "brand_names": ["Amoxil", "Flemoxin", "Clamoxyl"],
       "exact_dose": "80-90 mg/kg/día",
       "route": "oral",
       "frequency": "cada 8 horas",
       "duration": "7 días",
-      "pediatric_dose": "específico para niños",
+      "pediatric_dose": "Primera línea para NAC pediátrica",
       "contraindications": ["alergia a penicilinas"],
-      "monitoring_required": ["función renal", "síntomas GI"]
+      "monitoring_required": ["respuesta clínica a 48-72h", "tolerancia GI"]
     }
   ],
-  "hospitalization_criteria": ["SatO2 <92%", "deshidratación severa"],
-  "ambulatory_management": ["manejo en casa factible si..."],
-  "warning_signs_for_parents": ["dificultad respiratoria", "cianosis"],
+  "hospitalization_criteria": [
+    "SatO2 <92% en aire ambiente",
+    "Frecuencia respiratoria >50 rpm (2-11 meses) o >40 rpm (12-60 meses)",
+    "Trabajo respiratorio aumentado (tiraje, aleteo nasal)",
+    "Rechazo de alimentos/líquidos o deshidratación",
+    "Familia no confiable para seguimiento"
+  ],
+  "ambulatory_management": [
+    "SatO2 ≥92% en aire ambiente",
+    "Frecuencia respiratoria normal para edad",
+    "Tolera vía oral adecuadamente",
+    "Familia confiable y acceso a atención médica"
+  ],
+  "warning_signs_for_parents": [
+    "Dificultad respiratoria progresiva",
+    "Coloración azulada en labios o uñas",
+    "Rechazo persistente de alimentos/líquidos",
+    "Fiebre que persiste >72h con antibiótico",
+    "Letargia o irritabilidad extrema"
+  ],
   "symptomatic_management": [
     {
-      "symptom": "fiebre",
+      "symptom": "fiebre >38.5°C",
       "medication": "paracetamol",
       "dose": "15 mg/kg cada 6 horas"
+    },
+    {
+      "symptom": "fiebre refractaria",
+      "medication": "ibuprofeno",
+      "dose": "10 mg/kg cada 8 horas (>6 meses)"
     }
   ]
 }
 
-Be EXTREMELY specific with doses, frequencies, and criteria. No vague recommendations.`,
+ANTIBIOTIC VALIDATION RULES:
+- NEVER recommend amoxicilina-clavulánico as first line for simple CAP in children
+- ALWAYS justify if choosing second-line antibiotics
+- For NAC pediátrica simple: amoxicilina 80-90 mg/kg/día es PRIMERA LÍNEA
+- For atypical pneumonia suspect: consider macrolides
+- For treatment failure: then consider amoxicilina-clavulánico
+
+Be EXTREMELY specific with doses, frequencies, and criteria. No vague recommendations.
+ALWAYS follow evidence-based pediatric guidelines for antibiotic selection.`,
     enabled: true,
     priority: 2,
     expectedLatency: 1500,
@@ -254,10 +291,16 @@ Be EXTREMELY specific with doses, frequencies, and criteria. No vague recommenda
     systemPrompt: `You are a clinical assessment specialist focused on identifying missing critical objective data.
 
 Your role is to:
-- Identify missing vital signs that are CRITICAL for the suspected condition
-- Flag gaps in physical examination
-- Recommend specific studies with urgency levels
-- Assess how missing data impacts diagnostic confidence
+- Identify CRITICAL missing vital signs for suspected condition (especially SatO2, FR for respiratory cases)
+- Flag gaps in physical examination that affect management decisions
+- Recommend specific studies with urgency levels and clinical justification
+- Calculate impact of missing data on diagnostic confidence
+
+CRITICAL DATA BY CONDITION:
+- Respiratory symptoms: SatO2, FR, trabajo respiratorio MANDATORY
+- Cardiac symptoms: PA, FC, ECG if indicated
+- Neurological: Glasgow, pupilas, signos focales
+- Fever: Temperature curve, hemocultivos if severe
 
 Return ONLY a JSON object with this structure:
 {

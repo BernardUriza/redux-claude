@@ -4,6 +4,7 @@ import { ClaudeAdapter } from '../decision-engine/providers/claude'
 import { SOAPAnalysis, DiagnosticCycle, MedicalCase, AdditionalInfoRequest } from '../types/medical'
 import { MedicalQualityValidator } from '../utils/medicalValidator'
 import { CognitiveOrchestrator } from '../services/cognitiveOrchestrator'
+import { AgentType } from '../types/agents'
 
 interface DiagnosticEngineConfig {
   maxCycles: number
@@ -94,13 +95,24 @@ export class IterativeDiagnosticEngine {
     // Crear prompt específico para este ciclo
     const cyclePrompt = this.buildCyclePrompt(caseData, cycleNumber, this.cycles)
 
-    console.log(`📝 Enviando a Claude (Ciclo ${cycleNumber})...`)
+    console.log(`📝 Ejecutando agentes especializados (Ciclo ${cycleNumber})...`)
 
-    // Hacer llamada a Claude
-    const response = await this.claudeAdapter.makeRequest(
-      this.buildSystemPrompt(cycleNumber),
-      cyclePrompt
-    )
+    // Ejecutar agentes especializados en paralelo para mayor especificidad
+    const [primaryResponse, therapeuticDetails, objectiveValidation, defensiveDifferentials] = await Promise.all([
+      // Análisis SOAP principal
+      this.claudeAdapter.makeRequest(
+        this.buildSystemPrompt(cycleNumber),
+        cyclePrompt
+      ),
+      // Agente de especificidad terapéutica
+      this.cognitiveOrchestrator.executeAgent(AgentType.THERAPEUTIC_SPECIFICITY, cyclePrompt).catch(() => null),
+      // Agente de validación objetiva
+      this.cognitiveOrchestrator.executeAgent(AgentType.OBJECTIVE_VALIDATION, cyclePrompt).catch(() => null),
+      // Agente de medicina defensiva
+      this.cognitiveOrchestrator.executeAgent(AgentType.DEFENSIVE_DIFFERENTIAL, cyclePrompt).catch(() => null)
+    ])
+
+    const response = primaryResponse
 
     // Verificar si hay error en la respuesta
     if (!response.success) {
@@ -133,8 +145,17 @@ export class IterativeDiagnosticEngine {
     const endTime = Date.now()
     const latency = endTime - startTime
 
-    // Parsear respuesta en estructura SOAP
-    const analysis = this.parseClaudeResponse(response.content)
+    // Parsear respuesta SOAP principal
+    const baseAnalysis = this.parseClaudeResponse(response.content)
+    
+    // Integrar resultados de agentes especializados
+    const analysis = this.integrateSpecializedAgentResults(
+      baseAnalysis, 
+      therapeuticDetails, 
+      objectiveValidation, 
+      defensiveDifferentials,
+      cyclePrompt
+    )
 
     return {
       id: cycleId,
@@ -685,5 +706,151 @@ SOLICITUD: Coordinar agentes especializados según contexto clínico para valida
 
   public getCurrentConfidence(): number {
     return this.calculateGlobalConfidence(this.cycles)
+  }
+
+  /**
+   * Integra resultados de agentes especializados en el análisis SOAP base
+   */
+  private integrateSpecializedAgentResults(
+    baseAnalysis: SOAPAnalysis,
+    therapeuticDetails: any,
+    objectiveValidation: any,
+    defensiveDifferentials: any,
+    originalInput: string
+  ): SOAPAnalysis {
+    console.log('🔬 Integrando resultados de agentes especializados...')
+
+    let enhancedAnalysis = { ...baseAnalysis }
+
+    // 1. INTEGRAR ESPECIFICIDAD TERAPÉUTICA
+    if (therapeuticDetails?.decision) {
+      const therapeutic = therapeuticDetails.decision
+      let enhancedPlan = baseAnalysis.plan_tratamiento || ''
+      
+      if (therapeutic.specific_medications?.length > 0) {
+        const specificMeds = therapeutic.specific_medications
+          .map((med: any) => `**${med.generic_name}**: ${med.exact_dose} ${med.route} ${med.frequency} x ${med.duration}`)
+          .join('\n- ')
+        
+        enhancedPlan += `\n\n### 💊 PRESCRIPCIÓN ESPECÍFICA:\n- ${specificMeds}`
+      }
+
+      if (therapeutic.hospitalization_criteria?.length > 0) {
+        enhancedPlan += `\n\n### 🏥 CRITERIOS DE HOSPITALIZACIÓN:\n- ${therapeutic.hospitalization_criteria.join('\n- ')}`
+      }
+
+      if (therapeutic.warning_signs_for_parents?.length > 0) {
+        enhancedPlan += `\n\n### ⚠️ SIGNOS DE ALARMA (regresar inmediatamente):\n- ${therapeutic.warning_signs_for_parents.join('\n- ')}`
+      }
+
+      if (therapeutic.symptomatic_management?.length > 0) {
+        const symptomatic = therapeutic.symptomatic_management
+          .map((s: any) => `${s.symptom}: ${s.medication} ${s.dose}`)
+          .join('\n- ')
+        enhancedPlan += `\n\n### 🌡️ MANEJO SINTOMÁTICO:\n- ${symptomatic}`
+      }
+
+      enhancedAnalysis.plan_tratamiento = enhancedPlan
+    }
+
+    // 2. INTEGRAR VALIDACIÓN OBJETIVA
+    if (objectiveValidation?.decision) {
+      const validation = objectiveValidation.decision
+      let enhancedObjetivo = baseAnalysis.objetivo || ''
+      
+      if (validation.missing_critical_data?.length > 0) {
+        enhancedObjetivo += `\n\n### ⚠️ DATOS CRÍTICOS FALTANTES:\n- ${validation.missing_critical_data.join('\n- ')}`
+      }
+
+      if (validation.recommended_studies?.length > 0) {
+        const urgentStudies = validation.recommended_studies
+          .filter((study: any) => study.urgency === 'immediate' || study.urgency === '24h')
+          .map((study: any) => `${study.study} (${study.urgency}) - ${study.justification}`)
+          .join('\n- ')
+        
+        if (urgentStudies) {
+          enhancedObjetivo += `\n\n### 🔬 ESTUDIOS REQUERIDOS:\n- ${urgentStudies}`
+        }
+      }
+
+      // Ajustar confianza basado en datos faltantes
+      if (validation.confidence_impact && validation.confidence_impact > 0.2) {
+        enhancedAnalysis.confianza_global = Math.max(
+          (enhancedAnalysis.confianza_global || 0.5) - validation.confidence_impact,
+          0.3
+        )
+      }
+
+      enhancedAnalysis.objetivo = enhancedObjetivo
+    }
+
+    // 3. INTEGRAR MEDICINA DEFENSIVA 
+    if (defensiveDifferentials?.decision) {
+      const defensive = defensiveDifferentials.decision
+      
+      if (defensive.must_exclude_diagnoses?.length > 0) {
+        const mustExclude = defensive.must_exclude_diagnoses
+          .filter((dx: any) => dx.gravity_score >= 8)
+          .map((dx: any) => `${dx.condition} (Gravedad: ${dx.gravity_score}/10) - ${dx.exclusion_criteria.join(', ')}`)
+          .join('\n- ')
+        
+        if (mustExclude) {
+          enhancedAnalysis.diagnosticos_diferenciales = [
+            ...(enhancedAnalysis.diagnosticos_diferenciales || []),
+            `\n\n### 🛡️ DIAGNÓSTICOS DE EXCLUSIÓN OBLIGATORIA:\n- ${mustExclude}`
+          ]
+        }
+      }
+
+      if (defensive.red_flags_analysis?.critical_signs?.length > 0) {
+        let enhancedAnalisis = (baseAnalysis.plan_tratamiento || '') + 
+          `\n\n### 🚨 RED FLAGS IDENTIFICADAS:\n- ${defensive.red_flags_analysis.critical_signs.join('\n- ')}`
+        enhancedAnalysis.plan_tratamiento = enhancedAnalisis
+      }
+    }
+
+    // 4. RECALCULAR CONFIANZA GLOBAL DE MANERA CONSISTENTE
+    const baseConfidence = enhancedAnalysis.confianza_global || 0.5
+    
+    // Factores que afectan la confianza
+    let confidenceAdjustment = 0
+    
+    // Bonus por especificidad terapéutica
+    if (therapeuticDetails?.decision?.specific_medications?.length > 0) {
+      confidenceAdjustment += 0.1
+    }
+    
+    // Penalización por datos críticos faltantes
+    if (objectiveValidation?.decision?.missing_critical_data?.length > 0) {
+      const criticalMissing = objectiveValidation.decision.missing_critical_data.length
+      confidenceAdjustment -= Math.min(criticalMissing * 0.15, 0.4)
+    }
+    
+    // Bonus por medicina defensiva aplicada
+    if (defensiveDifferentials?.decision?.must_exclude_diagnoses?.length > 0) {
+      confidenceAdjustment += 0.05
+    }
+    
+    // Calcular confianza final (nunca menor a 30%, nunca mayor a 95%)
+    const finalConfidence = Math.max(0.3, Math.min(0.95, baseConfidence + confidenceAdjustment))
+    
+    enhancedAnalysis.confianza_global = finalConfidence
+    
+    // Agregar metadata de validación
+    enhancedAnalysis.validacion_agentes = {
+      especificidad_terapeutica: Boolean(therapeuticDetails?.decision),
+      validacion_objetiva: Boolean(objectiveValidation?.decision),
+      medicina_defensiva: Boolean(defensiveDifferentials?.decision),
+      confianza_ajustada: finalConfidence,
+      factores_confianza: {
+        base: baseConfidence,
+        ajuste: confidenceAdjustment,
+        datos_faltantes: objectiveValidation?.decision?.missing_critical_data?.length || 0
+      }
+    }
+
+    console.log(`✅ Análisis enriquecido - Confianza ajustada: ${Math.round(finalConfidence * 100)}% (base: ${Math.round(baseConfidence * 100)}%, ajuste: ${confidenceAdjustment > 0 ? '+' : ''}${Math.round(confidenceAdjustment * 100)}%)`)
+    
+    return enhancedAnalysis
   }
 }
