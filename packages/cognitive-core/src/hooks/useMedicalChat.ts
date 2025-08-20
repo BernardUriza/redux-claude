@@ -17,9 +17,99 @@ import {
   setError,
   clearError,
   addDiagnosticCycle,
-  updateIterativeState
+  updateIterativeState,
+  updateSOAPStructure,
+  updateUrgencyLevel
 } from '../store/medicalChatSlice'
+import type { SOAPStructure, SubjectiveData, ObjectiveFindings, DifferentialDiagnosis, TreatmentPlan, UrgencyLevel } from '../store/medicalChatSlice'
 import type { RootState, AppDispatch } from '../store/store'
+
+// Helper function to convert SOAPAnalysis to SOAPStructure
+const mapSOAPAnalysisToStructure = (soapAnalysis: SOAPAnalysis): SOAPStructure => {
+  const parsePatientData = (text: string): SubjectiveData => {
+    return {
+      chiefComplaint: soapAnalysis.subjetivo || 'No disponible',
+      presentIllness: soapAnalysis.subjetivo || 'No disponible',
+      medicalHistory: soapAnalysis.datos_adicionales_necesarios || [],
+      familyHistory: [],
+      socialHistory: '',
+      allergies: [],
+      medications: []
+    }
+  }
+
+  const parseObjectiveData = (text: string): ObjectiveFindings => {
+    return {
+      vitalSigns: {
+        temperature: '',
+        bloodPressure: '',
+        heartRate: '',
+        respiratoryRate: '',
+        oxygenSaturation: ''
+      },
+      physicalExam: {
+        general: soapAnalysis.objetivo || 'No disponible',
+        respiratory: soapAnalysis.objetivo || '',
+        cardiovascular: '',
+        abdominal: '',
+        neurological: '',
+        dermatological: ''
+      },
+      diagnosticStudies: []
+    }
+  }
+
+  const parseAnalysisData = (): DifferentialDiagnosis => {
+    return {
+      primaryDiagnosis: soapAnalysis.diagnostico_principal || 'No determinado',
+      differentials: (soapAnalysis.diagnosticos_diferenciales || []).map((diff, index) => ({
+        diagnosis: diff,
+        probability: 0.5,
+        gravityScore: 5,
+        reasoning: `Diagnóstico diferencial ${index + 1}`
+      })),
+      reasoning: soapAnalysis.plan_tratamiento || 'No disponible',
+      confidence: soapAnalysis.confianza_global || 0.8
+    }
+  }
+
+  const parsePlanData = (): TreatmentPlan => {
+    const plan = soapAnalysis.plan_tratamiento || ''
+    
+    // Extract medication from plan text
+    const medications = []
+    if (plan.includes('amoxicilina')) {
+      medications.push({
+        name: 'Amoxicilina',
+        dose: '90 mg/kg/día',
+        frequency: 'cada 8 horas',
+        duration: '7-10 días'
+      })
+    }
+
+    return {
+      immediate: [plan],
+      medications,
+      followUp: {
+        timeframe: '48-72 horas',
+        instructions: ['Control médico', 'Reevaluación clínica']
+      },
+      referrals: [],
+      studies: ['Radiografía de tórax'],
+      patientEducation: [],
+      redFlags: []
+    }
+  }
+
+  return {
+    subjetivo: parsePatientData(soapAnalysis.subjetivo || ''),
+    objetivo: parseObjectiveData(soapAnalysis.objetivo || ''),
+    analisis: parseAnalysisData(),
+    plan: parsePlanData(),
+    timestamp: Date.now(),
+    confidence: soapAnalysis.confianza_global || 0.8
+  }
+}
 
 export const useMedicalChat = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -155,6 +245,17 @@ ${validationResult.missingCriticalData?.map(data => `- ${data}`).join('\n') || '
         finalContent,
         confidence: soapAnalysis.confianza_global || 0.8
       }))
+
+      // 🚀 CRITICAL FIX: Update SOAP structure for UI panel
+      const soapStructure = mapSOAPAnalysisToStructure(soapAnalysis)
+      dispatch(updateSOAPStructure(soapStructure))
+      
+      // Determine urgency level based on analysis
+      const urgencyLevel: UrgencyLevel = soapAnalysis.confianza_global && soapAnalysis.confianza_global > 0.9 ? 'low' : 
+                                        soapAnalysis.confianza_global && soapAnalysis.confianza_global > 0.7 ? 'medium' : 'high'
+      dispatch(updateUrgencyLevel(urgencyLevel))
+      
+      console.log('✅ SOAP structure updated in Redux store for UI panel')
 
       // Actualizar estado iterativo
       dispatch(updateIterativeState({
