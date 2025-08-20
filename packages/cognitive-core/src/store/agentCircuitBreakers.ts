@@ -57,7 +57,10 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.TREATMENT]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 60000 }),
     [AgentType.DOCUMENTATION]: createInitialCircuitBreaker({ maxFailures: 5, cooldownMs: 90000 }), // More lenient
     [AgentType.RESPONSE_QUALITY]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 20000 }),
-    [AgentType.THERAPEUTIC_SPECIFICITY]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 }),
+    [AgentType.CLINICAL_PHARMACOLOGY]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 }),
+    [AgentType.PEDIATRIC_SPECIALIST]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 }),
+    [AgentType.HOSPITALIZATION_CRITERIA]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 }),
+    [AgentType.FAMILY_EDUCATION]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 }),
     [AgentType.OBJECTIVE_VALIDATION]: createInitialCircuitBreaker({ maxFailures: 4, cooldownMs: 45000 }),
     [AgentType.DEFENSIVE_DIFFERENTIAL]: createInitialCircuitBreaker({ maxFailures: 2, cooldownMs: 15000 })
   },
@@ -68,7 +71,10 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.TREATMENT]: createInitialMetrics(),
     [AgentType.DOCUMENTATION]: createInitialMetrics(),
     [AgentType.RESPONSE_QUALITY]: createInitialMetrics(),
-    [AgentType.THERAPEUTIC_SPECIFICITY]: createInitialMetrics(),
+    [AgentType.CLINICAL_PHARMACOLOGY]: createInitialMetrics(),
+    [AgentType.PEDIATRIC_SPECIALIST]: createInitialMetrics(),
+    [AgentType.HOSPITALIZATION_CRITERIA]: createInitialMetrics(),
+    [AgentType.FAMILY_EDUCATION]: createInitialMetrics(),
     [AgentType.OBJECTIVE_VALIDATION]: createInitialMetrics(),
     [AgentType.DEFENSIVE_DIFFERENTIAL]: createInitialMetrics()
   },
@@ -79,13 +85,16 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.TREATMENT]: AgentStatus.READY,
     [AgentType.DOCUMENTATION]: AgentStatus.READY, // Enabled for cognitive system
     [AgentType.RESPONSE_QUALITY]: AgentStatus.READY,
-    [AgentType.THERAPEUTIC_SPECIFICITY]: AgentStatus.READY,
+    [AgentType.CLINICAL_PHARMACOLOGY]: AgentStatus.READY,
+    [AgentType.PEDIATRIC_SPECIALIST]: AgentStatus.READY,
+    [AgentType.HOSPITALIZATION_CRITERIA]: AgentStatus.READY,
+    [AgentType.FAMILY_EDUCATION]: AgentStatus.READY,
     [AgentType.OBJECTIVE_VALIDATION]: AgentStatus.READY,
     [AgentType.DEFENSIVE_DIFFERENTIAL]: AgentStatus.READY
   },
   globalState: {
-    totalAgents: 9,
-    activeAgents: 9, // All 9 agents enabled
+    totalAgents: 12,
+    activeAgents: 12, // All 12 agents enabled
     failedAgents: 0,
     avgSystemLatency: 0,
     lastHealthCheck: Date.now()

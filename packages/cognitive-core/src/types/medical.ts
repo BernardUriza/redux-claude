@@ -189,6 +189,7 @@ export interface SOAPAnalysis {
     insights_memoria: string
     validacion_especializada: boolean
   }
+  validacion_agentes?: any
 }
 
 export interface DiagnosticEvolution {
