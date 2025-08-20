@@ -377,6 +377,12 @@ INSTRUCCIONES CRÍTICAS:
 - NUNCA digas "no requiere estudios" si hay síntomas respiratorios
 - SIEMPRE solicitar estudios confirmatorios en sospecha de neumonía
 
+🧒 REGLAS PEDIÁTRICAS ESPECÍFICAS:
+- BRONQUIOLITIS: Típica en <2 años, MUY RARA en ≥5 años (<5% probabilidad)
+- NIÑO 5 AÑOS: Neumonía bacteriana es MÁS común que bronquiolitis
+- SATURACIÓN O2: Siempre documentar en casos respiratorios pediátricos
+- SIGNOS ALARMA: Incluir educación a padres sobre cuándo regresar
+
 FORMATO REQUERIDO - SOAP:
 - S (Subjetivo): Síntomas reportados
 - O (Objetivo): Hallazgos del examen físico  
@@ -472,15 +478,17 @@ Responde EXCLUSIVAMENTE en este formato:
 **Confianza:** [0-100]%
 
 ## O - OBJETIVO
-[Signos vitales y hallazgos físicos inferidos/disponibles]
+[Signos vitales completos incluyendo SatO2 en casos respiratorios, temperatura, FR, FC]
+[Hallazgos físicos específicos del examen físico dirigido]
 **Confianza:** [0-100]%
 
 ## A - ANÁLISIS
 **Diagnóstico Principal:** [Diagnóstico más probable]
 **Diagnósticos Diferenciales:**
+IMPORTANTE: NO incluyas el diagnóstico principal en esta lista
 1. [ALTA GRAVEDAD - descartar urgente] - Probabilidad: X%
-2. [ALTA PROBABILIDAD - común en contexto] - Probabilidad: X%
-3. [Otras consideraciones] - Probabilidad: X%
+2. [SEGUNDA OPCIÓN más probable] - Probabilidad: X%  
+3. [TERCERA consideración] - Probabilidad: X%
 **Confianza global:** [0-100]%
 
 ## P - PLAN
@@ -488,6 +496,7 @@ Responde EXCLUSIVAMENTE en este formato:
 **Seguimiento:** [Cuándo revisar - específico]
 **Derivación:** [Cuándo referir especialista]
 **Estudios:** [MEDICINA DEFENSIVA OBLIGATORIA - Para estertores/crepitantes: Rx tórax PA SIEMPRE. Para fiebre: Hemograma+PCR SIEMPRE. NUNCA digas "no requiere estudios" si hay síntomas respiratorios]
+**Educación Padres:** [Signos de alarma específicos - cuándo regresar urgente, importancia completar tratamiento]
 **Confianza:** [0-100]%
 
 ## DATOS ADICIONALES NECESARIOS
