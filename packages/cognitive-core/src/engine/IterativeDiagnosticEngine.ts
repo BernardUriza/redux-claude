@@ -3,7 +3,7 @@
 import { ClaudeAdapter } from '../decision-engine/providers/claude'
 import { SOAPAnalysis, DiagnosticCycle, MedicalCase, AdditionalInfoRequest } from '../types/medical'
 import { MedicalQualityValidator } from '../utils/medicalValidator'
-import { CognitiveOrchestrator } from '../services/cognitiveOrchestrator'
+import { multiAgentOrchestrator } from '../services/multiAgentOrchestrator'
 import { AgentType } from '../types/agents'
 
 interface DiagnosticEngineConfig {
@@ -16,13 +16,11 @@ export class IterativeDiagnosticEngine {
   private cycles: DiagnosticCycle[] = []
   private claudeAdapter: ClaudeAdapter
   private validator: MedicalQualityValidator
-  private cognitiveOrchestrator: CognitiveOrchestrator
   private config: DiagnosticEngineConfig
 
   constructor(claudeAdapter?: ClaudeAdapter, config?: Partial<DiagnosticEngineConfig>) {
     this.claudeAdapter = claudeAdapter || new ClaudeAdapter()
     this.validator = new MedicalQualityValidator()
-    this.cognitiveOrchestrator = new CognitiveOrchestrator()
     this.config = {
       maxCycles: 3,
       confidenceThreshold: 0.85,
@@ -105,17 +103,17 @@ export class IterativeDiagnosticEngine {
         cyclePrompt
       ),
       // Agente de farmacología clínica
-      this.cognitiveOrchestrator.executeAgent(AgentType.CLINICAL_PHARMACOLOGY, cyclePrompt).catch(() => null),
+      multiAgentOrchestrator.executeSingleAgent(AgentType.CLINICAL_PHARMACOLOGY, cyclePrompt).catch(() => null),
       // Agente especialista pediátrico
-      this.cognitiveOrchestrator.executeAgent(AgentType.PEDIATRIC_SPECIALIST, cyclePrompt).catch(() => null),
+      multiAgentOrchestrator.executeSingleAgent(AgentType.PEDIATRIC_SPECIALIST, cyclePrompt).catch(() => null),
       // Agente criterios hospitalización
-      this.cognitiveOrchestrator.executeAgent(AgentType.HOSPITALIZATION_CRITERIA, cyclePrompt).catch(() => null),
+      multiAgentOrchestrator.executeSingleAgent(AgentType.HOSPITALIZATION_CRITERIA, cyclePrompt).catch(() => null),
       // Agente educación familiar
-      this.cognitiveOrchestrator.executeAgent(AgentType.FAMILY_EDUCATION, cyclePrompt).catch(() => null),
+      multiAgentOrchestrator.executeSingleAgent(AgentType.FAMILY_EDUCATION, cyclePrompt).catch(() => null),
       // Agente de validación objetiva
-      this.cognitiveOrchestrator.executeAgent(AgentType.OBJECTIVE_VALIDATION, cyclePrompt).catch(() => null),
+      multiAgentOrchestrator.executeSingleAgent(AgentType.OBJECTIVE_VALIDATION, cyclePrompt).catch(() => null),
       // Agente de medicina defensiva
-      this.cognitiveOrchestrator.executeAgent(AgentType.DEFENSIVE_DIFFERENTIAL, cyclePrompt).catch(() => null)
+      multiAgentOrchestrator.executeSingleAgent(AgentType.DEFENSIVE_DIFFERENTIAL, cyclePrompt).catch(() => null)
     ])
 
     const response = primaryResponse
@@ -600,7 +598,25 @@ Responde EXCLUSIVAMENTE en este formato:
         const structuredInput = this.buildStructuredInputForOrchestrator(cycles, finalAnalysis)
         
         // Procesar con orquestador cognitivo (agentes especializados)
-        const cognitiveResult = await this.cognitiveOrchestrator.processWithCognition(structuredInput)
+        // Usar multiAgentOrchestrator para obtener análisis cognitivo mejorado
+        const cognitiveAgents = [
+          AgentType.CLINICAL_PHARMACOLOGY,
+          AgentType.PEDIATRIC_SPECIALIST,
+          AgentType.HOSPITALIZATION_CRITERIA,
+          AgentType.FAMILY_EDUCATION,
+          AgentType.OBJECTIVE_VALIDATION,
+          AgentType.DEFENSIVE_DIFFERENTIAL
+        ]
+        const cognitiveResults = await multiAgentOrchestrator.executeParallelAgents(
+          structuredInput, 
+          cognitiveAgents
+        )
+        
+        const cognitiveResult = {
+          decisions: cognitiveResults,
+          consensus: cognitiveResults.filter(r => r.success).length > cognitiveResults.length / 2,
+          memory: { shortTermMemory: { relevantContext: 'Análisis multi-agente completado' } }
+        }
         
         console.log(`🎯 Orquestador activó ${cognitiveResult.decisions.length} agentes especializados`)
         console.log(`📊 Consenso alcanzado: ${cognitiveResult.consensus ? 'SÍ' : 'NO'}`)
@@ -735,7 +751,7 @@ SOLICITUD: Coordinar agentes especializados según contexto clínico para valida
     let enhancedAnalysis = { ...baseAnalysis }
 
     // 1. INTEGRAR FARMACOLOGÍA CLÍNICA
-    if (pharmacologyDetails?.decision) {
+    if (pharmacologyDetails?.success && pharmacologyDetails?.decision) {
       const pharmacology = pharmacologyDetails.decision
       let enhancedPlan = baseAnalysis.plan_tratamiento || ''
       
@@ -763,7 +779,7 @@ SOLICITUD: Coordinar agentes especializados según contexto clínico para valida
     }
 
     // 2. INTEGRAR CONSIDERACIONES PEDIÁTRICAS
-    if (pediatricDetails?.decision) {
+    if (pediatricDetails?.success && pediatricDetails?.decision) {
       const pediatric = pediatricDetails.decision
       let enhancedObjetivo = baseAnalysis.objetivo || ''
       
@@ -783,7 +799,7 @@ SOLICITUD: Coordinar agentes especializados según contexto clínico para valida
     }
 
     // 3. INTEGRAR CRITERIOS HOSPITALIZACIÓN
-    if (hospitalizationDetails?.decision) {
+    if (hospitalizationDetails?.success && hospitalizationDetails?.decision) {
       const hospitalization = hospitalizationDetails.decision
       let enhancedPlan = enhancedAnalysis.plan_tratamiento || ''
       
@@ -805,7 +821,7 @@ SOLICITUD: Coordinar agentes especializados según contexto clínico para valida
     }
 
     // 4. INTEGRAR EDUCACIÓN FAMILIAR
-    if (familyEducationDetails?.decision) {
+    if (familyEducationDetails?.success && familyEducationDetails?.decision) {
       const familyEd = familyEducationDetails.decision
       let enhancedPlan = enhancedAnalysis.plan_tratamiento || ''
       
@@ -829,7 +845,7 @@ SOLICITUD: Coordinar agentes especializados según contexto clínico para valida
     }
 
     // 5. INTEGRAR VALIDACIÓN OBJETIVA
-    if (objectiveValidation?.decision) {
+    if (objectiveValidation?.success && objectiveValidation?.decision) {
       const validation = objectiveValidation.decision
       let enhancedObjetivo = baseAnalysis.objetivo || ''
       
@@ -860,7 +876,7 @@ SOLICITUD: Coordinar agentes especializados según contexto clínico para valida
     }
 
     // 6. INTEGRAR MEDICINA DEFENSIVA 
-    if (defensiveDifferentials?.decision) {
+    if (defensiveDifferentials?.success && defensiveDifferentials?.decision) {
       const defensive = defensiveDifferentials.decision
       
       if (defensive.must_exclude_diagnoses?.length > 0) {
@@ -891,33 +907,33 @@ SOLICITUD: Coordinar agentes especializados según contexto clínico para valida
     let confidenceAdjustment = 0
     
     // Bonus por farmacología específica
-    if (pharmacologyDetails?.decision?.primary_medication) {
+    if (pharmacologyDetails?.success && pharmacologyDetails?.decision?.primary_medication) {
       confidenceAdjustment += 0.1
     }
     
     // Bonus por consideraciones pediátricas
-    if (pediatricDetails?.decision?.age_specific_considerations?.length > 0) {
+    if (pediatricDetails?.success && pediatricDetails?.decision?.age_specific_considerations?.length > 0) {
       confidenceAdjustment += 0.05
     }
     
     // Bonus por criterios hospitalización evaluados
-    if (hospitalizationDetails?.decision?.disposition_recommendation) {
+    if (hospitalizationDetails?.success && hospitalizationDetails?.decision?.disposition_recommendation) {
       confidenceAdjustment += 0.05
     }
     
     // Bonus por educación familiar completa
-    if (familyEducationDetails?.decision?.warning_signs?.length > 0) {
+    if (familyEducationDetails?.success && familyEducationDetails?.decision?.warning_signs?.length > 0) {
       confidenceAdjustment += 0.05
     }
     
     // Penalización por datos críticos faltantes
-    if (objectiveValidation?.decision?.missing_critical_data?.length > 0) {
+    if (objectiveValidation?.success && objectiveValidation?.decision?.missing_critical_data?.length > 0) {
       const criticalMissing = objectiveValidation.decision.missing_critical_data.length
       confidenceAdjustment -= Math.min(criticalMissing * 0.15, 0.4)
     }
     
     // Bonus por medicina defensiva aplicada
-    if (defensiveDifferentials?.decision?.must_exclude_diagnoses?.length > 0) {
+    if (defensiveDifferentials?.success && defensiveDifferentials?.decision?.must_exclude_diagnoses?.length > 0) {
       confidenceAdjustment += 0.05
     }
     
@@ -928,17 +944,17 @@ SOLICITUD: Coordinar agentes especializados según contexto clínico para valida
     
     // Agregar metadata de validación
     enhancedAnalysis.validacion_agentes = {
-      farmacologia_clinica: Boolean(pharmacologyDetails?.decision),
-      pediatria_especializada: Boolean(pediatricDetails?.decision),
-      criterios_hospitalizacion: Boolean(hospitalizationDetails?.decision),
-      educacion_familiar: Boolean(familyEducationDetails?.decision),
-      validacion_objetiva: Boolean(objectiveValidation?.decision),
-      medicina_defensiva: Boolean(defensiveDifferentials?.decision),
+      farmacologia_clinica: Boolean(pharmacologyDetails?.success && pharmacologyDetails?.decision),
+      pediatria_especializada: Boolean(pediatricDetails?.success && pediatricDetails?.decision),
+      criterios_hospitalizacion: Boolean(hospitalizationDetails?.success && hospitalizationDetails?.decision),
+      educacion_familiar: Boolean(familyEducationDetails?.success && familyEducationDetails?.decision),
+      validacion_objetiva: Boolean(objectiveValidation?.success && objectiveValidation?.decision),
+      medicina_defensiva: Boolean(defensiveDifferentials?.success && defensiveDifferentials?.decision),
       confianza_ajustada: finalConfidence,
       factores_confianza: {
         base: baseConfidence,
         ajuste: confidenceAdjustment,
-        datos_faltantes: objectiveValidation?.decision?.missing_critical_data?.length || 0
+        datos_faltantes: objectiveValidation?.success && objectiveValidation?.decision?.missing_critical_data?.length || 0
       }
     }
 
