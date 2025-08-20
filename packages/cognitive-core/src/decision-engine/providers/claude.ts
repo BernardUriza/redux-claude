@@ -12,7 +12,13 @@ export class ClaudeAdapter implements ProviderAdapter {
   }
 
   get isAvailable(): boolean {
-    return true
+    // En el browser, siempre disponible (usa API route)
+    // En servidor, verificar API key
+    if (this.useServerAPI) {
+      return true
+    } else {
+      return Boolean(process.env.CLAUDE_API_KEY)
+    }
   }
 
   async makeRequest(

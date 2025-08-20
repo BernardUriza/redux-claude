@@ -13,12 +13,17 @@ export class MedicalContentValidator {
   // Términos médicos y clínicos clave
   private readonly medicalTerms = [
     // Síntomas generales
-    'dolor', 'fiebre', 'náuseas', 'vómitos', 'diarrea', 'estreñimiento', 'cefalea', 'mareo',
-    'fatiga', 'astenia', 'anorexia', 'pérdida', 'peso', 'sudoración', 'escalofríos',
+    'dolor', 'fiebre', 'náuseas', 'vómitos', 'diarrea', 'estreñimiento', 'cefalea', 'mareo', 'mareos',
+    'fatiga', 'astenia', 'anorexia', 'pérdida', 'peso', 'sudoración', 'escalofríos', 'debilidad',
     
     // Términos clínicos
-    'paciente', 'síntomas', 'diagnóstico', 'tratamiento', 'medicamento', 'dosis',
+    'paciente', 'síntomas', 'diagnóstico', 'tratamiento', 'medicamento', 'dosis', 'medicación',
     'antecedentes', 'historia', 'clínica', 'examen', 'físico', 'laboratorios',
+    
+    // Condiciones médicas comunes
+    'diabética', 'diabético', 'diabetes', 'hipertensa', 'hipertenso', 'hipertensión',
+    'fibrilación', 'auricular', 'hipoglucemia', 'hipotensión', 'warfarina', 'digoxina',
+    'metformina', 'enalapril', 'mg/dl', 'mmhg',
     
     // Especialidades médicas
     'cardiología', 'neurología', 'psiquiatría', 'dermatología', 'gastroenterología',
@@ -26,7 +31,7 @@ export class MedicalContentValidator {
     
     // Términos anatómicos
     'corazón', 'pulmón', 'hígado', 'riñón', 'cerebro', 'estómago', 'intestino',
-    'piel', 'hueso', 'músculo', 'sangre', 'presión', 'arterial',
+    'piel', 'hueso', 'músculo', 'sangre', 'presión', 'arterial', 'glucemia', 'capilar',
     
     // Dermatológicos
     'lesiones', 'eritematosas', 'pruriginosas', 'pliegues', 'antecubitales', 'poplíteos',
@@ -38,11 +43,11 @@ export class MedicalContentValidator {
     'psicológico', 'emocional', 'mental', 'comportamiento', 'conducta',
     
     // Temporales médicos
-    'años', 'meses', 'días', 'horas', 'crónico', 'agudo', 'recurrente', 'episodio',
+    'años', 'meses', 'días', 'horas', 'semana', 'semanas', 'crónico', 'agudo', 'recurrente', 'episodio',
     
     // Exámenes y procedimientos
     'rayos', 'tomografía', 'resonancia', 'ecografía', 'biopsia', 'análisis',
-    'hemograma', 'glucosa', 'colesterol', 'presión', 'temperatura'
+    'hemograma', 'glucosa', 'colesterol', 'presión', 'temperatura', 'pa', 'fc'
   ]
 
   // Patrones de casos clínicos válidos
@@ -126,12 +131,13 @@ export class MedicalContentValidator {
 
     // Penalización más suave por falta de contexto médico
     if (!this.hasAgeGenderContext(cleanText)) {
-      score -= 10  // Reducido de 15 a 10
+      score -= 5  // Reducido aún más para ser menos punitivo
     }
 
     const confidence = Math.min(score / 100, 0.98)
 
-    if (confidence < 0.3) {  // Reducido de 0.4 a 0.3
+    // Ajuste más flexible para casos clínicos completos
+    if (confidence < 0.25 && medicalTermMatches.length < 3) {  // Más flexible
       return {
         isValid: false,
         confidence: 1 - confidence,
@@ -152,13 +158,14 @@ export class MedicalContentValidator {
   private hasClinicStructure(text: string): boolean {
     const structureIndicators = [
       /(años?|edad)/i,
-      /(presenta|refiere|acude|consulta)/i,
-      /(síntomas?|dolor|molestias?)/i,
-      /(desde|hace|durante)/i,
-      /(antecedentes?|historia)/i
+      /(presenta|refiere|acude|consulta|con)/i,
+      /(síntomas?|dolor|molestias?|mareo|mareos|debilidad)/i,
+      /(desde|hace|durante|de\s+\d+)/i,
+      /(antecedentes?|historia|diabética|hipertensa|medicación|medicamento)/i
     ]
 
-    return structureIndicators.filter(pattern => pattern.test(text)).length >= 3
+    const matchCount = structureIndicators.filter(pattern => pattern.test(text)).length
+    return matchCount >= 2  // Reducido de 3 a 2 para ser menos restrictivo
   }
 
   /**
@@ -168,7 +175,8 @@ export class MedicalContentValidator {
     const agePattern = /\d+\s*años?/i
     const genderPattern = /(masculino|femenino|femenina|masculina|hombre|mujer|varón|paciente\s+(masculino|femenino|femenina|masculina|de|con))/i
     
-    return agePattern.test(text) || genderPattern.test(text)
+    // Retorna true si tiene edad Y género, o al menos uno de ellos
+    return agePattern.test(text) && genderPattern.test(text)
   }
 
   /**
@@ -274,7 +282,7 @@ export class MedicalQualityValidator {
     )
 
     return {
-      isValid: confidence > 0.5, // Reducido de 0.6 a 0.5
+      isValid: confidence > 0.4, // Reducido aún más para ser menos restrictivo
       confidence,
       medicalTermsFound: medicalTerms,
       missingCriticalData: missingData,

@@ -102,9 +102,12 @@ export class IterativeDiagnosticEngine {
       cyclePrompt
     )
 
-    // Verificar si hay error de configuración
-    if (!response.success && response.error === 'API_KEY_NOT_CONFIGURED') {
-      // Retornar análisis especial que contenga el mensaje de configuración
+    // Verificar si hay error en la respuesta
+    if (!response.success) {
+      const errorMessage = response.error || 'Error desconocido'
+      console.error('❌ Error en Claude API:', errorMessage)
+      
+      // Retornar análisis de error informativo
       return {
         id: cycleId,
         cycleNumber,
@@ -112,18 +115,18 @@ export class IterativeDiagnosticEngine {
         latency: Date.now() - startTime,
         caseData,
         analysis: {
-          subjetivo: '## ⚠️ Configuración Requerida',
-          objetivo: response.content, // Contiene las instrucciones completas
-          diagnostico_principal: 'Configuración de API Key pendiente',
-          diagnosticos_diferenciales: ['Configurar CLAUDE_API_KEY en servidor'],
-          plan_tratamiento: 'Seguir las instrucciones mostradas para configurar Claude API',
+          subjetivo: '## ⚠️ Error en Análisis Médico',
+          objetivo: `**Error detectado:** ${errorMessage}\n\n**Contenido de respuesta:** ${response.content || 'Sin contenido'}`,
+          diagnostico_principal: 'Error en procesamiento médico',
+          diagnosticos_diferenciales: [`Error: ${errorMessage}`],
+          plan_tratamiento: 'Revisar configuración del sistema y reintentificar análisis.',
           confianza_global: 0,
           datos_adicionales_necesarios: []
         },
         confidence: 0,
         qualityScore: 0,
-        insights: ['Sistema requiere configuración de API Key'],
-        nextSteps: ['Configurar Claude API Key', 'Reiniciar servidor', 'Probar nuevamente']
+        insights: [`Error del sistema: ${errorMessage}`],
+        nextSteps: ['Verificar conectividad', 'Revisar logs del sistema', 'Contactar soporte técnico']
       }
     }
 
@@ -271,6 +274,22 @@ Responde EXCLUSIVAMENTE en este formato:
                                  this.extractDiagnosticoPrincipal(response)
     const diagnosticos_diferenciales = this.extractDiagnosticosDiferenciales(sections.analisis) ||
                                       this.extractDiagnosticosDiferenciales(response)
+
+    // Si no se pudo parsear nada, mostrar la respuesta completa para debug
+    const hasValidSections = sections.subjetivo || sections.objetivo || sections.analisis || sections.plan
+    
+    if (!hasValidSections) {
+      console.warn('⚠️ No se pudieron extraer secciones SOAP. Respuesta completa:', response)
+      return {
+        subjetivo: '## ⚠️ Error de Parsing\n\nNo se pudieron extraer las secciones SOAP de la respuesta.',
+        objetivo: `**Respuesta completa de Claude:**\n\n${response}`,
+        diagnostico_principal: 'Error en parsing de respuesta',
+        diagnosticos_diferenciales: ['Revisar formato de respuesta de Claude'],
+        plan_tratamiento: 'Verificar prompt y configuración del sistema.',
+        confianza_global: 0,
+        datos_adicionales_necesarios: ['Revisar logs del sistema']
+      }
+    }
 
     return {
       subjetivo: sections.subjetivo || 'Información subjetiva del paciente disponible en caso clínico.',

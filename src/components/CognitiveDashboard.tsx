@@ -15,6 +15,7 @@ import { FollowUpTracker } from './FollowUpTracker'
 import { MedicalNotes } from './MedicalNotes'
 import { LoadingScreen } from './LoadingScreen'
 import { useMobileInteractions } from '../hooks/useMobileInteractions'
+import { useSelector } from 'react-redux'
 
 // Medical Corporate Color Palette 2025
 const theme = {
@@ -62,18 +63,31 @@ interface CognitiveMetrics {
 }
 
 // Cognitive Health Metrics Component
-const CognitiveHealthMetrics = ({ metrics }: { metrics: CognitiveMetrics }) => (
-  <div className="grid grid-cols-4 gap-4 mb-6">
-    <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 backdrop-blur-sm rounded-2xl p-4 border border-cyan-500/20">
-      <div className="text-3xl font-bold text-cyan-400 mb-1">{metrics.systemConfidence}%</div>
-      <div className="text-sm text-cyan-300/80">System Confidence</div>
-      <div className="w-full bg-slate-700 rounded-full h-1.5 mt-2">
-        <div 
-          className="bg-gradient-to-r from-cyan-500 to-blue-500 h-1.5 rounded-full transition-all duration-500"
-          style={{ width: `${metrics.systemConfidence}%` }}
-        />
+const CognitiveHealthMetrics = ({ metrics }: { metrics: CognitiveMetrics | null }) => {
+  if (!metrics) {
+    return (
+      <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/30 text-center">
+        <div className="text-slate-400 mb-2">
+          <span className="text-4xl">🔬</span>
+        </div>
+        <p className="text-slate-300 font-medium">Sin análisis activo</p>
+        <p className="text-slate-500 text-sm mt-1">Realice una consulta médica para ver las métricas</p>
       </div>
-    </div>
+    )
+  }
+  
+  return (
+    <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 backdrop-blur-sm rounded-2xl p-4 border border-cyan-500/20">
+        <div className="text-3xl font-bold text-cyan-400 mb-1">{metrics.systemConfidence}%</div>
+        <div className="text-sm text-cyan-300/80">System Confidence</div>
+        <div className="w-full bg-slate-700 rounded-full h-1.5 mt-2">
+          <div 
+            className="bg-gradient-to-r from-cyan-500 to-blue-500 h-1.5 rounded-full transition-all duration-500"
+            style={{ width: `${metrics.systemConfidence}%` }}
+          />
+        </div>
+      </div>
     
     <div className="bg-gradient-to-br from-teal-500/10 to-emerald-500/10 backdrop-blur-sm rounded-2xl p-4 border border-teal-500/20">
       <div className="text-3xl font-bold text-teal-400 mb-1">{metrics.overallHealth}%</div>
@@ -163,7 +177,8 @@ const CognitiveStatusPanel = ({ metrics }: { metrics: CognitiveMetrics }) => (
       </div>
     </div>
   </div>
-)
+  )
+}
 
 // Agent Decision Component  
 const AgentDecision = ({ decision }: { decision: any }) => {
@@ -236,40 +251,80 @@ export const CognitiveDashboard = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
   
-  // Cognitive metrics (simulated for now)
-  const cognitiveMetrics = {
-    systemConfidence: 85,
-    overallHealth: 92,
-    consensusRate: 75,
+  // Cognitive metrics from Redux store
+  const { currentCase } = useSelector((state: any) => state.medicalChat)
+  const hasActiveSOAP = currentCase?.soap !== null
+  
+  // Only populate metrics if we have an active SOAP
+  const cognitiveMetrics = hasActiveSOAP ? {
+    systemConfidence: Math.round((currentCase?.confidence || 0) * 100),
+    overallHealth: Math.round((currentCase?.confidence || 0) * 100),
+    consensusRate: Math.round((currentCase?.confidence || 0) * 100),
     memoryLoad: 0.3,
-    learningProgress: 85,
-    activeDebates: 0,
-    pipelineSuccess: 91,
+    learningProgress: Math.round((currentCase?.confidence || 0) * 100),
+    activeDebates: currentCase?.cycles?.length || 0,
+    pipelineSuccess: Math.round((currentCase?.confidence || 0) * 100),
     avgLatency: 850,
-    activeGoals: 3,
-    knowledgeGaps: 2,
-  }
+    activeGoals: 0,
+    knowledgeGaps: 0,
+  } : null
 
-  // Sistema de Medicina Defensiva - Datos de urgencia
+  // Sistema de Medicina Defensiva - Datos de urgencia desde el store
   const [urgencyData, setUrgencyData] = useState<UrgencyData>({
-    level: 'low',
-    gravityScore: 3,
+    level: currentCase?.urgencyLevel || 'low',
+    gravityScore: currentCase?.urgencyLevel === 'critical' ? 10 : 
+                  currentCase?.urgencyLevel === 'high' ? 8 :
+                  currentCase?.urgencyLevel === 'medium' ? 5 : 3,
     urgentPatterns: [],
     immediateActions: [],
     riskFactors: [],
-    timeToAction: 'Rutinario (< 24 horas)',
-    triageCategory: 'non-urgent',
-    specialistRequired: false
+    timeToAction: currentCase?.urgencyLevel === 'critical' ? 'Inmediato (< 15 min)' :
+                  currentCase?.urgencyLevel === 'high' ? 'Urgente (< 1 hora)' :
+                  currentCase?.urgencyLevel === 'medium' ? 'Prioritario (< 4 horas)' :
+                  'Rutinario (< 24 horas)',
+    triageCategory: currentCase?.urgencyLevel === 'critical' ? 'resuscitation' :
+                    currentCase?.urgencyLevel === 'high' ? 'emergency' :
+                    currentCase?.urgencyLevel === 'medium' ? 'urgent' : 'non-urgent',
+    specialistRequired: currentCase?.urgencyLevel === 'critical' || currentCase?.urgencyLevel === 'high'
   })
 
-  // Simular cambios de urgencia basados en el contenido del chat
+  // Actualizar urgencia basado en el estado del store
   useEffect(() => {
-    if (messages.length > 0) {
+    if (currentCase?.soap) {
+      // Extraer datos de urgencia del SOAP si está disponible
+      const urgencyLevel = currentCase.urgencyLevel
+      const analysis = currentCase.soap?.analisis
+      
+      setUrgencyData({
+        level: urgencyLevel,
+        gravityScore: urgencyLevel === 'critical' ? 10 : 
+                      urgencyLevel === 'high' ? 8 :
+                      urgencyLevel === 'medium' ? 5 : 3,
+        urgentPatterns: analysis?.differentials
+          ?.filter((d: any) => d.gravityScore >= 7)
+          ?.map((d: any) => d.diagnosis) || [],
+        immediateActions: currentCase.soap?.plan?.immediate || [],
+        riskFactors: currentCase.soap?.plan?.redFlags || [],
+        timeToAction: urgencyLevel === 'critical' ? 'Inmediato (< 15 min)' :
+                      urgencyLevel === 'high' ? 'Urgente (< 1 hora)' :
+                      urgencyLevel === 'medium' ? 'Prioritario (< 4 horas)' :
+                      'Rutinario (< 24 horas)',
+        triageCategory: urgencyLevel === 'critical' ? 'resuscitation' :
+                        urgencyLevel === 'high' ? 'emergency' :
+                        urgencyLevel === 'medium' ? 'urgent' : 'non-urgent',
+        specialistRequired: urgencyLevel === 'critical' || urgencyLevel === 'high'
+      })
+    }
+  }, [currentCase])
+  
+  // Solo detectar patrones de urgencia en mensajes nuevos si no hay SOAP activo
+  useEffect(() => {
+    if (!currentCase?.soap && messages.length > 0) {
       const lastMessage = messages[messages.length - 1]
       if (lastMessage.type === 'user') {
         const input = lastMessage.content.toLowerCase()
         
-        // Detectar patrones de alta urgencia
+        // Detectar patrones de alta urgencia para casos sin SOAP
         if (input.includes('dolor torácico') || input.includes('dolor pecho')) {
           setUrgencyData({
             level: 'critical',
@@ -528,7 +583,7 @@ export const CognitiveDashboard = () => {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-slate-400">
                     <span>Confidence:</span>
-                    <span className="text-emerald-400 font-medium">{cognitiveMetrics.systemConfidence}%</span>
+                    <span className="text-emerald-400 font-medium">{cognitiveMetrics?.systemConfidence || 0}%</span>
                   </div>
                   <div className="flex justify-between text-slate-400">
                     <span>Agents:</span>
@@ -597,7 +652,7 @@ export const CognitiveDashboard = () => {
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between text-slate-400">
                     <span>Confidence:</span>
-                    <span className="text-emerald-400 font-medium">{cognitiveMetrics.systemConfidence}%</span>
+                    <span className="text-emerald-400 font-medium">{cognitiveMetrics?.systemConfidence || 0}%</span>
                   </div>
                   <div className="flex justify-between text-slate-400">
                     <span>Agents:</span>
@@ -608,7 +663,7 @@ export const CognitiveDashboard = () => {
             ) : (
               <div className="flex flex-col items-center space-y-2">
                 <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                <span className="text-xs text-emerald-400 font-bold">{cognitiveMetrics.systemConfidence}%</span>
+                <span className="text-xs text-emerald-400 font-bold">{cognitiveMetrics?.systemConfidence || 0}%</span>
               </div>
             )}
           </div>
@@ -735,20 +790,27 @@ export const CognitiveDashboard = () => {
               </div>
               
               {/* Quick Stats Overview - More Compact */}
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-lg p-2 border border-emerald-500/20">
-                  <div className="text-sm font-bold text-emerald-400">{cognitiveMetrics.systemConfidence}%</div>
-                  <div className="text-xs text-emerald-300">Sistema</div>
+              {cognitiveMetrics ? (
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-lg p-2 border border-emerald-500/20">
+                    <div className="text-sm font-bold text-emerald-400">{cognitiveMetrics?.systemConfidence || 0}%</div>
+                    <div className="text-xs text-emerald-300">Sistema</div>
+                  </div>
+                  <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg p-2 border border-blue-500/20">
+                    <div className="text-sm font-bold text-blue-400">{cognitiveMetrics?.activeDebates || 0}</div>
+                    <div className="text-xs text-blue-300">Debates</div>
+                  </div>
+                  <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg p-2 border border-orange-500/20">
+                    <div className="text-sm font-bold text-orange-400">{messages.length}</div>
+                    <div className="text-xs text-orange-300">Consultas</div>
+                  </div>
                 </div>
-                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg p-2 border border-blue-500/20">
-                  <div className="text-sm font-bold text-blue-400">5/5</div>
-                  <div className="text-xs text-blue-300">Agentes</div>
+              ) : (
+                <div className="bg-gradient-to-r from-slate-700/30 to-slate-600/30 rounded-lg p-4 border border-slate-600/30 text-center mb-3">
+                  <div className="text-slate-400 text-sm">Sin análisis activo</div>
+                  <div className="text-slate-500 text-xs mt-1">Realice una consulta para ver métricas</div>
                 </div>
-                <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg p-2 border border-orange-500/20">
-                  <div className="text-sm font-bold text-orange-400">{messages.length}</div>
-                  <div className="text-xs text-orange-300">Consultas</div>
-                </div>
-              </div>
+              )}
               
               {/* Navigation Tabs - More Compact with Swipe Support */}
               <div ref={tabsRef} className={`flex space-x-1 bg-slate-800/30 rounded-lg p-1 ${mobileState.isMobile ? 'swipe-indicator' : ''}`}>

@@ -6,7 +6,10 @@ export enum AgentType {
   DOCUMENTATION = 'documentation',
   TREATMENT = 'treatment',
   TRIAGE = 'triage',
-  RESPONSE_QUALITY = 'response_quality'
+  RESPONSE_QUALITY = 'response_quality',
+  THERAPEUTIC_SPECIFICITY = 'therapeutic_specificity',
+  OBJECTIVE_VALIDATION = 'objective_validation',
+  DEFENSIVE_DIFFERENTIAL = 'defensive_differential'
 }
 
 export enum AgentStatus {
@@ -80,12 +83,77 @@ export type TriageDecision = {
   warning_signs: string[]
 }
 
+export type TherapeuticSpecificityDecision = {
+  specific_medications: Array<{
+    generic_name: string
+    brand_names: string[]
+    exact_dose: string // e.g., "80-90 mg/kg/día"
+    route: 'oral' | 'iv' | 'im' | 'topical' | 'inhaled' | 'sublingual'
+    frequency: string // e.g., "cada 8 horas"
+    duration: string // e.g., "7 días"
+    pediatric_dose?: string
+    geriatric_considerations?: string[]
+    contraindications: string[]
+    monitoring_required: string[]
+  }>
+  hospitalization_criteria: string[]
+  ambulatory_management: string[]
+  warning_signs_for_parents: string[]
+  symptomatic_management: Array<{
+    symptom: string
+    medication: string
+    dose: string
+  }>
+}
+
+export type ObjectiveValidationDecision = {
+  missing_critical_data: string[]
+  vital_signs_assessment: {
+    saturation_required: boolean
+    respiratory_rate_needed: boolean
+    blood_pressure_concern: boolean
+    temperature_monitoring: boolean
+  }
+  physical_exam_gaps: string[]
+  recommended_studies: Array<{
+    study: string
+    urgency: 'immediate' | '24h' | '48h' | 'routine'
+    justification: string
+  }>
+  confidence_impact: number // 0-1, how missing data affects confidence
+}
+
+export type DefensiveDifferentialDecision = {
+  must_exclude_diagnoses: Array<{
+    condition: string
+    gravity_score: number // 1-10
+    exclusion_criteria: string[]
+    required_tests: string[]
+    time_sensitivity: 'immediate' | 'urgent' | 'semi-urgent'
+  }>
+  gravity_vs_probability: Array<{
+    diagnosis: string
+    probability: number
+    gravity: number
+    defensive_priority: number // calculated priority for defensive medicine
+  }>
+  red_flags_analysis: {
+    critical_signs: string[]
+    concerning_patterns: string[]
+    age_specific_concerns: string[]
+  }
+  disposition_recommendation: 'emergency' | 'urgent_clinic' | 'routine_followup' | 'home_care'
+}
+
 export type AgentDecision = 
   | DiagnosticDecision 
   | ValidationDecision 
   | DocumentationDecision 
   | TreatmentDecision 
   | TriageDecision
+  | TherapeuticSpecificityDecision
+  | ObjectiveValidationDecision
+  | DefensiveDifferentialDecision
 
 // Agent registry definition
 export type AgentDefinition = {
