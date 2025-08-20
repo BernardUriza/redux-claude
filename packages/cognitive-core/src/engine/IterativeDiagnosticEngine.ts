@@ -97,6 +97,7 @@ export class IterativeDiagnosticEngine {
 
     // NUEVA ARQUITECTURA: Agentes especializados PRIMERO, luego SOAP integrado
     let pharmacologyDetails, pediatricDetails, hospitalizationDetails, familyEducationDetails, objectiveValidation, defensiveDifferentials
+    let response: any
 
     try {
       // PASO 1: Ejecutar agentes especializados PRIMERO
@@ -177,24 +178,21 @@ export class IterativeDiagnosticEngine {
         defensiveDifferential: defensiveDifferentials
       })
 
-      const primaryResponse = await this.claudeAdapter.makeRequest(
+      response = await this.claudeAdapter.makeRequest(
         integratedPrompt.systemPrompt,
         integratedPrompt.userPrompt
       )
-
-      const response = primaryResponse
 
     } catch (error) {
       console.error('❌ ERROR CRÍTICO en nueva arquitectura:', error)
       
       // Fallback - método antiguo
       console.log('🔄 Fallback: Usando método antiguo...')
-      const primaryResponse = await this.claudeAdapter.makeRequest(
+      response = await this.claudeAdapter.makeRequest(
         this.buildSystemPrompt(cycleNumber),
         cyclePrompt
       )
-      
-      const response = primaryResponse
+    }
 
     // Verificar si hay error en la respuesta
     if (!response.success) {
