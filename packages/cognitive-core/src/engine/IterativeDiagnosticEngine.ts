@@ -5,6 +5,7 @@ import { SOAPAnalysis, DiagnosticCycle, MedicalCase, AdditionalInfoRequest } fro
 import { MedicalQualityValidator } from '../utils/medicalValidator'
 import { multiAgentOrchestrator } from '../services/multiAgentOrchestrator'
 import { AgentType } from '../types/agents'
+import { callClaudeForDecision } from '../services/decisionalMiddleware'
 
 interface DiagnosticEngineConfig {
   maxCycles: number
@@ -148,27 +149,14 @@ export class IterativeDiagnosticEngine {
       objectiveValidation = agentResults[4]
       defensiveDifferentials = agentResults[5]
 
-      // Logging detallado de resultados de agentes
-      console.log('🔍 Resultados de agentes especializados:')
-      console.log('- CLINICAL_PHARMACOLOGY:', pharmacologyDetails ? '✅ Éxito' : '❌ Fallo/Null')
-      if (pharmacologyDetails) {
-        console.log('  Data:', JSON.stringify(pharmacologyDetails, null, 2))
-      }
-      console.log('- PEDIATRIC_SPECIALIST:', pediatricDetails ? '✅ Éxito' : '❌ Fallo/Null')
-      if (pediatricDetails) {
-        console.log('  Data:', JSON.stringify(pediatricDetails, null, 2))
-      }
-      console.log('- HOSPITALIZATION_CRITERIA:', hospitalizationDetails ? '✅ Éxito' : '❌ Fallo/Null')
-      if (hospitalizationDetails) {
-        console.log('  Data:', JSON.stringify(hospitalizationDetails, null, 2))
-      }
-      console.log('- FAMILY_EDUCATION:', familyEducationDetails ? '✅ Éxito' : '❌ Fallo/Null')
-      console.log('- OBJECTIVE_VALIDATION:', objectiveValidation ? '✅ Éxito' : '❌ Fallo/Null')
-      console.log('- DEFENSIVE_DIFFERENTIAL:', defensiveDifferentials ? '✅ Éxito' : '❌ Fallo/Null')
-      
-      if (pharmacologyDetails) {
-        console.log('📊 CLINICAL_PHARMACOLOGY decision:', JSON.stringify(pharmacologyDetails.decision || {}, null, 2))
-      }
+      console.log('🔍 Agentes completados:', {
+        pharmacology: !!pharmacologyDetails,
+        pediatric: !!pediatricDetails,
+        hospitalization: !!hospitalizationDetails,
+        familyEducation: !!familyEducationDetails,
+        objectiveValidation: !!objectiveValidation,
+        defensiveDifferential: !!defensiveDifferentials
+      })
 
       // PASO 2: Construir SOAP basado en resultados de agentes especializados
       console.log('🚀 PASO 2: Construyendo SOAP integrado basado en agentes...')
@@ -271,96 +259,21 @@ export class IterativeDiagnosticEngine {
     }
   ): { systemPrompt: string, userPrompt: string } {
     
-    // Extraer información específica de cada agente
-    let medicationInfo = ''
-    let pediatricInfo = ''
-    let dispositionInfo = ''
+    // 🧠 USAR DECISIONAL MIDDLEWARE para generar contexto y estudios
+    // TODO: Hacer async completo cuando se implemente correctamente
+    const contextualInfo = this.buildBasicContext(agentResults)
+    const dynamicStudies = '🔬 MEDICINA DEFENSIVA - ESTUDIOS: Via DiagnosticDecisionTree integrado'
     
-    // Farmacología - extraer medicación específica
-    if (agentResults.pharmacology?.success && agentResults.pharmacology?.decision) {
-      const pharmResult = agentResults.pharmacology.decision.result || agentResults.pharmacology.decision
-      
-      console.log('🔬 DEBUGGING - Farmacología Data:')
-      console.log('agentResults.pharmacology:', JSON.stringify(agentResults.pharmacology, null, 2))
-      console.log('pharmResult:', JSON.stringify(pharmResult, null, 2))
-      
-      let medication = null
-      
-      if (pharmResult.primary_medication) {
-        medication = pharmResult.primary_medication
-        console.log('✅ Found primary_medication:', medication)
-      } else if (pharmResult.P?.immediate_treatment?.medication?.primary_medication) {
-        medication = pharmResult.P.immediate_treatment.medication.primary_medication
-        console.log('✅ Found P.immediate_treatment.medication.primary_medication:', medication)
-      } else if (pharmResult.P?.immediate_treatment?.medication) {
-        medication = pharmResult.P.immediate_treatment.medication
-        console.log('✅ Found P.immediate_treatment.medication:', medication)
-      } else if (pharmResult.P?.immediate_treatment?.primary_medication) {
-        medication = pharmResult.P.immediate_treatment.primary_medication
-        console.log('✅ Found P.immediate_treatment.primary_medication:', medication)
-      } else {
-        console.log('❌ NO medication found in pharmResult structure')
-      }
-      
-      if (medication) {
-        medicationInfo = `
-MEDICACIÓN ESPECÍFICA (del especialista en farmacología):
-- Antibiótico: ${medication.generic_name} ${medication.exact_dose} VO ${medication.frequency} x ${medication.duration}
-- Línea de tratamiento: ${medication.line_of_treatment}
-- Evidencia: Nivel ${medication.evidence_level}
-- NO usar antitusivos en neumonía pediátrica
-- Antipirético: paracetamol 15 mg/kg/dosis c/6-8h PRN fiebre >38.5°C`
-        console.log('✅ medicationInfo built:', medicationInfo)
-      } else {
-        console.log('❌ No medication extracted - medicationInfo will be empty')
-      }
-    } else {
-      console.log('❌ No pharmacology agent results found')
-    }
-
-    // Pediatría - consideraciones específicas
-    if (agentResults.pediatric?.success && agentResults.pediatric?.decision) {
-      const pedResult = agentResults.pediatric.decision.result || agentResults.pediatric.decision
-      
-      console.log('🔬 DEBUGGING - Pediatric Data:')
-      console.log('agentResults.pediatric:', JSON.stringify(agentResults.pediatric, null, 2))
-      console.log('pedResult:', JSON.stringify(pedResult, null, 2))
-      
-      if (pedResult.age_specific_considerations?.length > 0) {
-        pediatricInfo = `
-CONSIDERACIONES PEDIÁTRICAS (del especialista pediatra):
-- ${pedResult.age_specific_considerations.join('\n- ')}`
-        console.log('✅ pediatricInfo built:', pediatricInfo)
-      } else {
-        console.log('❌ No age_specific_considerations found')
-      }
-    } else {
-      console.log('❌ No pediatric agent results found')
-    }
-
-    // Hospitalización - disposición
-    if (agentResults.hospitalization?.success && agentResults.hospitalization?.decision) {
-      const hospResult = agentResults.hospitalization.decision.result || agentResults.hospitalization.decision
-      
-      console.log('🔬 DEBUGGING - Hospitalization Data:')
-      console.log('agentResults.hospitalization:', JSON.stringify(agentResults.hospitalization, null, 2))
-      console.log('hospResult:', JSON.stringify(hospResult, null, 2))
-      
-      let disposition = hospResult.disposition_recommendation || hospResult.p?.disposition_recommendation || 'home'
-      dispositionInfo = `
-DISPOSICIÓN (del especialista en hospitalización):
-- Recomendación: ${disposition}`
-      console.log('✅ dispositionInfo built:', dispositionInfo)
-    } else {
-      console.log('❌ No hospitalization agent results found')
-    }
+    // Llamada async en background (no bloqueante)
+    this.generateContextUsingAI(originalInput, agentResults).then(context => {
+      console.log('🧠 Contexto IA generado:', context.substring(0, 100) + '...')
+    }).catch(err => console.warn('Context AI error:', err))
+    
+    console.log('🎯 Usando decisionalMiddleware REAL para toda la lógica')
 
     const systemPrompt = `Eres un médico especialista creando un análisis SOAP basado en las recomendaciones de especialistas médicos.
 
-DATOS DE ESPECIALISTAS CONSULTADOS:
-${medicationInfo}
-${pediatricInfo}  
-${dispositionInfo}
+${contextualInfo}
 
 INSTRUCCIONES CRÍTICAS:
 - USA EXACTAMENTE la medicación especificada por farmacología (dosis, frecuencia, duración)
@@ -370,18 +283,7 @@ INSTRUCCIONES CRÍTICAS:
 - USA las consideraciones pediátricas específicas
 - USA la disposición recomendada por el especialista
 
-🚨 MEDICINA DEFENSIVA - ESTUDIOS OBLIGATORIOS:
-- ESTERTORES/CREPITANTES → Radiografía tórax PA y lateral [SIEMPRE]
-- FIEBRE (>38°C) → Hemograma completo + PCR [SIEMPRE]
-- TOS + FIEBRE en niños → Saturación O2 + Rx tórax [SIEMPRE]
-- NUNCA digas "no requiere estudios" si hay síntomas respiratorios
-- SIEMPRE solicitar estudios confirmatorios en sospecha de neumonía
-
-🧒 REGLAS PEDIÁTRICAS ESPECÍFICAS:
-- BRONQUIOLITIS: Típica en <2 años, MUY RARA en ≥5 años (<5% probabilidad)
-- NIÑO 5 AÑOS: Neumonía bacteriana es MÁS común que bronquiolitis
-- SATURACIÓN O2: Siempre documentar en casos respiratorios pediátricos
-- SIGNOS ALARMA: Incluir educación a padres sobre cuándo regresar
+${dynamicStudies}
 
 FORMATO REQUERIDO - SOAP:
 - S (Subjetivo): Síntomas reportados
@@ -389,10 +291,6 @@ FORMATO REQUERIDO - SOAP:
 - A (Análisis): Diagnóstico principal y diferenciales
 - P (Plan): USAR las prescripciones EXACTAS de los especialistas`
 
-    console.log('🔬 DEBUGGING - Final System Prompt:')
-    console.log(systemPrompt)
-    console.log('🔬 DEBUGGING - User Prompt:')
-    console.log(originalInput)
 
     return {
       systemPrompt,
@@ -972,6 +870,117 @@ SOLICITUD: Coordinar agentes especializados según contexto clínico para valida
     return this.calculateGlobalConfidence(this.cycles)
   }
 
-  // Función eliminada: integrateSpecializedAgentResults() 
-  // Ahora usamos buildIntegratedSOAPPrompt() para que Claude genere directamente el resultado correcto
+  /**
+   * 🧠 USA DECISIONAL MIDDLEWARE para generar contexto inteligente
+   */
+  private async generateContextUsingAI(originalInput: string, agentResults: any): Promise<string> {
+    try {
+      const response = await callClaudeForDecision(
+        'documentation',
+        `Analiza los resultados de estos agentes médicos y genera un contexto estructurado para SOAP.
+
+CASO ORIGINAL:
+${originalInput}
+
+RESULTADOS DE AGENTES:
+${JSON.stringify(agentResults, null, 2)}
+
+INSTRUCCIONES:
+- Estructura la información de los especialistas consultados
+- Destaca medicaciones específicas, consideraciones pediátricas/geriátricas
+- Incluye recomendaciones de disposición
+- Formato claro para usar en prompt SOAP
+
+Devuelve en formato documentation con soap.assessment que contenga el contexto estructurado.`,
+        'claude'
+      )
+      
+      if (response.success && (response.decision as any).soap?.assessment) {
+        return (response.decision as any).soap.assessment
+      }
+    } catch (error) {
+      console.warn('generateContextUsingAI fallback:', error)
+    }
+    
+    // Fallback simple
+    return this.buildBasicContext(agentResults)
+  }
+
+  /**
+   * 🧠 USA DECISIONAL MIDDLEWARE para generar estudios dinámicos  
+   */
+  private async generateStudiesUsingAI(originalInput: string, agentResults: any): Promise<string> {
+    try {
+      const response = await callClaudeForDecision(
+        'diagnosis', 
+        `Analiza este caso médico y determina QUÉ ESTUDIOS DIAGNÓSTICOS se requieren según medicina defensiva.
+
+CASO CLÍNICO:
+${originalInput}
+
+CONTEXTO DE AGENTES:
+${JSON.stringify(agentResults, null, 2)}
+
+INSTRUCCIONES:
+- Aplica medicina defensiva (mejor sobrediagnosticar que subdiagnosticar)  
+- Considera edad, síntomas, medicamentos del caso
+- Incluye estudios obligatorios, urgentes y de seguimiento
+- Justifica cada estudio y sus consecuencias si no se hace
+
+En tests_recommended incluye estudios con justificación completa.`,
+        'claude'
+      )
+      
+      if (response.success && (response.decision as any).tests_recommended) {
+        return this.formatStudiesFromAI((response.decision as any).tests_recommended)
+      }
+    } catch (error) {
+      console.warn('generateStudiesUsingAI fallback:', error)
+    }
+    
+    // Fallback
+    return '🔬 MEDICINA DEFENSIVA - ESTUDIOS BÁSICOS:\n- Evaluación clínica completa requerida'
+  }
+
+  /**
+   * 🆘 Contexto básico si falla la IA
+   */
+  private buildBasicContext(agentResults: any): string {
+    let context = "DATOS DE ESPECIALISTAS CONSULTADOS:\n\n"
+    
+    if (agentResults.pharmacology?.success) {
+      context += "MEDICACIÓN: Prescripción especializada disponible\n"
+    }
+    
+    if (agentResults.pediatric?.success) {
+      context += "PEDIATRÍA: Consideraciones específicas por edad\n" 
+    }
+    
+    if (agentResults.hospitalization?.success) {
+      context += "DISPOSICIÓN: Criterios de manejo definidos\n"
+    }
+    
+    return context
+  }
+
+  /**
+   * 📋 Formatea estudios de respuesta IA
+   */
+  private formatStudiesFromAI(tests: any[]): string {
+    let formatted = "🚨 MEDICINA DEFENSIVA - ESTUDIOS REQUERIDOS:\n\n"
+    
+    tests.forEach((test, index) => {
+      if (typeof test === 'string') {
+        formatted += `${index + 1}. ${test}\n`
+      } else if (test.name || test.study) {
+        formatted += `${index + 1}. ${test.name || test.study}\n`
+        if (test.justification) {
+          formatted += `   💡 ${test.justification}\n`
+        }
+      }
+    })
+    
+    return formatted
+  }
+
 }

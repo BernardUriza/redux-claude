@@ -5,6 +5,7 @@
 
 import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
+import ReactMarkdown from 'react-markdown'
 import type { RootState } from '@redux-claude/cognitive-core'
 import { updateSOAPSection, addPhysicianNote, updateUrgencyLevel } from '@redux-claude/cognitive-core'
 import type { SOAPStructure, SubjectiveData, ObjectiveFindings, DifferentialDiagnosis, TreatmentPlan } from '@redux-claude/cognitive-core'
@@ -280,6 +281,7 @@ const PlanContent = ({ data }: { data: TreatmentPlan }) => (
 export const SOAPDisplay = () => {
   const dispatch = useDispatch()
   const { currentCase } = useSelector((state: RootState) => state.medicalChat)
+  const [viewMode, setViewMode] = useState<'structured' | 'markdown'>('structured')
 
   // 🔬 DEBUG: Log current case to see what's actually in the store
   console.log('🔬 SOAPDisplay DEBUG - currentCase:', currentCase)
@@ -287,6 +289,111 @@ export const SOAPDisplay = () => {
 
   const handleSectionEdit = (section: 'subjetivo' | 'objetivo' | 'analisis' | 'plan', data: any) => {
     dispatch(updateSOAPSection({ section, data }))
+  }
+
+  // Función para generar contenido markdown del SOAP
+  const generateMarkdownContent = (soap: any) => {
+    let markdown = `# Análisis SOAP Completo\n\n`
+    markdown += `**Confianza:** ${Math.round(soap.confidence * 100)}%\n`
+    markdown += `**Urgencia:** ${currentCase.urgencyLevel.toUpperCase()}\n`
+    markdown += `**Actualizado:** ${new Date(currentCase.lastUpdated).toLocaleString('es-ES')}\n\n`
+    
+    // Sección Subjetivo
+    if (soap.subjetivo) {
+      markdown += `## 🗣️ SUBJETIVO\n\n`
+      if (soap.subjetivo.chiefComplaint) {
+        markdown += `**Motivo de Consulta:**\n${soap.subjetivo.chiefComplaint}\n\n`
+      }
+      if (soap.subjetivo.presentIllness) {
+        markdown += `**Enfermedad Actual:**\n${soap.subjetivo.presentIllness}\n\n`
+      }
+      if (soap.subjetivo.medicalHistory?.length > 0) {
+        markdown += `**Antecedentes Médicos:**\n`
+        soap.subjetivo.medicalHistory.forEach((item: string) => {
+          markdown += `- ${item}\n`
+        })
+        markdown += `\n`
+      }
+      if (soap.subjetivo.familyHistory?.length > 0) {
+        markdown += `**Antecedentes Familiares:**\n`
+        soap.subjetivo.familyHistory.forEach((item: string) => {
+          markdown += `- ${item}\n`
+        })
+        markdown += `\n`
+      }
+    }
+    
+    // Sección Objetivo
+    if (soap.objetivo) {
+      markdown += `## 🔍 OBJETIVO\n\n`
+      if (soap.objetivo.vitalSigns && Object.keys(soap.objetivo.vitalSigns).length > 0) {
+        markdown += `**Signos Vitales:**\n`
+        Object.entries(soap.objetivo.vitalSigns).forEach(([key, value]) => {
+          if (value) {
+            markdown += `- **${key.replace(/([A-Z])/g, ' $1')}:** ${value}\n`
+          }
+        })
+        markdown += `\n`
+      }
+      if (soap.objetivo.physicalExam && Object.keys(soap.objetivo.physicalExam).length > 0) {
+        markdown += `**Examen Físico:**\n`
+        Object.entries(soap.objetivo.physicalExam).forEach(([system, findings]) => {
+          if (findings) {
+            markdown += `- **${system.replace(/([A-Z])/g, ' $1')}:** ${findings}\n`
+          }
+        })
+        markdown += `\n`
+      }
+    }
+    
+    // Sección Análisis
+    if (soap.analisis) {
+      markdown += `## 🧠 ANÁLISIS\n\n`
+      if (soap.analisis.primaryDiagnosis) {
+        markdown += `**Diagnóstico Principal:**\n${soap.analisis.primaryDiagnosis}\n`
+        markdown += `*Confianza: ${Math.round(soap.analisis.confidence * 100)}%*\n\n`
+      }
+      if (soap.analisis.differentials?.length > 0) {
+        markdown += `**Diagnósticos Diferenciales:**\n`
+        soap.analisis.differentials.forEach((diff: any, index: number) => {
+          markdown += `${index + 1}. **${diff.diagnosis}** (P: ${Math.round(diff.probability * 100)}%, G: ${diff.gravityScore}/10)\n`
+          markdown += `   ${diff.reasoning}\n\n`
+        })
+      }
+      if (soap.analisis.reasoning) {
+        markdown += `**Razonamiento Clínico:**\n${soap.analisis.reasoning}\n\n`
+      }
+    }
+    
+    // Sección Plan
+    if (soap.plan) {
+      markdown += `## 📋 PLAN\n\n`
+      if (soap.plan.immediate?.length > 0) {
+        markdown += `**Manejo Inmediato:**\n`
+        soap.plan.immediate.forEach((item: string) => {
+          markdown += `- ${item}\n`
+        })
+        markdown += `\n`
+      }
+      if (soap.plan.medications?.length > 0) {
+        markdown += `**Medicamentos:**\n`
+        soap.plan.medications.forEach((med: any) => {
+          markdown += `- **${med.name}**: ${med.dose} - ${med.frequency} por ${med.duration}\n`
+        })
+        markdown += `\n`
+      }
+      if (soap.plan.followUp) {
+        markdown += `**Seguimiento:** ${soap.plan.followUp.timeframe}\n`
+        if (soap.plan.followUp.instructions?.length > 0) {
+          soap.plan.followUp.instructions.forEach((instruction: string) => {
+            markdown += `- ${instruction}\n`
+          })
+        }
+        markdown += `\n`
+      }
+    }
+    
+    return markdown
   }
 
   if (!currentCase.soap) {
@@ -305,11 +412,34 @@ export const SOAPDisplay = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header con información del caso */}
+      {/* Header con información del caso y toggle de vista */}
       <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-6 border border-slate-600/40">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-white">Análisis SOAP Completo</h2>
           <div className="flex items-center space-x-4">
+            {/* Toggle de vista */}
+            <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('structured')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-all duration-200 ${
+                  viewMode === 'structured'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                }`}
+              >
+                📋 Estructurado
+              </button>
+              <button
+                onClick={() => setViewMode('markdown')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-all duration-200 ${
+                  viewMode === 'markdown'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                }`}
+              >
+                📝 Markdown
+              </button>
+            </div>
             <div className="text-sm text-slate-300">
               Confianza: <span className="text-green-400 font-semibold">{Math.round(soap.confidence * 100)}%</span>
             </div>
@@ -329,38 +459,64 @@ export const SOAPDisplay = () => {
         </div>
       </div>
 
-      {/* Secciones SOAP */}
-      <SOAPSection
-        section="S"
-        title="SUBJETIVO"
-        data={soap.subjetivo}
-        editable={true}
-        onEdit={(data) => handleSectionEdit('subjetivo', data)}
-      />
+      {/* Contenido condicional según el modo de vista */}
+      {viewMode === 'structured' ? (
+        <>
+          {/* Secciones SOAP estructuradas */}
+          <SOAPSection
+            section="S"
+            title="SUBJETIVO"
+            data={soap.subjetivo}
+            editable={true}
+            onEdit={(data) => handleSectionEdit('subjetivo', data)}
+          />
 
-      <SOAPSection
-        section="O"
-        title="OBJETIVO"
-        data={soap.objetivo}
-        editable={true}
-        onEdit={(data) => handleSectionEdit('objetivo', data)}
-      />
+          <SOAPSection
+            section="O"
+            title="OBJETIVO"
+            data={soap.objetivo}
+            editable={true}
+            onEdit={(data) => handleSectionEdit('objetivo', data)}
+          />
 
-      <SOAPSection
-        section="A"
-        title="ANÁLISIS"
-        data={soap.analisis}
-        editable={true}
-        onEdit={(data) => handleSectionEdit('analisis', data)}
-      />
+          <SOAPSection
+            section="A"
+            title="ANÁLISIS"
+            data={soap.analisis}
+            editable={true}
+            onEdit={(data) => handleSectionEdit('analisis', data)}
+          />
 
-      <SOAPSection
-        section="P"
-        title="PLAN"
-        data={soap.plan}
-        editable={true}
-        onEdit={(data) => handleSectionEdit('plan', data)}
-      />
+          <SOAPSection
+            section="P"
+            title="PLAN"
+            data={soap.plan}
+            editable={true}
+            onEdit={(data) => handleSectionEdit('plan', data)}
+          />
+        </>
+      ) : (
+        /* Vista Markdown */
+        <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-xl rounded-2xl border border-slate-600/40 p-6">
+          <div className="prose prose-invert prose-slate max-w-none">
+            <ReactMarkdown
+              components={{
+                h1: ({ children }) => <h1 className="text-3xl font-bold text-white mb-6 border-b border-slate-600 pb-3">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-2xl font-bold text-slate-200 mb-4 mt-8 flex items-center gap-2">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-xl font-semibold text-slate-300 mb-3 mt-6">{children}</h3>,
+                p: ({ children }) => <p className="text-slate-300 mb-4 leading-relaxed">{children}</p>,
+                ul: ({ children }) => <ul className="text-slate-300 mb-4 ml-4">{children}</ul>,
+                li: ({ children }) => <li className="mb-2 flex items-start gap-2"><span className="text-blue-400 mt-2 text-xs">•</span><span className="flex-1">{children}</span></li>,
+                strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+                em: ({ children }) => <em className="text-slate-400 italic">{children}</em>,
+                code: ({ children }) => <code className="bg-slate-800 text-slate-200 px-2 py-1 rounded text-sm">{children}</code>,
+              }}
+            >
+              {generateMarkdownContent(soap)}
+            </ReactMarkdown>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
