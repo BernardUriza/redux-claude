@@ -77,6 +77,10 @@ export {
 export { StreamingService } from './streaming'
 export type { StreamingChunk } from './streaming'
 
+// === AUTOCOMPLETADO MÉDICO ===
+export { MedicalAutocompletionService } from './services/MedicalAutocompletionService'
+export type { AutocompletionSuggestion, AutocompletionRequest, AutocompletionResult } from './services/MedicalAutocompletionService'
+
 // === CONFIGURACIÓN RÁPIDA ===
 export interface CognitiveCoreConfig {
   claudeApiKey?: string

@@ -111,7 +111,11 @@ const mapSOAPAnalysisToStructure = (soapAnalysis: SOAPAnalysis): SOAPStructure =
   }
 }
 
-export const useMedicalChat = () => {
+interface UseMedicalChatOptions {
+  onValidationFailed?: (input: string, validationResult: any) => void
+}
+
+export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
   const dispatch = useDispatch<AppDispatch>()
   const [claudeAdapter] = useState(() => new ClaudeAdapter())
   const [medicalValidator] = useState(() => new MedicalQualityValidator())
@@ -160,7 +164,8 @@ ${validationResult.suggestedImprovements?.map(improvement => `- ${improvement}`)
 ### 🔍 Datos Críticos Faltantes:
 ${validationResult.missingCriticalData?.map(data => `- ${data}`).join('\n') || 'Ninguno identificado'}
 
-**Por favor, reformula tu consulta con más contexto médico específico.**`
+### 💡 **¿Necesitas ayuda estructurando tu consulta?**
+Haz clic en el botón de autocompletado 🤖 para obtener templates médicos personalizados.`
 
         dispatch(addMessage({
           content: rejectionMessage,
@@ -172,6 +177,11 @@ ${validationResult.missingCriticalData?.map(data => `- ${data}`).join('\n') || '
             sectionType: 'education'
           }
         }))
+
+        // Trigger autocompletion callback if provided
+        if (options.onValidationFailed) {
+          options.onValidationFailed(message, validationResult)
+        }
 
         return
       }

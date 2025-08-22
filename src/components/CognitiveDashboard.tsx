@@ -14,6 +14,7 @@ import { SOAPDisplay } from './SOAPDisplay'
 import { FollowUpTracker } from './FollowUpTracker'
 import { MedicalNotes } from './MedicalNotes'
 import { LoadingScreen } from './LoadingScreen'
+import { MedicalAutocompletion } from './MedicalAutocompletion'
 import { useMobileInteractions } from '../hooks/useMobileInteractions'
 import { useSelector } from 'react-redux'
 
@@ -232,6 +233,8 @@ export const CognitiveDashboard = () => {
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [isAppLoading, setIsAppLoading] = useState(true)
   const [showMainApp, setShowMainApp] = useState(false)
+  const [showAutocompletion, setShowAutocompletion] = useState(false)
+  const [lastRejectedInput, setLastRejectedInput] = useState('')
   
   // Mobile interactions hook
   const { state: mobileState, triggerHaptic, addTouchFeedback, setupGestureDetection } = useMobileInteractions()
@@ -243,7 +246,15 @@ export const CognitiveDashboard = () => {
     sendMedicalQuery,
     newSession,
     error
-  } = useMedicalChat()
+  } = useMedicalChat({
+    onValidationFailed: (input, validationResult) => {
+      // Auto-open autocompletion modal when validation fails
+      setLastRejectedInput(input)
+      setTimeout(() => {
+        setShowAutocompletion(true)
+      }, 1500) // Delay to let user read the validation message first
+    }
+  })
   
   const chatEndRef = useRef<HTMLDivElement>(null)
   
@@ -1080,12 +1091,30 @@ export const CognitiveDashboard = () => {
                       onChange={(e) => setInput(e.target.value)}
                       onFocus={handleMobileInputFocus}
                       placeholder={mobileState.isMobile ? "Describe tu caso médico..." : "Describe el caso clínico aquí... Ej: Paciente de 45 años presenta dolor torácico..."}
-                      className={`w-full px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-slate-800/60 to-slate-700/60 backdrop-blur-xl border border-slate-600/40 rounded-xl sm:rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 text-slate-100 placeholder-slate-400 shadow-xl shadow-slate-950/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${mobileState.isMobile ? 'touch-feedback' : ''}`}
+                      className={`w-full px-4 sm:px-6 py-3 sm:py-4 pr-12 bg-gradient-to-r from-slate-800/60 to-slate-700/60 backdrop-blur-xl border border-slate-600/40 rounded-xl sm:rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 text-slate-100 placeholder-slate-400 shadow-xl shadow-slate-950/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${mobileState.isMobile ? 'touch-feedback' : ''}`}
                       disabled={isLoading || isStreaming}
                       autoComplete="off"
                       autoCapitalize="sentences"
                       autoCorrect="on"
                     />
+                    
+                    {/* Autocompletion Button */}
+                    {input.trim().length > 10 && !isLoading && !isStreaming && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLastRejectedInput(input)
+                          setShowAutocompletion(true)
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 rounded-lg flex items-center justify-center text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-200 group"
+                        title="Asistente de Autocompletado Médico"
+                      >
+                        <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                      </button>
+                    )}
+                    
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-2xl pointer-events-none opacity-0 transition-opacity duration-300 peer-focus:opacity-100" />
                   </div>
                 </div>
@@ -1128,6 +1157,25 @@ export const CognitiveDashboard = () => {
           ✍️
         </button>
       )}
+
+      {/* Medical Autocompletion Modal */}
+      <MedicalAutocompletion
+        partialInput={lastRejectedInput}
+        onSelectTemplate={(template) => {
+          setInput(template)
+          setShowAutocompletion(false)
+          setLastRejectedInput('')
+          // Focus input after template is applied
+          setTimeout(() => {
+            inputRef.current?.focus()
+          }, 100)
+        }}
+        isVisible={showAutocompletion}
+        onClose={() => {
+          setShowAutocompletion(false)
+          setLastRejectedInput('')
+        }}
+      />
     </div>
       
       <style jsx>{`
