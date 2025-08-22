@@ -211,7 +211,7 @@ interface CognitiveAgentsPanelProps {
 
 // Función para generar agentes basados en el análisis SOAP real
 const generateAgentsFromSOAP = (message?: MedicalMessage): SpecializedAgent[] => {
-  if (!message || message.type !== 'assistant') {
+  if (!message || message.type !== 'assistant' || !message.content.includes('SOAP') || !message.content.includes('SUBJETIVO')) {
     return []
   }
 
@@ -219,7 +219,7 @@ const generateAgentsFromSOAP = (message?: MedicalMessage): SpecializedAgent[] =>
   const confidence = message.confidence || 0.5
   const agents: SpecializedAgent[] = []
 
-  // Agente de Medicina General (siempre presente)
+  // Agente de Medicina General (solo cuando hay análisis SOAP real)
   agents.push({
     id: 'general',
     name: 'Dr. Medicina General',
@@ -322,8 +322,10 @@ export const CognitiveAgentsPanel = ({ lastMessage, isActive = false }: Cognitiv
     setConsensusData(generateConsensusFromAgents(newAgents))
   }, [lastMessage])
 
-  // Simular progreso de consulta
+  // Simular progreso de consulta solo cuando hay agentes activos
   useEffect(() => {
+    if (agents.length === 0) return
+
     const interval = setInterval(() => {
       setAgents(prev => prev.map(agent => {
         if (agent.status === 'consulting') {
@@ -338,15 +340,51 @@ export const CognitiveAgentsPanel = ({ lastMessage, isActive = false }: Cognitiv
 
       setConsensusData(prev => ({
         ...prev,
-        percentage: Math.min(prev.percentage + 1, 85)
+        percentage: Math.min(prev.percentage + 1, 95)
       }))
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [agents.length])
 
   const activeAgents = agents.filter(agent => agent.status !== 'idle')
   const completedAgents = agents.filter(agent => agent.status === 'completed')
+
+  // Mostrar estado vacío si no hay agentes
+  if (agents.length === 0) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center space-x-4">
+          <div className="w-10 h-10 bg-gradient-to-r from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center shadow-lg">
+            <span className="text-white text-lg">🧠</span>
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-white">Orquestador Cognitivo</h3>
+            <p className="text-sm text-slate-400">Sistema de Consulta Multi-Especialista</p>
+          </div>
+        </div>
+
+        {/* Estado vacío */}
+        <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/60 backdrop-blur-xl rounded-2xl p-8 border border-slate-600/30 text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <span className="text-2xl">👨‍⚕️</span>
+          </div>
+          <h3 className="text-slate-200 text-lg font-semibold mb-2">
+            Sistema de Agentes en Espera
+          </h3>
+          <p className="text-slate-400 text-sm mb-4 max-w-md mx-auto leading-relaxed">
+            Los especialistas médicos se activarán automáticamente cuando realices una consulta SOAP
+          </p>
+          <div className="bg-gradient-to-r from-blue-950/30 to-purple-950/30 backdrop-blur-sm rounded-xl p-3 border border-blue-700/20 max-w-sm mx-auto">
+            <p className="text-slate-300 text-xs">
+              💡 Describe un caso clínico para activar el orquestador cognitivo
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
