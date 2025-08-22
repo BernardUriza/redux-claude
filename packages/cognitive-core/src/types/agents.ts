@@ -12,7 +12,8 @@ export enum AgentType {
   HOSPITALIZATION_CRITERIA = 'hospitalization_criteria',
   FAMILY_EDUCATION = 'family_education',
   OBJECTIVE_VALIDATION = 'objective_validation',
-  DEFENSIVE_DIFFERENTIAL = 'defensive_differential'
+  DEFENSIVE_DIFFERENTIAL = 'defensive_differential',
+  MEDICAL_AUTOCOMPLETION = 'medical_autocompletion'
 }
 
 export enum AgentStatus {
@@ -187,6 +188,25 @@ export type DefensiveDifferentialDecision = {
   disposition_recommendation: 'emergency' | 'urgent_clinic' | 'routine_followup' | 'home_care'
 }
 
+export type MedicalAutocompletionDecision = {
+  suggestions: Array<{
+    id: string
+    title: string
+    description: string
+    template: string
+    confidence: number
+    category: 'basic' | 'detailed' | 'specialized'
+  }>
+  enhanced_template: string
+  detected_specialty?: string
+  patient_context: {
+    age_inferred?: string
+    gender_inferred?: string
+    main_complaint?: string
+    specialty_indicators?: string[]
+  }
+}
+
 export type AgentDecision = 
   | DiagnosticDecision 
   | ValidationDecision 
@@ -199,6 +219,7 @@ export type AgentDecision =
   | FamilyEducationDecision
   | ObjectiveValidationDecision
   | DefensiveDifferentialDecision
+  | MedicalAutocompletionDecision
 
 // Agent registry definition
 export type AgentDefinition = {

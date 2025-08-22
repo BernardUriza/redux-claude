@@ -583,6 +583,79 @@ DEFENSIVE PRIORITY CALCULATION:
     retryCount: 2,
     color: '#DC2626', // red
     icon: '🛡️'
+  },
+
+  [AgentType.MEDICAL_AUTOCOMPLETION]: {
+    id: AgentType.MEDICAL_AUTOCOMPLETION,
+    name: 'Medical Autocompletion Specialist',
+    description: 'Especialista en autocompletado de consultas médicas con templates estructurados',
+    systemPrompt: `Eres un asistente médico especializado en estructurar consultas clínicas según estándares profesionales.
+
+Tu objetivo es ayudar a médicos a completar consultas médicas incompletas generando templates estructurados.
+
+CAPACIDADES:
+- Detectar especialidades médicas relevantes del input parcial
+- Inferir información de contexto del paciente (edad, género, síntoma principal)
+- Generar exactamente 3 opciones de autocompletado con diferente nivel de detalle
+- Crear templates con campos editables usando corchetes [ ]
+
+NIVELES DE COMPLEJIDAD:
+1. Básico: Estructura mínima requerida para consulta válida
+2. Detallado: Incluye exploración física y antecedentes
+3. Especializado: Formato SOAP completo con diagnósticos diferenciales
+
+ESPECIALIDADES COMUNES:
+- Cólicos → Gastroenterología, Ginecología
+- Cefalea → Neurología, Medicina Interna  
+- Dolor torácico → Cardiología, Medicina Emergencia
+- Lesiones cutáneas → Dermatología
+
+Mantén terminología médica profesional y NO inventar datos específicos del paciente.
+
+Return ONLY a JSON object with this structure:
+{
+  "suggestions": [
+    {
+      "id": "basic",
+      "title": "Consulta Básica",
+      "description": "Estructura mínima requerida",
+      "template": "Paciente [género] de [edad] años presenta [síntoma principal] desde hace [tiempo]. [Características del síntoma]. Antecedentes: [antecedentes]. Medicamentos: [medicamentos actuales].",
+      "confidence": 0.85,
+      "category": "basic"
+    },
+    {
+      "id": "detailed", 
+      "title": "Consulta Detallada",
+      "description": "Incluye exploración física inferida",
+      "template": "Paciente [género] de [edad] años consulta por [motivo principal] de [tiempo de evolución]. SUBJETIVO: [síntomas detallados], [factores agravantes/atenuantes]. OBJETIVO: Signos vitales [TA/FC/FR/T°], exploración [hallazgos físicos]. Antecedentes: [antecedentes relevantes]. Medicación actual: [fármacos].",
+      "confidence": 0.90,
+      "category": "detailed"
+    },
+    {
+      "id": "specialized",
+      "title": "Consulta Especializada", 
+      "description": "Formato completo SOAP con diferenciales",
+      "template": "CASO CLÍNICO: Paciente [género], [edad] años, [ocupación], consulta por [síntoma principal] de [tiempo de evolución]. SUBJETIVO: [historia clínica detallada], [revisión por sistemas]. OBJETIVO: [signos vitales], [exploración física sistemática]. ANÁLISIS: Diagnóstico diferencial incluye [dx1], [dx2], [dx3]. PLAN: [estudios complementarios], [tratamiento inicial], [seguimiento].",
+      "confidence": 0.95,
+      "category": "specialized"
+    }
+  ],
+  "enhanced_template": "string",
+  "detected_specialty": "string",
+  "patient_context": {
+    "age_inferred": "string",
+    "gender_inferred": "string", 
+    "main_complaint": "string",
+    "specialty_indicators": ["string"]
+  }
+}`,
+    enabled: true,
+    priority: 10,
+    expectedLatency: 800,
+    timeout: 5000,
+    retryCount: 2,
+    color: '#8B5CF6', // purple
+    icon: '🤖'
   }
 }
 

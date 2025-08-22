@@ -15,14 +15,15 @@ import {
   HospitalizationCriteriaDecision,
   FamilyEducationDecision,
   ObjectiveValidationDecision,
-  DefensiveDifferentialDecision
+  DefensiveDifferentialDecision,
+  MedicalAutocompletionDecision
 } from '../types/agents'
 
 import { decisionEngineService } from '../decision-engine/DecisionEngineService'
 import { getAgentDefinition } from './agentRegistry'
 
 // Tipos para el middleware (mantenidos para compatibilidad)
-export type DecisionType = 'diagnosis' | 'validation' | 'treatment' | 'triage' | 'documentation' | 'clinical_pharmacology' | 'pediatric_specialist' | 'hospitalization_criteria' | 'family_education' | 'objective_validation' | 'defensive_differential'
+export type DecisionType = 'diagnosis' | 'validation' | 'treatment' | 'triage' | 'documentation' | 'clinical_pharmacology' | 'pediatric_specialist' | 'hospitalization_criteria' | 'family_education' | 'objective_validation' | 'defensive_differential' | 'medical_autocompletion'
 export type ProviderType = 'claude' | 'openai' | 'local'
 
 export interface DecisionRequest {
@@ -152,11 +153,20 @@ async function callClaudeAPI(request: DecisionRequest): Promise<Omit<DecisionRes
   // Construir system prompt específico para el tipo de decisión
   const systemPrompt = buildSystemPrompt(request.type, request.previousDecisions, request.context)
   
+  // Build conversation history if available in context
+  const conversationHistory = Array.isArray(request.context?.conversationHistory) 
+    ? request.context.conversationHistory 
+    : []
+  const messages = [
+    ...conversationHistory,
+    { role: 'user', content: request.input }
+  ]
+
   const response = await anthropic.messages.create({
     model: 'claude-3-haiku-20240307',
     max_tokens: 1000,
     system: systemPrompt,
-    messages: [{ role: 'user', content: request.input }],
+    messages,
     temperature: 0.3
   })
 
@@ -230,7 +240,8 @@ function getAgentSystemPrompt(type: DecisionType): string {
     'hospitalization_criteria': AgentType.HOSPITALIZATION_CRITERIA,
     'family_education': AgentType.FAMILY_EDUCATION,
     'objective_validation': AgentType.OBJECTIVE_VALIDATION,
-    'defensive_differential': AgentType.DEFENSIVE_DIFFERENTIAL
+    'defensive_differential': AgentType.DEFENSIVE_DIFFERENTIAL,
+    'medical_autocompletion': AgentType.MEDICAL_AUTOCOMPLETION
   }
   
   const agentType = agentTypeMap[type]
@@ -294,6 +305,30 @@ Considera contraindicaciones, interacciones y preferencias del paciente.`
 - Calidad de documentación
 
 Asegura precisión, completitud y cumplimiento regulatorio.`
+
+    case 'medical_autocompletion':
+      return `Eres un asistente médico especializado en estructurar consultas clínicas según estándares profesionales.
+
+Tu objetivo es ayudar a médicos a completar consultas médicas incompletas generando templates estructurados.
+
+CAPACIDADES:
+- Detectar especialidades médicas relevantes del input parcial
+- Inferir información de contexto del paciente (edad, género, síntoma principal)
+- Generar exactamente 3 opciones de autocompletado con diferente nivel de detalle
+- Crear templates con campos editables usando corchetes [ ]
+
+NIVELES DE COMPLEJIDAD:
+1. Básico: Estructura mínima requerida para consulta válida
+2. Detallado: Incluye exploración física y antecedentes
+3. Especializado: Formato SOAP completo con diagnósticos diferenciales
+
+ESPECIALIDADES COMUNES:
+- Cólicos → Gastroenterología, Ginecología
+- Cefalea → Neurología, Medicina Interna  
+- Dolor torácico → Cardiología, Medicina Emergencia
+- Lesiones cutáneas → Dermatología
+
+Mantén terminología médica profesional y NO inventar datos específicos del paciente.`
 
     default:
       return 'Eres un asistente médico especializado. Proporciona respuestas precisas y profesionales.'
@@ -368,6 +403,45 @@ function getJsonFormatRequirements(type: DecisionType): string {
   "follow_up_required": true|false
 }`
 
+    case 'medical_autocompletion':
+      return `\n\nRETURN ONLY JSON with this exact structure:
+{
+  "suggestions": [
+    {
+      "id": "basic",
+      "title": "Consulta Básica",
+      "description": "Estructura mínima requerida",
+      "template": "Paciente [género] de [edad] años presenta [síntoma principal] desde hace [tiempo]. [Características del síntoma]. Antecedentes: [antecedentes]. Medicamentos: [medicamentos actuales].",
+      "confidence": 0.85,
+      "category": "basic"
+    },
+    {
+      "id": "detailed", 
+      "title": "Consulta Detallada",
+      "description": "Incluye exploración física inferida",
+      "template": "Paciente [género] de [edad] años consulta por [motivo principal] de [tiempo de evolución]. SUBJETIVO: [síntomas detallados], [factores agravantes/atenuantes]. OBJETIVO: Signos vitales [TA/FC/FR/T°], exploración [hallazgos físicos]. Antecedentes: [antecedentes relevantes]. Medicación actual: [fármacos].",
+      "confidence": 0.90,
+      "category": "detailed"
+    },
+    {
+      "id": "specialized",
+      "title": "Consulta Especializada", 
+      "description": "Formato completo SOAP con diferenciales",
+      "template": "CASO CLÍNICO: Paciente [género], [edad] años, [ocupación], consulta por [síntoma principal] de [tiempo de evolución]. SUBJETIVO: [historia clínica detallada], [revisión por sistemas]. OBJETIVO: [signos vitales], [exploración física sistemática]. ANÁLISIS: Diagnóstico diferencial incluye [dx1], [dx2], [dx3]. PLAN: [estudios complementarios], [tratamiento inicial], [seguimiento].",
+      "confidence": 0.95,
+      "category": "specialized"
+    }
+  ],
+  "enhanced_template": "string",
+  "detected_specialty": "string",
+  "patient_context": {
+    "age_inferred": "string",
+    "gender_inferred": "string", 
+    "main_complaint": "string",
+    "specialty_indicators": ["string"]
+  }
+}`
+
     default:
       return '\n\nRETURN ONLY valid JSON format.'
   }
@@ -420,6 +494,12 @@ function validateDecisionStructure(decision: AgentDecision, type: DecisionType):
         throw new Error('Invalid documentation decision structure')
       }
       break
+    case 'medical_autocompletion':
+      const autocomp = decision as MedicalAutocompletionDecision
+      if (!autocomp.suggestions || !Array.isArray(autocomp.suggestions) || autocomp.suggestions.length !== 3) {
+        throw new Error('Invalid medical autocompletion decision structure: must have exactly 3 suggestions')
+      }
+      break
   }
 }
 
@@ -465,6 +545,13 @@ function calculateConfidence(decision: AgentDecision, type: DecisionType): numbe
       const docs = decision as DocumentationDecision
       if (docs.icd10_codes?.length > 0) baseConfidence += 10
       if (docs.billing_codes?.length > 0) baseConfidence += 5
+      break
+    case 'medical_autocompletion':
+      const autocomp = decision as MedicalAutocompletionDecision
+      if (autocomp.suggestions?.length === 3) baseConfidence += 15
+      if (autocomp.detected_specialty) baseConfidence += 10
+      if (autocomp.patient_context?.main_complaint) baseConfidence += 5
+      if (autocomp.enhanced_template?.length > 100) baseConfidence += 5
       break
   }
   
@@ -590,6 +677,44 @@ function createFallbackDecision(type: DecisionType, input: string): AgentDecisio
         follow_up_required: true
       } as DocumentationDecision
 
+    case 'medical_autocompletion':
+      return {
+        suggestions: [
+          {
+            id: 'basic_fallback',
+            title: 'Consulta Básica',
+            description: 'Estructura mínima requerida',
+            template: `Paciente [género] de [edad] años presenta [síntoma principal] desde hace [tiempo]. [Características del síntoma]. Antecedentes: [antecedentes relevantes]. Medicamentos actuales: [medicamentos].`,
+            confidence: 0.7,
+            category: 'basic'
+          },
+          {
+            id: 'detailed_fallback',
+            title: 'Consulta Detallada', 
+            description: 'Con exploración física',
+            template: `Paciente [género] de [edad] años consulta por [síntoma principal] de [tiempo de evolución]. SUBJETIVO: [descripción detallada del síntoma], [factores asociados]. OBJETIVO: Signos vitales [TA/FC/FR/T°], [hallazgos en exploración]. Antecedentes: [antecedentes]. Medicación: [fármacos actuales].`,
+            confidence: 0.75,
+            category: 'detailed'
+          },
+          {
+            id: 'specialized_fallback',
+            title: 'Consulta Especializada',
+            description: 'Formato SOAP completo',
+            template: `CASO CLÍNICO: Paciente [género], [edad] años, presenta [síntoma principal] de [tiempo de evolución]. SUBJETIVO: [historia detallada]. OBJETIVO: [signos vitales y exploración]. ANÁLISIS: [diagnósticos diferenciales]. PLAN: [estudios y tratamiento].`,
+            confidence: 0.8,
+            category: 'specialized'
+          }
+        ],
+        enhanced_template: 'Consulta médica estructurada requerida',
+        detected_specialty: undefined,
+        patient_context: {
+          age_inferred: undefined,
+          gender_inferred: undefined,
+          main_complaint: 'síntomas reportados',
+          specialty_indicators: []
+        }
+      } as MedicalAutocompletionDecision
+
     default:
       return {} as AgentDecision
   }
@@ -611,6 +736,7 @@ export function mapAgentTypeToDecisionType(agentType: AgentType): DecisionType {
     case AgentType.FAMILY_EDUCATION: return 'family_education'
     case AgentType.OBJECTIVE_VALIDATION: return 'objective_validation'
     case AgentType.DEFENSIVE_DIFFERENTIAL: return 'defensive_differential'
+    case AgentType.MEDICAL_AUTOCOMPLETION: return 'medical_autocompletion'
     default: return 'diagnosis'
   }
 }

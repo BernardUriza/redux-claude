@@ -62,7 +62,8 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.HOSPITALIZATION_CRITERIA]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 }),
     [AgentType.FAMILY_EDUCATION]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 }),
     [AgentType.OBJECTIVE_VALIDATION]: createInitialCircuitBreaker({ maxFailures: 4, cooldownMs: 45000 }),
-    [AgentType.DEFENSIVE_DIFFERENTIAL]: createInitialCircuitBreaker({ maxFailures: 2, cooldownMs: 15000 })
+    [AgentType.DEFENSIVE_DIFFERENTIAL]: createInitialCircuitBreaker({ maxFailures: 2, cooldownMs: 15000 }),
+    [AgentType.MEDICAL_AUTOCOMPLETION]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 })
   },
   metrics: {
     [AgentType.DIAGNOSTIC]: createInitialMetrics(),
@@ -76,7 +77,8 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.HOSPITALIZATION_CRITERIA]: createInitialMetrics(),
     [AgentType.FAMILY_EDUCATION]: createInitialMetrics(),
     [AgentType.OBJECTIVE_VALIDATION]: createInitialMetrics(),
-    [AgentType.DEFENSIVE_DIFFERENTIAL]: createInitialMetrics()
+    [AgentType.DEFENSIVE_DIFFERENTIAL]: createInitialMetrics(),
+    [AgentType.MEDICAL_AUTOCOMPLETION]: createInitialMetrics()
   },
   agentStatuses: {
     [AgentType.DIAGNOSTIC]: AgentStatus.READY,
@@ -90,11 +92,12 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.HOSPITALIZATION_CRITERIA]: AgentStatus.READY,
     [AgentType.FAMILY_EDUCATION]: AgentStatus.READY,
     [AgentType.OBJECTIVE_VALIDATION]: AgentStatus.READY,
-    [AgentType.DEFENSIVE_DIFFERENTIAL]: AgentStatus.READY
+    [AgentType.DEFENSIVE_DIFFERENTIAL]: AgentStatus.READY,
+    [AgentType.MEDICAL_AUTOCOMPLETION]: AgentStatus.READY
   },
   globalState: {
-    totalAgents: 12,
-    activeAgents: 12, // All 12 agents enabled
+    totalAgents: 13,
+    activeAgents: 13, // All 13 agents enabled
     failedAgents: 0,
     avgSystemLatency: 0,
     lastHealthCheck: Date.now()

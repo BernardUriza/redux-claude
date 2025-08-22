@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { systemPrompt, userPrompt, stream = false } = body
+    const { systemPrompt, userPrompt, stream = false, conversationHistory = [] } = body
 
     const anthropic = new Anthropic({
       apiKey: apiKey,
@@ -29,12 +29,18 @@ export async function POST(req: NextRequest) {
       const stream = new ReadableStream({
         async start(controller) {
           try {
+            // Build complete conversation with history
+            const messages = [
+              ...conversationHistory,
+              { role: 'user', content: userPrompt }
+            ]
+
             const messageStream = await anthropic.messages.create({
               model: 'claude-3-haiku-20240307',
               max_tokens: 1000,
               temperature: 0.3,
               system: systemPrompt,
-              messages: [{ role: 'user', content: userPrompt }],
+              messages,
               stream: true
             })
 
@@ -60,12 +66,18 @@ export async function POST(req: NextRequest) {
         },
       })
     } else {
+      // Build complete conversation with history
+      const messages = [
+        ...conversationHistory,
+        { role: 'user', content: userPrompt }
+      ]
+
       const response = await anthropic.messages.create({
         model: 'claude-3-haiku-20240307',
         max_tokens: 1000,
         temperature: 0.3,
         system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }]
+        messages
       })
 
       const content = response.content[0]

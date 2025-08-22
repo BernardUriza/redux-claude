@@ -2,13 +2,39 @@
 // Adaptador Claude usando SDK oficial - Bernard Orozco
 
 import type { ProviderAdapter } from '../core/types'
+import type { RootState } from '../../store/store'
+
+// Interface for conversation history
+interface ConversationMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+// Helper function to convert Redux messages to Claude format
+export function convertReduxMessagesToClaudeFormat(messages: any[]): ConversationMessage[] {
+  return messages
+    .filter(msg => msg.type === 'user' || msg.type === 'assistant')
+    .filter(msg => msg.id !== 'welcome_msg') // Exclude welcome message
+    .map(msg => ({
+      role: msg.type as 'user' | 'assistant',
+      content: msg.content
+    }))
+    .slice(-10) // Keep only last 10 messages to avoid token limits
+}
 
 export class ClaudeAdapter implements ProviderAdapter {
   readonly name = 'claude' as const
   private useServerAPI: boolean
+  private conversationHistory: ConversationMessage[]
 
-  constructor(apiKey?: string) {
+  constructor(apiKey?: string, conversationHistory: ConversationMessage[] = []) {
     this.useServerAPI = typeof window !== 'undefined'
+    this.conversationHistory = conversationHistory
+  }
+
+  // Method to update conversation history
+  updateConversationHistory(history: ConversationMessage[]) {
+    this.conversationHistory = history
   }
 
   get isAvailable(): boolean {
@@ -43,7 +69,12 @@ export class ClaudeAdapter implements ProviderAdapter {
           const response = await fetch('/api/claude', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ systemPrompt, userPrompt, stream: true }),
+            body: JSON.stringify({ 
+              systemPrompt, 
+              userPrompt, 
+              stream: true,
+              conversationHistory: this.conversationHistory 
+            }),
             signal
           })
 
@@ -88,7 +119,12 @@ export class ClaudeAdapter implements ProviderAdapter {
           const response = await fetch('/api/claude', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ systemPrompt, userPrompt, stream: false }),
+            body: JSON.stringify({ 
+              systemPrompt, 
+              userPrompt, 
+              stream: false,
+              conversationHistory: this.conversationHistory 
+            }),
             signal
           })
 

@@ -1,8 +1,8 @@
 // 🧠 Hook Médico con Motor Iterativo SOAP - Creado por Bernard Orozco
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { ClaudeAdapter } from '../decision-engine/providers/claude'
+import { ClaudeAdapter, convertReduxMessagesToClaudeFormat } from '../decision-engine/providers/claude'
 import { MedicalQualityValidator } from '../utils/medicalValidator'
 import { IterativeDiagnosticEngine } from '../engine/IterativeDiagnosticEngine'
 import { AdditionalInfoService, InfoRequestMessage } from '../services/AdditionalInfoService'
@@ -120,6 +120,7 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
   const [claudeAdapter] = useState(() => new ClaudeAdapter())
   const [medicalValidator] = useState(() => new MedicalQualityValidator())
   const [diagnosticEngine] = useState(() => new IterativeDiagnosticEngine(new ClaudeAdapter()))
+  
   const [infoService] = useState(() => new AdditionalInfoService())
   
   const { 
@@ -130,6 +131,18 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
     error,
     iterativeState 
   } = useSelector((state: RootState) => state.medicalChat)
+
+  // Update Claude adapter with conversation history whenever messages change
+  useEffect(() => {
+    const conversationHistory = convertReduxMessagesToClaudeFormat(messages)
+    claudeAdapter.updateConversationHistory(conversationHistory)
+    
+    // Also update the diagnostic engine's adapter
+    const diagnosticEngineAdapter = diagnosticEngine['claudeAdapter'] // Access private property
+    if (diagnosticEngineAdapter && typeof diagnosticEngineAdapter.updateConversationHistory === 'function') {
+      diagnosticEngineAdapter.updateConversationHistory(conversationHistory)
+    }
+  }, [messages, claudeAdapter, diagnosticEngine])
 
   const sendMedicalQuery = useCallback(async (message: string, requestId?: string) => {
     if (!message.trim() || streaming.isActive) return
