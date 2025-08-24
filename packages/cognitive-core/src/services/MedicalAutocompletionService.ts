@@ -32,18 +32,34 @@ export interface AutocompletionResult {
 
 export class MedicalAutocompletionService {
   
+  /**
+   * Detecta si el texto contiene artefactos de template que necesitan limpieza
+   */
+  private needsCleanup(text: string): boolean {
+    return text.includes('[') && text.includes(']') && 
+           (text.includes('[FEMENINO]') || text.includes('[MASCULINO]') || 
+            !!text.match(/\[\d+\]/) || text.includes('[antecedentes]'))
+  }
+  
   async generateCompletionSuggestions(request: AutocompletionRequest): Promise<AutocompletionResult> {
     try {
+      // Enhanced prompt context for cleanup detection
+      const needsCleanup = this.needsCleanup(request.partialInput)
+      const contextualInfo = needsCleanup ? 
+        'ALERTA: Este texto contiene artefactos de template ([corchetes]) que necesitan limpieza antes del análisis.' : 
+        'Texto normal que requiere análisis para autocompletado.'
+
       // Use SOLID decisionalMiddleware pattern
       const response = await callClaudeForDecision(
         'medical_autocompletion',
-        request.partialInput,
+        `${contextualInfo}\n\nTEXTO A PROCESAR: ${request.partialInput}`,
         'claude',
         undefined,
         undefined,
         {
           medicalSpecialty: request.medicalSpecialty,
-          patientContext: request.patientContext
+          patientContext: request.patientContext,
+          needsCleanup
         }
       )
 

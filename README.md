@@ -1,25 +1,26 @@
-# 🏥 Redux Claude - Sistema Médico AI de Nueva Generación
+# 🏥 Redux Claude - Plataforma Médica AI Enterprise
 
 [![Deploy Status](https://api.netlify.com/api/v1/badges/your-site-id/deploy-status)](https://app.netlify.com/sites/your-site-name/deploys)
 
-*Creado por Bernard Orozco*
+*Arquitectura SOLID por Bernard Orozco*
 
 ## 🚀 Demo en Vivo
 
-🌐 **[Ver Demo](https://redux-claude-medical.netlify.app)** - Experiencia médica AI en tiempo real
+🌐 **[Ver Demo](https://redux-claude-medical.netlify.app)** - Sistema médico con contexto persistente
 
 ## 📖 Descripción
 
-Redux Claude es una plataforma médica avanzada que combina **streaming en tiempo real**, **validación inteligente** y **arquitectura modular** para crear la experiencia médica más avanzada de 2025.
+Redux Claude es una **plataforma médica enterprise-grade** que combina **arquitectura SOLID**, **contexto persistente** y **13 agentes especializados** para crear el sistema médico AI más avanzado de 2025.
 
-### ✨ Características Principales
+### ✨ Características Enterprise
 
-- 🔄 **Streaming en tiempo real** con Claude AI
-- 🛡️ **Validación médica inteligente** (150+ términos especializados)
-- 📋 **Interface médica profesional** con dark mode
-- 🏗️ **Arquitectura monorepo escalable**
-- 📱 **Responsive design** para dispositivos médicos
-- 📋 **Copy-to-clipboard** para diagnósticos
+- 🧠 **Contexto médico persistente** - Historial completo entre consultas
+- 🤖 **Autocompletado médico inteligente** - Templates SOAP estructurados
+- 🛡️ **Medicina defensiva integrada** - Priorización por gravedad
+- 🏗️ **Arquitectura SOLID escalable** - 13 agentes especializados
+- ⚡ **Streaming en tiempo real** - Respuestas progresivas con Claude AI
+- 📱 **Interface médica profesional** - Diseño responsive enterprise
+- 🔧 **Circuit breakers y métricas** - Monitoreo en tiempo real
 
 ## 🚀 Inicio Rápido
 
@@ -116,233 +117,231 @@ El proyecto incluye configuración automática para Netlify con soporte para:
 
 ---
 
-## 📊 Arquitectura del Sistema Completo
+## 📊 Arquitectura SOLID Enterprise
 
 ```mermaid
 graph TB
-    subgraph "🖥️ Frontend Layer"
-        A[CognitiveDashboard] --> B[EnhancedMedicalMessage]
+    subgraph "🖥️ Presentation Layer"
+        A[CognitiveDashboard] --> B[MedicalAutocompletion]
         A --> C[CognitiveAgentsPanel]
-        A --> D[IterativeDiagnosticProgress]
-        A --> E[UrgencyIndicator]
-        A --> F[SOAPDisplay]
-        A --> G[FollowUpTracker]
-        A --> H[MedicalNotes]
-        A --> I[RealTimeMetrics]
+        A --> D[SOAPDisplay]
+        A --> E[RealTimeMetrics]
+        B --> F[AutocompletionTemplates]
+        C --> G[13 Specialized Agents]
     end
     
-    subgraph "🧠 Cognitive Core Package"
-        J[useMedicalChat Hook] --> K[MedicalContentValidator]
-        J --> L[DefensiveMedicineValidator]
-        J --> M[UrgencyClassifier]
-        K --> N[Redux Store]
-        L --> N
-        M --> N
-        N --> O[ClaudeAdapter]
-        N --> P[StreamingService]
+    subgraph "🧠 Business Logic (SOLID)"
+        H[useMedicalChat] --> I[MedicalAutocompletionService]
+        H --> J[DecisionalMiddleware]
+        I --> J
+        J --> K[AgentRegistry - 13 Agents]
+        J --> L[CircuitBreakers]
+        K --> M[ClaudeAdapter with Context]
     end
     
-    subgraph "🏗️ Decision Engine"
-        Q[DecisionEngineService] --> R[IterativeDiagnosticEngine]
-        R --> S[SOAPProcessor]
-        R --> T[SOAPResolver]
-        S --> U[AdditionalInfoService]
+    subgraph "📊 State Management"
+        N[Redux Store] --> O[Medical Context History]
+        N --> P[Agent Status & Metrics]
+        N --> Q[Streaming State]
+        O --> M
+        H --> N
     end
     
-    subgraph "⚡ Real-time Processing"
-        V[Claude API] --> W[Streaming Chunks]
-        W --> X[Progressive Display]
-        X --> Y[Copy to Clipboard]
+    subgraph "🔄 Context & Streaming"
+        M --> R[Claude API with History]
+        R --> S[Conversation Context]
+        R --> T[Progressive Streaming]
+        S --> O
+        T --> Q
     end
     
-    A --> J
-    J --> Q
-    O --> V
-    Q --> O
-    W --> N
+    A --> H
+    H --> N
+    N --> M
+    M --> R
     
     style A fill:#1e293b,stroke:#3b82f6,color:#fff
-    style J fill:#0f172a,stroke:#06b6d4,color:#fff
-    style Q fill:#7c3aed,stroke:#5b21b6,color:#fff
-    style V fill:#059669,stroke:#10b981,color:#fff
+    style J fill:#7c3aed,stroke:#5b21b6,color:#fff
+    style N fill:#059669,stroke:#10b981,color:#fff
+    style R fill:#dc2626,stroke:#b91c1c,color:#fff
 ```
 
 ---
 
-## 🛡️ Sistema de Medicina Defensiva (FASE 3)
+## 🛡️ Flujo de Medicina Defensiva + Autocompletado
 
 ```mermaid
 flowchart TD
     A[👨‍⚕️ Input Médico] --> B[MedicalContentValidator]
     B --> C{Contenido Médico Válido?}
     
-    C -->|No| D[DefensiveMedicineValidator]
-    D --> E[Guía Educativa + Redirección]
+    C -->|No| D[Autocompletado Inteligente]
+    D --> E[🤖 MedicalAutocompletionService]
+    E --> F[DecisionalMiddleware]
+    F --> G[3 Templates SOAP]
+    G --> H[Usuario Selecciona Template]
+    H --> A
     
-    C -->|Sí| F[UrgencyClassifier]
-    F --> G{Nivel de Urgencia}
+    C -->|Sí| I[Context History Manager]
+    I --> J[Redux Store + Conversation]
+    J --> K[UrgencyClassifier]
+    K --> L{Nivel de Urgencia}
     
-    G -->|Crítico| H[🚨 PROTOCOLO EMERGENCIA]
-    G -->|Alto| I[⚠️ REFERENCIA URGENTE]
-    G -->|Medio| J[📋 EVALUACIÓN PRIORITARIA]
-    G -->|Bajo| K[📅 SEGUIMIENTO RUTINARIO]
+    L -->|Crítico| M[🚨 PROTOCOLO EMERGENCIA]
+    L -->|Alto| N[⚠️ REFERENCIA URGENTE] 
+    L -->|Medio| O[📋 EVALUACIÓN PRIORITARIA]
+    L -->|Bajo| P[📅 SEGUIMIENTO RUTINARIO]
     
-    H --> L[IterativeDiagnosticEngine]
-    I --> L
-    J --> L
-    K --> L
+    M --> Q[13 Agentes Especializados]
+    N --> Q
+    O --> Q
+    P --> Q
     
-    L --> M[SOAPProcessor]
-    M --> N[SOAPResolver]
-    N --> O[DecisionEngineService]
+    Q --> R[DecisionalMiddleware SOLID]
+    R --> S[ClaudeAdapter + Context]
+    S --> T[🤖 Claude AI + History]
+    T --> U[Streaming Response]
+    U --> V[⚡ Real-time SOAP]
     
-    O --> P[ClaudeAdapter]
-    P --> Q[🤖 Claude AI Analysis]
-    Q --> R[StreamingService]
-    R --> S[⚡ Real-time SOAP Response]
-    
-    S --> T[UrgencyIndicator Display]
-    S --> U[SOAPDisplay]
-    S --> V[FollowUpTracker]
-    S --> W[MedicalNotes]
+    V --> W[Context Update]
+    W --> J
+    V --> X[UI Components]
     
     style A fill:#3b82f6,stroke:#1e40af,color:#fff
-    style H fill:#dc2626,stroke:#b91c1c,color:#fff
-    style I fill:#f59e0b,stroke:#d97706,color:#fff
-    style L fill:#7c3aed,stroke:#5b21b6,color:#fff
-    style S fill:#059669,stroke:#047857,color:#fff
+    style E fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style M fill:#dc2626,stroke:#b91c1c,color:#fff
+    style Q fill:#059669,stroke:#047857,color:#fff
+    style T fill:#f59e0b,stroke:#d97706,color:#fff
 ```
 
 ---
 
-## ⚡ Monorepo + Streaming Architecture
+## ⚡ Flujo SOLID + Contexto Persistente
 
 ```mermaid
 sequenceDiagram
     participant U as 👨‍⚕️ Usuario
-    participant CD as 🖥️ CognitiveDashboard
-    participant CH as 🧠 useMedicalChat Hook
-    participant CC as 📦 Cognitive Core
-    participant DE as 🏗️ DecisionEngine
-    participant CA as 🤖 ClaudeAdapter
-    participant SS as ⚡ StreamingService
+    participant CD as 🖥️ CognitiveDashboard  
+    participant AS as 🤖 AutocompletionService
+    participant DM as 🏗️ DecisionalMiddleware
+    participant CH as 🧠 ContextHistoryManager
     participant RS as 📚 Redux Store
+    participant CA as ⚕️ ClaudeAdapter
+    participant API as 🔥 Claude API
     
-    U->>CD: Input médico
-    CD->>CH: sendMedicalQuery()
-    CH->>CC: MedicalContentValidator
+    U->>CD: Input médico incompleto
+    CD->>AS: generateCompletionSuggestions()
+    AS->>DM: callClaudeForDecision('medical_autocompletion')
+    DM->>CH: getConversationHistory()
+    CH->>RS: messages.slice(-10)
+    RS-->>CH: conversationHistory[]
+    CH-->>DM: history context
+    DM->>CA: makeRequest(prompt + history)
+    CA->>API: messages: [...history, newInput]
+    API-->>CA: 3 SOAP templates
+    CA-->>DM: structured response
+    DM-->>AS: MedicalAutocompletionDecision
+    AS-->>CD: suggestions[]
+    CD->>U: Modal con 3 opciones
     
-    alt Contenido Inválido
-        CC->>RS: Store rejection
-        RS->>CD: Display educational guide
-    else Contenido Válido
-        CC->>CC: UrgencyClassifier
-        CC->>DE: Process with IterativeDiagnosticEngine
-        DE->>CA: Send to Claude API
-        
-        loop Real-time Streaming
-            CA->>SS: Stream chunk
-            SS->>RS: Update state
-            RS->>CD: Progressive display
-            CD->>U: Real-time updates
-        end
-        
-        CA->>DE: Complete analysis
-        DE->>CC: SOAPProcessor + SOAPResolver
-        CC->>RS: Final SOAP structure
-        RS->>CD: Display complete analysis
-        CD->>U: Show copy button + urgency indicators
+    U->>CD: Selecciona template + datos
+    CD->>CH: sendMedicalQuery(completedInput)
+    CH->>RS: updateConversationHistory()
+    CH->>DM: processWithContext()
+    DM->>CA: requestWithFullHistory()
+    CA->>API: complete conversation context
+    
+    loop Streaming Contextual
+        API-->>CA: chunk with context awareness
+        CA-->>RS: updateStreamingState()
+        RS-->>CD: progressive display
+        CD-->>U: real-time SOAP response
     end
     
-    Note over U,CD: 🏥 Sistema completo con medicina defensiva
+    Note over U,CD: 🧠 Contexto médico preservado entre consultas
 ```
 
 ---
 
-## 🏗️ Estructura Monorepo Modular
+## 🏗️ Arquitectura SOLID Enterprise 
 
 ```mermaid
 graph TB
-    subgraph "📂 Redux Claude Root"
-        A[package.json<br/>Workspace Config] --> B[next.config.js<br/>Export + Netlify]
-        A --> C[netlify.toml<br/>Deploy Config]
-        A --> D[tsconfig.json<br/>TypeScript]
+    subgraph "📂 Monorepo Workspace"
+        A[package.json<br/>Workspace + Scripts] --> B[next.config.js<br/>Static Export]
+        A --> C[netlify.toml<br/>Production Deploy]
+        A --> D[tsconfig.json<br/>Strict TypeScript]
     end
     
-    subgraph "📦 packages/cognitive-core"
-        E[🧠 Decision Engine] --> F[🤖 ClaudeAdapter]
-        F --> G[🛡️ Validators]
-        G --> H[📚 Redux Store]
-        H --> I[🔗 Hooks]
+    subgraph "🧠 Cognitive Core (SOLID)"
+        E[📋 AgentRegistry<br/>13 Specialists] --> F[🔧 DecisionalMiddleware<br/>SOLID Pattern]
+        F --> G[🤖 MedicalAutocompletionService<br/>Refactored]
+        F --> H[⚕️ ClaudeAdapter<br/>Context Manager]
+        H --> I[📚 Redux Store<br/>State + History]
+        I --> J[🔗 useMedicalChat<br/>Context Hook]
         
-        J[🏥 SOAP Processing] --> K[📋 SOAPProcessor]
-        K --> L[🔍 SOAPResolver]
-        
-        M[⚡ Streaming] --> N[📡 StreamingService]
-        N --> O[🔄 Real-time Updates]
+        K[🛡️ Circuit Breakers] --> L[📊 Agent Metrics]
+        K --> M[⚡ Streaming Service]
+        M --> N[🔄 Real-time Context]
     end
     
-    subgraph "🎨 src/components"
-        P[CognitiveDashboard] --> Q[EnhancedMedicalMessage]
-        P --> R[CognitiveAgentsPanel]
-        P --> S[IterativeDiagnosticProgress]
-        P --> T[UrgencyIndicator]
-        P --> U[SOAPDisplay]
-        P --> V[FollowUpTracker]
-        P --> W[MedicalNotes]
-        P --> X[RealTimeMetrics]
+    subgraph "🎨 Enterprise UI"
+        O[CognitiveDashboard] --> P[MedicalAutocompletion<br/>Template Modal]
+        O --> Q[CognitiveAgentsPanel<br/>13 Agents Status]
+        O --> R[SOAPDisplay<br/>Structured Output]
+        O --> S[RealTimeMetrics<br/>System Monitor]
+        P --> T[3 SOAP Templates<br/>Editable Fields]
     end
     
-    subgraph "🌐 Deployment"
-        Y[Static Export] --> Z[Netlify CDN]
-        Z --> AA[Global Distribution]
+    subgraph "🌐 Production Ready"
+        U[Static Build] --> V[Netlify Edge]
+        V --> W[Global CDN]
+        W --> X[Security Headers]
     end
     
     A --> E
-    E --> P
-    P --> Y
+    E --> O
+    O --> U
     
-    style E fill:#0f172a,stroke:#06b6d4,color:#fff
-    style P fill:#1e293b,stroke:#3b82f6,color:#fff
-    style Y fill:#059669,stroke:#047857,color:#fff
-    style Z fill:#f59e0b,stroke:#d97706,color:#fff
+    style E fill:#7c3aed,stroke:#5b21b6,color:#fff
+    style F fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style O fill:#1e293b,stroke:#3b82f6,color:#fff
+    style U fill:#059669,stroke:#047857,color:#fff
 ```
 
 ---
 
-## 🎯 Características del Sistema
+## 🎯 Características Enterprise
 
-### 🛡️ **Sistema de Medicina Defensiva (FASE 3)**
-- **DefensiveMedicineValidator**: Valida contenido médico profesional
-- **UrgencyClassifier**: Clasifica urgencia por gravedad sobre probabilidad
-- **UrgencyIndicator**: Alertas visuales críticas/altas/medias/bajas
-- **ProtocoloEmergencia**: Activación automática para casos críticos
+### 🧠 **Contexto Médico Persistente (NUEVO)**
+- **ConversationHistoryManager**: Mantiene contexto completo entre consultas
+- **ClaudeAdapter + Context**: Envía historial completo a Claude API
+- **Redux Store Integration**: Fuente única de verdad para conversaciones
+- **convertReduxMessagesToClaudeFormat**: Transformación automática de contexto
 
-### ⚡ **Motor Iterativo + Orquestador Cognitivo**
-- **IterativeDiagnosticEngine**: Procesamiento diagnóstico iterativo
-- **DecisionEngineService**: Orquestación de decisiones médicas
-- **SOAPProcessor + SOAPResolver**: Análisis SOAP estructurado automático
-- **AdditionalInfoService**: Solicitud inteligente de información adicional
+### 🤖 **Autocompletado Médico Inteligente (NUEVO)**
+- **MedicalAutocompletionService**: Refactorizado con patrón SOLID
+- **DecisionalMiddleware Integration**: Reutiliza arquitectura existente
+- **3 Templates SOAP**: Básico, Detallado y Especializado automáticos
+- **Detección de Especialidades**: Inferencia inteligente de contexto médico
 
-### 🧠 **Cognitive Core Package Completo**
-- **useMedicalChat Hook**: Gestión completa del chat médico
-- **Redux Store Médico**: Estado predictible con tipos médicos específicos
-- **ClaudeAdapter**: Integración nativa con Claude AI
-- **StreamingService**: Streaming en tiempo real palabra por palabra
+### 🏗️ **Arquitectura SOLID Enterprise**
+- **13 Agentes Especializados**: Registry unificado con circuit breakers
+- **Single Responsibility**: Cada servicio tiene una función específica
+- **Dependency Inversion**: Interfaces abstractas sobre implementaciones
+- **Open/Closed**: Sistema extensible sin modificar código base
 
-### 📱 **Interface Médica Profesional**
-- **CognitiveDashboard**: Panel principal multi-pestaña responsive
-- **EnhancedMedicalMessage**: Mensajes médicos con copy-to-clipboard
-- **IterativeDiagnosticProgress**: Progreso diagnóstico en tiempo real
-- **CognitiveAgentsPanel**: Panel de agentes cognitivos activos
-- **FollowUpTracker**: Seguimiento de recordatorios médicos
-- **MedicalNotes**: Notas médicas con trazabilidad completa
+### 🛡️ **Sistema de Medicina Defensiva Avanzado**
+- **UrgencyClassifier**: Priorización por gravedad médica real
+- **DefensiveMedicineValidator**: Validación profesional automática
+- **Circuit Breakers**: Protección contra fallos de agentes
+- **Fallback Systems**: Templates y respuestas de emergencia
 
-### 🌐 **Deploy Production-Ready**
-- **Next.js 15 Static Export**: Optimizado para Netlify
-- **Monorepo Workspaces**: Gestión modular de dependencias
-- **Headers de Seguridad**: CSP, CORS, XSS protection
-- **Environment Variables**: Configuración segura de API keys
+### 📊 **Monitoreo y Métricas en Tiempo Real**
+- **AgentMetrics**: Métricas individuales por especialista
+- **RealTimeMetrics**: Dashboard con estado del sistema
+- **Performance Tracking**: Latencia y confianza por agente
+- **Health Monitoring**: Estado global de 13 agentes especializados
 
 ---
 

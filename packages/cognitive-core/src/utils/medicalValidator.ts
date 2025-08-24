@@ -45,12 +45,15 @@ export class MedicalContentValidator {
     // Temporales médicos
     'años', 'meses', 'días', 'horas', 'semana', 'semanas', 'crónico', 'agudo', 'recurrente', 'episodio',
     
-    // Exámenes y procedimientos
+    // Exámenes y procedimientos - EXPANDIDO
     'rayos', 'tomografía', 'resonancia', 'ecografía', 'biopsia', 'análisis',
-    'hemograma', 'glucosa', 'colesterol', 'presión', 'temperatura', 'pa', 'fc'
+    'hemograma', 'glucosa', 'colesterol', 'presión', 'temperatura', 'pa', 'fc',
+    'hba1c', 'hemoglobina', 'glicosilada', 'control', 'revisión', 'seguimiento',
+    'consulta', 'cita', 'evaluación', 'monitoreo', 'exámenes', 'pruebas',
+    'total', 'nivel', 'valores', 'resultados', 'hdl', 'ldl', 'triglicéridos'
   ]
 
-  // Patrones de casos clínicos válidos
+  // Patrones de casos clínicos válidos - MEJORADO
   private readonly medicalPatterns = [
     /paciente\s+(masculino|femenino|femenina|masculina|de|con|presenta)/i,
     /años?\s+(presenta|refiere|acude|consulta)/i,
@@ -66,7 +69,16 @@ export class MedicalContentValidator {
     /laboratorios?\s+(muestran?|revelan?|reportan?)/i,
     /lesiones?\s+(eritematosas?|pruriginosas?)/i,
     /(empeoran?|mejoran?)\s+con/i,
-    /desde\s+hace\s+\d+\s+(días?|meses?|años?)/i
+    /desde\s+hace\s+\d+\s+(días?|meses?|años?)/i,
+    // NUEVOS PATRONES PARA CONSULTAS DE CONTROL
+    /(acude|consulta|viene)\s+(para|por)\s+(control|revisión|seguimiento)/i,
+    /laboratorios?\s*:\s*(glucosa|colesterol|hba1c|hemoglobina)/i,
+    /(control|seguimiento|revisión)\s+(de|con|por)/i,
+    /(glucosa|colesterol|hba1c)\s+(\d+\.?\d*)\s*(mg\/dl|%)/i,
+    /valores?\s+(de|en)\s+(laboratorio|análisis|pruebas)/i,
+    /resultados?\s+(de|del)\s+(análisis|examen|laboratorio)/i,
+    /consulta\s+(médica|de\s+control|preventiva)/i,
+    /evaluación\s+(médica|clínica|de\s+rutina)/i
   ]
 
   // Patrones que NO son médicos
@@ -90,6 +102,10 @@ export class MedicalContentValidator {
    */
   public validateMedicalContent(text: string): BasicMedicalValidationResult {
     const cleanText = text.toLowerCase().trim()
+    // Normalizar corchetes y espacios extra para mejores matches
+    const normalizedText = cleanText
+      .replace(/\[([^\]]*)\]/g, '$1')  // Remover corchetes pero mantener contenido
+      .replace(/\s+/g, ' ')           // Normalizar espacios múltiples
     
     if (cleanText.length < 10) {
       return {
@@ -101,7 +117,7 @@ export class MedicalContentValidator {
     }
 
     // Verificar patrones explícitamente no médicos
-    const nonMedicalMatches = this.nonMedicalPatterns.filter(pattern => pattern.test(cleanText))
+    const nonMedicalMatches = this.nonMedicalPatterns.filter(pattern => pattern.test(normalizedText))
     if (nonMedicalMatches.length > 0) {
       return {
         isValid: false,
@@ -111,38 +127,47 @@ export class MedicalContentValidator {
       }
     }
 
-    // Verificar patrones médicos estructurados
-    const medicalPatternMatches = this.medicalPatterns.filter(pattern => pattern.test(cleanText))
-    const medicalTermMatches = this.medicalTerms.filter(term => cleanText.includes(term))
+    // Verificar patrones médicos estructurados (usar texto normalizado)
+    const medicalPatternMatches = this.medicalPatterns.filter(pattern => 
+      pattern.test(normalizedText) || pattern.test(cleanText)
+    )
+    const medicalTermMatches = this.medicalTerms.filter(term => 
+      normalizedText.includes(term) || cleanText.includes(term)
+    )
 
-    // Calcular puntuación
+    // Calcular puntuación - MÁS GENEROSO
     let score = 0
     
     // Peso alto para patrones médicos estructurados
-    score += medicalPatternMatches.length * 25
+    score += medicalPatternMatches.length * 20  // Reducido de 25 a 20
     
     // Peso medio para términos médicos
-    score += medicalTermMatches.length * 5
+    score += medicalTermMatches.length * 8      // Aumentado de 5 a 8
     
     // Bonificación por estructura de caso clínico
-    if (this.hasClinicStructure(cleanText)) {
-      score += 30
+    if (this.hasClinicStructure(normalizedText)) {
+      score += 25  // Reducido de 30 a 25
     }
 
-    // Penalización más suave por falta de contexto médico
-    if (!this.hasAgeGenderContext(cleanText)) {
-      score -= 5  // Reducido aún más para ser menos punitivo
+    // Bonificación especial para consultas de control/laboratorios
+    if (this.isControlConsultation(normalizedText)) {
+      score += 35  // NUEVA bonificación alta para controles
     }
+
+    // Sin penalización por falta de contexto - demasiado restrictivo
+    // if (!this.hasAgeGenderContext(normalizedText)) {
+    //   score -= 5
+    // }
 
     const confidence = Math.min(score / 100, 0.98)
 
-    // Ajuste más flexible para casos clínicos completos
-    if (confidence < 0.25 && medicalTermMatches.length < 3) {  // Más flexible
+    // Threshold más bajo y flexible para casos válidos
+    if (confidence < 0.15 && medicalTermMatches.length < 2) {  // MÁS flexible
       return {
         isValid: false,
         confidence: 1 - confidence,
         rejectionReason: 'insufficient_medical_context',
-        suggestedFormat: 'Incluye: edad, género, síntomas principales, duración, antecedentes relevantes'
+        suggestedFormat: 'Incluye información médica relevante: síntomas, laboratorios o contexto clínico'
       }
     }
 
@@ -158,14 +183,15 @@ export class MedicalContentValidator {
   private hasClinicStructure(text: string): boolean {
     const structureIndicators = [
       /(años?|edad)/i,
-      /(presenta|refiere|acude|consulta|con)/i,
-      /(síntomas?|dolor|molestias?|mareo|mareos|debilidad)/i,
-      /(desde|hace|durante|de\s+\d+)/i,
-      /(antecedentes?|historia|diabética|hipertensa|medicación|medicamento)/i
+      /(presenta|refiere|acude|consulta|con|viene)/i,
+      /(síntomas?|dolor|molestias?|mareo|mareos|debilidad|laboratorios|control|análisis)/i,
+      /(desde|hace|durante|de\s+\d+|para\s+control)/i,
+      /(antecedentes?|historia|diabética|hipertensa|medicación|medicamento|glucosa|colesterol|hba1c)/i,
+      /(mg\/dl|%|valores?|resultados?)/i  // NUEVO: patrones de laboratorios
     ]
 
     const matchCount = structureIndicators.filter(pattern => pattern.test(text)).length
-    return matchCount >= 2  // Reducido de 3 a 2 para ser menos restrictivo
+    return matchCount >= 2  // Mantener 2 para flexibilidad
   }
 
   /**
@@ -177,6 +203,25 @@ export class MedicalContentValidator {
     
     // Retorna true si tiene edad Y género, o al menos uno de ellos
     return agePattern.test(text) && genderPattern.test(text)
+  }
+
+  /**
+   * Verifica si es una consulta de control médico o laboratorios
+   */
+  private isControlConsultation(text: string): boolean {
+    const controlPatterns = [
+      /(acude|consulta|viene)\s+(para|por)\s+(control|revisión|seguimiento)/i,
+      /laboratorios?\s*:\s*(glucosa|colesterol|hba1c|hemoglobina)/i,
+      /(control|seguimiento|revisión)\s+(médico|de\s+rutina|periódico)/i,
+      /(glucosa|colesterol|hba1c)\s+\d+/i,
+      /valores?\s+(de|laboratorio|análisis)/i,
+      /resultados?\s+(de|del)\s+(análisis|examen|laboratorio)/i,
+      /consulta\s+(de\s+control|preventiva|de\s+rutina)/i,
+      /evaluación\s+(médica|clínica|de\s+control)/i,
+      /monitoreo\s+(de|médico)/i
+    ]
+
+    return controlPatterns.some(pattern => pattern.test(text))
   }
 
   /**
@@ -282,7 +327,7 @@ export class MedicalQualityValidator {
     )
 
     return {
-      isValid: confidence > 0.4, // Reducido aún más para ser menos restrictivo
+      isValid: confidence > 0.3, // Reducido aún más para consultas de control
       confidence,
       medicalTermsFound: medicalTerms,
       missingCriticalData: missingData,
@@ -353,26 +398,34 @@ export class MedicalQualityValidator {
 
   private identifyMissingCriticalData(text: string): string[] {
     const missing: string[] = []
+    // Normalizar texto igual que en el validador básico
     const cleanText = text.toLowerCase()
+    const normalizedText = cleanText
+      .replace(/\[([^\]]*)\]/g, '$1')  // Remover corchetes
+      .replace(/\s+/g, ' ')
 
-    if (!cleanText.match(/\d+\s*años?/)) {
+    // Verificar edad - usar texto normalizado
+    if (!normalizedText.match(/\d+\s*años?/)) {
       missing.push('Edad del paciente')
     }
 
-    if (!cleanText.match(/(masculino|femenino|femenina|masculina|hombre|mujer)/i)) {
+    // Verificar género - usar texto normalizado
+    if (!normalizedText.match(/(masculino|femenino|femenina|masculina|hombre|mujer)/i)) {
       missing.push('Género del paciente')
     }
 
-    if (!cleanText.match(/(desde|hace|durante|\d+\s*(días?|meses|horas?|semanas?))/i)) {
+    // NUEVA LÓGICA: Para consultas de control, la cronología no es crítica
+    const isControlConsult = this.isControlConsultation(normalizedText)
+    
+    if (!isControlConsult && !normalizedText.match(/(desde|hace|durante|\d+\s*(días?|meses|horas?|semanas?))/i)) {
       missing.push('Cronología/duración de síntomas')
     }
 
-    // Hacer antecedentes opcional - no crítico
-    // if (!cleanText.match(/(antecedentes?|historia\s+(de|médica|familiar))/i)) {
-    //   missing.push('Antecedentes médicos')
-    // }
-
-    if (!cleanText.match(/(síntomas?|dolor|presenta|refiere|molestias?|lesiones?)/i)) {
+    // NUEVA LÓGICA: Para consultas de control, los laboratorios reemplazan la sintomatología
+    const hasLabResults = normalizedText.match(/(glucosa|colesterol|hba1c|hemoglobina)\s+\d+/i)
+    const hasSymptoms = normalizedText.match(/(síntomas?|dolor|presenta|refiere|molestias?|lesiones?)/i)
+    
+    if (!isControlConsult && !hasSymptoms && !hasLabResults) {
       missing.push('Sintomatología clara')
     }
 
@@ -381,42 +434,66 @@ export class MedicalQualityValidator {
 
   private evaluateStructure(text: string): number {
     const cleanText = text.toLowerCase()
+    // Normalizar texto
+    const normalizedText = cleanText
+      .replace(/\[([^\]]*)\]/g, '$1')
+      .replace(/\s+/g, ' ')
+    
     let score = 0
 
     // Estructura demográfica (30%)
-    if (cleanText.match(/paciente\s+(masculino|femenino|\d+\s*años?)/i)) score += 0.3
+    if (normalizedText.match(/paciente\s+(masculino|femenino|\d+\s*años?)/i)) score += 0.3
     
-    // Presentación de síntomas (25%)  
-    if (cleanText.match(/(presenta|refiere|acude\s+por|consulta\s+por)/i)) score += 0.25
+    // Presentación de síntomas O consulta de control (25%)  
+    if (normalizedText.match(/(presenta|refiere|acude\s+por|consulta\s+por|acude\s+para\s+control)/i)) score += 0.25
     
-    // Cronología (20%)
-    if (cleanText.match(/(desde|hace|durante|\d+\s*(días?|meses|horas?))/i)) score += 0.2
+    // Cronología O laboratorios (20%) - NUEVA lógica
+    const hasChronology = normalizedText.match(/(desde|hace|durante|\d+\s*(días?|meses|horas?))/i)
+    const hasLabResults = normalizedText.match(/(glucosa|colesterol|hba1c)\s+\d+/i)
+    if (hasChronology || hasLabResults) score += 0.2
     
     // Contexto médico (15%)
-    if (cleanText.match(/(antecedentes?|historia|medicamentos?)/i)) score += 0.15
+    if (normalizedText.match(/(antecedentes?|historia|medicamentos?|laboratorios)/i)) score += 0.15
     
-    // Detalles específicos (10%)
-    if (cleanText.match(/(localizado|irradiado|asociado|acompañado)/i)) score += 0.1
+    // Detalles específicos O valores de laboratorio (10%)
+    const hasSpecificDetails = normalizedText.match(/(localizado|irradiado|asociado|acompañado)/i)
+    const hasLabValues = normalizedText.match(/(mg\/dl|%|valores?)/i)
+    if (hasSpecificDetails || hasLabValues) score += 0.1
 
     return Math.min(score, 1.0)
   }
 
   private evaluateClinicalCoherence(text: string): number {
     const cleanText = text.toLowerCase()
+    const normalizedText = cleanText.replace(/\[([^\]]*)\]/g, '$1').replace(/\s+/g, ' ')
     let coherenceScore = 0.5 // Base
 
     // Coherencia sintomática
     const cardiacTerms = ['dolor', 'torácico', 'pecho', 'corazón', 'palpitaciones']
     const giTerms = ['abdominal', 'náuseas', 'vómitos', 'diarrea', 'estómago']
     const neuroTerms = ['cefalea', 'mareo', 'neurológico', 'cabeza', 'confusión']
+    
+    // NUEVO: Términos de control/laboratorios
+    const labTerms = ['glucosa', 'colesterol', 'hba1c', 'hemoglobina', 'laboratorios', 'control', 'análisis']
 
-    const cardiacCount = cardiacTerms.filter(term => cleanText.includes(term)).length
-    const giCount = giTerms.filter(term => cleanText.includes(term)).length
-    const neuroCount = neuroTerms.filter(term => cleanText.includes(term)).length
+    const cardiacCount = cardiacTerms.filter(term => normalizedText.includes(term)).length
+    const giCount = giTerms.filter(term => normalizedText.includes(term)).length
+    const neuroCount = neuroTerms.filter(term => normalizedText.includes(term)).length
+    const labCount = labTerms.filter(term => normalizedText.includes(term)).length
 
     // Si hay clustering de síntomas por sistema, aumenta coherencia
     if (cardiacCount >= 2 || giCount >= 2 || neuroCount >= 2) {
       coherenceScore += 0.3
+    }
+    
+    // NUEVA: Coherencia para consultas de control/laboratorios
+    if (labCount >= 2) {
+      coherenceScore += 0.4  // Más puntos para laboratorios coherentes
+    }
+    
+    // Bonificación por consulta estructurada de control
+    if (this.isControlConsultation(normalizedText)) {
+      coherenceScore += 0.2
     }
 
     return Math.min(coherenceScore, 1.0)
@@ -579,5 +656,25 @@ export class MedicalQualityValidator {
     }
 
     return improvements
+  }
+
+  /**
+   * Verifica si es una consulta de control médico o laboratorios
+   * Duplicado desde MedicalContentValidator para evitar dependencia
+   */
+  private isControlConsultation(text: string): boolean {
+    const controlPatterns = [
+      /(acude|consulta|viene)\s+(para|por)\s+(control|revisión|seguimiento)/i,
+      /laboratorios?\s*:\s*(glucosa|colesterol|hba1c|hemoglobina)/i,
+      /(control|seguimiento|revisión)\s+(médico|de\s+rutina|periódico)/i,
+      /(glucosa|colesterol|hba1c)\s+\d+/i,
+      /valores?\s+(de|laboratorio|análisis)/i,
+      /resultados?\s+(de|del)\s+(análisis|examen|laboratorio)/i,
+      /consulta\s+(de\s+control|preventiva|de\s+rutina)/i,
+      /evaluación\s+(médica|clínica|de\s+control)/i,
+      /monitoreo\s+(de|médico)/i
+    ]
+
+    return controlPatterns.some(pattern => pattern.test(text))
   }
 }

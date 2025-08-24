@@ -81,6 +81,10 @@ export type { StreamingChunk } from './streaming'
 export { MedicalAutocompletionService } from './services/MedicalAutocompletionService'
 export type { AutocompletionSuggestion, AutocompletionRequest, AutocompletionResult } from './services/MedicalAutocompletionService'
 
+// === MEDICAL PROMPT ORCHESTRATOR ===
+export { medicalOrchestrator, MedicalPromptOrchestrator } from './services/MedicalPromptOrchestrator'
+export type { PatientFormData, OrchestrationResult } from './services/MedicalPromptOrchestrator'
+
 // === CONFIGURACIÓN RÁPIDA ===
 export interface CognitiveCoreConfig {
   claudeApiKey?: string

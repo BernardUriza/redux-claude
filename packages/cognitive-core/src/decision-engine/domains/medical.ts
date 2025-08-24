@@ -7,7 +7,7 @@ import type {
   ValidationResult 
 } from '../core/types'
 import { getAgentDefinition } from '../../services/agentRegistry'
-import { AgentType } from '../../types/agents'
+import { AgentType, MedicalAutocompletionDecision, CriticalDataValidationDecision, SpecialtyDetectionDecision } from '../../types/agents'
 
 // Tipos específicos del dominio médico
 export interface DiagnosticDecision {
@@ -73,10 +73,13 @@ export type MedicalDecision =
   | ValidationDecision 
   | TreatmentDecision 
   | DocumentationDecision
+  | MedicalAutocompletionDecision
+  | CriticalDataValidationDecision
+  | SpecialtyDetectionDecision
 
 export class MedicalStrategy implements DomainStrategy<MedicalDecision> {
   readonly domain = 'medical' as const
-  readonly supportedTypes = ['diagnosis', 'triage', 'validation', 'treatment', 'documentation', 'clinical_pharmacology', 'pediatric_specialist', 'hospitalization_criteria', 'family_education', 'objective_validation', 'defensive_differential']
+  readonly supportedTypes = ['diagnosis', 'triage', 'validation', 'treatment', 'documentation', 'clinical_pharmacology', 'pediatric_specialist', 'hospitalization_criteria', 'family_education', 'objective_validation', 'defensive_differential', 'medical_autocompletion', 'critical_data_validation', 'specialty_detection']
 
   buildSystemPrompt(decisionType: string, request: BaseDecisionRequest): string {
     // Para los nuevos tipos especializados, usar prompts del AGENT_REGISTRY
@@ -86,7 +89,10 @@ export class MedicalStrategy implements DomainStrategy<MedicalDecision> {
       'hospitalization_criteria': AgentType.HOSPITALIZATION_CRITERIA,
       'family_education': AgentType.FAMILY_EDUCATION,
       'objective_validation': AgentType.OBJECTIVE_VALIDATION,
-      'defensive_differential': AgentType.DEFENSIVE_DIFFERENTIAL
+      'defensive_differential': AgentType.DEFENSIVE_DIFFERENTIAL,
+      'medical_autocompletion': AgentType.MEDICAL_AUTOCOMPLETION,
+      'critical_data_validation': AgentType.CRITICAL_DATA_VALIDATION,
+      'specialty_detection': AgentType.SPECIALTY_DETECTION
     }
     
     const agentType = agentTypeMap[decisionType]
@@ -224,6 +230,76 @@ Generate structured medical documentation using SOAP format:
   "follow_up_required": true|false
 }`
 
+      case 'medical_autocompletion':
+        return `{
+  "suggestions": [
+    {
+      "id": "basic",
+      "title": "Consulta Básica",
+      "description": "Estructura mínima requerida",
+      "template": "Paciente [género] de [edad] años presenta [síntoma principal] desde hace [tiempo]. [Características del síntoma]. Antecedentes: [antecedentes].",
+      "confidence": 0.85,
+      "category": "basic"
+    },
+    {
+      "id": "detailed", 
+      "title": "Consulta Detallada",
+      "description": "Incluye exploración física",
+      "template": "Paciente [género] de [edad] años consulta por [motivo principal] de [tiempo]. SUBJETIVO: [síntomas]. OBJETIVO: [exploración].",
+      "confidence": 0.90,
+      "category": "detailed"
+    },
+    {
+      "id": "specialized",
+      "title": "Consulta Especializada", 
+      "description": "Formato SOAP completo",
+      "template": "CASO CLÍNICO: [descripción completa con formato SOAP].",
+      "confidence": 0.95,
+      "category": "specialized"
+    }
+  ],
+  "enhanced_template": "template mejorado basado en input",
+  "detected_specialty": "especialidad médica inferida",
+  "patient_context": {
+    "age_inferred": "edad inferida",
+    "gender_inferred": "género inferido", 
+    "main_complaint": "queja principal",
+    "specialty_indicators": ["indicadores de especialidad"]
+  }
+}`
+
+      case 'critical_data_validation':
+        return `{
+  "missing_fields": [
+    {
+      "field": "edad",
+      "reason": "Necesaria para dosificación y diagnósticos diferenciales",
+      "criticality": "high",
+      "suggested_prompt": "¿Qué edad tiene el paciente?"
+    }
+  ],
+  "can_proceed": false,
+  "completion_percentage": 0.65,
+  "next_required_action": "Completar datos básicos del paciente",
+  "required_form_fields": ["age", "gender", "chief_complaint", "allergies"]
+}`
+
+      case 'specialty_detection':
+        return `{
+  "detected_specialty": "cardiología",
+  "confidence": 0.85,
+  "indicators": ["dolor torácico", "disnea de esfuerzo", "historia de HTA"],
+  "suggested_form_fields": ["chest_pain_characteristics", "dyspnea_scale", "cardiovascular_history"],
+  "specialized_prompts": ["Dolor torácico - Estudio completo", "Síndrome coronario agudo"],
+  "recommended_tabs": [
+    {
+      "tab_name": "cardiovascular_exam",
+      "priority": 1,
+      "fields": ["blood_pressure", "heart_rate", "cardiac_auscultation"]
+    }
+  ]
+}`
+
       default:
         return '{ "result": "unknown decision type" }'
     }
@@ -249,6 +325,15 @@ Generate structured medical documentation using SOAP format:
           break
         case 'documentation':
           this.validateDocumentationDecision(decision, errors, warnings)
+          break
+        case 'medical_autocompletion':
+          this.validateMedicalAutocompletionDecision(decision, errors, warnings)
+          break
+        case 'critical_data_validation':
+          this.validateCriticalDataValidationDecision(decision, errors, warnings)
+          break
+        case 'specialty_detection':
+          this.validateSpecialtyDetectionDecision(decision, errors, warnings)
           break
       }
     } catch (error) {
@@ -339,6 +424,76 @@ Generate structured medical documentation using SOAP format:
           follow_up_required: true
         } as DocumentationDecision
 
+      case 'medical_autocompletion':
+        return {
+          suggestions: [
+            {
+              id: 'basic_fallback',
+              title: 'Consulta Básica',
+              description: 'Estructura mínima requerida',
+              template: 'Paciente [género] de [edad] años presenta [síntoma principal] desde hace [tiempo]. [Características del síntoma]. Antecedentes: [antecedentes].',
+              confidence: 0.7,
+              category: 'basic'
+            },
+            {
+              id: 'detailed_fallback',
+              title: 'Consulta Detallada',
+              description: 'Con exploración física',
+              template: 'Paciente [género] de [edad] años consulta por [síntoma principal] de [tiempo]. SUBJETIVO: [síntomas]. OBJETIVO: [exploración]. Antecedentes: [antecedentes].',
+              confidence: 0.75,
+              category: 'detailed'
+            },
+            {
+              id: 'specialized_fallback',
+              title: 'Consulta Especializada',
+              description: 'Formato SOAP completo',
+              template: 'CASO CLÍNICO: Paciente [género], [edad] años, presenta [síntoma principal]. SUBJETIVO: [historia]. OBJETIVO: [exploración]. ANÁLISIS: [diagnósticos]. PLAN: [tratamiento].',
+              confidence: 0.8,
+              category: 'specialized'
+            }
+          ],
+          enhanced_template: 'Consulta médica estructurada requerida',
+          detected_specialty: undefined,
+          patient_context: {
+            age_inferred: undefined,
+            gender_inferred: undefined,
+            main_complaint: 'síntomas reportados',
+            specialty_indicators: []
+          }
+        } as MedicalAutocompletionDecision
+
+      case 'critical_data_validation':
+        return {
+          missing_fields: [
+            {
+              field: 'datos_básicos',
+              reason: 'Error del sistema - información crítica no disponible',
+              criticality: 'high',
+              suggested_prompt: 'Complete los datos básicos del paciente'
+            }
+          ],
+          can_proceed: false,
+          completion_percentage: 0.1,
+          next_required_action: 'Sistema en fallback - completar información manualmente',
+          required_form_fields: ['age', 'gender', 'chief_complaint']
+        } as CriticalDataValidationDecision
+
+      case 'specialty_detection':
+        return {
+          detected_specialty: 'medicina_general',
+          confidence: 0.5,
+          indicators: ['fallback del sistema'],
+          suggested_form_fields: ['basic_symptoms', 'general_examination'],
+          specialized_prompts: ['Consulta general'],
+          recommended_tabs: [
+            {
+              tab_name: 'general_form',
+              priority: 1,
+              fields: ['age', 'gender', 'symptoms']
+            }
+          ]
+        } as SpecialtyDetectionDecision
+
       default:
         return {} as MedicalDecision
     }
@@ -401,12 +556,85 @@ Generate structured medical documentation using SOAP format:
     }
   }
 
+  private validateMedicalAutocompletionDecision(decision: any, errors: string[], warnings: string[]): void {
+    if (!decision.suggestions || !Array.isArray(decision.suggestions)) {
+      errors.push('Missing or invalid suggestions array')
+    } else {
+      if (decision.suggestions.length !== 3) {
+        errors.push('Must have exactly 3 suggestions')
+      }
+      
+      decision.suggestions.forEach((suggestion: any, index: number) => {
+        if (!suggestion.id || !suggestion.title || !suggestion.template) {
+          errors.push(`Suggestion ${index + 1} missing required fields (id, title, template)`)
+        }
+        if (!suggestion.category || !['basic', 'detailed', 'specialized'].includes(suggestion.category)) {
+          errors.push(`Suggestion ${index + 1} has invalid category`)
+        }
+      })
+    }
+
+    if (!decision.patient_context) {
+      warnings.push('Missing patient context inference')
+    }
+  }
+
+  private validateCriticalDataValidationDecision(decision: any, errors: string[], warnings: string[]): void {
+    if (typeof decision.can_proceed !== 'boolean') {
+      errors.push('Missing or invalid can_proceed field')
+    }
+
+    if (!decision.missing_fields || !Array.isArray(decision.missing_fields)) {
+      errors.push('Missing or invalid missing_fields array')
+    } else {
+      decision.missing_fields.forEach((field: any, index: number) => {
+        if (!field.field || !field.reason || !field.criticality || !field.suggested_prompt) {
+          errors.push(`Missing field ${index + 1} missing required properties`)
+        }
+        if (!['high', 'medium', 'low'].includes(field.criticality)) {
+          errors.push(`Missing field ${index + 1} has invalid criticality`)
+        }
+      })
+    }
+
+    if (typeof decision.completion_percentage !== 'number' || decision.completion_percentage < 0 || decision.completion_percentage > 1) {
+      errors.push('Invalid completion_percentage (must be number between 0-1)')
+    }
+  }
+
+  private validateSpecialtyDetectionDecision(decision: any, errors: string[], warnings: string[]): void {
+    if (!decision.detected_specialty || typeof decision.detected_specialty !== 'string') {
+      errors.push('Missing or invalid detected_specialty')
+    }
+
+    if (typeof decision.confidence !== 'number' || decision.confidence < 0 || decision.confidence > 1) {
+      errors.push('Invalid confidence (must be number between 0-1)')
+    }
+
+    if (!decision.indicators || !Array.isArray(decision.indicators)) {
+      warnings.push('Missing indicators array')
+    }
+
+    if (!decision.recommended_tabs || !Array.isArray(decision.recommended_tabs)) {
+      warnings.push('Missing recommended_tabs array')
+    } else {
+      decision.recommended_tabs.forEach((tab: any, index: number) => {
+        if (!tab.tab_name || typeof tab.priority !== 'number' || !Array.isArray(tab.fields)) {
+          errors.push(`Recommended tab ${index + 1} missing required properties`)
+        }
+      })
+    }
+  }
+
   private inferDecisionType(decision: any): string {
     if ('differentials' in decision) return 'diagnosis'
     if ('acuity_level' in decision) return 'triage'
     if ('valid' in decision && 'risk_assessment' in decision) return 'validation'
     if ('medications' in decision) return 'treatment'
     if ('soap' in decision) return 'documentation'
+    if ('suggestions' in decision && Array.isArray(decision.suggestions)) return 'medical_autocompletion'
+    if ('can_proceed' in decision && 'missing_fields' in decision) return 'critical_data_validation'
+    if ('detected_specialty' in decision && 'confidence' in decision) return 'specialty_detection'
     return 'unknown'
   }
 
@@ -422,6 +650,12 @@ Generate structured medical documentation using SOAP format:
         return 'medications' in decision
       case 'documentation':
         return 'soap' in decision
+      case 'medical_autocompletion':
+        return 'suggestions' in decision && Array.isArray(decision.suggestions) && decision.suggestions.length === 3
+      case 'critical_data_validation':
+        return 'can_proceed' in decision && 'missing_fields' in decision && 'completion_percentage' in decision
+      case 'specialty_detection':
+        return 'detected_specialty' in decision && 'confidence' in decision && 'indicators' in decision
       default:
         return false
     }

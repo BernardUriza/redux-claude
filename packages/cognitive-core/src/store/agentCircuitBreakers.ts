@@ -63,7 +63,9 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.FAMILY_EDUCATION]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 }),
     [AgentType.OBJECTIVE_VALIDATION]: createInitialCircuitBreaker({ maxFailures: 4, cooldownMs: 45000 }),
     [AgentType.DEFENSIVE_DIFFERENTIAL]: createInitialCircuitBreaker({ maxFailures: 2, cooldownMs: 15000 }),
-    [AgentType.MEDICAL_AUTOCOMPLETION]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 })
+    [AgentType.MEDICAL_AUTOCOMPLETION]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 }),
+    [AgentType.CRITICAL_DATA_VALIDATION]: createInitialCircuitBreaker({ maxFailures: 2, cooldownMs: 15000 }),
+    [AgentType.SPECIALTY_DETECTION]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 })
   },
   metrics: {
     [AgentType.DIAGNOSTIC]: createInitialMetrics(),
@@ -78,7 +80,9 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.FAMILY_EDUCATION]: createInitialMetrics(),
     [AgentType.OBJECTIVE_VALIDATION]: createInitialMetrics(),
     [AgentType.DEFENSIVE_DIFFERENTIAL]: createInitialMetrics(),
-    [AgentType.MEDICAL_AUTOCOMPLETION]: createInitialMetrics()
+    [AgentType.MEDICAL_AUTOCOMPLETION]: createInitialMetrics(),
+    [AgentType.CRITICAL_DATA_VALIDATION]: createInitialMetrics(),
+    [AgentType.SPECIALTY_DETECTION]: createInitialMetrics()
   },
   agentStatuses: {
     [AgentType.DIAGNOSTIC]: AgentStatus.READY,
@@ -93,11 +97,13 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.FAMILY_EDUCATION]: AgentStatus.READY,
     [AgentType.OBJECTIVE_VALIDATION]: AgentStatus.READY,
     [AgentType.DEFENSIVE_DIFFERENTIAL]: AgentStatus.READY,
-    [AgentType.MEDICAL_AUTOCOMPLETION]: AgentStatus.READY
+    [AgentType.MEDICAL_AUTOCOMPLETION]: AgentStatus.READY,
+    [AgentType.CRITICAL_DATA_VALIDATION]: AgentStatus.READY,
+    [AgentType.SPECIALTY_DETECTION]: AgentStatus.READY
   },
   globalState: {
-    totalAgents: 13,
-    activeAgents: 13, // All 13 agents enabled
+    totalAgents: 15,
+    activeAgents: 15, // All 15 agents enabled
     failedAgents: 0,
     avgSystemLatency: 0,
     lastHealthCheck: Date.now()

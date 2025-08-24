@@ -184,7 +184,14 @@ class DecisionEngineService {
       'triage': 'triage', 
       'validation': 'validation',
       'treatment': 'treatment',
-      'documentation': 'documentation'
+      'documentation': 'documentation',
+      'medical_autocompletion': 'medical_autocompletion',
+      'clinical_pharmacology': 'clinical_pharmacology',
+      'pediatric_specialist': 'pediatric_specialist',
+      'hospitalization_criteria': 'hospitalization_criteria',
+      'family_education': 'family_education',
+      'objective_validation': 'objective_validation',
+      'defensive_differential': 'defensive_differential'
     }
 
     return typeMap[legacyType] || legacyType

@@ -234,7 +234,9 @@ export const CognitiveDashboard = () => {
   const [isAppLoading, setIsAppLoading] = useState(true)
   const [showMainApp, setShowMainApp] = useState(false)
   const [showAutocompletion, setShowAutocompletion] = useState(false)
+  const [showMedicalAssistant, setShowMedicalAssistant] = useState(false)
   const [lastRejectedInput, setLastRejectedInput] = useState('')
+  const [showDataRequiredAlert, setShowDataRequiredAlert] = useState(false)
   
   // Mobile interactions hook
   const { state: mobileState, triggerHaptic, addTouchFeedback, setupGestureDetection } = useMobileInteractions()
@@ -495,6 +497,34 @@ export const CognitiveDashboard = () => {
     e.preventDefault()
     if (!input.trim() || isLoading || isStreaming) return
     
+    // 🛡️ INTERCEPTOR BRUTAL - MEDICAL CONSULTATION FILTER
+    const isMedical = isMedicalConsultation(input)
+    const hasPatientData = hasMinimumPatientData()
+    
+    console.log('🛡️ INTERCEPTOR DEBUG:', {
+      input: input.substring(0, 50) + '...',
+      isMedical,
+      hasPatientData,
+      shouldBlock: isMedical && !hasPatientData
+    })
+    
+    if (isMedical && !hasPatientData) {
+      // Bloquear procesamiento y forzar uso del asistente avanzado
+      console.log('🚫 BLOQUEANDO CONSULTA MÉDICA INCOMPLETA')
+      setLastRejectedInput(input)
+      setShowMedicalAssistant(true)
+      setShowDataRequiredAlert(true)
+      
+      // Mensaje educativo para el usuario
+      triggerHaptic && triggerHaptic('error')
+      
+      // Ocultar alerta después de 5 segundos
+      setTimeout(() => setShowDataRequiredAlert(false), 5000)
+      
+      // NO limpiar el input para que el usuario vea qué fue rechazado
+      return
+    }
+    
     const messageToSend = input
     setInput('')
     
@@ -502,6 +532,71 @@ export const CognitiveDashboard = () => {
     await sendMedicalQuery(messageToSend)
   }
   
+  // 🛡️ MEDICAL CONSULTATION DETECTOR - BRUTAL FILTER
+  const isMedicalConsultation = (text: string): boolean => {
+    const medicalKeywords = [
+      // Términos médicos básicos
+      'paciente', 'doctor', 'síntoma', 'dolor', 'fiebre', 'diagnóstico',
+      'tratamiento', 'medicamento', 'consulta', 'control', 'laboratorio',
+      'examen', 'análisis', 'radiografía', 'ecografía', 'biopsia',
+      
+      // Valores de laboratorio
+      'glucosa', 'colesterol', 'triglicéridos', 'hba1c', 'creatinina',
+      'urea', 'hemoglobina', 'plaquetas', 'leucocitos', 
+      
+      // Signos vitales
+      'presión arterial', 'frecuencia cardíaca', 'temperatura', 'peso',
+      'saturación', 'signos vitales', 'ritmo cardíaco', 'tensión arterial',
+      
+      // Especialidades
+      'cardiología', 'neurología', 'gastroenterología', 'dermatología',
+      'ginecología', 'pediatría', 'traumatología', 'oftalmología',
+      
+      // Patrones médicos
+      'mg/dl', 'mmhg', 'bpm', 'años', 'presenta', 'refiere', 'acude'
+    ]
+    
+    const lowerText = text.toLowerCase()
+    const keywordMatches = medicalKeywords.filter(keyword => 
+      lowerText.includes(keyword.toLowerCase())
+    ).length
+    
+    // Si tiene 2+ keywords médicos Y más de 20 caracteres = consulta médica
+    return keywordMatches >= 2 && text.trim().length > 20
+  }
+
+  const hasMinimumPatientData = (): boolean => {
+    const savedData = localStorage.getItem('medical_patient_data')
+    console.log('📋 PATIENT DATA CHECK:', { savedData: !!savedData })
+    
+    if (!savedData) return false
+    
+    try {
+      const patientData = JSON.parse(savedData)
+      console.log('📋 PARSED DATA:', patientData)
+      
+      // Datos mínimos requeridos: edad, género, motivo consulta
+      const hasMinData = Boolean(
+        patientData.age && 
+        patientData.gender && 
+        patientData.chiefComplaint &&
+        patientData.chiefComplaint.trim().length > 5
+      )
+      
+      console.log('📋 HAS MIN DATA:', hasMinData, {
+        age: !!patientData.age,
+        gender: !!patientData.gender,
+        chiefComplaint: !!patientData.chiefComplaint,
+        ccLength: patientData.chiefComplaint?.length || 0
+      })
+      
+      return hasMinData
+    } catch (error) {
+      console.log('📋 PARSE ERROR:', error)
+      return false
+    }
+  }
+
   // Handle mobile FAB actions
   const handleMobileFab = () => {
     triggerHaptic('medium')
@@ -1079,6 +1174,35 @@ export const CognitiveDashboard = () => {
               </div>
             )}
 
+            {/* 🚨 Data Required Alert */}
+            {showDataRequiredAlert && (
+              <div className="bg-gradient-to-r from-orange-900/80 to-red-900/60 border-t border-orange-500/30 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur-xl">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <svg className="w-6 h-6 text-orange-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-orange-200 font-medium text-sm">
+                      <span className="font-bold">Consulta médica detectada:</span> Se requieren datos del paciente para proceder con análisis seguro.
+                    </p>
+                    <p className="text-orange-300/80 text-xs mt-1">
+                      Complete edad, género y motivo de consulta en el asistente avanzado que se ha abierto.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowDataRequiredAlert(false)}
+                    className="flex-shrink-0 text-orange-400 hover:text-orange-200 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Input Form */}
             <div className={`border-t border-slate-700/50 bg-gradient-to-r from-slate-950/80 to-slate-900/90 backdrop-blur-xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6 ${mobileState.isMobile ? 'safe-area-bottom' : ''} ${keyboardVisible ? 'keyboard-padding' : ''}`}>
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
@@ -1098,21 +1222,39 @@ export const CognitiveDashboard = () => {
                       autoCorrect="on"
                     />
                     
-                    {/* Autocompletion Button */}
+                    {/* Autocompletion Buttons */}
                     {input.trim().length > 10 && !isLoading && !isStreaming && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLastRejectedInput(input)
-                          setShowAutocompletion(true)
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 rounded-lg flex items-center justify-center text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-200 group"
-                        title="Asistente de Autocompletado Médico"
-                      >
-                        <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                      </button>
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex space-x-1">
+                        {/* Simple Autocompletion Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLastRejectedInput(input)
+                            setShowAutocompletion(true)
+                          }}
+                          className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 rounded-lg flex items-center justify-center text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-200 group"
+                          title="Autocompletado Rápido"
+                        >
+                          <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                          </svg>
+                        </button>
+                        
+                        {/* Medical Assistant Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLastRejectedInput(input)
+                            setShowMedicalAssistant(true)
+                          }}
+                          className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-lg flex items-center justify-center text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-200 group"
+                          title="Asistente Médico Inteligente"
+                        >
+                          <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 7.172V5L8 4z" />
+                          </svg>
+                        </button>
+                      </div>
                     )}
                     
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-2xl pointer-events-none opacity-0 transition-opacity duration-300 peer-focus:opacity-100" />
@@ -1158,7 +1300,7 @@ export const CognitiveDashboard = () => {
         </button>
       )}
 
-      {/* Medical Autocompletion Modal */}
+      {/* Medical Autocompletion Modal (Simple) */}
       <MedicalAutocompletion
         partialInput={lastRejectedInput}
         onSelectTemplate={(template) => {
@@ -1174,6 +1316,25 @@ export const CognitiveDashboard = () => {
         onClose={() => {
           setShowAutocompletion(false)
           setLastRejectedInput('')
+        }}
+      />
+
+      {/* Medical Assistant Modal (Unificado) */}
+      <MedicalAutocompletion
+        partialInput={lastRejectedInput || input}
+        isVisible={showMedicalAssistant}
+        onClose={() => {
+          setShowMedicalAssistant(false)
+          setLastRejectedInput('')
+        }}
+        onSelectTemplate={(template) => {
+          setInput(template)
+          setShowMedicalAssistant(false)
+          setLastRejectedInput('')
+          // Focus input after prompt is selected
+          setTimeout(() => {
+            inputRef.current?.focus()
+          }, 100)
         }}
       />
     </div>

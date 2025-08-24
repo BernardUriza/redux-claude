@@ -13,7 +13,9 @@ export enum AgentType {
   FAMILY_EDUCATION = 'family_education',
   OBJECTIVE_VALIDATION = 'objective_validation',
   DEFENSIVE_DIFFERENTIAL = 'defensive_differential',
-  MEDICAL_AUTOCOMPLETION = 'medical_autocompletion'
+  MEDICAL_AUTOCOMPLETION = 'medical_autocompletion',
+  CRITICAL_DATA_VALIDATION = 'critical_data_validation',
+  SPECIALTY_DETECTION = 'specialty_detection'
 }
 
 export enum AgentStatus {
@@ -207,6 +209,32 @@ export type MedicalAutocompletionDecision = {
   }
 }
 
+export type CriticalDataValidationDecision = {
+  missing_fields: Array<{
+    field: string
+    reason: string
+    criticality: 'high' | 'medium' | 'low'
+    suggested_prompt: string
+  }>
+  can_proceed: boolean
+  completion_percentage: number
+  next_required_action: string
+  required_form_fields: string[]
+}
+
+export type SpecialtyDetectionDecision = {
+  detected_specialty: string
+  confidence: number
+  indicators: string[]
+  suggested_form_fields: string[]
+  specialized_prompts: string[]
+  recommended_tabs: Array<{
+    tab_name: string
+    priority: number
+    fields: string[]
+  }>
+}
+
 export type AgentDecision = 
   | DiagnosticDecision 
   | ValidationDecision 
@@ -220,6 +248,8 @@ export type AgentDecision =
   | ObjectiveValidationDecision
   | DefensiveDifferentialDecision
   | MedicalAutocompletionDecision
+  | CriticalDataValidationDecision
+  | SpecialtyDetectionDecision
 
 // Agent registry definition
 export type AgentDefinition = {

@@ -16,14 +16,16 @@ import {
   FamilyEducationDecision,
   ObjectiveValidationDecision,
   DefensiveDifferentialDecision,
-  MedicalAutocompletionDecision
+  MedicalAutocompletionDecision,
+  CriticalDataValidationDecision,
+  SpecialtyDetectionDecision
 } from '../types/agents'
 
 import { decisionEngineService } from '../decision-engine/DecisionEngineService'
 import { getAgentDefinition } from './agentRegistry'
 
 // Tipos para el middleware (mantenidos para compatibilidad)
-export type DecisionType = 'diagnosis' | 'validation' | 'treatment' | 'triage' | 'documentation' | 'clinical_pharmacology' | 'pediatric_specialist' | 'hospitalization_criteria' | 'family_education' | 'objective_validation' | 'defensive_differential' | 'medical_autocompletion'
+export type DecisionType = 'diagnosis' | 'validation' | 'treatment' | 'triage' | 'documentation' | 'clinical_pharmacology' | 'pediatric_specialist' | 'hospitalization_criteria' | 'family_education' | 'objective_validation' | 'defensive_differential' | 'medical_autocompletion' | 'critical_data_validation' | 'specialty_detection'
 export type ProviderType = 'claude' | 'openai' | 'local'
 
 export interface DecisionRequest {
@@ -241,7 +243,9 @@ function getAgentSystemPrompt(type: DecisionType): string {
     'family_education': AgentType.FAMILY_EDUCATION,
     'objective_validation': AgentType.OBJECTIVE_VALIDATION,
     'defensive_differential': AgentType.DEFENSIVE_DIFFERENTIAL,
-    'medical_autocompletion': AgentType.MEDICAL_AUTOCOMPLETION
+    'medical_autocompletion': AgentType.MEDICAL_AUTOCOMPLETION,
+    'critical_data_validation': AgentType.CRITICAL_DATA_VALIDATION,
+    'specialty_detection': AgentType.SPECIALTY_DETECTION
   }
   
   const agentType = agentTypeMap[type]
@@ -737,6 +741,8 @@ export function mapAgentTypeToDecisionType(agentType: AgentType): DecisionType {
     case AgentType.OBJECTIVE_VALIDATION: return 'objective_validation'
     case AgentType.DEFENSIVE_DIFFERENTIAL: return 'defensive_differential'
     case AgentType.MEDICAL_AUTOCOMPLETION: return 'medical_autocompletion'
+    case AgentType.CRITICAL_DATA_VALIDATION: return 'critical_data_validation'
+    case AgentType.SPECIALTY_DETECTION: return 'specialty_detection'
     default: return 'diagnosis'
   }
 }
