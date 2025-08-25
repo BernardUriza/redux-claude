@@ -11,6 +11,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./src/store/selectors": {
+      "import": "./dist/store/selectors/index.js",
+      "types": "./dist/store/selectors/index.d.ts"
     }
   },
   "scripts": {
