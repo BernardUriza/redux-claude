@@ -157,16 +157,34 @@ export interface IterativeState {
   awaitingAdditionalInfo: boolean
 }
 
-// === FASE 4: Estado Redux Médico Completo ===
-export interface MedicalChatState {
+// === ARQUITECTURA MULTINÚCLEO EVOLUCIONADA 2025 ===
+// Creado por Bernard Orozco - Inspirado por Gandalf el Blanco
+
+export interface ChatCore {
   messages: MedicalMessage[]
-  streaming: StreamingState
-  currentSession: {
-    id: string
-    patientId?: string
-    startedAt: number
+  isLoading: boolean
+  lastActivity: number
+  sessionId: string
+}
+
+export interface MedicalChatState {
+  // 🧠 NÚCLEOS DE CONVERSACIÓN SEPARADOS
+  cores: {
+    dashboard: ChatCore      // Chat principal del dashboard
+    assistant: ChatCore      // Chat del asistente médico
+    inference: ChatCore      // Chat de inferencias (futuro)
   }
-  iterativeState: IterativeState
+  
+  // 🏥 ESTADO COMPARTIDO MÉDICO
+  sharedState: {
+    streaming: StreamingState
+    currentSession: {
+      id: string
+      patientId?: string
+      startedAt: number
+    }
+    iterativeState: IterativeState
+  }
   
   // NUEVO: Estructura SOAP Completa
   currentCase: {

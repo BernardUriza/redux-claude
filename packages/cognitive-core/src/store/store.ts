@@ -1,12 +1,11 @@
-// 🧠 Store Médico Multinúcleo - Creado por Bernard Orozco
+// 🧠 Store Médico Multinúcleo EVOLUCIONADO - Creado por Bernard Orozco + Gandalf el Blanco
 import { configureStore } from '@reduxjs/toolkit'
-import medicalChatReducer from './medicalChatSlice'
-import intelligentChatReducer from './intelligentChatSlice'
+import medicalChatReducer from './medicalChatSliceEvolved'
 
 export const store = configureStore({
   reducer: {
-    medicalChat: medicalChatReducer,
-    intelligentChat: intelligentChatReducer
+    medicalChat: medicalChatReducer
+    // 🔥 ELIMINADO: intelligentChat (ahora es cores.assistant)
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

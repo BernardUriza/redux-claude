@@ -108,26 +108,12 @@ export const MedicalAssistant = ({
             <IntelligentMedicalChat className="h-full" showMetrics={false} />
           </div>
           
-          {/* Columna Derecha: Paneles de Información (40%) */}
-          <div className="w-full lg:w-2/5 flex flex-col bg-gray-800/50">
-            
-            {/* Panel de Inferencias Dinámicas (Superior) */}
-            <div className="flex-1 min-h-0">
-              <DynamicInferencePanel 
-                currentMessage={lastUserMessage}
-                className="h-full border-b border-gray-700"
-                onInferenceUpdate={handleInferenceUpdate}
-              />
-            </div>
-            
-            {/* Panel de Resumen Médico (Inferior) */}
-            <div className="flex-1 min-h-0">
-              <MedicalSummaryPanel 
-                currentCase={currentCase}
-                className="h-full"
-              />
-            </div>
-            
+          {/* Columna Derecha: Panel de Resumen Médico Completo */}
+          <div className="w-full lg:w-2/5 bg-gray-800/50">
+            <MedicalSummaryPanel 
+              currentCase={currentCase}
+              className="h-full"
+            />
           </div>
           
         </div>

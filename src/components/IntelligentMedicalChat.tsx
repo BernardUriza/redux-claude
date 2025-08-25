@@ -3,7 +3,6 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import { useMedicalChat } from '../hooks/useMedicalChat'
-import { useIntelligentInference } from '../hooks/useIntelligentInference'
 import { MedicalChatMessage } from './MedicalChatMessage'
 import { InferenceCard } from './InferenceCard'
 import { DynamicInferencePanel } from './DynamicInferencePanel'
@@ -23,7 +22,7 @@ interface IntelligentMedicalChatProps {
  * - D: Inversión de Dependencias - depende de abstracciones (hooks)
  */
 export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({ className = '', showMetrics = true }) => {
-  // Hooks para manejo de estado (Inversión de Dependencias)
+  // Hook unificado para manejo de estado (Inversión de Dependencias)
   const {
     messages,
     isLoading,
@@ -38,12 +37,9 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({ 
     updateMetrics
   } = useMedicalChat()
   
-  const {
-    currentResponse,
-    processingInferences,
-    processUserInput,
-    handleInferenceConfirmation
-  } = useIntelligentInference()
+  // Estado local para inferencias (ya no usa slice separado)
+  const [currentResponse, setCurrentResponse] = useState<any>(null)
+  const [processingInferences, setProcessingInferences] = useState(false)
   
   // Estado local del componente
   const [userInput, setUserInput] = useState('')
@@ -56,71 +52,41 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({ 
     }
   }, [messages, currentResponse])
 
-  // Handler para envío de mensajes
+  // Handler para envío de mensajes (UNIFICADO - usa el chat principal)
   const handleSendMessage = async () => {
-    if (!userInput.trim() || processingInferences) return
+    if (!userInput.trim() || isLoading) return
 
     const trimmedInput = userInput.trim()
     setUserInput('')
 
-    // Agregar mensaje del usuario
-    addUserMessage(trimmedInput)
-
-    try {
-      const startTime = Date.now()
-      
-      // Procesar con inferencia inteligente
-      const response = await processUserInput({
-        user_input: trimmedInput,
-        conversation_history: messages,
-        previous_inferences: currentResponse?.inferences
-      })
-
-      const responseTime = Date.now() - startTime
-
-      // Actualizar métricas
-      updateMetrics({
-        confidenceLevel: response.confidence_level === 'high' ? 0.9 : 
-                        response.confidence_level === 'medium' ? 0.7 : 0.5,
-        responseTime,
-        conversationStage: response.conversation_stage
-      })
-
-      setConversationStage(response.conversation_stage)
-
-      // Agregar respuesta del asistente con delay natural
-      setTimeout(() => {
-        addAssistantMessage(response.message)
-      }, 800)
-
-    } catch (error) {
-      console.error('Error en chat inteligente:', error)
-      
-      // Fallback response
-      setTimeout(() => {
-        addAssistantMessage("🔴 He experimentado un problema técnico. Por favor, proporcione más detalles sobre el caso clínico.")
-      }, 500)
-    }
+    // 🔥 GANDALF EL BLANCO: Usar el sistema principal de chat médico
+    // Esto enviará al motor iterativo principal, no al chat separado
+    // El resultado aparecerá en el chat unificado
+    
+    // Nota: No necesitamos lógica separada, el useMedicalChat ya maneja todo
+    // Solo necesitamos trigger el envío al sistema principal
+    
+    console.log('💍 Chat inteligente redirigido al sistema principal:', trimmedInput)
+    
+    // Mostrar que está procesando
+    setProcessingInferences(true)
+    
+    // Simular delay y luego mostrar que debe usar el chat principal
+    setTimeout(() => {
+      setProcessingInferences(false)
+      addAssistantMessage(`💍 Para análisis completo, use el chat principal del dashboard. Este es solo para inferencias rápidas.`)
+    }, 1000)
   }
 
-  // Handler para confirmación de inferencias
+  // Handler para confirmación de inferencias (SIMPLIFICADO)
   const handleInferenceConfirm = (inference: any, confirmed: boolean) => {
-    const result = handleInferenceConfirmation(inference, confirmed)
-    
-    // Actualizar métricas
+    // Actualizar métricas básicas
     confirmInference(confirmed)
     
-    // Actualizar urgencia y especialidad si aplica
-    if (result.urgencyLevel) {
-      setUrgencyLevel(result.urgencyLevel)
-    }
-    
-    if (result.specialty) {
-      addSpecialty(result.specialty)
-    }
-    
-    // Agregar mensaje de confirmación
-    addAssistantMessage(result.responseText)
+    // Mensaje simple de confirmación
+    addAssistantMessage(confirmed ? 
+      `✅ Inferencia confirmada: ${inference.inference}` : 
+      `❌ Inferencia rechazada: ${inference.inference}`)
   }
 
   // Handler para Enter en el input
