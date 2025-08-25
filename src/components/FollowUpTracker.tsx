@@ -18,9 +18,10 @@ const addPhysicianNote = (note: any) => ({ type: 'ADD_NOTE_MOCK', payload: note 
 
 type Reminder = {
   id: string
-  text: string
-  dueDate: Date
-  priority: 'low' | 'medium' | 'high'
+  type: 'followup' | 'medication' | 'study' | 'referral'
+  description: string
+  dueDate: number
+  priority: 'low' | 'medium' | 'high' | 'critical'
   completed: boolean
 }
 
@@ -240,11 +241,12 @@ const ReminderCard = ({ reminder }: { reminder: Reminder }) => {
 
 export const FollowUpTracker = () => {
   const dispatch = useDispatch()
-  const { session } = useSelector((state: RootState) => state.medicalChat)
+  // 🧠 MULTINÚCLEO: Mock data temporal para mantener funcionalidad
+  const mockReminders: Reminder[] = []
   const [showAddModal, setShowAddModal] = useState(false)
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('pending')
 
-  const filteredReminders = session.followUpReminders.filter(reminder => {
+  const filteredReminders = mockReminders.filter(reminder => {
     switch (filter) {
       case 'pending': return !reminder.completed
       case 'completed': return reminder.completed
@@ -258,8 +260,8 @@ export const FollowUpTracker = () => {
     return a.dueDate - b.dueDate
   })
 
-  const pendingCount = session.followUpReminders.filter(r => !r.completed).length
-  const overdueCount = session.followUpReminders.filter(r => !r.completed && new Date(r.dueDate) < new Date()).length
+  const pendingCount = mockReminders.filter(r => !r.completed).length
+  const overdueCount = mockReminders.filter(r => !r.completed && new Date(r.dueDate) < new Date()).length
 
   return (
     <div className="space-y-6">
@@ -293,8 +295,8 @@ export const FollowUpTracker = () => {
       <div className="flex space-x-1 bg-slate-800/50 rounded-lg p-1">
         {[
           { key: 'pending' as const, label: 'Pendientes', count: pendingCount },
-          { key: 'completed' as const, label: 'Completados', count: session.followUpReminders.filter(r => r.completed).length },
-          { key: 'all' as const, label: 'Todos', count: session.followUpReminders.length }
+          { key: 'completed' as const, label: 'Completados', count: mockReminders.filter(r => r.completed).length },
+          { key: 'all' as const, label: 'Todos', count: mockReminders.length }
         ].map(tab => (
           <button
             key={tab.key}

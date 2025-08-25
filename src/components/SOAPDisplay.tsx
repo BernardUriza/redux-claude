@@ -7,7 +7,13 @@ import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import ReactMarkdown from 'react-markdown'
 import type { RootState } from '@redux-claude/cognitive-core'
-import { updateSOAPSection, addPhysicianNote, updateUrgencyLevel } from '@redux-claude/cognitive-core'
+// 🧠 MULTINÚCLEO: Funciones legacy deshabilitadas - usando mocks
+// import { updateSOAPSection, addPhysicianNote, updateUrgencyLevel } from '@redux-claude/cognitive-core'
+
+// Mocks temporales para mantener funcionalidad
+const updateSOAPSection = (sectionData: any) => ({ type: 'UPDATE_SOAP_SECTION_MOCK', payload: sectionData })
+const addPhysicianNote = (note: any) => ({ type: 'ADD_PHYSICIAN_NOTE_MOCK', payload: note })
+const updateUrgencyLevel = (level: any) => ({ type: 'UPDATE_URGENCY_LEVEL_MOCK', payload: level })
 import type { SOAPStructure, SubjectiveData, ObjectiveFindings, DifferentialDiagnosis, TreatmentPlan } from '@redux-claude/cognitive-core'
 
 interface SOAPSectionProps {
@@ -280,12 +286,18 @@ const PlanContent = ({ data }: { data: TreatmentPlan }) => (
 // Componente principal SOAPDisplay
 export const SOAPDisplay = () => {
   const dispatch = useDispatch()
-  const { currentCase } = useSelector((state: RootState) => state.medicalChat)
+  // 🧠 MULTINÚCLEO: Mock data temporal para mantener funcionalidad
+  const mockCurrentCase = {
+    soap: null,
+    confidence: 0.8,
+    urgencyLevel: 'medium' as const,
+    lastUpdated: Date.now()
+  }
   const [viewMode, setViewMode] = useState<'structured' | 'markdown'>('structured')
 
   // 🔬 DEBUG: Log current case to see what's actually in the store
-  console.log('🔬 SOAPDisplay DEBUG - currentCase:', currentCase)
-  console.log('🔬 SOAPDisplay DEBUG - currentCase.soap:', currentCase.soap)
+  console.log('🔬 SOAPDisplay DEBUG - mockCurrentCase:', mockCurrentCase)
+  console.log('🔬 SOAPDisplay DEBUG - mockCurrentCase.soap:', mockCurrentCase.soap)
 
   const handleSectionEdit = (section: 'subjetivo' | 'objetivo' | 'analisis' | 'plan', data: any) => {
     dispatch(updateSOAPSection({ section, data }))
@@ -295,8 +307,8 @@ export const SOAPDisplay = () => {
   const generateMarkdownContent = (soap: any) => {
     let markdown = `# Análisis SOAP Completo\n\n`
     markdown += `**Confianza:** ${Math.round(soap.confidence * 100)}%\n`
-    markdown += `**Urgencia:** ${currentCase.urgencyLevel.toUpperCase()}\n`
-    markdown += `**Actualizado:** ${new Date(currentCase.lastUpdated).toLocaleString('es-ES')}\n\n`
+    markdown += `**Urgencia:** ${mockCurrentCase.urgencyLevel.toUpperCase()}\n`
+    markdown += `**Actualizado:** ${new Date(mockCurrentCase.lastUpdated).toLocaleString('es-ES')}\n\n`
     
     // Sección Subjetivo
     if (soap.subjetivo) {
@@ -396,7 +408,7 @@ export const SOAPDisplay = () => {
     return markdown
   }
 
-  if (!currentCase.soap) {
+  if (!mockCurrentCase.soap) {
     return (
       <div className="text-center py-8">
         <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -408,7 +420,7 @@ export const SOAPDisplay = () => {
     )
   }
 
-  const soap = currentCase.soap
+  const soap = mockCurrentCase.soap
 
   return (
     <div className="space-y-6">
@@ -445,17 +457,17 @@ export const SOAPDisplay = () => {
             </div>
             <div className="text-sm text-slate-300">
               Urgencia: <span className={`font-semibold ${
-                currentCase.urgencyLevel === 'critical' ? 'text-red-400' :
-                currentCase.urgencyLevel === 'high' ? 'text-orange-400' :
-                currentCase.urgencyLevel === 'medium' ? 'text-yellow-400' : 'text-green-400'
+                mockCurrentCase.urgencyLevel === 'critical' ? 'text-red-400' :
+                mockCurrentCase.urgencyLevel === 'high' ? 'text-orange-400' :
+                mockCurrentCase.urgencyLevel === 'medium' ? 'text-yellow-400' : 'text-green-400'
               }`}>
-                {currentCase.urgencyLevel.toUpperCase()}
+                {mockCurrentCase.urgencyLevel.toUpperCase()}
               </span>
             </div>
           </div>
         </div>
         <div className="text-sm text-slate-400">
-          Actualizado: {new Date(currentCase.lastUpdated).toLocaleString('es-ES')}
+          Actualizado: {new Date(mockCurrentCase.lastUpdated).toLocaleString('es-ES')}
         </div>
       </div>
 

@@ -162,7 +162,7 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({ 
                   Inferencias Médicas Generadas
                 </h4>
                 <div className="space-y-3">
-                  {currentResponse.inferences.map((inference) => (
+                  {currentResponse.inferences.map((inference: any) => (
                     <InferenceCard 
                       key={inference.id} 
                       inference={inference} 

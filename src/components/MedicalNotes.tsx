@@ -220,12 +220,13 @@ const NoteCard = ({ note }: { note: PhysicianNote }) => {
 
 export const MedicalNotes = () => {
   const dispatch = useDispatch()
-  const { session } = useSelector((state: RootState) => state.medicalChat)
+  // 🧠 MULTINÚCLEO: Mock data temporal para mantener funcionalidad
+  const mockNotes: PhysicianNote[] = []
   const [showAddModal, setShowAddModal] = useState(false)
   const [filter, setFilter] = useState<'all' | 'clinical' | 'administrative' | 'legal' | 'observation'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'priority'>('newest')
 
-  const filteredNotes = session.physicianNotes
+  const filteredNotes = mockNotes
     .filter(note => filter === 'all' || note.type === filter)
     .sort((a, b) => {
       switch (sortBy) {
@@ -239,8 +240,8 @@ export const MedicalNotes = () => {
       }
     })
 
-  const notesCount = session.physicianNotes.length
-  const urgentCount = session.physicianNotes.filter(n => n.priority === 'critical' || n.priority === 'high').length
+  const notesCount = mockNotes.length
+  const urgentCount = mockNotes.filter(n => n.priority === 'critical' || n.priority === 'high').length
 
   return (
     <div className="space-y-6">
@@ -275,9 +276,9 @@ export const MedicalNotes = () => {
         <div className="flex space-x-1 bg-slate-800/50 rounded-lg p-1">
           {[
             { key: 'all' as const, label: 'Todas', count: notesCount },
-            { key: 'clinical' as const, label: 'Clínicas', count: session.physicianNotes.filter(n => n.type === 'clinical').length },
-            { key: 'administrative' as const, label: 'Admin', count: session.physicianNotes.filter(n => n.type === 'administrative').length },
-            { key: 'legal' as const, label: 'Legales', count: session.physicianNotes.filter(n => n.type === 'legal').length }
+            { key: 'clinical' as const, label: 'Clínicas', count: mockNotes.filter(n => n.type === 'clinical').length },
+            { key: 'administrative' as const, label: 'Admin', count: mockNotes.filter(n => n.type === 'administrative').length },
+            { key: 'legal' as const, label: 'Legales', count: mockNotes.filter(n => n.type === 'legal').length }
           ].map(tab => (
             <button
               key={tab.key}
