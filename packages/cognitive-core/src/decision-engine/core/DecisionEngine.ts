@@ -9,7 +9,7 @@ import type {
   DecisionResponse,
   DomainStrategy,
   ProviderAdapter,
-  DecisionEngineConfig
+  DecisionEngineConfig,
 } from './types'
 
 export class DecisionEngine {
@@ -24,7 +24,7 @@ export class DecisionEngine {
       timeout: 30000,
       maxRetries: 2,
       enableValidation: true,
-      ...config
+      ...config,
     }
   }
 
@@ -56,7 +56,7 @@ export class DecisionEngine {
       decisionType,
       input,
       context: options.context,
-      previousDecisions: options.previousDecisions
+      previousDecisions: options.previousDecisions,
     }
 
     try {
@@ -77,7 +77,10 @@ export class DecisionEngine {
 
       // 3. Get provider (with fallback)
       const targetProvider = options.provider || this.config.defaultProvider
-      const providersToTry = [targetProvider, ...this.config.fallbackProviders.filter(p => p !== targetProvider)]
+      const providersToTry = [
+        targetProvider,
+        ...this.config.fallbackProviders.filter(p => p !== targetProvider),
+      ]
 
       let lastError: Error | null = null
 
@@ -102,11 +105,14 @@ export class DecisionEngine {
 
           // 5. Parse and validate response
           const decision = this.parseDecisionResponse(response.content)
-          
+
           if (this.config.enableValidation) {
             const validation = strategy.validateDecision(decision, decisionType)
             if (!validation.valid && validation.errors.length > 0) {
-              console.warn(`Validation warnings for ${domain}/${decisionType}:`, validation.warnings)
+              console.warn(
+                `Validation warnings for ${domain}/${decisionType}:`,
+                validation.warnings
+              )
             }
           }
 
@@ -121,7 +127,6 @@ export class DecisionEngine {
             latency,
             provider: providerName,
           }
-
         } catch (error) {
           lastError = error instanceof Error ? error : new Error('Unknown provider error')
           console.warn(`Provider ${providerName} failed:`, lastError.message)
@@ -132,26 +137,25 @@ export class DecisionEngine {
       // 7. All providers failed - return fallback
       console.error('All providers failed, using fallback decision')
       const fallbackDecision = strategy.createFallbackDecision(decisionType, request)
-      
+
       return {
         success: false,
         decision: fallbackDecision as TDecision,
         confidence: 0,
         latency: Date.now() - startTime,
         provider: targetProvider,
-        error: lastError?.message || 'All providers failed'
+        error: lastError?.message || 'All providers failed',
       }
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      
+
       return {
         success: false,
         decision: {} as TDecision,
         confidence: 0,
         latency: Date.now() - startTime,
         provider: options.provider || this.config.defaultProvider,
-        error: errorMessage
+        error: errorMessage,
       }
     }
   }
@@ -169,7 +173,7 @@ export class DecisionEngine {
         return await provider.makeRequest(systemPrompt, userPrompt, signal)
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error')
-        
+
         if (signal?.aborted) {
           throw new Error('Request aborted')
         }
@@ -190,7 +194,7 @@ export class DecisionEngine {
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0])
       }
-      
+
       // If no JSON found, try parsing entire content
       return JSON.parse(content)
     } catch (error) {
@@ -210,11 +214,11 @@ export class DecisionEngine {
     overallHealth: boolean
   }> {
     const strategies = Array.from(this.strategies.keys())
-    
+
     const providers = await Promise.all(
       Array.from(this.providers.entries()).map(async ([name, adapter]) => ({
         name,
-        available: adapter.isAvailable && await adapter.healthCheck()
+        available: adapter.isAvailable && (await adapter.healthCheck()),
       }))
     )
 

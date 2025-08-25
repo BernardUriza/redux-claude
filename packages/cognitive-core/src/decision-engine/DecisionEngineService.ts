@@ -17,7 +17,7 @@ class DecisionEngineService {
       fallbackProviders: ['local'],
       timeout: 30000,
       maxRetries: 2,
-      enableValidation: true
+      enableValidation: true,
     })
   }
 
@@ -43,8 +43,10 @@ class DecisionEngineService {
       // Log available capabilities
       const health = await this.engine.getSystemHealth()
       console.log('📊 Available domains:', health.strategies)
-      console.log('🔌 Available providers:', health.providers.map(p => `${p.name} (${p.available ? 'online' : 'offline'})`))
-
+      console.log(
+        '🔌 Available providers:',
+        health.providers.map(p => `${p.name} (${p.available ? 'online' : 'offline'})`)
+      )
     } catch (error) {
       console.error('❌ Failed to initialize Decision Engine:', error)
       throw error
@@ -66,12 +68,7 @@ class DecisionEngineService {
     await this.initialize()
 
     try {
-      return await this.engine.makeDecision<TDecision>(
-        domain,
-        decisionType,
-        input,
-        options
-      )
+      return await this.engine.makeDecision<TDecision>(domain, decisionType, input, options)
     } catch (error) {
       console.error(`Decision Engine error for ${domain}/${decisionType}:`, error)
       throw error
@@ -80,7 +77,7 @@ class DecisionEngineService {
 
   // Medical domain convenience methods
   async makeMedicalDiagnosis(
-    input: string, 
+    input: string,
     options: { context?: Record<string, unknown>; signal?: AbortSignal } = {}
   ) {
     return this.makeDecision('medical', 'diagnosis', input, options)
@@ -147,7 +144,7 @@ class DecisionEngineService {
     try {
       // Map legacy decision types to new format
       const mappedType = this.mapLegacyDecisionType(decisionType)
-      
+
       const response = await this.makeDecision(
         'medical', // Assume medical domain for legacy calls
         mappedType,
@@ -156,7 +153,7 @@ class DecisionEngineService {
           provider: provider as Provider,
           context,
           previousDecisions,
-          signal
+          signal,
         }
       )
 
@@ -164,15 +161,14 @@ class DecisionEngineService {
         success: response.success,
         decision: response.decision,
         confidence: response.confidence,
-        error: response.error
+        error: response.error,
       }
-
     } catch (error) {
       return {
         success: false,
         decision: {},
         confidence: 0,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       }
     }
   }
@@ -180,18 +176,18 @@ class DecisionEngineService {
   public mapLegacyDecisionType(legacyType: string): string {
     // Map old decision types to new ones
     const typeMap: Record<string, string> = {
-      'diagnosis': 'diagnosis',
-      'triage': 'triage', 
-      'validation': 'validation',
-      'treatment': 'treatment',
-      'documentation': 'documentation',
-      'medical_autocompletion': 'medical_autocompletion',
-      'clinical_pharmacology': 'clinical_pharmacology',
-      'pediatric_specialist': 'pediatric_specialist',
-      'hospitalization_criteria': 'hospitalization_criteria',
-      'family_education': 'family_education',
-      'objective_validation': 'objective_validation',
-      'defensive_differential': 'defensive_differential'
+      diagnosis: 'diagnosis',
+      triage: 'triage',
+      validation: 'validation',
+      treatment: 'treatment',
+      documentation: 'documentation',
+      medical_autocompletion: 'medical_autocompletion',
+      clinical_pharmacology: 'clinical_pharmacology',
+      pediatric_specialist: 'pediatric_specialist',
+      hospitalization_criteria: 'hospitalization_criteria',
+      family_education: 'family_education',
+      objective_validation: 'objective_validation',
+      defensive_differential: 'defensive_differential',
     }
 
     return typeMap[legacyType] || legacyType
@@ -218,25 +214,25 @@ class DecisionEngineService {
     errors: string[]
   }> {
     const errors: string[] = []
-    
+
     try {
       await this.initialize()
       const health = await this.engine.getSystemHealth()
-      
+
       return {
         overall: health.overallHealth,
         domains: health.strategies,
         providers: health.providers,
-        errors
+        errors,
       }
     } catch (error) {
       errors.push(error instanceof Error ? error.message : 'Unknown error')
-      
+
       return {
         overall: false,
         domains: [],
         providers: [],
-        errors
+        errors,
       }
     }
   }
@@ -249,7 +245,7 @@ class DecisionEngineService {
       fallbackProviders: ['local'],
       timeout: 30000,
       maxRetries: 2,
-      enableValidation: true
+      enableValidation: true,
     })
   }
 }
@@ -258,12 +254,7 @@ class DecisionEngineService {
 export const decisionEngineService = new DecisionEngineService()
 
 // Export types for external use
-export type { 
-  Domain, 
-  Provider, 
-  DecisionResponse,
-  BaseDecisionRequest 
-} from './core/types'
+export type { Domain, Provider, DecisionResponse, BaseDecisionRequest } from './core/types'
 
 export type {
   DiagnosticDecision,
@@ -271,5 +262,5 @@ export type {
   ValidationDecision,
   TreatmentDecision,
   DocumentationDecision,
-  MedicalDecision
+  MedicalDecision,
 } from './domains/medical'

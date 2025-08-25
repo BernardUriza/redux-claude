@@ -2,7 +2,6 @@
 // Creado por Bernard Orozco - Fase 1 del Plan de Migración
 
 export class SOAPPrompts {
-  
   /**
    * 📋 Prompt para Sección SUBJETIVO (S)
    * Enfoque: Medicina Familiar holística
@@ -36,7 +35,7 @@ TERMINOLOGÍA:
 - Considerar determinantes sociales de la salud
 
 Responde ÚNICAMENTE en formato JSON válido sin texto adicional.
-`;
+`
 
   /**
    * 🔬 Prompt para Sección OBJETIVO (O)
@@ -86,10 +85,10 @@ CRITERIOS CLÍNICOS:
 - Seguir secuencia sistemática céfalo-caudal
 
 Responde ÚNICAMENTE en formato JSON válido sin texto adicional.
-`;
+`
 
   /**
-   * ⚕️ Prompt para Sección ANÁLISIS (A) 
+   * ⚕️ Prompt para Sección ANÁLISIS (A)
    * Enfoque: Medicina de Urgencias + Especialista (Medicina Defensiva)
    */
   static readonly ANALISIS_PROMPT = `
@@ -143,7 +142,7 @@ MEDICINA DEFENSIVA:
 USAR CÓDIGOS CIE-10 MEXICANOS OFICIALES.
 
 Responde ÚNICAMENTE en formato JSON válido sin texto adicional.
-`;
+`
 
   /**
    * 📝 Prompt para Sección PLAN (P)
@@ -230,7 +229,7 @@ NORMATIVA MEXICANA:
 - Cumplir con requisitos de incapacidades laborales
 
 Responde ÚNICAMENTE en formato JSON válido sin texto adicional.
-`;
+`
 
   /**
    * 🧠 Prompt Integrador SOAP Completo
@@ -267,7 +266,7 @@ RESPONSABILIDAD PROFESIONAL:
 Este expediente debe cumplir con estándares médico-legales mexicanos para ser válido ante autoridades sanitarias.
 
 Analiza el SOAP completo y proporciona validación integral.
-`;
+`
 
   /**
    * 🎯 Prompt Especializado por Personalidad de Agente
@@ -277,7 +276,7 @@ Analiza el SOAP completo y proporciona validación integral.
       S: this.SUBJETIVO_PROMPT,
       O: this.OBJETIVO_PROMPT,
       A: this.ANALISIS_PROMPT,
-      P: this.PLAN_PROMPT
+      P: this.PLAN_PROMPT,
     }
 
     const personalityModifiers = {
@@ -315,11 +314,11 @@ Analiza el SOAP completo y proporciona validación integral.
         - Verificación de coherencia S-O-A-P
         - Identificación de riesgos y gaps
         - Asegurar estándares de seguridad
-      `
+      `,
     }
 
     const modifier = personalityModifiers[personality as keyof typeof personalityModifiers] || ''
-    
+
     return basePrompts[section] + '\n\n' + modifier
   }
 
@@ -352,5 +351,5 @@ ESTRUCTURA DE RESPUESTA (JSON):
   "flags": ["Observaciones importantes"],
   "recomendaciones": ["Sugerencias de mejora"]
 }
-`;
+`
 }

@@ -17,7 +17,7 @@ export function convertReduxMessagesToClaudeFormat(messages: any[]): Conversatio
     .filter(msg => msg.id !== 'welcome_msg') // Exclude welcome message
     .map(msg => ({
       role: msg.type as 'user' | 'assistant',
-      content: msg.content
+      content: msg.content,
     }))
     .slice(-10) // Keep only last 10 messages to avoid token limits
 }
@@ -48,16 +48,16 @@ export class ClaudeAdapter implements ProviderAdapter {
   }
 
   async makeRequest(
-    systemPrompt: string, 
-    userPrompt: string, 
+    systemPrompt: string,
+    userPrompt: string,
     signal?: AbortSignal
   ): Promise<{ content: string; success: boolean; error?: string }> {
     return this.makeStreamingRequest(systemPrompt, userPrompt, signal)
   }
 
   async makeStreamingRequest(
-    systemPrompt: string, 
-    userPrompt: string, 
+    systemPrompt: string,
+    userPrompt: string,
     signal?: AbortSignal,
     onChunk?: (chunk: string) => void
   ): Promise<{ content: string; success: boolean; error?: string }> {
@@ -69,13 +69,13 @@ export class ClaudeAdapter implements ProviderAdapter {
           const response = await fetch('/api/claude', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              systemPrompt, 
-              userPrompt, 
+            body: JSON.stringify({
+              systemPrompt,
+              userPrompt,
               stream: true,
-              conversationHistory: this.conversationHistory 
+              conversationHistory: this.conversationHistory,
             }),
-            signal
+            signal,
           })
 
           if (!response.ok) {
@@ -98,7 +98,7 @@ export class ClaudeAdapter implements ProviderAdapter {
                 if (line.startsWith('data: ')) {
                   const data = line.slice(6)
                   if (data === '[DONE]') continue
-                  
+
                   try {
                     const parsed = JSON.parse(data)
                     if (parsed.text) {
@@ -119,13 +119,13 @@ export class ClaudeAdapter implements ProviderAdapter {
           const response = await fetch('/api/claude', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              systemPrompt, 
-              userPrompt, 
+            body: JSON.stringify({
+              systemPrompt,
+              userPrompt,
               stream: false,
-              conversationHistory: this.conversationHistory 
+              conversationHistory: this.conversationHistory,
             }),
-            signal
+            signal,
           })
 
           if (!response.ok) {
@@ -143,7 +143,7 @@ export class ClaudeAdapter implements ProviderAdapter {
           return {
             content: '',
             success: false,
-            error: 'Server API key not configured'
+            error: 'Server API key not configured',
           }
         }
 
@@ -161,13 +161,13 @@ export class ClaudeAdapter implements ProviderAdapter {
             temperature: 0.3,
             system: systemPrompt,
             messages: [{ role: 'user', content: userPrompt }],
-            stream: true
+            stream: true,
           })
 
           let fullContent = ''
           for await (const chunk of stream) {
             if (signal?.aborted) throw new Error('Request aborted')
-            
+
             if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
               const text = chunk.delta.text
               fullContent += text
@@ -182,7 +182,7 @@ export class ClaudeAdapter implements ProviderAdapter {
             max_tokens: 1000,
             temperature: 0.3,
             system: systemPrompt,
-            messages: [{ role: 'user', content: userPrompt }]
+            messages: [{ role: 'user', content: userPrompt }],
           })
 
           const content = response.content[0]
@@ -198,16 +198,16 @@ export class ClaudeAdapter implements ProviderAdapter {
         return {
           content: '',
           success: false,
-          error: 'Request aborted'
+          error: 'Request aborted',
         }
       }
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      
+
       return {
         content: '',
         success: false,
-        error: `Claude API error: ${errorMessage}`
+        error: `Claude API error: ${errorMessage}`,
       }
     }
   }
@@ -233,7 +233,6 @@ export class ClaudeAdapter implements ProviderAdapter {
       } catch {
         return false
       }
-
     } catch (error) {
       console.warn('Claude health check failed:', error)
       return false

@@ -1,10 +1,11 @@
 # 🏥 Plan de Migración: Redux Claude → Flujo SOAP Completo
 
-*Creado por Bernard Orozco*
+_Creado por Bernard Orozco_
 
 ## 📊 Análisis de Compatibilidad Actual
 
 ### ✅ **LO QUE YA TIENES BIEN**
+
 - **Streaming Real**: Simulas el razonamiento médico progresivo ✨
 - **Validación Médica**: Filtras contenido no clínico 🛡️
 - **Arquitectura Modular**: SOLID + Redux permite evolución 🏗️
@@ -13,23 +14,29 @@
 ### ⚠️ **GAPS CRÍTICOS IDENTIFICADOS**
 
 #### 1. **Falta Estructura SOAP Formal**
-Tu app actualmente hace "análisis general" pero no sigue el estándar médico SOAP (NOM-004-SSA3-2012):
+
+Tu app actualmente hace "análisis general" pero no sigue el estándar médico SOAP
+(NOM-004-SSA3-2012):
+
 - **S**ubjetivo: Lo que dice el paciente
-- **O**bjetivo: Signos vitales, exploración física  
+- **O**bjetivo: Signos vitales, exploración física
 - **A**nálisis: Diagnóstico diferencial estructurado
 - **P**lan: Tratamiento + seguimiento + criterios de derivación
 
 #### 2. **No Hay Proceso Iterativo**
+
 El médico real hace ciclos de validación - tu app genera respuesta única.
 
 #### 3. **Ausencia de Medicina Defensiva**
-No priorizas "alta gravedad" sobre "alta probabilidad" (ej: dolor torácico = descartar IAM antes que gastritis).
+
+No priorizas "alta gravedad" sobre "alta probabilidad" (ej: dolor torácico =
+descartar IAM antes que gastritis).
 
 ---
 
 ## 🚀 Plan de Migración: 4 Fases
 
-### **FASE 1: Estructura SOAP Formal** ⏱️ *2-3 días*
+### **FASE 1: Estructura SOAP Formal** ⏱️ _2-3 días_
 
 ```mermaid
 graph TD
@@ -39,7 +46,7 @@ graph TD
     C --> E[Sección O - Objetivo]
     C --> F[Sección A - Análisis]
     C --> G[Sección P - Plan]
-    
+
     D --> H[Streaming Estructurado]
     E --> H
     F --> H
@@ -47,6 +54,7 @@ graph TD
 ```
 
 #### **Implementación:**
+
 ```typescript
 // packages/cognitive-core/src/processors/SOAPProcessor.ts
 export class SOAPProcessor {
@@ -55,13 +63,14 @@ export class SOAPProcessor {
       subjetivo: await this.extractSubjectiveData(input),
       objetivo: await this.inferObjectiveFindings(input),
       analisis: await this.generateDifferentialDx(input),
-      plan: await this.createTreatmentPlan(input)
+      plan: await this.createTreatmentPlan(input),
     }
   }
 }
 ```
 
 #### **Nuevo Prompt Structure:**
+
 ```typescript
 const SOAPPrompt = `
 Analiza este caso siguiendo NOM-004-SSA3-2012:
@@ -89,7 +98,7 @@ Analiza este caso siguiendo NOM-004-SSA3-2012:
 
 ---
 
-### **FASE 2: Razonamiento Iterativo** ⏱️ *3-4 días*
+### **FASE 2: Razonamiento Iterativo** ⏱️ _3-4 días_
 
 ```mermaid
 sequenceDiagram
@@ -97,15 +106,15 @@ sequenceDiagram
     participant V as Validator
     participant I as IterativeEngine
     participant C as Claude
-    
+
     U->>V: Caso Clínico
     V->>I: Input Validado
-    
+
     loop Ciclo Diagnóstico
         I->>C: Hipótesis Round N
         C->>I: Análisis Parcial
         I->>I: Valida Coherencia
-        
+
         alt Necesita Más Info
             I->>U: Pregunta Específica
             U->>I: Datos Adicionales
@@ -116,26 +125,27 @@ sequenceDiagram
 ```
 
 #### **Nueva Arquitectura Iterativa:**
+
 ```typescript
 // packages/cognitive-core/src/engine/IterativeDiagnosticEngine.ts
 export class IterativeDiagnosticEngine {
   private cycles: DiagnosticCycle[] = []
-  
+
   async processWithValidation(case: MedicalCase): Promise<SOAPResult> {
     let cycle = 1
     let confidence = 0
-    
+
     while (confidence < 0.85 && cycle <= 3) {
       const analysis = await this.runDiagnosticCycle(case, cycle)
-      
+
       if (this.needsMoreData(analysis)) {
         return this.requestAdditionalInfo(analysis)
       }
-      
+
       confidence = this.calculateConfidence(analysis)
       cycle++
     }
-    
+
     return this.finalizeSOAP(analysis)
   }
 }
@@ -143,22 +153,33 @@ export class IterativeDiagnosticEngine {
 
 ---
 
-### **FASE 3: Medicina Defensiva AI** ⏱️ *2-3 días*
+### **FASE 3: Medicina Defensiva AI** ⏱️ _2-3 días_
 
 #### **Sistema de Priorización por Gravedad:**
+
 ```typescript
 // packages/cognitive-core/src/validators/DefensiveMedicineValidator.ts
 export class DefensiveMedicineValidator {
   private urgentPatterns = {
-    'dolor_toracico': ['infarto', 'embolia_pulmonar', 'diseccion_aortica'],
-    'cefalea_severa': ['hemorragia_cerebral', 'meningitis', 'hipertension_maligna'],
-    'dolor_abdominal': ['apendicitis', 'obstruccion_intestinal', 'isquemia_mesenterica']
+    dolor_toracico: ['infarto', 'embolia_pulmonar', 'diseccion_aortica'],
+    cefalea_severa: [
+      'hemorragia_cerebral',
+      'meningitis',
+      'hipertension_maligna',
+    ],
+    dolor_abdominal: [
+      'apendicitis',
+      'obstruccion_intestinal',
+      'isquemia_mesenterica',
+    ],
   }
-  
+
   prioritizeByGravity(differentials: Diagnosis[]): Diagnosis[] {
-    return differentials.sort((a, b) => 
-      (b.gravityScore * 0.7 + b.probabilityScore * 0.3) - 
-      (a.gravityScore * 0.7 + a.probabilityScore * 0.3)
+    return differentials.sort(
+      (a, b) =>
+        b.gravityScore * 0.7 +
+        b.probabilityScore * 0.3 -
+        (a.gravityScore * 0.7 + a.probabilityScore * 0.3)
     )
   }
 }
@@ -166,15 +187,16 @@ export class DefensiveMedicineValidator {
 
 ---
 
-### **FASE 4: Redux Médico Completo** ⏱️ *4-5 días*
+### **FASE 4: Redux Médico Completo** ⏱️ _4-5 días_
 
 #### **Nuevo Store State:**
+
 ```typescript
 interface MedicalReduxState {
   currentCase: {
     soap: {
       subjetivo: SubjectiveData
-      objetivo: ObjectiveFindings  
+      objetivo: ObjectiveFindings
       analisis: DifferentialDiagnosis
       plan: TreatmentPlan
     }
@@ -182,7 +204,7 @@ interface MedicalReduxState {
     confidence: number
     urgencyLevel: 'low' | 'medium' | 'high' | 'critical'
   }
-  
+
   session: {
     physicianNotes: string[]
     followUpReminders: Reminder[]
@@ -192,12 +214,13 @@ interface MedicalReduxState {
 ```
 
 #### **Componentes UI Específicos:**
+
 ```typescript
 // src/components/SOAPDisplay.tsx
 export const SOAPDisplay = () => (
   <div className="soap-container">
     <SOAPSection section="S" />
-    <SOAPSection section="O" />  
+    <SOAPSection section="O" />
     <SOAPSection section="A" />
     <SOAPSection section="P" />
     <UrgencyIndicator />
@@ -210,12 +233,12 @@ export const SOAPDisplay = () => (
 
 ## 📋 Cronograma de Implementación
 
-| Fase | Duración | Entregables Clave |
-|------|----------|-------------------|
-| **Fase 1** | 2-3 días | SOAPProcessor + Prompts estructurados |
-| **Fase 2** | 3-4 días | IterativeDiagnosticEngine + Validación iterativa |
+| Fase       | Duración | Entregables Clave                                  |
+| ---------- | -------- | -------------------------------------------------- |
+| **Fase 1** | 2-3 días | SOAPProcessor + Prompts estructurados              |
+| **Fase 2** | 3-4 días | IterativeDiagnosticEngine + Validación iterativa   |
 | **Fase 3** | 2-3 días | DefensiveMedicineValidator + Priorización gravedad |
-| **Fase 4** | 4-5 días | Redux médico completo + UI especializada |
+| **Fase 4** | 4-5 días | Redux médico completo + UI especializada           |
 
 **TOTAL: 11-15 días de desarrollo**
 
@@ -224,16 +247,19 @@ export const SOAPDisplay = () => (
 ## 🎯 Beneficios Post-Migración
 
 ### **Cumplimiento Normativo:**
+
 - ✅ NOM-004-SSA3-2012 compliant
 - ✅ Estructura SOAP formal
 - ✅ Trazabilidad legal completa
 
 ### **Precisión Diagnóstica:**
+
 - ✅ Medicina defensiva integrada
 - ✅ Proceso iterativo de validación
 - ✅ Priorización por gravedad real
 
 ### **UX Médica Profesional:**
+
 - ✅ Interfaz familiar para médicos
 - ✅ Documentación exportable
 - ✅ Flujo de trabajo médico natural
@@ -242,20 +268,23 @@ export const SOAPDisplay = () => (
 
 ## 🚨 Riesgos y Mitigaciones
 
-| Riesgo | Probabilidad | Mitigación |
-|--------|--------------|------------|
-| **Prompts demasiado complejos** | Media | Prompt engineering iterativo + testing |
-| **Latencia por múltiples cycles** | Alta | Streaming optimizado + cache inteligente |
-| **Resistance de usuarios** | Baja | Migración gradual + fallback a versión actual |
+| Riesgo                            | Probabilidad | Mitigación                                    |
+| --------------------------------- | ------------ | --------------------------------------------- |
+| **Prompts demasiado complejos**   | Media        | Prompt engineering iterativo + testing        |
+| **Latencia por múltiples cycles** | Alta         | Streaming optimizado + cache inteligente      |
+| **Resistance de usuarios**        | Baja         | Migración gradual + fallback a versión actual |
 
 ---
 
 ## 💡 Conclusión
 
-Tu app actual es sólida como **MVP médico**, pero para ser una **herramienta clínica profesional** necesita esta migración SOAP. 
+Tu app actual es sólida como **MVP médico**, pero para ser una **herramienta
+clínica profesional** necesita esta migración SOAP.
 
-**Recomendación:** Implementar Fase 1 inmediatamente - es el cambio con mayor impacto/esfuerzo ratio.
+**Recomendación:** Implementar Fase 1 inmediatamente - es el cambio con mayor
+impacto/esfuerzo ratio.
 
 ---
 
-*🔬 "De Redux médico básico a sistema clínico profesional que respeta el flujo cognitivo real del médico" - Bernard Orozco*
+_🔬 "De Redux médico básico a sistema clínico profesional que respeta el flujo
+cognitivo real del médico" - Bernard Orozco_

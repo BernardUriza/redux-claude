@@ -114,25 +114,32 @@ const AgentCard = ({ agent, isHighlighted }: AgentCardProps) => {
   const statusColor = getStatusColor(agent.status)
 
   return (
-    <div className={`relative bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-xl rounded-2xl p-5 border transition-all duration-300 ${
-      isHighlighted 
-        ? 'border-blue-400/50 shadow-2xl shadow-blue-500/20 ring-1 ring-blue-400/30' 
-        : 'border-slate-600/40 hover:border-slate-500/60 hover:shadow-xl hover:shadow-slate-950/30'
-    }`}>
-      
+    <div
+      className={`relative bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-xl rounded-2xl p-5 border transition-all duration-300 ${
+        isHighlighted
+          ? 'border-blue-400/50 shadow-2xl shadow-blue-500/20 ring-1 ring-blue-400/30'
+          : 'border-slate-600/40 hover:border-slate-500/60 hover:shadow-xl hover:shadow-slate-950/30'
+      }`}
+    >
       {/* Agent Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-4">
-          <div className={`w-12 h-12 bg-gradient-to-br ${colorGradient} rounded-2xl flex items-center justify-center text-xl shadow-lg`}>
+          <div
+            className={`w-12 h-12 bg-gradient-to-br ${colorGradient} rounded-2xl flex items-center justify-center text-xl shadow-lg`}
+          >
             {getAgentIcon(agent.specialty)}
           </div>
           <div className="flex-1">
             <h4 className="text-base font-semibold text-white mb-1">{agent.name}</h4>
-            <p className="text-sm text-slate-400 capitalize font-medium">{agent.specialty.replace('_', ' ')}</p>
+            <p className="text-sm text-slate-400 capitalize font-medium">
+              {agent.specialty.replace('_', ' ')}
+            </p>
           </div>
         </div>
-        
-        <div className={`px-3 py-1.5 rounded-xl text-sm font-medium border ${statusColor} whitespace-nowrap`}>
+
+        <div
+          className={`px-3 py-1.5 rounded-xl text-sm font-medium border ${statusColor} whitespace-nowrap`}
+        >
           {agent.status === 'consulting' && (
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 border border-purple-400 border-t-transparent rounded-full animate-spin" />
@@ -154,10 +161,12 @@ const AgentCard = ({ agent, isHighlighted }: AgentCardProps) => {
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-slate-400 font-medium">Nivel de Confianza</span>
-          <span className="text-sm text-white font-bold">{Math.round(agent.confidence * 100)}%</span>
+          <span className="text-sm text-white font-bold">
+            {Math.round(agent.confidence * 100)}%
+          </span>
         </div>
         <div className="w-full bg-slate-700/50 rounded-full h-2">
-          <div 
+          <div
             className={`bg-gradient-to-r ${colorGradient} h-2 rounded-full transition-all duration-500 shadow-sm`}
             style={{ width: `${Math.round(agent.confidence * 100)}%` }}
           />
@@ -170,7 +179,10 @@ const AgentCard = ({ agent, isHighlighted }: AgentCardProps) => {
           <p className="text-sm text-slate-400 mb-3 font-medium">Insights Clínicos:</p>
           <div className="space-y-2">
             {agent.insights.slice(0, 2).map((insight, idx) => (
-              <div key={idx} className="bg-slate-800/50 backdrop-blur-sm rounded-lg px-3 py-2 border border-slate-700/30">
+              <div
+                key={idx}
+                className="bg-slate-800/50 backdrop-blur-sm rounded-lg px-3 py-2 border border-slate-700/30"
+              >
                 <p className="text-sm text-slate-200 leading-relaxed">• {insight}</p>
               </div>
             ))}
@@ -211,7 +223,12 @@ interface CognitiveAgentsPanelProps {
 
 // Función para generar agentes basados en el análisis SOAP real
 const generateAgentsFromSOAP = (message?: MedicalMessage): SpecializedAgent[] => {
-  if (!message || message.type !== 'assistant' || !message.content.includes('SOAP') || !message.content.includes('SUBJETIVO')) {
+  if (
+    !message ||
+    message.type !== 'assistant' ||
+    !message.content.includes('SOAP') ||
+    !message.content.includes('SUBJETIVO')
+  ) {
     return []
   }
 
@@ -226,28 +243,27 @@ const generateAgentsFromSOAP = (message?: MedicalMessage): SpecializedAgent[] =>
     specialty: 'medicina_general',
     confidence: confidence,
     status: 'completed',
-    insights: [
-      'Análisis SOAP completo realizado',
-      'Evaluación clínica estructurada según NOM-004'
-    ],
+    insights: ['Análisis SOAP completo realizado', 'Evaluación clínica estructurada según NOM-004'],
     recommendation: 'Seguimiento según plan establecido',
-    consultationTime: Math.round(Math.random() * 1000 + 800)
+    consultationTime: Math.round(Math.random() * 1000 + 800),
   })
 
   // Detectar especialidades necesarias basadas en el contenido
-  if (content.includes('dermatitis') || content.includes('lesion') || content.includes('piel') || content.includes('eritema')) {
+  if (
+    content.includes('dermatitis') ||
+    content.includes('lesion') ||
+    content.includes('piel') ||
+    content.includes('eritema')
+  ) {
     agents.push({
       id: 'dermato',
       name: 'Dr. Dermatólogo',
       specialty: 'dermatologia',
       confidence: Math.min(confidence + 0.1, 0.95),
       status: 'completed',
-      insights: [
-        'Patrón dermatológico identificado',
-        'Tratamiento tópico recomendado'
-      ],
+      insights: ['Patrón dermatológico identificado', 'Tratamiento tópico recomendado'],
       recommendation: 'Manejo dermatológico especializado',
-      consultationTime: Math.round(Math.random() * 800 + 600)
+      consultationTime: Math.round(Math.random() * 800 + 600),
     })
   }
 
@@ -258,11 +274,8 @@ const generateAgentsFromSOAP = (message?: MedicalMessage): SpecializedAgent[] =>
       specialty: 'alergologia',
       confidence: Math.min(confidence + 0.05, 0.9),
       status: 'consulting',
-      insights: [
-        'Componente alérgico presente',
-        'Pruebas alérgicas recomendadas'
-      ],
-      consultationTime: Math.round(Math.random() * 600 + 400)
+      insights: ['Componente alérgico presente', 'Pruebas alérgicas recomendadas'],
+      consultationTime: Math.round(Math.random() * 600 + 400),
     })
   }
 
@@ -273,11 +286,8 @@ const generateAgentsFromSOAP = (message?: MedicalMessage): SpecializedAgent[] =>
       specialty: 'cardiologia',
       confidence: Math.min(confidence + 0.08, 0.92),
       status: 'active',
-      insights: [
-        'Evaluación cardiovascular indicada',
-        'Factores de riesgo presentes'
-      ],
-      consultationTime: Math.round(Math.random() * 900 + 700)
+      insights: ['Evaluación cardiovascular indicada', 'Factores de riesgo presentes'],
+      consultationTime: Math.round(Math.random() * 900 + 700),
     })
   }
 
@@ -291,28 +301,35 @@ const generateConsensusFromAgents = (agents: SpecializedAgent[]) => {
       achieved: false,
       percentage: 0,
       conflictingPoints: ['No hay análisis disponible'],
-      agreements: []
+      agreements: [],
     }
   }
 
   const avgConfidence = agents.reduce((sum, agent) => sum + agent.confidence, 0) / agents.length
   const completedAgents = agents.filter(a => a.status === 'completed')
-  
+
   return {
     achieved: avgConfidence > 0.8 && completedAgents.length >= 2,
     percentage: Math.round(avgConfidence * 100),
-    conflictingPoints: avgConfidence < 0.7 ? ['Requiere más evaluación', 'Diagnóstico por confirmar'] : [],
-    agreements: completedAgents.length > 0 ? ['Análisis clínico completo', 'Plan de tratamiento establecido'] : []
+    conflictingPoints:
+      avgConfidence < 0.7 ? ['Requiere más evaluación', 'Diagnóstico por confirmar'] : [],
+    agreements:
+      completedAgents.length > 0
+        ? ['Análisis clínico completo', 'Plan de tratamiento establecido']
+        : [],
   }
 }
 
-export const CognitiveAgentsPanel = ({ lastMessage, isActive = false }: CognitiveAgentsPanelProps) => {
+export const CognitiveAgentsPanel = ({
+  lastMessage,
+  isActive = false,
+}: CognitiveAgentsPanelProps) => {
   const [agents, setAgents] = useState<SpecializedAgent[]>([])
   const [consensusData, setConsensusData] = useState({
     achieved: false,
     percentage: 0,
     conflictingPoints: [] as string[],
-    agreements: [] as string[]
+    agreements: [] as string[],
   })
 
   // Actualizar agentes cuando cambie el mensaje
@@ -327,20 +344,22 @@ export const CognitiveAgentsPanel = ({ lastMessage, isActive = false }: Cognitiv
     if (agents.length === 0) return
 
     const interval = setInterval(() => {
-      setAgents(prev => prev.map(agent => {
-        if (agent.status === 'consulting') {
-          return {
-            ...agent,
-            confidence: Math.min(agent.confidence + 0.02, 0.95),
-            consultationTime: (agent.consultationTime || 0) + 100
+      setAgents(prev =>
+        prev.map(agent => {
+          if (agent.status === 'consulting') {
+            return {
+              ...agent,
+              confidence: Math.min(agent.confidence + 0.02, 0.95),
+              consultationTime: (agent.consultationTime || 0) + 100,
+            }
           }
-        }
-        return agent
-      }))
+          return agent
+        })
+      )
 
       setConsensusData(prev => ({
         ...prev,
-        percentage: Math.min(prev.percentage + 1, 95)
+        percentage: Math.min(prev.percentage + 1, 95),
       }))
     }, 1000)
 
@@ -388,7 +407,6 @@ export const CognitiveAgentsPanel = ({ lastMessage, isActive = false }: Cognitiv
 
   return (
     <div className="space-y-6">
-      
       {/* Enhanced Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -416,44 +434,53 @@ export const CognitiveAgentsPanel = ({ lastMessage, isActive = false }: Cognitiv
           <h4 className="text-lg font-semibold text-white">Consenso Médico</h4>
           <div className="flex items-center space-x-2">
             <span className="text-2xl font-bold text-white">{consensusData.percentage}%</span>
-            <div className={`w-3 h-3 rounded-full ${
-              consensusData.percentage > 80 ? 'bg-emerald-400' :
-              consensusData.percentage > 60 ? 'bg-yellow-400' : 'bg-red-400'
-            } animate-pulse`} />
+            <div
+              className={`w-3 h-3 rounded-full ${
+                consensusData.percentage > 80
+                  ? 'bg-emerald-400'
+                  : consensusData.percentage > 60
+                    ? 'bg-yellow-400'
+                    : 'bg-red-400'
+              } animate-pulse`}
+            />
           </div>
         </div>
-        
+
         <div className="w-full bg-slate-700/50 rounded-full h-3 mb-4">
-          <div 
+          <div
             className={`h-3 rounded-full transition-all duration-500 shadow-lg ${
-              consensusData.percentage > 80 
+              consensusData.percentage > 80
                 ? 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-500/30'
                 : consensusData.percentage > 60
-                ? 'bg-gradient-to-r from-yellow-500 to-orange-500 shadow-yellow-500/30'
-                : 'bg-gradient-to-r from-red-500 to-pink-500 shadow-red-500/30'
+                  ? 'bg-gradient-to-r from-yellow-500 to-orange-500 shadow-yellow-500/30'
+                  : 'bg-gradient-to-r from-red-500 to-pink-500 shadow-red-500/30'
             }`}
             style={{ width: `${consensusData.percentage}%` }}
           />
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {consensusData.agreements.length > 0 && (
             <div className="bg-emerald-950/30 rounded-xl p-4 border border-emerald-700/20">
               <h5 className="text-sm font-medium text-emerald-300 mb-2">✅ Puntos de Acuerdo</h5>
               <ul className="space-y-1">
                 {consensusData.agreements.map((agreement, idx) => (
-                  <li key={idx} className="text-sm text-emerald-200 leading-relaxed">• {agreement}</li>
+                  <li key={idx} className="text-sm text-emerald-200 leading-relaxed">
+                    • {agreement}
+                  </li>
                 ))}
               </ul>
             </div>
           )}
-          
+
           {consensusData.conflictingPoints.length > 0 && (
             <div className="bg-yellow-950/30 rounded-xl p-4 border border-yellow-700/20">
               <h5 className="text-sm font-medium text-yellow-300 mb-2">⚠️ En Discusión</h5>
               <ul className="space-y-1">
                 {consensusData.conflictingPoints.map((point, idx) => (
-                  <li key={idx} className="text-sm text-yellow-200 leading-relaxed">• {point}</li>
+                  <li key={idx} className="text-sm text-yellow-200 leading-relaxed">
+                    • {point}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -464,11 +491,7 @@ export const CognitiveAgentsPanel = ({ lastMessage, isActive = false }: Cognitiv
       {/* Enhanced Agents Layout - Single Column for Better Readability */}
       <div className="space-y-4">
         {agents.map((agent, index) => (
-          <AgentCard
-            key={agent.id}
-            agent={agent}
-            isHighlighted={agent.status === 'consulting'}
-          />
+          <AgentCard key={agent.id} agent={agent} isHighlighted={agent.status === 'consulting'} />
         ))}
       </div>
 
@@ -485,7 +508,10 @@ export const CognitiveAgentsPanel = ({ lastMessage, isActive = false }: Cognitiv
           <div className="text-center">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-lg shadow-blue-500/25">
               <span className="text-white text-xl font-bold">
-                {Math.round(agents.reduce((sum, agent) => sum + agent.confidence, 0) / agents.length * 100)}%
+                {Math.round(
+                  (agents.reduce((sum, agent) => sum + agent.confidence, 0) / agents.length) * 100
+                )}
+                %
               </span>
             </div>
             <p className="text-sm text-slate-400 font-medium">Confianza Promedio</p>
@@ -493,7 +519,10 @@ export const CognitiveAgentsPanel = ({ lastMessage, isActive = false }: Cognitiv
           <div className="text-center">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-lg shadow-orange-500/25">
               <span className="text-white text-xl font-bold">
-                {Math.round(agents.reduce((sum, agent) => sum + (agent.consultationTime || 0), 0) / 1000)}s
+                {Math.round(
+                  agents.reduce((sum, agent) => sum + (agent.consultationTime || 0), 0) / 1000
+                )}
+                s
               </span>
             </div>
             <p className="text-sm text-slate-400 font-medium">Tiempo Total</p>

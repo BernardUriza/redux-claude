@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs  
+.next/
+out/
+dist/
+build/
+
+# Environment files
+.env*
+!.env.example
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache directories
+.cache/
+.parcel-cache/
+.eslintcache
+
+# Test coverage
+coverage/
+
+# Generated files
+*.tsbuildinfo
+.turbo/
+
+# Specific to this project
+packages/**/dist/
+packages/**/build/
+PLAN_MIGRACION_SOAP.md
+*.md
+!README.md
+!MIGRACION_MOCK_DATA.md

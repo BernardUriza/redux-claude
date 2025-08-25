@@ -1,4 +1,4 @@
-// 🧠 Cognitive Core MULTINÚCLEO - API Pública 
+// 🧠 Cognitive Core MULTINÚCLEO - API Pública
 // Creado por Bernard Orozco + Gandalf el Blanco
 
 // === DECISION ENGINE (CORE) ===
@@ -18,8 +18,17 @@ export type { BasicMedicalValidationResult } from './utils/medicalValidator'
 export type { MedicalValidationResult } from './types/medical'
 
 // === MEDICINA DEFENSIVA (FASE 3) ===
-export { DefensiveMedicineValidator, type UrgentPattern, type DefensiveDiagnosis } from './validators'
-export { UrgencyClassifier, type UrgencyAssessment, type TriageResult, type RiskFactor } from './classifiers'
+export {
+  DefensiveMedicineValidator,
+  type UrgentPattern,
+  type DefensiveDiagnosis,
+} from './validators'
+export {
+  UrgencyClassifier,
+  type UrgencyAssessment,
+  type TriageResult,
+  type RiskFactor,
+} from './classifiers'
 
 // === HOOKS MULTINÚCLEO ===
 export { useMedicalChat } from './hooks/useMedicalChatEvolved'
@@ -34,23 +43,19 @@ export { IterativeDiagnosticEngine } from './engine/IterativeDiagnosticEngine'
 export { AdditionalInfoService } from './services/AdditionalInfoService'
 
 // === MEDICAL TYPES ===
-export type { 
-  MedicalMessage,
-  ChatCore,
-  MedicalChatState
-} from './store/medicalChatSlice'
+export type { MedicalMessage, ChatCore, MedicalChatState } from './store/medicalChatSlice'
 
-export type { 
-  MedicalCase, 
+export type {
+  MedicalCase,
   SOAPData,
   SOAPAnalysis,
-  DiagnosticCycle, 
-  AdditionalInfoRequest, 
-  DiagnosticResult 
+  DiagnosticCycle,
+  AdditionalInfoRequest,
+  DiagnosticResult,
 } from './types/medical'
 
 // === ACCIONES MULTINÚCLEO ===
-export { 
+export {
   addDashboardMessage,
   addAssistantMessage,
   addInferenceMessage,
@@ -60,7 +65,7 @@ export {
   clearAssistantMessages,
   startNewSession,
   setError,
-  clearError
+  clearError,
 } from './store/medicalChatSlice'
 
 // === STREAMING ===

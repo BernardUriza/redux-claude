@@ -9,7 +9,7 @@ if (typeof process !== 'undefined' && process.env.NODE_TLS_REJECT_UNAUTHORIZED !
 export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.CLAUDE_API_KEY
-    
+
     if (!apiKey) {
       return NextResponse.json(
         { error: 'Claude API key not configured on server' },
@@ -30,10 +30,7 @@ export async function POST(req: NextRequest) {
         async start(controller) {
           try {
             // Build complete conversation with history
-            const messages = [
-              ...conversationHistory,
-              { role: 'user', content: userPrompt }
-            ]
+            const messages = [...conversationHistory, { role: 'user', content: userPrompt }]
 
             const messageStream = await anthropic.messages.create({
               model: 'claude-3-haiku-20240307',
@@ -41,66 +38,62 @@ export async function POST(req: NextRequest) {
               temperature: 0.3,
               system: systemPrompt,
               messages,
-              stream: true
+              stream: true,
             })
 
             for await (const chunk of messageStream) {
               if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`))
+                controller.enqueue(
+                  encoder.encode(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`)
+                )
               }
             }
-            
+
             controller.enqueue(encoder.encode('data: [DONE]\n\n'))
             controller.close()
           } catch (error) {
             controller.error(error)
           }
-        }
+        },
       })
 
       return new Response(stream, {
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
+          Connection: 'keep-alive',
         },
       })
     } else {
       // Build complete conversation with history
-      const messages = [
-        ...conversationHistory,
-        { role: 'user', content: userPrompt }
-      ]
+      const messages = [...conversationHistory, { role: 'user', content: userPrompt }]
 
       const response = await anthropic.messages.create({
         model: 'claude-3-haiku-20240307',
         max_tokens: 1000,
         temperature: 0.3,
         system: systemPrompt,
-        messages
+        messages,
       })
 
       const content = response.content[0]
       if (content.type !== 'text') {
-        return NextResponse.json(
-          { error: 'Unexpected response format' },
-          { status: 500 }
-        )
+        return NextResponse.json({ error: 'Unexpected response format' }, { status: 500 })
       }
 
       return NextResponse.json({ content: content.text, success: true })
     }
   } catch (error) {
     console.error('Claude API error:', error)
-    
+
     // More detailed error handling
     let errorMessage = 'Unknown error'
     let errorDetails = ''
-    
+
     if (error instanceof Error) {
       errorMessage = error.message
       errorDetails = error.stack || ''
-      
+
       // Specific handling for common errors
       if (error.message.includes('self-signed certificate')) {
         errorMessage = 'SSL Certificate error - Corporate network detected'
@@ -113,12 +106,12 @@ export async function POST(req: NextRequest) {
         errorDetails = 'Verify CLAUDE_API_KEY environment variable'
       }
     }
-    
+
     return NextResponse.json(
-      { 
+      {
         error: errorMessage,
         details: errorDetails,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       { status: 500 }
     )

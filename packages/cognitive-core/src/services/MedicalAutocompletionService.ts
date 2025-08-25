@@ -31,23 +31,29 @@ export interface AutocompletionResult {
 }
 
 export class MedicalAutocompletionService {
-  
   /**
    * Detecta si el texto contiene artefactos de template que necesitan limpieza
    */
   private needsCleanup(text: string): boolean {
-    return text.includes('[') && text.includes(']') && 
-           (text.includes('[FEMENINO]') || text.includes('[MASCULINO]') || 
-            !!text.match(/\[\d+\]/) || text.includes('[antecedentes]'))
+    return (
+      text.includes('[') &&
+      text.includes(']') &&
+      (text.includes('[FEMENINO]') ||
+        text.includes('[MASCULINO]') ||
+        !!text.match(/\[\d+\]/) ||
+        text.includes('[antecedentes]'))
+    )
   }
-  
-  async generateCompletionSuggestions(request: AutocompletionRequest): Promise<AutocompletionResult> {
+
+  async generateCompletionSuggestions(
+    request: AutocompletionRequest
+  ): Promise<AutocompletionResult> {
     try {
       // Enhanced prompt context for cleanup detection
       const needsCleanup = this.needsCleanup(request.partialInput)
-      const contextualInfo = needsCleanup ? 
-        'ALERTA: Este texto contiene artefactos de template ([corchetes]) que necesitan limpieza antes del análisis.' : 
-        'Texto normal que requiere análisis para autocompletado.'
+      const contextualInfo = needsCleanup
+        ? 'ALERTA: Este texto contiene artefactos de template ([corchetes]) que necesitan limpieza antes del análisis.'
+        : 'Texto normal que requiere análisis para autocompletado.'
 
       // Use SOLID decisionalMiddleware pattern
       const response = await callClaudeForDecision(
@@ -59,7 +65,7 @@ export class MedicalAutocompletionService {
         {
           medicalSpecialty: request.medicalSpecialty,
           patientContext: request.patientContext,
-          needsCleanup
+          needsCleanup,
         }
       )
 
@@ -68,13 +74,13 @@ export class MedicalAutocompletionService {
           success: false,
           suggestions: [],
           enhancedTemplate: '',
-          error: response.error || 'Error generando autocompletado'
+          error: response.error || 'Error generando autocompletado',
         }
       }
 
       // Type assertion and conversion
       const decision = response.decision as MedicalAutocompletionDecision
-      
+
       return {
         success: true,
         suggestions: decision.suggestions.map(s => ({
@@ -83,19 +89,18 @@ export class MedicalAutocompletionService {
           description: s.description,
           template: s.template,
           confidence: s.confidence,
-          category: s.category
+          category: s.category,
         })),
         enhancedTemplate: decision.enhanced_template,
-        error: undefined
+        error: undefined,
       }
-      
     } catch (error) {
       console.error('Error en autocompletado médico:', error)
       return {
         success: false,
         suggestions: [],
         enhancedTemplate: '',
-        error: error instanceof Error ? error.message : 'Error desconocido'
+        error: error instanceof Error ? error.message : 'Error desconocido',
       }
     }
   }

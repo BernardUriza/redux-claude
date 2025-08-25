@@ -5,20 +5,20 @@ import { AuditEntry } from './audit'
 
 export enum ProviderType {
   CLAUDE = 'claude',
-  OPENAI = 'openai', 
-  LOCAL = 'local'
+  OPENAI = 'openai',
+  LOCAL = 'local',
 }
 
 export enum DecisionType {
   DIAGNOSIS = 'diagnosis',
-  VALIDATION = 'validation'
+  VALIDATION = 'validation',
 }
 
 export enum DecisionStatus {
   PENDING = 'pending',
   SUCCESS = 'success',
   FAILED = 'failed',
-  RETRYING = 'retrying'
+  RETRYING = 'retrying',
 }
 
 export type DiagnosisDecision = {

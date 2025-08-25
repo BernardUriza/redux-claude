@@ -1,9 +1,9 @@
 // packages/cognitive-core/src/classifiers/index.ts
 // Exportaciones de Clasificadores - Sistema de Medicina Defensiva
 
-export { 
+export {
   UrgencyClassifier,
   type UrgencyAssessment,
   type TriageResult,
-  type RiskFactor
+  type RiskFactor,
 } from './UrgencyClassifier'

@@ -39,7 +39,7 @@ Probabilities must sum to 1.0 across all differentials.`,
     timeout: 8000,
     retryCount: 2,
     color: '#3B82F6', // blue
-    icon: '🔍'
+    icon: '🔍',
   },
 
   [AgentType.TRIAGE]: {
@@ -69,7 +69,7 @@ ESI Levels:
     timeout: 5000,
     retryCount: 3,
     color: '#EF4444', // red
-    icon: '🚨'
+    icon: '🚨',
   },
 
   [AgentType.VALIDATION]: {
@@ -102,7 +102,7 @@ Validation criteria:
     timeout: 6000,
     retryCount: 2,
     color: '#10B981', // green
-    icon: '✅'
+    icon: '✅',
   },
 
   [AgentType.TREATMENT]: {
@@ -139,7 +139,7 @@ Consider:
     timeout: 7000,
     retryCount: 2,
     color: '#8B5CF6', // purple
-    icon: '💊'
+    icon: '💊',
   },
 
   [AgentType.DOCUMENTATION]: {
@@ -172,7 +172,7 @@ SOAP Guidelines:
     timeout: 10000,
     retryCount: 1,
     color: '#F59E0B', // amber
-    icon: '📝'
+    icon: '📝',
   },
 
   [AgentType.RESPONSE_QUALITY]: {
@@ -194,7 +194,7 @@ Always improve responses to be professional, complete, and contextually appropri
     timeout: 5000,
     retryCount: 1,
     color: '#10B981', // green
-    icon: '✅'
+    icon: '✅',
   },
 
   [AgentType.CLINICAL_PHARMACOLOGY]: {
@@ -267,7 +267,7 @@ ALWAYS follow evidence-based pediatric guidelines for antibiotic selection.`,
     timeout: 7000,
     retryCount: 2,
     color: '#7C3AED', // violet
-    icon: '💊'
+    icon: '💊',
   },
 
   [AgentType.PEDIATRIC_SPECIALIST]: {
@@ -328,7 +328,7 @@ CRITICAL AGE-BASED DIFFERENTIAL RULES:
     timeout: 6000,
     retryCount: 2,
     color: '#EC4899', // pink
-    icon: '👶'
+    icon: '👶',
   },
 
   [AgentType.HOSPITALIZATION_CRITERIA]: {
@@ -402,7 +402,7 @@ Base decisions on objective clinical criteria and evidence-based guidelines.`,
     timeout: 6000,
     retryCount: 2,
     color: '#DC2626', // red
-    icon: '🏥'
+    icon: '🏥',
   },
 
   [AgentType.FAMILY_EDUCATION]: {
@@ -458,7 +458,7 @@ Focus on clear, actionable education for families without medical training.`,
     timeout: 6000,
     retryCount: 2,
     color: '#059669', // green
-    icon: '👨‍👩‍👧‍👦'
+    icon: '👨‍👩‍👧‍👦',
   },
 
   [AgentType.OBJECTIVE_VALIDATION]: {
@@ -518,7 +518,7 @@ RESPIRATORY CASE PRIORITY VALIDATION:
     timeout: 6000,
     retryCount: 2,
     color: '#DC2626', // red
-    icon: '🔍'
+    icon: '🔍',
   },
 
   [AgentType.DEFENSIVE_DIFFERENTIAL]: {
@@ -582,7 +582,7 @@ DEFENSIVE PRIORITY CALCULATION:
     timeout: 7000,
     retryCount: 2,
     color: '#DC2626', // red
-    icon: '🛡️'
+    icon: '🛡️',
   },
 
   [AgentType.MEDICAL_AUTOCOMPLETION]: {
@@ -674,7 +674,7 @@ Return ONLY a JSON object with this structure:
     timeout: 5000,
     retryCount: 2,
     color: '#8B5CF6', // purple
-    icon: '🤖'
+    icon: '🤖',
   },
 
   [AgentType.CRITICAL_DATA_VALIDATION]: {
@@ -720,13 +720,14 @@ Si datos HIGH completos pero faltan MEDIUM → can_proceed: true con advertencia
     timeout: 4000,
     retryCount: 2,
     color: '#DC2626', // red
-    icon: '⚠️'
+    icon: '⚠️',
   },
 
   [AgentType.SPECIALTY_DETECTION]: {
     id: AgentType.SPECIALTY_DETECTION,
     name: 'Specialty Detection Agent',
-    description: 'Middleware para detectar automáticamente especialidad médica y sugerir formularios',
+    description:
+      'Middleware para detectar automáticamente especialidad médica y sugerir formularios',
     systemPrompt: `Eres un detector de especialidades médicas que analiza síntomas, contexto y datos del paciente para inferir la especialidad más relevante.
 
 TU TRABAJO:
@@ -767,13 +768,14 @@ Confidence >= 0.7 para specialidades claras, >= 0.5 para casos mixtos.`,
     timeout: 5000,
     retryCount: 2,
     color: '#059669', // green
-    icon: '🎯'
+    icon: '🎯',
   },
 
   [AgentType.INTELLIGENT_MEDICAL_CHAT]: {
     id: AgentType.INTELLIGENT_MEDICAL_CHAT,
     name: 'Asistente Médico IA',
-    description: 'Sistema inteligente de diagnóstico que asiste al doctor con inferencias automáticas',
+    description:
+      'Sistema inteligente de diagnóstico que asiste al doctor con inferencias automáticas',
     systemPrompt: `Eres un ASISTENTE MÉDICO INTELIGENTE que NUNCA rechaza pacientes por datos incompletos.
 
 FILOSOFÍA CORE: Como sistema de diagnóstico avanzado, tu trabajo es INFERIR inteligentemente y AYUDAR inmediatamente, no pedir más datos.
@@ -814,8 +816,8 @@ Return ONLY a JSON object with conversation structure.`,
     timeout: 6000,
     retryCount: 2,
     color: '#F59E0B', // amber
-    icon: '🦁'
-  }
+    icon: '🦁',
+  },
 }
 
 // Helper functions

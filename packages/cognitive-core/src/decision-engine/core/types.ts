@@ -36,7 +36,7 @@ export interface ValidationResult {
 export interface DomainStrategy<TDecision = BaseDecision> {
   readonly domain: Domain
   readonly supportedTypes: string[]
-  
+
   buildSystemPrompt(decisionType: string, request: BaseDecisionRequest): string
   buildJsonSchema(decisionType: string): string
   validateDecision(decision: any, decisionType: string): ValidationResult
@@ -47,13 +47,17 @@ export interface DomainStrategy<TDecision = BaseDecision> {
 export interface ProviderAdapter {
   readonly name: Provider
   readonly isAvailable: boolean
-  
-  makeRequest(systemPrompt: string, userPrompt: string, signal?: AbortSignal): Promise<{
+
+  makeRequest(
+    systemPrompt: string,
+    userPrompt: string,
+    signal?: AbortSignal
+  ): Promise<{
     content: string
     success: boolean
     error?: string
   }>
-  
+
   healthCheck(): Promise<boolean>
 }
 

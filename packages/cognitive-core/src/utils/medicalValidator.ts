@@ -9,48 +9,166 @@ export interface BasicMedicalValidationResult {
 }
 
 export class MedicalContentValidator {
-  
   // Términos médicos y clínicos clave
   private readonly medicalTerms = [
     // Síntomas generales
-    'dolor', 'fiebre', 'náuseas', 'vómitos', 'diarrea', 'estreñimiento', 'cefalea', 'mareo', 'mareos',
-    'fatiga', 'astenia', 'anorexia', 'pérdida', 'peso', 'sudoración', 'escalofríos', 'debilidad',
-    
+    'dolor',
+    'fiebre',
+    'náuseas',
+    'vómitos',
+    'diarrea',
+    'estreñimiento',
+    'cefalea',
+    'mareo',
+    'mareos',
+    'fatiga',
+    'astenia',
+    'anorexia',
+    'pérdida',
+    'peso',
+    'sudoración',
+    'escalofríos',
+    'debilidad',
+
     // Términos clínicos
-    'paciente', 'síntomas', 'diagnóstico', 'tratamiento', 'medicamento', 'dosis', 'medicación',
-    'antecedentes', 'historia', 'clínica', 'examen', 'físico', 'laboratorios',
-    
+    'paciente',
+    'síntomas',
+    'diagnóstico',
+    'tratamiento',
+    'medicamento',
+    'dosis',
+    'medicación',
+    'antecedentes',
+    'historia',
+    'clínica',
+    'examen',
+    'físico',
+    'laboratorios',
+
     // Condiciones médicas comunes
-    'diabética', 'diabético', 'diabetes', 'hipertensa', 'hipertenso', 'hipertensión',
-    'fibrilación', 'auricular', 'hipoglucemia', 'hipotensión', 'warfarina', 'digoxina',
-    'metformina', 'enalapril', 'mg/dl', 'mmhg',
-    
+    'diabética',
+    'diabético',
+    'diabetes',
+    'hipertensa',
+    'hipertenso',
+    'hipertensión',
+    'fibrilación',
+    'auricular',
+    'hipoglucemia',
+    'hipotensión',
+    'warfarina',
+    'digoxina',
+    'metformina',
+    'enalapril',
+    'mg/dl',
+    'mmhg',
+
     // Especialidades médicas
-    'cardiología', 'neurología', 'psiquiatría', 'dermatología', 'gastroenterología',
-    'medicina', 'pediatría', 'ginecología', 'urología', 'oftalmología',
-    
+    'cardiología',
+    'neurología',
+    'psiquiatría',
+    'dermatología',
+    'gastroenterología',
+    'medicina',
+    'pediatría',
+    'ginecología',
+    'urología',
+    'oftalmología',
+
     // Términos anatómicos
-    'corazón', 'pulmón', 'hígado', 'riñón', 'cerebro', 'estómago', 'intestino',
-    'piel', 'hueso', 'músculo', 'sangre', 'presión', 'arterial', 'glucemia', 'capilar',
-    
+    'corazón',
+    'pulmón',
+    'hígado',
+    'riñón',
+    'cerebro',
+    'estómago',
+    'intestino',
+    'piel',
+    'hueso',
+    'músculo',
+    'sangre',
+    'presión',
+    'arterial',
+    'glucemia',
+    'capilar',
+
     // Dermatológicos
-    'lesiones', 'eritematosas', 'pruriginosas', 'pliegues', 'antecubitales', 'poplíteos',
-    'liquenificación', 'excoriaciones', 'rascado', 'alérgica', 'rinitis', 'psoriasis',
-    'cremas', 'dermatitis', 'eczema', 'atópica',
-    
+    'lesiones',
+    'eritematosas',
+    'pruriginosas',
+    'pliegues',
+    'antecubitales',
+    'poplíteos',
+    'liquenificación',
+    'excoriaciones',
+    'rascado',
+    'alérgica',
+    'rinitis',
+    'psoriasis',
+    'cremas',
+    'dermatitis',
+    'eczema',
+    'atópica',
+
     // Psicológicos/Psiquiátricos
-    'depresión', 'ansiedad', 'estrés', 'insomnio', 'trastorno', 'estado', 'ánimo',
-    'psicológico', 'emocional', 'mental', 'comportamiento', 'conducta',
-    
+    'depresión',
+    'ansiedad',
+    'estrés',
+    'insomnio',
+    'trastorno',
+    'estado',
+    'ánimo',
+    'psicológico',
+    'emocional',
+    'mental',
+    'comportamiento',
+    'conducta',
+
     // Temporales médicos
-    'años', 'meses', 'días', 'horas', 'semana', 'semanas', 'crónico', 'agudo', 'recurrente', 'episodio',
-    
+    'años',
+    'meses',
+    'días',
+    'horas',
+    'semana',
+    'semanas',
+    'crónico',
+    'agudo',
+    'recurrente',
+    'episodio',
+
     // Exámenes y procedimientos - EXPANDIDO
-    'rayos', 'tomografía', 'resonancia', 'ecografía', 'biopsia', 'análisis',
-    'hemograma', 'glucosa', 'colesterol', 'presión', 'temperatura', 'pa', 'fc',
-    'hba1c', 'hemoglobina', 'glicosilada', 'control', 'revisión', 'seguimiento',
-    'consulta', 'cita', 'evaluación', 'monitoreo', 'exámenes', 'pruebas',
-    'total', 'nivel', 'valores', 'resultados', 'hdl', 'ldl', 'triglicéridos'
+    'rayos',
+    'tomografía',
+    'resonancia',
+    'ecografía',
+    'biopsia',
+    'análisis',
+    'hemograma',
+    'glucosa',
+    'colesterol',
+    'presión',
+    'temperatura',
+    'pa',
+    'fc',
+    'hba1c',
+    'hemoglobina',
+    'glicosilada',
+    'control',
+    'revisión',
+    'seguimiento',
+    'consulta',
+    'cita',
+    'evaluación',
+    'monitoreo',
+    'exámenes',
+    'pruebas',
+    'total',
+    'nivel',
+    'valores',
+    'resultados',
+    'hdl',
+    'ldl',
+    'triglicéridos',
   ]
 
   // Patrones de casos clínicos válidos - MEJORADO
@@ -78,7 +196,7 @@ export class MedicalContentValidator {
     /valores?\s+(de|en)\s+(laboratorio|análisis|pruebas)/i,
     /resultados?\s+(de|del)\s+(análisis|examen|laboratorio)/i,
     /consulta\s+(médica|de\s+control|preventiva)/i,
-    /evaluación\s+(médica|clínica|de\s+rutina)/i
+    /evaluación\s+(médica|clínica|de\s+rutina)/i,
   ]
 
   // Patrones que NO son médicos
@@ -94,7 +212,7 @@ export class MedicalContentValidator {
     /política|gobierno|elecciones?/i,
     /entretenimiento|música|películas?|series?/i,
     /viajes?|turismo|vacaciones?/i,
-    /tecnología\s+(no\s+médica)|gadgets?|teléfonos?/i
+    /tecnología\s+(no\s+médica)|gadgets?|teléfonos?/i,
   ]
 
   /**
@@ -104,54 +222,57 @@ export class MedicalContentValidator {
     const cleanText = text.toLowerCase().trim()
     // Normalizar corchetes y espacios extra para mejores matches
     const normalizedText = cleanText
-      .replace(/\[([^\]]*)\]/g, '$1')  // Remover corchetes pero mantener contenido
-      .replace(/\s+/g, ' ')           // Normalizar espacios múltiples
-    
+      .replace(/\[([^\]]*)\]/g, '$1') // Remover corchetes pero mantener contenido
+      .replace(/\s+/g, ' ') // Normalizar espacios múltiples
+
     if (cleanText.length < 10) {
       return {
         isValid: false,
         confidence: 0.9,
         rejectionReason: 'input_too_short',
-        suggestedFormat: 'Proporciona más detalles del caso clínico'
+        suggestedFormat: 'Proporciona más detalles del caso clínico',
       }
     }
 
     // Verificar patrones explícitamente no médicos
-    const nonMedicalMatches = this.nonMedicalPatterns.filter(pattern => pattern.test(normalizedText))
+    const nonMedicalMatches = this.nonMedicalPatterns.filter(pattern =>
+      pattern.test(normalizedText)
+    )
     if (nonMedicalMatches.length > 0) {
       return {
         isValid: false,
         confidence: 0.95,
         rejectionReason: 'non_medical_content',
-        suggestedFormat: 'Este sistema está diseñado exclusivamente para análisis de casos clínicos'
+        suggestedFormat:
+          'Este sistema está diseñado exclusivamente para análisis de casos clínicos',
       }
     }
 
     // Verificar patrones médicos estructurados (usar texto normalizado)
-    const medicalPatternMatches = this.medicalPatterns.filter(pattern => 
-      pattern.test(normalizedText) || pattern.test(cleanText)
+    const medicalPatternMatches = this.medicalPatterns.filter(
+      pattern => pattern.test(normalizedText) || pattern.test(cleanText)
     )
-    const medicalTermMatches = this.medicalTerms.filter(term => 
-      normalizedText.includes(term) || cleanText.includes(term)
+    const medicalTermMatches = this.medicalTerms.filter(
+      term => normalizedText.includes(term) || cleanText.includes(term)
     )
 
     // Calcular puntuación - MÁS GENEROSO
     let score = 0
-    
+
     // Peso alto para patrones médicos estructurados
-    score += medicalPatternMatches.length * 20  // Reducido de 25 a 20
-    
+    score += medicalPatternMatches.length * 20 // Reducido de 25 a 20
+
     // Peso medio para términos médicos
-    score += medicalTermMatches.length * 8      // Aumentado de 5 a 8
-    
+    score += medicalTermMatches.length * 8 // Aumentado de 5 a 8
+
     // Bonificación por estructura de caso clínico
     if (this.hasClinicStructure(normalizedText)) {
-      score += 25  // Reducido de 30 a 25
+      score += 25 // Reducido de 30 a 25
     }
 
     // Bonificación especial para consultas de control/laboratorios
     if (this.isControlConsultation(normalizedText)) {
-      score += 35  // NUEVA bonificación alta para controles
+      score += 35 // NUEVA bonificación alta para controles
     }
 
     // Sin penalización por falta de contexto - demasiado restrictivo
@@ -162,18 +283,20 @@ export class MedicalContentValidator {
     const confidence = Math.min(score / 100, 0.98)
 
     // Threshold más bajo y flexible para casos válidos
-    if (confidence < 0.15 && medicalTermMatches.length < 2) {  // MÁS flexible
+    if (confidence < 0.15 && medicalTermMatches.length < 2) {
+      // MÁS flexible
       return {
         isValid: false,
         confidence: 1 - confidence,
         rejectionReason: 'insufficient_medical_context',
-        suggestedFormat: 'Incluye información médica relevante: síntomas, laboratorios o contexto clínico'
+        suggestedFormat:
+          'Incluye información médica relevante: síntomas, laboratorios o contexto clínico',
       }
     }
 
     return {
       isValid: true,
-      confidence
+      confidence,
     }
   }
 
@@ -187,11 +310,11 @@ export class MedicalContentValidator {
       /(síntomas?|dolor|molestias?|mareo|mareos|debilidad|laboratorios|control|análisis)/i,
       /(desde|hace|durante|de\s+\d+|para\s+control)/i,
       /(antecedentes?|historia|diabética|hipertensa|medicación|medicamento|glucosa|colesterol|hba1c)/i,
-      /(mg\/dl|%|valores?|resultados?)/i  // NUEVO: patrones de laboratorios
+      /(mg\/dl|%|valores?|resultados?)/i, // NUEVO: patrones de laboratorios
     ]
 
     const matchCount = structureIndicators.filter(pattern => pattern.test(text)).length
-    return matchCount >= 2  // Mantener 2 para flexibilidad
+    return matchCount >= 2 // Mantener 2 para flexibilidad
   }
 
   /**
@@ -199,8 +322,9 @@ export class MedicalContentValidator {
    */
   private hasAgeGenderContext(text: string): boolean {
     const agePattern = /\d+\s*años?/i
-    const genderPattern = /(masculino|femenino|femenina|masculina|hombre|mujer|varón|paciente\s+(masculino|femenino|femenina|masculina|de|con))/i
-    
+    const genderPattern =
+      /(masculino|femenino|femenina|masculina|hombre|mujer|varón|paciente\s+(masculino|femenino|femenina|masculina|de|con))/i
+
     // Retorna true si tiene edad Y género, o al menos uno de ellos
     return agePattern.test(text) && genderPattern.test(text)
   }
@@ -218,7 +342,7 @@ export class MedicalContentValidator {
       /resultados?\s+(de|del)\s+(análisis|examen|laboratorio)/i,
       /consulta\s+(de\s+control|preventiva|de\s+rutina)/i,
       /evaluación\s+(médica|clínica|de\s+control)/i,
-      /monitoreo\s+(de|médico)/i
+      /monitoreo\s+(de|médico)/i,
     ]
 
     return controlPatterns.some(pattern => pattern.test(text))
@@ -228,11 +352,13 @@ export class MedicalContentValidator {
    * Genera mensaje de rechazo apropiado
    */
   public generateRejectionMessage(result: BasicMedicalValidationResult): string {
-    const baseMessage = "## ⚠️ Consulta No Válida\n\n"
-    
+    const baseMessage = '## ⚠️ Consulta No Válida\n\n'
+
     switch (result.rejectionReason) {
       case 'input_too_short':
-        return baseMessage + `**Información insuficiente**
+        return (
+          baseMessage +
+          `**Información insuficiente**
 
 Por favor, proporciona un caso clínico más detallado que incluya:
 
@@ -244,9 +370,12 @@ Por favor, proporciona un caso clínico más detallado que incluya:
 - **Examen físico:** Hallazgos relevantes (si disponible)
 
 **Ejemplo:** *"Paciente masculino de 45 años presenta dolor torácico opresivo de 2 horas de evolución, irradiado a brazo izquierdo. Antecedente de hipertensión arterial..."*`
+        )
 
       case 'non_medical_content':
-        return baseMessage + `**Fuera del dominio médico**
+        return (
+          baseMessage +
+          `**Fuera del dominio médico**
 
 Este sistema está especializado exclusivamente en:
 - 🏥 **Análisis de casos clínicos**
@@ -256,9 +385,12 @@ Este sistema está especializado exclusivamente en:
 No puedo ayudar con temas fuera del ámbito médico-psicológico.
 
 Por favor, reformula tu consulta como un caso clínico específico.`
+        )
 
       case 'insufficient_medical_context':
-        return baseMessage + `**Requiere más contexto médico**
+        return (
+          baseMessage +
+          `**Requiere más contexto médico**
 
 Para realizar un análisis clínico apropiado, necesito información específica del paciente.
 
@@ -270,13 +402,17 @@ Para realizar un análisis clínico apropiado, necesito información específica
 5. **Contexto:** Circunstancias asociadas
 
 **Reformula tu consulta con estos elementos para obtener un análisis médico completo.**`
+        )
 
       default:
-        return baseMessage + `**Consulta no reconocida como caso clínico**
+        return (
+          baseMessage +
+          `**Consulta no reconocida como caso clínico**
 
 ${result.suggestedFormat}
 
 Por favor, estructura tu consulta como un caso médico específico.`
+        )
     }
   }
 }
@@ -298,7 +434,7 @@ export class MedicalQualityValidator {
   public validateMedicalCase(text: string): MedicalValidationResult {
     // Validación básica primero
     const basicValidation = this.contentValidator.validateMedicalContent(text)
-    
+
     if (!basicValidation.isValid) {
       return {
         isValid: false,
@@ -308,7 +444,7 @@ export class MedicalQualityValidator {
         structureScore: 0,
         clinicalCoherence: 0,
         rejectionReason: basicValidation.rejectionReason,
-        suggestedImprovements: [basicValidation.suggestedFormat || 'Mejora la estructura del caso']
+        suggestedImprovements: [basicValidation.suggestedFormat || 'Mejora la estructura del caso'],
       }
     }
 
@@ -333,7 +469,7 @@ export class MedicalQualityValidator {
       missingCriticalData: missingData,
       structureScore,
       clinicalCoherence,
-      suggestedImprovements: this.generateImprovementSuggestions(missingData, structureScore)
+      suggestedImprovements: this.generateImprovementSuggestions(missingData, structureScore),
     }
   }
 
@@ -386,7 +522,7 @@ export class MedicalQualityValidator {
       missingCriticalData: issues,
       structureScore: totalScore,
       clinicalCoherence: this.evaluateSOAPCoherence(analysis),
-      suggestedImprovements: this.generateSOAPImprovements(analysis, issues)
+      suggestedImprovements: this.generateSOAPImprovements(analysis, issues),
     }
   }
 
@@ -401,7 +537,7 @@ export class MedicalQualityValidator {
     // Normalizar texto igual que en el validador básico
     const cleanText = text.toLowerCase()
     const normalizedText = cleanText
-      .replace(/\[([^\]]*)\]/g, '$1')  // Remover corchetes
+      .replace(/\[([^\]]*)\]/g, '$1') // Remover corchetes
       .replace(/\s+/g, ' ')
 
     // Verificar edad - usar texto normalizado
@@ -416,15 +552,20 @@ export class MedicalQualityValidator {
 
     // NUEVA LÓGICA: Para consultas de control, la cronología no es crítica
     const isControlConsult = this.isControlConsultation(normalizedText)
-    
-    if (!isControlConsult && !normalizedText.match(/(desde|hace|durante|\d+\s*(días?|meses|horas?|semanas?))/i)) {
+
+    if (
+      !isControlConsult &&
+      !normalizedText.match(/(desde|hace|durante|\d+\s*(días?|meses|horas?|semanas?))/i)
+    ) {
       missing.push('Cronología/duración de síntomas')
     }
 
     // NUEVA LÓGICA: Para consultas de control, los laboratorios reemplazan la sintomatología
     const hasLabResults = normalizedText.match(/(glucosa|colesterol|hba1c|hemoglobina)\s+\d+/i)
-    const hasSymptoms = normalizedText.match(/(síntomas?|dolor|presenta|refiere|molestias?|lesiones?)/i)
-    
+    const hasSymptoms = normalizedText.match(
+      /(síntomas?|dolor|presenta|refiere|molestias?|lesiones?)/i
+    )
+
     if (!isControlConsult && !hasSymptoms && !hasLabResults) {
       missing.push('Sintomatología clara')
     }
@@ -435,26 +576,27 @@ export class MedicalQualityValidator {
   private evaluateStructure(text: string): number {
     const cleanText = text.toLowerCase()
     // Normalizar texto
-    const normalizedText = cleanText
-      .replace(/\[([^\]]*)\]/g, '$1')
-      .replace(/\s+/g, ' ')
-    
+    const normalizedText = cleanText.replace(/\[([^\]]*)\]/g, '$1').replace(/\s+/g, ' ')
+
     let score = 0
 
     // Estructura demográfica (30%)
     if (normalizedText.match(/paciente\s+(masculino|femenino|\d+\s*años?)/i)) score += 0.3
-    
-    // Presentación de síntomas O consulta de control (25%)  
-    if (normalizedText.match(/(presenta|refiere|acude\s+por|consulta\s+por|acude\s+para\s+control)/i)) score += 0.25
-    
+
+    // Presentación de síntomas O consulta de control (25%)
+    if (
+      normalizedText.match(/(presenta|refiere|acude\s+por|consulta\s+por|acude\s+para\s+control)/i)
+    )
+      score += 0.25
+
     // Cronología O laboratorios (20%) - NUEVA lógica
     const hasChronology = normalizedText.match(/(desde|hace|durante|\d+\s*(días?|meses|horas?))/i)
     const hasLabResults = normalizedText.match(/(glucosa|colesterol|hba1c)\s+\d+/i)
     if (hasChronology || hasLabResults) score += 0.2
-    
+
     // Contexto médico (15%)
     if (normalizedText.match(/(antecedentes?|historia|medicamentos?|laboratorios)/i)) score += 0.15
-    
+
     // Detalles específicos O valores de laboratorio (10%)
     const hasSpecificDetails = normalizedText.match(/(localizado|irradiado|asociado|acompañado)/i)
     const hasLabValues = normalizedText.match(/(mg\/dl|%|valores?)/i)
@@ -472,9 +614,17 @@ export class MedicalQualityValidator {
     const cardiacTerms = ['dolor', 'torácico', 'pecho', 'corazón', 'palpitaciones']
     const giTerms = ['abdominal', 'náuseas', 'vómitos', 'diarrea', 'estómago']
     const neuroTerms = ['cefalea', 'mareo', 'neurológico', 'cabeza', 'confusión']
-    
+
     // NUEVO: Términos de control/laboratorios
-    const labTerms = ['glucosa', 'colesterol', 'hba1c', 'hemoglobina', 'laboratorios', 'control', 'análisis']
+    const labTerms = [
+      'glucosa',
+      'colesterol',
+      'hba1c',
+      'hemoglobina',
+      'laboratorios',
+      'control',
+      'análisis',
+    ]
 
     const cardiacCount = cardiacTerms.filter(term => normalizedText.includes(term)).length
     const giCount = giTerms.filter(term => normalizedText.includes(term)).length
@@ -485,12 +635,12 @@ export class MedicalQualityValidator {
     if (cardiacCount >= 2 || giCount >= 2 || neuroCount >= 2) {
       coherenceScore += 0.3
     }
-    
+
     // NUEVA: Coherencia para consultas de control/laboratorios
     if (labCount >= 2) {
-      coherenceScore += 0.4  // Más puntos para laboratorios coherentes
+      coherenceScore += 0.4 // Más puntos para laboratorios coherentes
     }
-    
+
     // Bonificación por consulta estructurada de control
     if (this.isControlConsultation(normalizedText)) {
       coherenceScore += 0.2
@@ -506,18 +656,20 @@ export class MedicalQualityValidator {
     medicalTermCount: number,
     missingDataCount: number
   ): number {
-    
     const termBonus = Math.min(medicalTermCount * 0.02, 0.2)
     const missingPenalty = missingDataCount * 0.1
-    
-    return Math.min(Math.max(
-      basicConfidence * 0.4 +
-      structureScore * 0.3 +
-      clinicalCoherence * 0.2 +
-      termBonus * 0.1 -
-      missingPenalty,
-      0
-    ), 1.0)
+
+    return Math.min(
+      Math.max(
+        basicConfidence * 0.4 +
+          structureScore * 0.3 +
+          clinicalCoherence * 0.2 +
+          termBonus * 0.1 -
+          missingPenalty,
+        0
+      ),
+      1.0
+    )
   }
 
   private generateImprovementSuggestions(missingData: string[], structureScore: number): string[] {
@@ -541,7 +693,7 @@ export class MedicalQualityValidator {
   // Métodos para validación SOAP
   private evaluateSubjectivoSection(subjetivo: string): number {
     if (!subjetivo || subjetivo.length < 20) return 0.2
-    
+
     let score = 0.4 // Base
     const cleanText = subjetivo.toLowerCase()
 
@@ -578,7 +730,7 @@ export class MedicalQualityValidator {
   private evaluatePlanSection(plan: string): number {
     if (!plan || plan.length < 30) return 0.2
 
-    let score = 0.3 // Base  
+    let score = 0.3 // Base
     const cleanText = plan.toLowerCase()
 
     if (cleanText.match(/(medicamento|tratamiento|terapia)/)) score += 0.3
@@ -589,7 +741,8 @@ export class MedicalQualityValidator {
   }
 
   private extractMedicalTermsFromSOAP(analysis: SOAPAnalysis): string[] {
-    const allText = `${analysis.subjetivo || ''} ${analysis.objetivo || ''} ${analysis.diagnostico_principal || ''} ${analysis.plan_tratamiento || ''}`.toLowerCase()
+    const allText =
+      `${analysis.subjetivo || ''} ${analysis.objetivo || ''} ${analysis.diagnostico_principal || ''} ${analysis.plan_tratamiento || ''}`.toLowerCase()
     const terms = this.contentValidator['medicalTerms']
     return terms.filter(term => allText.includes(term))
   }
@@ -599,12 +752,22 @@ export class MedicalQualityValidator {
     let coherence = 0.5
 
     // El diagnóstico principal debería estar relacionado con síntomas subjetivos
-    if (this.checkDiagnosisSymptomCoherence(analysis.diagnostico_principal || '', analysis.subjetivo || '')) {
+    if (
+      this.checkDiagnosisSymptomCoherence(
+        analysis.diagnostico_principal || '',
+        analysis.subjetivo || ''
+      )
+    ) {
       coherence += 0.25
     }
 
     // El plan debería estar alineado con el diagnóstico
-    if (this.checkPlanDiagnosisAlignment(analysis.plan_tratamiento || '', analysis.diagnostico_principal || '')) {
+    if (
+      this.checkPlanDiagnosisAlignment(
+        analysis.plan_tratamiento || '',
+        analysis.diagnostico_principal || ''
+      )
+    ) {
       coherence += 0.25
     }
 
@@ -617,7 +780,8 @@ export class MedicalQualityValidator {
     const symptomsLower = symptoms.toLowerCase()
 
     // Ejemplos de coherencia
-    if (diagnosisLower.includes('gastritis') && symptomsLower.includes('dolor abdominal')) return true
+    if (diagnosisLower.includes('gastritis') && symptomsLower.includes('dolor abdominal'))
+      return true
     if (diagnosisLower.includes('hipertensión') && symptomsLower.includes('cefalea')) return true
     if (diagnosisLower.includes('ansiedad') && symptomsLower.includes('nerviosismo')) return true
 
@@ -630,7 +794,8 @@ export class MedicalQualityValidator {
     const diagnosisLower = diagnosis.toLowerCase()
 
     if (diagnosisLower.includes('infección') && planLower.includes('antibiótico')) return true
-    if (diagnosisLower.includes('hipertensión') && planLower.includes('antihipertensivo')) return true
+    if (diagnosisLower.includes('hipertensión') && planLower.includes('antihipertensivo'))
+      return true
     if (diagnosisLower.includes('diabetes') && planLower.includes('glucosa')) return true
 
     return planLower.includes('tratamiento') || planLower.includes('medicamento')
@@ -672,7 +837,7 @@ export class MedicalQualityValidator {
       /resultados?\s+(de|del)\s+(análisis|examen|laboratorio)/i,
       /consulta\s+(de\s+control|preventiva|de\s+rutina)/i,
       /evaluación\s+(médica|clínica|de\s+control)/i,
-      /monitoreo\s+(de|médico)/i
+      /monitoreo\s+(de|médico)/i,
     ]
 
     return controlPatterns.some(pattern => pattern.test(text))

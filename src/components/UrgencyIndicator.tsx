@@ -29,16 +29,16 @@ const UrgencyLevelConfig = {
     textColor: 'text-red-300',
     icon: '🚨',
     label: 'CRÍTICO',
-    description: 'Requiere atención inmediata'
+    description: 'Requiere atención inmediata',
   },
   high: {
     color: 'from-orange-600 to-orange-500',
     bgColor: 'bg-orange-500/20',
-    borderColor: 'border-orange-500/30', 
+    borderColor: 'border-orange-500/30',
     textColor: 'text-orange-300',
     icon: '⚠️',
     label: 'ALTO',
-    description: 'Urgente - Atender en < 1 hora'
+    description: 'Urgente - Atender en < 1 hora',
   },
   medium: {
     color: 'from-yellow-600 to-yellow-500',
@@ -47,7 +47,7 @@ const UrgencyLevelConfig = {
     textColor: 'text-yellow-300',
     icon: '🟡',
     label: 'MEDIO',
-    description: 'Prioritario - Atender en < 4 horas'
+    description: 'Prioritario - Atender en < 4 horas',
   },
   low: {
     color: 'from-green-600 to-green-500',
@@ -56,16 +56,22 @@ const UrgencyLevelConfig = {
     textColor: 'text-green-300',
     icon: '🟢',
     label: 'BAJO',
-    description: 'Rutinario - Atender en < 24 horas'
-  }
+    description: 'Rutinario - Atender en < 24 horas',
+  },
 }
 
-const ActionCard = ({ title, actions, color }: { 
+const ActionCard = ({
+  title,
+  actions,
+  color,
+}: {
   title: string
   actions: string[]
-  color: string 
+  color: string
 }) => (
-  <div className={`bg-gradient-to-br ${color} bg-opacity-10 backdrop-blur-sm rounded-lg p-3 border border-opacity-20`}>
+  <div
+    className={`bg-gradient-to-br ${color} bg-opacity-10 backdrop-blur-sm rounded-lg p-3 border border-opacity-20`}
+  >
     <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
       <span className="text-xs">🎯</span>
       {title}
@@ -105,7 +111,7 @@ const GravityMeter = ({ score }: { score: number }) => {
         <span className="text-lg font-bold text-white">{score}/10</span>
       </div>
       <div className="w-full bg-slate-700 rounded-full h-3">
-        <div 
+        <div
           className={`bg-gradient-to-r ${getGravityColor(score)} h-3 rounded-full transition-all duration-500 relative`}
           style={{ width: `${(score / 10) * 100}%` }}
         >
@@ -131,7 +137,9 @@ const PatternCard = ({ patterns, title }: { patterns: string[]; title: string })
     </div>
     <div className="space-y-1">
       {patterns.slice(0, 2).map((pattern, idx) => (
-        <p key={idx} className="text-xs text-slate-300">• {pattern}</p>
+        <p key={idx} className="text-xs text-slate-300">
+          • {pattern}
+        </p>
       ))}
       {patterns.length > 2 && (
         <p className="text-xs text-slate-500">+{patterns.length - 2} patrones más</p>
@@ -145,21 +153,20 @@ export const UrgencyIndicator = ({ urgencyData, className = '' }: UrgencyIndicat
   const config = UrgencyLevelConfig[urgencyData.level]
 
   return (
-    <div className={`${className} bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-600/30 overflow-hidden`}>
-      
+    <div
+      className={`${className} bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-600/30 overflow-hidden`}
+    >
       {/* Header - Nivel de Urgencia */}
       <div className={`${config.bgColor} border-b ${config.borderColor} p-4`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="text-2xl">{config.icon}</div>
             <div>
-              <h3 className={`text-lg font-bold ${config.textColor}`}>
-                URGENCIA {config.label}
-              </h3>
+              <h3 className={`text-lg font-bold ${config.textColor}`}>URGENCIA {config.label}</h3>
               <p className="text-sm text-slate-400">{config.description}</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <div className="text-center">
               <div className={`text-2xl font-bold ${config.textColor}`}>
@@ -167,7 +174,7 @@ export const UrgencyIndicator = ({ urgencyData, className = '' }: UrgencyIndicat
               </div>
               <div className="text-xs text-slate-400">Score</div>
             </div>
-            
+
             <button
               onClick={() => setExpanded(!expanded)}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${config.bgColor} ${config.textColor} border ${config.borderColor} hover:opacity-80`}
@@ -181,11 +188,9 @@ export const UrgencyIndicator = ({ urgencyData, className = '' }: UrgencyIndicat
         <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center space-x-2 text-sm">
             <span className="text-slate-400">⏱️ Tiempo máximo:</span>
-            <span className={`font-semibold ${config.textColor}`}>
-              {urgencyData.timeToAction}
-            </span>
+            <span className={`font-semibold ${config.textColor}`}>{urgencyData.timeToAction}</span>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <span className="text-xs bg-slate-700/50 text-slate-300 px-2 py-1 rounded-full">
               Triage: {urgencyData.triageCategory}
@@ -207,10 +212,9 @@ export const UrgencyIndicator = ({ urgencyData, className = '' }: UrgencyIndicat
       {/* Expanded Details */}
       {expanded && (
         <div className="p-4 space-y-4 border-t border-slate-700 bg-slate-900/20">
-          
           {/* Patrones Urgentes */}
           {urgencyData.urgentPatterns.length > 0 && (
-            <PatternCard 
+            <PatternCard
               patterns={urgencyData.urgentPatterns}
               title="Patrones Críticos Detectados"
             />
@@ -218,10 +222,7 @@ export const UrgencyIndicator = ({ urgencyData, className = '' }: UrgencyIndicat
 
           {/* Risk Factors */}
           {urgencyData.riskFactors.length > 0 && (
-            <PatternCard 
-              patterns={urgencyData.riskFactors}
-              title="Factores de Riesgo"
-            />
+            <PatternCard patterns={urgencyData.riskFactors} title="Factores de Riesgo" />
           )}
 
           {/* Acciones Inmediatas */}
@@ -240,12 +241,14 @@ export const UrgencyIndicator = ({ urgencyData, className = '' }: UrgencyIndicat
               <h4 className="text-sm font-semibold text-blue-300">Medicina Defensiva</h4>
             </div>
             <p className="text-xs text-slate-300">
-              Diagnósticos priorizados por <strong>gravedad</strong> sobre probabilidad.
-              Sistema diseñado para minimizar riesgos vitales no detectados.
+              Diagnósticos priorizados por <strong>gravedad</strong> sobre probabilidad. Sistema
+              diseñado para minimizar riesgos vitales no detectados.
             </p>
             <div className="mt-2 flex items-center space-x-2 text-xs">
               <span className="text-slate-400">Principio:</span>
-              <span className="text-blue-300 font-medium">"Mejor sobrediagnosticar que subdiagnosticar"</span>
+              <span className="text-blue-300 font-medium">
+                "Mejor sobrediagnosticar que subdiagnosticar"
+              </span>
             </div>
           </div>
         </div>
@@ -257,19 +260,17 @@ export const UrgencyIndicator = ({ urgencyData, className = '' }: UrgencyIndicat
 // Componente simplificado para casos de baja urgencia
 export const CompactUrgencyIndicator = ({ urgencyData }: UrgencyIndicatorProps) => {
   const config = UrgencyLevelConfig[urgencyData.level]
-  
+
   return (
-    <div className={`${config.bgColor} backdrop-blur-sm rounded-lg p-3 border ${config.borderColor} flex items-center space-x-3`}>
+    <div
+      className={`${config.bgColor} backdrop-blur-sm rounded-lg p-3 border ${config.borderColor} flex items-center space-x-3`}
+    >
       <div className="text-lg">{config.icon}</div>
       <div className="flex-1">
-        <div className={`text-sm font-semibold ${config.textColor}`}>
-          {config.label}
-        </div>
+        <div className={`text-sm font-semibold ${config.textColor}`}>{config.label}</div>
         <div className="text-xs text-slate-400">{urgencyData.timeToAction}</div>
       </div>
-      <div className={`text-lg font-bold ${config.textColor}`}>
-        {urgencyData.gravityScore}
-      </div>
+      <div className={`text-lg font-bold ${config.textColor}`}>{urgencyData.gravityScore}</div>
     </div>
   )
 }

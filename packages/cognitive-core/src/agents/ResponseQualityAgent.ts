@@ -35,10 +35,10 @@ class MedicalQualityValidator implements QualityValidator {
   validateLanguage(text: string): number {
     const spanishTerms = /\b(paciente|diagnóstico|tratamiento|síntomas)\b/gi
     const englishTerms = /\b(patient|diagnosis|treatment|symptoms)\b/gi
-    
+
     const hasSpanish = spanishTerms.test(text)
     const hasEnglish = englishTerms.test(text)
-    
+
     // Penalizar mezcla de idiomas
     return hasSpanish && hasEnglish ? 30 : 85
   }
@@ -46,11 +46,11 @@ class MedicalQualityValidator implements QualityValidator {
   validateProfessionalism(text: string): number {
     const emojiCount = (text.match(/[\u2600-\u27BF]|[\uD800-\uDBFF][\uDC00-\uDFFF]/g) || []).length
     const hasSystemMeta = /procesamiento cognitivo|confianza del sistema/i.test(text)
-    
+
     let score = 90
     if (emojiCount > 0) score -= emojiCount * 20
     if (hasSystemMeta) score -= 30
-    
+
     return Math.max(0, score)
   }
 
@@ -58,9 +58,9 @@ class MedicalQualityValidator implements QualityValidator {
     const clinicalElements = [
       /diagnóstico|diagnosis/i,
       /tratamiento|treatment/i,
-      /seguimiento|follow.?up/i
+      /seguimiento|follow.?up/i,
     ]
-    
+
     const presentElements = clinicalElements.filter(regex => regex.test(text)).length
     return (presentElements / clinicalElements.length) * 100
   }
@@ -94,7 +94,7 @@ export class ResponseQualityAgent extends BaseAgent<MedicalQualityDecision> {
 
   constructor(claudeAdapter?: ClaudeAdapter) {
     super('response_quality', 'ResponseQualityAgent v3.0 - Real Claude Integration')
-    
+
     // SOLID: Dependency Injection
     this.validator = new MedicalQualityValidator()
     this.improver = new ClaudeResponseImprover(claudeAdapter || new ClaudeAdapter())
@@ -119,7 +119,7 @@ export class ResponseQualityAgent extends BaseAgent<MedicalQualityDecision> {
         metrics,
         improved_response: improvedResponse,
         confidence: metrics.overall_score / 100,
-        reasoning: this.generateReasoning(metrics)
+        reasoning: this.generateReasoning(metrics),
       }
 
       return this.createSuccessResponse(
@@ -128,12 +128,8 @@ export class ResponseQualityAgent extends BaseAgent<MedicalQualityDecision> {
         request.timestamp,
         decision.reasoning
       )
-
     } catch (error) {
-      return this.createErrorResponse(
-        `Quality agent error: ${error}`,
-        request.timestamp
-      )
+      return this.createErrorResponse(`Quality agent error: ${error}`, request.timestamp)
     }
   }
 
@@ -142,20 +138,22 @@ export class ResponseQualityAgent extends BaseAgent<MedicalQualityDecision> {
     const language = this.validator.validateLanguage(text)
     const professionalism = this.validator.validateProfessionalism(text)
     const completeness = this.validator.validateCompleteness(text)
-    
+
     return {
       language_consistency: language,
       medical_professionalism: professionalism,
       clinical_completeness: completeness,
-      overall_score: (language + professionalism + completeness) / 3
+      overall_score: (language + professionalism + completeness) / 3,
     }
   }
 
   // SOLID: Single Responsibility - Una decisión clara
   private shouldImprove(metrics: QualityMetrics): boolean {
-    return metrics.overall_score < 70 || 
-           metrics.language_consistency < 60 || 
-           metrics.medical_professionalism < 60
+    return (
+      metrics.overall_score < 70 ||
+      metrics.language_consistency < 60 ||
+      metrics.medical_professionalism < 60
+    )
   }
 
   // DRY: Generación uniforme de reasoning

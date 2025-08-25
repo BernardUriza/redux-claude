@@ -188,10 +188,7 @@ export interface PipelineRecommendation {
 }
 
 export interface PerformanceOptimizer {
-  optimizePipeline(
-    current: PipelineStage[], 
-    performance: PerformanceMetrics[]
-  ): OptimizationResult
+  optimizePipeline(current: PipelineStage[], performance: PerformanceMetrics[]): OptimizationResult
 }
 
 export interface OptimizationResult {
@@ -262,7 +259,7 @@ export enum CognitiveEventType {
   ANOMALY_DETECTED = 'anomaly_detected',
   CONFIDENCE_THRESHOLD_CROSSED = 'confidence_threshold_crossed',
   KNOWLEDGE_GAP_IDENTIFIED = 'knowledge_gap_identified',
-  PROCESSING_STEP = 'processing_step'
+  PROCESSING_STEP = 'processing_step',
 }
 
 // ============= MEDICAL DECISION INTERFACES =============

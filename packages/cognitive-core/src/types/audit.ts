@@ -4,7 +4,7 @@ export enum AuditLevel {
   INFO = 'info',
   WARNING = 'warning',
   CRITICAL = 'critical',
-  ERROR = 'error'
+  ERROR = 'error',
 }
 
 export enum AuditCategory {
@@ -12,7 +12,7 @@ export enum AuditCategory {
   SAFETY_CHECK = 'safety_check',
   DECISION_REVIEW = 'decision_review',
   CONTRADICTION = 'contradiction',
-  QUALITY_ASSURANCE = 'quality_assurance'
+  QUALITY_ASSURANCE = 'quality_assurance',
 }
 
 export type AuditEntry = {

@@ -31,11 +31,11 @@ Describa el caso clínico completo: síntomas, antecedentes, examen físico, y c
 
 **Ejemplo**: *"Paciente femenina de 32 años presenta cefalea pulsátil de 2 días de duración, asociada a náuseas y fotofobia. Sin fiebre. Antecedente de migrañas ocasionales..."*
 
-🚀 **Estoy listo para procesar su consulta médica con análisis cognitivo avanzado.**`
-    }
+🚀 **Estoy listo para procesar su consulta médica con análisis cognitivo avanzado.**`,
+    },
   ],
   isLoading: false,
-  error: null
+  error: null,
 }
 
 const chatSlice = createSlice({
@@ -45,7 +45,7 @@ const chatSlice = createSlice({
     addUserMessage: (state, action: PayloadAction<string>) => {
       state.messages.push({
         role: 'user',
-        content: action.payload
+        content: action.payload,
       })
       state.isLoading = true
       state.error = null
@@ -53,7 +53,7 @@ const chatSlice = createSlice({
     addAssistantMessage: (state, action: PayloadAction<string>) => {
       state.messages.push({
         role: 'assistant',
-        content: action.payload
+        content: action.payload,
       })
       state.isLoading = false
     },
@@ -61,11 +61,11 @@ const chatSlice = createSlice({
       state.error = action.payload
       state.isLoading = false
     },
-    clearChat: (state) => {
+    clearChat: state => {
       state.messages = []
       state.error = null
-    }
-  }
+    },
+  },
 })
 
 export const { addUserMessage, addAssistantMessage, setError, clearChat } = chatSlice.actions

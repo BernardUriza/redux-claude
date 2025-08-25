@@ -11,10 +11,14 @@ import type { RootState } from '@redux-claude/cognitive-core'
 // import { updateSOAPSection, addPhysicianNote, updateUrgencyLevel } from '@redux-claude/cognitive-core'
 
 // Mocks temporales para mantener funcionalidad
-const updateSOAPSection = (sectionData: any) => ({ type: 'UPDATE_SOAP_SECTION_MOCK', payload: sectionData })
+const updateSOAPSection = (sectionData: any) => ({
+  type: 'UPDATE_SOAP_SECTION_MOCK',
+  payload: sectionData,
+})
 const addPhysicianNote = (note: any) => ({ type: 'ADD_PHYSICIAN_NOTE_MOCK', payload: note })
 const updateUrgencyLevel = (level: any) => ({ type: 'UPDATE_URGENCY_LEVEL_MOCK', payload: level })
-import type { SOAPStructure, SubjectiveData, ObjectiveFindings, DifferentialDiagnosis, TreatmentPlan } from '@redux-claude/cognitive-core'
+// Types temporarily removed - using mock data for now
+// TODO: Re-implement with proper SOAPData types from cognitive-core
 
 interface SOAPSectionProps {
   section: 'S' | 'O' | 'A' | 'P'
@@ -30,21 +34,31 @@ const SOAPSection = ({ section, title, data, editable = false, onEdit }: SOAPSec
 
   const getSectionIcon = (section: string) => {
     switch (section) {
-      case 'S': return '🗣️'
-      case 'O': return '🔍'
-      case 'A': return '🧠'
-      case 'P': return '📋'
-      default: return '📄'
+      case 'S':
+        return '🗣️'
+      case 'O':
+        return '🔍'
+      case 'A':
+        return '🧠'
+      case 'P':
+        return '📋'
+      default:
+        return '📄'
     }
   }
 
   const getSectionColor = (section: string) => {
     switch (section) {
-      case 'S': return 'from-blue-500 to-cyan-500'
-      case 'O': return 'from-emerald-500 to-teal-500'
-      case 'A': return 'from-purple-500 to-indigo-500'
-      case 'P': return 'from-orange-500 to-yellow-500'
-      default: return 'from-gray-500 to-slate-500'
+      case 'S':
+        return 'from-blue-500 to-cyan-500'
+      case 'O':
+        return 'from-emerald-500 to-teal-500'
+      case 'A':
+        return 'from-purple-500 to-indigo-500'
+      case 'P':
+        return 'from-orange-500 to-yellow-500'
+      default:
+        return 'from-gray-500 to-slate-500'
     }
   }
 
@@ -53,13 +67,13 @@ const SOAPSection = ({ section, title, data, editable = false, onEdit }: SOAPSec
 
     switch (section) {
       case 'S':
-        return <SubjectiveContent data={data as SubjectiveData} />
+        return <SubjectiveContent data={data as any} />
       case 'O':
-        return <ObjectiveContent data={data as ObjectiveFindings} />
+        return <ObjectiveContent data={data as any} />
       case 'A':
-        return <AnalysisContent data={data as DifferentialDiagnosis} />
+        return <AnalysisContent data={data as any} />
       case 'P':
-        return <PlanContent data={data as TreatmentPlan} />
+        return <PlanContent data={data as any} />
       default:
         return <p className="text-slate-300">{String(data)}</p>
     }
@@ -68,12 +82,16 @@ const SOAPSection = ({ section, title, data, editable = false, onEdit }: SOAPSec
   return (
     <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-xl rounded-2xl border border-slate-600/40 overflow-hidden">
       {/* Section Header */}
-      <div className={`bg-gradient-to-r ${getSectionColor(section)} p-4 border-b border-slate-600/30`}>
+      <div
+        className={`bg-gradient-to-r ${getSectionColor(section)} p-4 border-b border-slate-600/30`}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <span className="text-2xl">{getSectionIcon(section)}</span>
             <div>
-              <h3 className="text-white font-bold text-lg">{section} - {title}</h3>
+              <h3 className="text-white font-bold text-lg">
+                {section} - {title}
+              </h3>
               <p className="text-white/80 text-sm">Sección SOAP estructurada</p>
             </div>
           </div>
@@ -94,7 +112,7 @@ const SOAPSection = ({ section, title, data, editable = false, onEdit }: SOAPSec
           <div className="space-y-4">
             <textarea
               value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
+              onChange={e => setEditContent(e.target.value)}
               className="w-full h-32 bg-slate-800 border border-slate-600 rounded-lg p-4 text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder={`Editar contenido de sección ${section}...`}
             />
@@ -125,13 +143,13 @@ const SOAPSection = ({ section, title, data, editable = false, onEdit }: SOAPSec
 }
 
 // Componentes específicos para cada sección SOAP
-const SubjectiveContent = ({ data }: { data: SubjectiveData }) => (
+const SubjectiveContent = ({ data }: { data: any }) => (
   <div className="space-y-4">
     <div>
       <h4 className="text-slate-200 font-semibold mb-2">Motivo de Consulta</h4>
       <p className="text-slate-300 leading-relaxed">{data.chiefComplaint}</p>
     </div>
-    
+
     <div>
       <h4 className="text-slate-200 font-semibold mb-2">Enfermedad Actual</h4>
       <p className="text-slate-300 leading-relaxed">{data.presentIllness}</p>
@@ -141,7 +159,7 @@ const SubjectiveContent = ({ data }: { data: SubjectiveData }) => (
       <div>
         <h4 className="text-slate-200 font-semibold mb-2">Antecedentes Médicos</h4>
         <ul className="list-disc list-inside text-slate-300 space-y-1">
-          {data.medicalHistory.map((item, index) => (
+          {data.medicalHistory.map((item: string, index: number) => (
             <li key={index}>{item}</li>
           ))}
         </ul>
@@ -152,7 +170,7 @@ const SubjectiveContent = ({ data }: { data: SubjectiveData }) => (
       <div>
         <h4 className="text-slate-200 font-semibold mb-2">Antecedentes Familiares</h4>
         <ul className="list-disc list-inside text-slate-300 space-y-1">
-          {data.familyHistory.map((item, index) => (
+          {data.familyHistory.map((item: string, index: number) => (
             <li key={index}>{item}</li>
           ))}
         </ul>
@@ -161,19 +179,22 @@ const SubjectiveContent = ({ data }: { data: SubjectiveData }) => (
   </div>
 )
 
-const ObjectiveContent = ({ data }: { data: ObjectiveFindings }) => (
+const ObjectiveContent = ({ data }: { data: any }) => (
   <div className="space-y-4">
     {Object.keys(data.vitalSigns).length > 0 && (
       <div>
         <h4 className="text-slate-200 font-semibold mb-2">Signos Vitales</h4>
         <div className="grid grid-cols-2 gap-4">
-          {Object.entries(data.vitalSigns).map(([key, value]) => 
-            value && (
-              <div key={key} className="bg-slate-800/50 rounded-lg p-3">
-                <div className="text-slate-400 text-sm capitalize">{key.replace(/([A-Z])/g, ' $1')}</div>
-                <div className="text-slate-200 font-medium">{value}</div>
-              </div>
-            )
+          {Object.entries(data.vitalSigns).map(
+            ([key, value]: [string, any]) =>
+              value && (
+                <div key={key} className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="text-slate-400 text-sm capitalize">
+                    {key.replace(/([A-Z])/g, ' $1')}
+                  </div>
+                  <div className="text-slate-200 font-medium">{value}</div>
+                </div>
+              )
           )}
         </div>
       </div>
@@ -183,15 +204,16 @@ const ObjectiveContent = ({ data }: { data: ObjectiveFindings }) => (
       <div>
         <h4 className="text-slate-200 font-semibold mb-2">Examen Físico</h4>
         <div className="space-y-3">
-          {Object.entries(data.physicalExam).map(([system, findings]) => 
-            findings && (
-              <div key={system} className="bg-slate-800/50 rounded-lg p-3">
-                <div className="text-slate-400 text-sm font-medium capitalize mb-1">
-                  {system.replace(/([A-Z])/g, ' $1')}
+          {Object.entries(data.physicalExam).map(
+            ([system, findings]: [string, any]) =>
+              findings && (
+                <div key={system} className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="text-slate-400 text-sm font-medium capitalize mb-1">
+                    {system.replace(/([A-Z])/g, ' $1')}
+                  </div>
+                  <div className="text-slate-300">{findings}</div>
                 </div>
-                <div className="text-slate-300">{findings}</div>
-              </div>
-            )
+              )
           )}
         </div>
       </div>
@@ -199,13 +221,15 @@ const ObjectiveContent = ({ data }: { data: ObjectiveFindings }) => (
   </div>
 )
 
-const AnalysisContent = ({ data }: { data: DifferentialDiagnosis }) => (
+const AnalysisContent = ({ data }: { data: any }) => (
   <div className="space-y-4">
     <div>
       <h4 className="text-slate-200 font-semibold mb-2">Diagnóstico Principal</h4>
       <div className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 rounded-lg p-4 border border-purple-700/20">
         <div className="text-white font-medium text-lg">{data.primaryDiagnosis}</div>
-        <div className="text-purple-300 text-sm mt-1">Confianza: {Math.round(data.confidence * 100)}%</div>
+        <div className="text-purple-300 text-sm mt-1">
+          Confianza: {Math.round(data.confidence * 100)}%
+        </div>
       </div>
     </div>
 
@@ -213,7 +237,7 @@ const AnalysisContent = ({ data }: { data: DifferentialDiagnosis }) => (
       <div>
         <h4 className="text-slate-200 font-semibold mb-2">Diagnósticos Diferenciales</h4>
         <div className="space-y-2">
-          {data.differentials.map((diff, index) => (
+          {data.differentials.map((diff: any, index: number) => (
             <div key={index} className="bg-slate-800/50 rounded-lg p-4">
               <div className="flex justify-between items-start mb-2">
                 <div className="text-slate-200 font-medium">{diff.diagnosis}</div>
@@ -238,13 +262,13 @@ const AnalysisContent = ({ data }: { data: DifferentialDiagnosis }) => (
   </div>
 )
 
-const PlanContent = ({ data }: { data: TreatmentPlan }) => (
+const PlanContent = ({ data }: { data: any }) => (
   <div className="space-y-4">
     {data.immediate.length > 0 && (
       <div>
         <h4 className="text-slate-200 font-semibold mb-2">Manejo Inmediato</h4>
         <ul className="list-disc list-inside text-slate-300 space-y-1">
-          {data.immediate.map((item, index) => (
+          {data.immediate.map((item: string, index: number) => (
             <li key={index}>{item}</li>
           ))}
         </ul>
@@ -255,7 +279,7 @@ const PlanContent = ({ data }: { data: TreatmentPlan }) => (
       <div>
         <h4 className="text-slate-200 font-semibold mb-2">Medicamentos</h4>
         <div className="space-y-2">
-          {data.medications.map((med, index) => (
+          {data.medications.map((med: any, index: number) => (
             <div key={index} className="bg-slate-800/50 rounded-lg p-3">
               <div className="text-slate-200 font-medium">{med.name}</div>
               <div className="text-slate-400 text-sm">
@@ -273,7 +297,7 @@ const PlanContent = ({ data }: { data: TreatmentPlan }) => (
         <div className="bg-blue-900/30 rounded-lg p-4 border border-blue-700/20">
           <div className="text-blue-300 font-medium mb-2">{data.followUp.timeframe}</div>
           <ul className="list-disc list-inside text-blue-200 text-sm space-y-1">
-            {data.followUp.instructions.map((instruction, index) => (
+            {data.followUp.instructions.map((instruction: string, index: number) => (
               <li key={index}>{instruction}</li>
             ))}
           </ul>
@@ -291,7 +315,7 @@ export const SOAPDisplay = () => {
     soap: null,
     confidence: 0.8,
     urgencyLevel: 'medium' as const,
-    lastUpdated: Date.now()
+    lastUpdated: Date.now(),
   }
   const [viewMode, setViewMode] = useState<'structured' | 'markdown'>('structured')
 
@@ -299,17 +323,20 @@ export const SOAPDisplay = () => {
   console.log('🔬 SOAPDisplay DEBUG - mockCurrentCase:', mockCurrentCase)
   console.log('🔬 SOAPDisplay DEBUG - mockCurrentCase.soap:', mockCurrentCase.soap)
 
-  const handleSectionEdit = (section: 'subjetivo' | 'objetivo' | 'analisis' | 'plan', data: any) => {
+  const handleSectionEdit = (
+    section: 'subjetivo' | 'objetivo' | 'analisis' | 'plan',
+    data: any
+  ) => {
     dispatch(updateSOAPSection({ section, data }))
   }
 
   // Función para generar contenido markdown del SOAP
   const generateMarkdownContent = (soap: any) => {
     let markdown = `# Análisis SOAP Completo\n\n`
-    markdown += `**Confianza:** ${Math.round(soap.confidence * 100)}%\n`
+    markdown += `**Confianza:** ${Math.round(mockCurrentCase.confidence * 100)}%\n`
     markdown += `**Urgencia:** ${mockCurrentCase.urgencyLevel.toUpperCase()}\n`
     markdown += `**Actualizado:** ${new Date(mockCurrentCase.lastUpdated).toLocaleString('es-ES')}\n\n`
-    
+
     // Sección Subjetivo
     if (soap.subjetivo) {
       markdown += `## 🗣️ SUBJETIVO\n\n`
@@ -334,13 +361,13 @@ export const SOAPDisplay = () => {
         markdown += `\n`
       }
     }
-    
+
     // Sección Objetivo
     if (soap.objetivo) {
       markdown += `## 🔍 OBJETIVO\n\n`
       if (soap.objetivo.vitalSigns && Object.keys(soap.objetivo.vitalSigns).length > 0) {
         markdown += `**Signos Vitales:**\n`
-        Object.entries(soap.objetivo.vitalSigns).forEach(([key, value]) => {
+        Object.entries(soap.objetivo.vitalSigns).forEach(([key, value]: [string, any]) => {
           if (value) {
             markdown += `- **${key.replace(/([A-Z])/g, ' $1')}:** ${value}\n`
           }
@@ -349,7 +376,7 @@ export const SOAPDisplay = () => {
       }
       if (soap.objetivo.physicalExam && Object.keys(soap.objetivo.physicalExam).length > 0) {
         markdown += `**Examen Físico:**\n`
-        Object.entries(soap.objetivo.physicalExam).forEach(([system, findings]) => {
+        Object.entries(soap.objetivo.physicalExam).forEach(([system, findings]: [string, any]) => {
           if (findings) {
             markdown += `- **${system.replace(/([A-Z])/g, ' $1')}:** ${findings}\n`
           }
@@ -357,7 +384,7 @@ export const SOAPDisplay = () => {
         markdown += `\n`
       }
     }
-    
+
     // Sección Análisis
     if (soap.analisis) {
       markdown += `## 🧠 ANÁLISIS\n\n`
@@ -376,7 +403,7 @@ export const SOAPDisplay = () => {
         markdown += `**Razonamiento Clínico:**\n${soap.analisis.reasoning}\n\n`
       }
     }
-    
+
     // Sección Plan
     if (soap.plan) {
       markdown += `## 📋 PLAN\n\n`
@@ -404,7 +431,7 @@ export const SOAPDisplay = () => {
         markdown += `\n`
       }
     }
-    
+
     return markdown
   }
 
@@ -415,7 +442,9 @@ export const SOAPDisplay = () => {
           <span className="text-2xl">📋</span>
         </div>
         <h3 className="text-slate-200 font-semibold mb-2">No hay análisis SOAP disponible</h3>
-        <p className="text-slate-400 text-sm">Realiza una consulta médica para ver el análisis estructurado</p>
+        <p className="text-slate-400 text-sm">
+          Realiza una consulta médica para ver el análisis estructurado
+        </p>
       </div>
     )
   }
@@ -453,14 +482,24 @@ export const SOAPDisplay = () => {
               </button>
             </div>
             <div className="text-sm text-slate-300">
-              Confianza: <span className="text-green-400 font-semibold">{Math.round(soap.confidence * 100)}%</span>
+              Confianza:{' '}
+              <span className="text-green-400 font-semibold">
+                {Math.round(mockCurrentCase.confidence * 100)}%
+              </span>
             </div>
             <div className="text-sm text-slate-300">
-              Urgencia: <span className={`font-semibold ${
-                mockCurrentCase.urgencyLevel === 'critical' ? 'text-red-400' :
-                mockCurrentCase.urgencyLevel === 'high' ? 'text-orange-400' :
-                mockCurrentCase.urgencyLevel === 'medium' ? 'text-yellow-400' : 'text-green-400'
-              }`}>
+              Urgencia:{' '}
+              <span
+                className={`font-semibold ${
+                  mockCurrentCase.urgencyLevel === 'critical'
+                    ? 'text-red-400'
+                    : mockCurrentCase.urgencyLevel === 'high'
+                      ? 'text-orange-400'
+                      : mockCurrentCase.urgencyLevel === 'medium'
+                        ? 'text-yellow-400'
+                        : 'text-green-400'
+                }`}
+              >
                 {mockCurrentCase.urgencyLevel.toUpperCase()}
               </span>
             </div>
@@ -480,7 +519,7 @@ export const SOAPDisplay = () => {
             title="SUBJETIVO"
             data={soap.subjetivo}
             editable={true}
-            onEdit={(data) => handleSectionEdit('subjetivo', data)}
+            onEdit={data => handleSectionEdit('subjetivo', data)}
           />
 
           <SOAPSection
@@ -488,7 +527,7 @@ export const SOAPDisplay = () => {
             title="OBJETIVO"
             data={soap.objetivo}
             editable={true}
-            onEdit={(data) => handleSectionEdit('objetivo', data)}
+            onEdit={data => handleSectionEdit('objetivo', data)}
           />
 
           <SOAPSection
@@ -496,7 +535,7 @@ export const SOAPDisplay = () => {
             title="ANÁLISIS"
             data={soap.analisis}
             editable={true}
-            onEdit={(data) => handleSectionEdit('analisis', data)}
+            onEdit={data => handleSectionEdit('analisis', data)}
           />
 
           <SOAPSection
@@ -504,7 +543,7 @@ export const SOAPDisplay = () => {
             title="PLAN"
             data={soap.plan}
             editable={true}
-            onEdit={(data) => handleSectionEdit('plan', data)}
+            onEdit={data => handleSectionEdit('plan', data)}
           />
         </>
       ) : (
@@ -513,15 +552,38 @@ export const SOAPDisplay = () => {
           <div className="prose prose-invert prose-slate max-w-none">
             <ReactMarkdown
               components={{
-                h1: ({ children }) => <h1 className="text-3xl font-bold text-white mb-6 border-b border-slate-600 pb-3">{children}</h1>,
-                h2: ({ children }) => <h2 className="text-2xl font-bold text-slate-200 mb-4 mt-8 flex items-center gap-2">{children}</h2>,
-                h3: ({ children }) => <h3 className="text-xl font-semibold text-slate-300 mb-3 mt-6">{children}</h3>,
-                p: ({ children }) => <p className="text-slate-300 mb-4 leading-relaxed">{children}</p>,
+                h1: ({ children }) => (
+                  <h1 className="text-3xl font-bold text-white mb-6 border-b border-slate-600 pb-3">
+                    {children}
+                  </h1>
+                ),
+                h2: ({ children }) => (
+                  <h2 className="text-2xl font-bold text-slate-200 mb-4 mt-8 flex items-center gap-2">
+                    {children}
+                  </h2>
+                ),
+                h3: ({ children }) => (
+                  <h3 className="text-xl font-semibold text-slate-300 mb-3 mt-6">{children}</h3>
+                ),
+                p: ({ children }) => (
+                  <p className="text-slate-300 mb-4 leading-relaxed">{children}</p>
+                ),
                 ul: ({ children }) => <ul className="text-slate-300 mb-4 ml-4">{children}</ul>,
-                li: ({ children }) => <li className="mb-2 flex items-start gap-2"><span className="text-blue-400 mt-2 text-xs">•</span><span className="flex-1">{children}</span></li>,
-                strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+                li: ({ children }) => (
+                  <li className="mb-2 flex items-start gap-2">
+                    <span className="text-blue-400 mt-2 text-xs">•</span>
+                    <span className="flex-1">{children}</span>
+                  </li>
+                ),
+                strong: ({ children }) => (
+                  <strong className="text-white font-semibold">{children}</strong>
+                ),
                 em: ({ children }) => <em className="text-slate-400 italic">{children}</em>,
-                code: ({ children }) => <code className="bg-slate-800 text-slate-200 px-2 py-1 rounded text-sm">{children}</code>,
+                code: ({ children }) => (
+                  <code className="bg-slate-800 text-slate-200 px-2 py-1 rounded text-sm">
+                    {children}
+                  </code>
+                ),
               }}
             >
               {generateMarkdownContent(soap)}

@@ -14,7 +14,6 @@ export interface SpecialistRecommendation {
  * 🧠 SERVICIO LIMPIO que usa decisionalMiddleware para TODO
  */
 export class SpecialistSelectionService {
-  
   /**
    * 🎯 Determina qué especialistas se necesitan usando IA
    */
@@ -25,14 +24,14 @@ export class SpecialistSelectionService {
         this.buildSpecialistSelectionPrompt(clinicalCase),
         'claude'
       )
-      
+
       if (response.success) {
         return this.parseSpecialistRecommendations(response.decision)
       }
     } catch (error) {
       console.warn('SpecialistSelectionService fallback:', error)
     }
-    
+
     // Fallback mínimo
     return this.getMinimalSpecialists()
   }
@@ -75,7 +74,7 @@ FORMATO REQUERIDO - Devuelve como si fuera decisión de triage:
    */
   private parseSpecialistRecommendations(decision: any): SpecialistRecommendation[] {
     const specialists: SpecialistRecommendation[] = []
-    
+
     if (decision.required_resources && Array.isArray(decision.required_resources)) {
       decision.required_resources.forEach((resource: string) => {
         if (this.isValidSpecialist(resource)) {
@@ -83,12 +82,12 @@ FORMATO REQUERIDO - Devuelve como si fuera decisión de triage:
             agentType: resource,
             priority: this.mapUrgencyToPriority(decision.acuity_level || 3),
             reason: `Requerido por triage nivel ${decision.acuity_level}`,
-            confidence: 0.85
+            confidence: 0.85,
           })
         }
       })
     }
-    
+
     return specialists
   }
 
@@ -98,13 +97,13 @@ FORMATO REQUERIDO - Devuelve como si fuera decisión de triage:
   private isValidSpecialist(agentType: string): boolean {
     const validSpecialists = [
       'clinical_pharmacology',
-      'pediatric_specialist', 
+      'pediatric_specialist',
       'hospitalization_criteria',
       'family_education',
       'objective_validation',
-      'defensive_differential'
+      'defensive_differential',
     ]
-    
+
     return validSpecialists.includes(agentType)
   }
 
@@ -127,14 +126,14 @@ FORMATO REQUERIDO - Devuelve como si fuera decisión de triage:
         agentType: 'clinical_pharmacology',
         priority: 'high',
         reason: 'Farmacología siempre necesaria',
-        confidence: 0.9
+        confidence: 0.9,
       },
       {
         agentType: 'family_education',
         priority: 'medium',
         reason: 'Educación siempre recomendada',
-        confidence: 0.8
-      }
+        confidence: 0.8,
+      },
     ]
   }
 }

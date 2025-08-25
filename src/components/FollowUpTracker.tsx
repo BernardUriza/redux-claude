@@ -12,7 +12,10 @@ import type { RootState } from '@redux-claude/cognitive-core'
 
 // Mocks temporales para mantener funcionalidad
 const addReminder = (reminder: any) => ({ type: 'ADD_REMINDER_MOCK', payload: reminder })
-const updateReminder = (id: string, updates: any) => ({ type: 'UPDATE_REMINDER_MOCK', payload: { id, updates } })
+const updateReminder = (id: string, updates: any) => ({
+  type: 'UPDATE_REMINDER_MOCK',
+  payload: { id, updates },
+})
 const completeReminder = (id: string) => ({ type: 'COMPLETE_REMINDER_MOCK', payload: id })
 const addPhysicianNote = (note: any) => ({ type: 'ADD_NOTE_MOCK', payload: note })
 
@@ -52,7 +55,7 @@ const AddReminderModal = ({ isOpen, onClose, onAdd }: AddReminderModalProps) => 
       description: description.trim(),
       dueDate: new Date(dueDate).getTime(),
       priority,
-      completed: false
+      completed: false,
     })
 
     // Reset form
@@ -69,12 +72,14 @@ const AddReminderModal = ({ isOpen, onClose, onAdd }: AddReminderModalProps) => 
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 w-full max-w-md border border-slate-600/40">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-white">Nuevo Recordatorio</h3>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
-          >
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -84,7 +89,7 @@ const AddReminderModal = ({ isOpen, onClose, onAdd }: AddReminderModalProps) => 
             <label className="block text-sm font-medium text-slate-200 mb-2">Tipo</label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value as any)}
+              onChange={e => setType(e.target.value as any)}
               className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="followup">Seguimiento</option>
@@ -98,7 +103,7 @@ const AddReminderModal = ({ isOpen, onClose, onAdd }: AddReminderModalProps) => 
             <label className="block text-sm font-medium text-slate-200 mb-2">Descripción</label>
             <textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={3}
               placeholder="Describe el recordatorio..."
@@ -107,11 +112,13 @@ const AddReminderModal = ({ isOpen, onClose, onAdd }: AddReminderModalProps) => 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-2">Fecha de Vencimiento</label>
+            <label className="block text-sm font-medium text-slate-200 mb-2">
+              Fecha de Vencimiento
+            </label>
             <input
               type="datetime-local"
               value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
+              onChange={e => setDueDate(e.target.value)}
               className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -121,7 +128,7 @@ const AddReminderModal = ({ isOpen, onClose, onAdd }: AddReminderModalProps) => 
             <label className="block text-sm font-medium text-slate-200 mb-2">Prioridad</label>
             <select
               value={priority}
-              onChange={(e) => setPriority(e.target.value as any)}
+              onChange={e => setPriority(e.target.value as any)}
               className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="low">Baja</option>
@@ -157,21 +164,31 @@ const ReminderCard = ({ reminder }: { reminder: Reminder }) => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critical': return 'from-red-500 to-pink-500'
-      case 'high': return 'from-orange-500 to-yellow-500'
-      case 'medium': return 'from-blue-500 to-cyan-500'
-      case 'low': return 'from-green-500 to-emerald-500'
-      default: return 'from-gray-500 to-slate-500'
+      case 'critical':
+        return 'from-red-500 to-pink-500'
+      case 'high':
+        return 'from-orange-500 to-yellow-500'
+      case 'medium':
+        return 'from-blue-500 to-cyan-500'
+      case 'low':
+        return 'from-green-500 to-emerald-500'
+      default:
+        return 'from-gray-500 to-slate-500'
     }
   }
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'followup': return '📅'
-      case 'medication': return '💊'
-      case 'study': return '🔬'
-      case 'referral': return '👨‍⚕️'
-      default: return '📋'
+      case 'followup':
+        return '📅'
+      case 'medication':
+        return '💊'
+      case 'study':
+        return '🔬'
+      case 'referral':
+        return '👨‍⚕️'
+      default:
+        return '📋'
     }
   }
 
@@ -179,24 +196,30 @@ const ReminderCard = ({ reminder }: { reminder: Reminder }) => {
   const daysUntilDue = Math.ceil((reminder.dueDate - Date.now()) / (1000 * 60 * 60 * 24))
 
   return (
-    <div className={`bg-gradient-to-br from-slate-800/60 to-slate-900/40 rounded-xl p-4 border transition-all ${
-      reminder.completed 
-        ? 'border-green-600/30 opacity-60' 
-        : isOverdue 
-        ? 'border-red-500/50' 
-        : 'border-slate-600/40 hover:border-slate-500/60'
-    }`}>
+    <div
+      className={`bg-gradient-to-br from-slate-800/60 to-slate-900/40 rounded-xl p-4 border transition-all ${
+        reminder.completed
+          ? 'border-green-600/30 opacity-60'
+          : isOverdue
+            ? 'border-red-500/50'
+            : 'border-slate-600/40 hover:border-slate-500/60'
+      }`}
+    >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3">
           <span className="text-2xl">{getTypeIcon(reminder.type)}</span>
           <div>
-            <div className="text-white font-medium capitalize">{reminder.type.replace('_', ' ')}</div>
-            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getPriorityColor(reminder.priority)} text-white`}>
+            <div className="text-white font-medium capitalize">
+              {reminder.type.replace('_', ' ')}
+            </div>
+            <div
+              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getPriorityColor(reminder.priority)} text-white`}
+            >
               {reminder.priority}
             </div>
           </div>
         </div>
-        
+
         {!reminder.completed && (
           <button
             onClick={() => dispatch(completeReminder(reminder.id))}
@@ -204,7 +227,12 @@ const ReminderCard = ({ reminder }: { reminder: Reminder }) => {
             title="Marcar como completado"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
           </button>
         )}
@@ -213,26 +241,25 @@ const ReminderCard = ({ reminder }: { reminder: Reminder }) => {
       <p className="text-slate-300 mb-3">{reminder.description}</p>
 
       <div className="flex items-center justify-between text-sm">
-        <div className="text-slate-400">
-          {new Date(reminder.dueDate).toLocaleString('es-ES')}
-        </div>
-        <div className={`font-medium ${
-          reminder.completed 
-            ? 'text-green-400' 
-            : isOverdue 
-            ? 'text-red-400' 
-            : daysUntilDue <= 1 
-            ? 'text-yellow-400' 
-            : 'text-slate-400'
-        }`}>
-          {reminder.completed 
-            ? '✅ Completado' 
-            : isOverdue 
-            ? '⚠️ Vencido' 
-            : daysUntilDue === 0 
-            ? '🔥 Hoy' 
-            : `${daysUntilDue} días`
-          }
+        <div className="text-slate-400">{new Date(reminder.dueDate).toLocaleString('es-ES')}</div>
+        <div
+          className={`font-medium ${
+            reminder.completed
+              ? 'text-green-400'
+              : isOverdue
+                ? 'text-red-400'
+                : daysUntilDue <= 1
+                  ? 'text-yellow-400'
+                  : 'text-slate-400'
+          }`}
+        >
+          {reminder.completed
+            ? '✅ Completado'
+            : isOverdue
+              ? '⚠️ Vencido'
+              : daysUntilDue === 0
+                ? '🔥 Hoy'
+                : `${daysUntilDue} días`}
         </div>
       </div>
     </div>
@@ -246,22 +273,29 @@ export const FollowUpTracker = () => {
   const [showAddModal, setShowAddModal] = useState(false)
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('pending')
 
-  const filteredReminders = mockReminders.filter(reminder => {
-    switch (filter) {
-      case 'pending': return !reminder.completed
-      case 'completed': return reminder.completed
-      default: return true
-    }
-  }).sort((a, b) => {
-    // Prioritize by completion status, then by due date
-    if (a.completed !== b.completed) {
-      return a.completed ? 1 : -1
-    }
-    return a.dueDate - b.dueDate
-  })
+  const filteredReminders = mockReminders
+    .filter(reminder => {
+      switch (filter) {
+        case 'pending':
+          return !reminder.completed
+        case 'completed':
+          return reminder.completed
+        default:
+          return true
+      }
+    })
+    .sort((a, b) => {
+      // Prioritize by completion status, then by due date
+      if (a.completed !== b.completed) {
+        return a.completed ? 1 : -1
+      }
+      return a.dueDate - b.dueDate
+    })
 
   const pendingCount = mockReminders.filter(r => !r.completed).length
-  const overdueCount = mockReminders.filter(r => !r.completed && new Date(r.dueDate) < new Date()).length
+  const overdueCount = mockReminders.filter(
+    r => !r.completed && new Date(r.dueDate) < new Date()
+  ).length
 
   return (
     <div className="space-y-6">
@@ -270,13 +304,9 @@ export const FollowUpTracker = () => {
         <div>
           <h2 className="text-xl font-bold text-white mb-1">Seguimiento y Recordatorios</h2>
           <div className="flex items-center space-x-4 text-sm">
-            <span className="text-slate-300">
-              {pendingCount} pendientes
-            </span>
+            <span className="text-slate-300">{pendingCount} pendientes</span>
             {overdueCount > 0 && (
-              <span className="text-red-400 font-medium">
-                {overdueCount} vencidos
-              </span>
+              <span className="text-red-400 font-medium">{overdueCount} vencidos</span>
             )}
           </div>
         </div>
@@ -295,8 +325,12 @@ export const FollowUpTracker = () => {
       <div className="flex space-x-1 bg-slate-800/50 rounded-lg p-1">
         {[
           { key: 'pending' as const, label: 'Pendientes', count: pendingCount },
-          { key: 'completed' as const, label: 'Completados', count: mockReminders.filter(r => r.completed).length },
-          { key: 'all' as const, label: 'Todos', count: mockReminders.length }
+          {
+            key: 'completed' as const,
+            label: 'Completados',
+            count: mockReminders.filter(r => r.completed).length,
+          },
+          { key: 'all' as const, label: 'Todos', count: mockReminders.length },
         ].map(tab => (
           <button
             key={tab.key}
@@ -320,20 +354,22 @@ export const FollowUpTracker = () => {
               <span className="text-2xl">📅</span>
             </div>
             <h3 className="text-slate-200 font-semibold mb-2">
-              {filter === 'pending' ? 'No hay recordatorios pendientes' : 
-               filter === 'completed' ? 'No hay recordatorios completados' : 
-               'No hay recordatorios'}
+              {filter === 'pending'
+                ? 'No hay recordatorios pendientes'
+                : filter === 'completed'
+                  ? 'No hay recordatorios completados'
+                  : 'No hay recordatorios'}
             </h3>
             <p className="text-slate-400 text-sm">
-              {filter === 'pending' ? 'Todos los recordatorios están completados' : 
-               filter === 'completed' ? 'Aún no se han completado recordatorios' :
-               'Agrega recordatorios para seguimiento médico'}
+              {filter === 'pending'
+                ? 'Todos los recordatorios están completados'
+                : filter === 'completed'
+                  ? 'Aún no se han completado recordatorios'
+                  : 'Agrega recordatorios para seguimiento médico'}
             </p>
           </div>
         ) : (
-          filteredReminders.map(reminder => (
-            <ReminderCard key={reminder.id} reminder={reminder} />
-          ))
+          filteredReminders.map(reminder => <ReminderCard key={reminder.id} reminder={reminder} />)
         )}
       </div>
 
@@ -341,7 +377,7 @@ export const FollowUpTracker = () => {
       <AddReminderModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onAdd={(reminderData) => dispatch(addReminder(reminderData))}
+        onAdd={reminderData => dispatch(addReminder(reminderData))}
       />
     </div>
   )

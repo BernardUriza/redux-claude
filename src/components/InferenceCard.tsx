@@ -14,10 +14,10 @@ interface InferenceCardProps {
  * Componente de presentación para mostrar inferencias médicas
  * Aplica Principio de Responsabilidad Única - solo UI de inferencias
  */
-export const InferenceCard: React.FC<InferenceCardProps> = ({ 
-  inference, 
+export const InferenceCard: React.FC<InferenceCardProps> = ({
+  inference,
   onConfirm,
-  className = '' 
+  className = '',
 }) => {
   return (
     <div className={`bg-amber-50 border border-amber-200 rounded-lg p-3 mb-2 ${className}`}>
@@ -31,16 +31,14 @@ export const InferenceCard: React.FC<InferenceCardProps> = ({
               {Math.round(inference.confidence * 100)}% confianza
             </span>
           </div>
-          
+
           <p className="text-sm text-gray-800 mb-1">{inference.inference}</p>
-          
+
           {inference.evidence.length > 0 && (
-            <p className="text-xs text-gray-600">
-              Basado en: {inference.evidence.join(', ')}
-            </p>
+            <p className="text-xs text-gray-600">Basado en: {inference.evidence.join(', ')}</p>
           )}
         </div>
-        
+
         {inference.needs_confirmation && (
           <div className="flex gap-1 ml-3">
             <button

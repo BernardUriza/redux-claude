@@ -25,11 +25,11 @@ export interface ChatCore {
 export interface MedicalChatState {
   // 🧠 NÚCLEOS DE CONVERSACIÓN SEPARADOS
   cores: {
-    dashboard: ChatCore      // Chat principal del dashboard
-    assistant: ChatCore      // Chat del asistente médico
-    inference: ChatCore      // Chat de inferencias (futuro)
+    dashboard: ChatCore // Chat principal del dashboard
+    assistant: ChatCore // Chat del asistente médico
+    inference: ChatCore // Chat de inferencias (futuro)
   }
-  
+
   // 🏥 ESTADO COMPARTIDO MÉDICO
   sharedState: {
     currentSession: {
@@ -44,10 +44,12 @@ export interface MedicalChatState {
 
 // 🧠 ESTADO INICIAL MULTINÚCLEO EVOLUCIONADO
 const createInitialChatCore = (type: 'dashboard' | 'assistant' | 'inference'): ChatCore => ({
-  messages: type === 'dashboard' ? [
-    {
-      id: 'welcome_multinucleus',
-      content: `## 🧠 Sistema Médico Multinúcleo v3.0
+  messages:
+    type === 'dashboard'
+      ? [
+          {
+            id: 'welcome_multinucleus',
+            content: `## 🧠 Sistema Médico Multinúcleo v3.0
 
 **ARQUITECTURA EVOLUCIONADA 2025**
 - Dashboard Core: Chat principal
@@ -55,33 +57,34 @@ const createInitialChatCore = (type: 'dashboard' | 'assistant' | 'inference'): C
 - Inference Core: Análisis contextual
 
 🚀 Multinúcleo activado - Conversaciones separadas`,
-      type: 'assistant',
-      timestamp: Date.now(),
-      confidence: 0.95,
-      metadata: {
-        sessionId: `${type}_session`,
-        sectionType: 'education'
-      }
-    }
-  ] : [],
+            type: 'assistant',
+            timestamp: Date.now(),
+            confidence: 0.95,
+            metadata: {
+              sessionId: `${type}_session`,
+              sectionType: 'education',
+            },
+          },
+        ]
+      : [],
   isLoading: false,
   lastActivity: Date.now(),
-  sessionId: `${type}_session_${Date.now()}`
+  sessionId: `${type}_session_${Date.now()}`,
 })
 
 const initialState: MedicalChatState = {
   cores: {
     dashboard: createInitialChatCore('dashboard'),
-    assistant: createInitialChatCore('assistant'), 
-    inference: createInitialChatCore('inference')
+    assistant: createInitialChatCore('assistant'),
+    inference: createInitialChatCore('inference'),
   },
   sharedState: {
     currentSession: {
       id: 'multinucleus_session',
-      startedAt: Date.now()
+      startedAt: Date.now(),
     },
-    isLoading: false
-  }
+    isLoading: false,
+  },
 }
 
 // 🔥 SLICE MULTINÚCLEO CON ACCIONES ESPECÍFICAS POR NÚCLEO
@@ -90,31 +93,40 @@ const medicalChatSlice = createSlice({
   initialState,
   reducers: {
     // 💬 ACCIONES ESPECÍFICAS POR NÚCLEO
-    addDashboardMessage: (state, action: PayloadAction<Omit<MedicalMessage, 'id' | 'timestamp'>>) => {
+    addDashboardMessage: (
+      state,
+      action: PayloadAction<Omit<MedicalMessage, 'id' | 'timestamp'>>
+    ) => {
       const message: MedicalMessage = {
         id: `dashboard_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         timestamp: Date.now(),
-        ...action.payload
+        ...action.payload,
       }
       state.cores.dashboard.messages.push(message)
       state.cores.dashboard.lastActivity = Date.now()
     },
 
-    addAssistantMessage: (state, action: PayloadAction<Omit<MedicalMessage, 'id' | 'timestamp'>>) => {
+    addAssistantMessage: (
+      state,
+      action: PayloadAction<Omit<MedicalMessage, 'id' | 'timestamp'>>
+    ) => {
       const message: MedicalMessage = {
         id: `assistant_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         timestamp: Date.now(),
-        ...action.payload
+        ...action.payload,
       }
       state.cores.assistant.messages.push(message)
       state.cores.assistant.lastActivity = Date.now()
     },
 
-    addInferenceMessage: (state, action: PayloadAction<Omit<MedicalMessage, 'id' | 'timestamp'>>) => {
+    addInferenceMessage: (
+      state,
+      action: PayloadAction<Omit<MedicalMessage, 'id' | 'timestamp'>>
+    ) => {
       const message: MedicalMessage = {
         id: `inference_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         timestamp: Date.now(),
-        ...action.payload
+        ...action.payload,
       }
       state.cores.inference.messages.push(message)
       state.cores.inference.lastActivity = Date.now()
@@ -130,11 +142,11 @@ const medicalChatSlice = createSlice({
     },
 
     // 🗑️ LIMPIAR NÚCLEOS ESPECÍFICOS
-    clearDashboardMessages: (state) => {
+    clearDashboardMessages: state => {
       state.cores.dashboard.messages = []
     },
 
-    clearAssistantMessages: (state) => {
+    clearAssistantMessages: state => {
       state.cores.assistant.messages = []
     },
 
@@ -144,9 +156,9 @@ const medicalChatSlice = createSlice({
       state.sharedState.currentSession = {
         id: sessionId,
         patientId: action.payload.patientId,
-        startedAt: Date.now()
+        startedAt: Date.now(),
       }
-      
+
       // Limpiar todos los núcleos excepto mensajes de bienvenida del dashboard
       state.cores.assistant.messages = []
       state.cores.inference.messages = []
@@ -158,10 +170,10 @@ const medicalChatSlice = createSlice({
       state.sharedState.isLoading = false
     },
 
-    clearError: (state) => {
+    clearError: state => {
       state.sharedState.error = undefined
-    }
-  }
+    },
+  },
 })
 
 export const {
@@ -174,7 +186,7 @@ export const {
   clearAssistantMessages,
   startNewSession,
   setError,
-  clearError
+  clearError,
 } = medicalChatSlice.actions
 
 export default medicalChatSlice.reducer

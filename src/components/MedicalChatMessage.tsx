@@ -14,13 +14,13 @@ interface MedicalChatMessageProps {
  * Componente de presentación puro para mensajes del chat médico
  * Aplica Principio de Responsabilidad Única - solo renderiza UI
  */
-export const MedicalChatMessage: React.FC<MedicalChatMessageProps> = ({ 
-  message, 
-  className = '' 
+export const MedicalChatMessage: React.FC<MedicalChatMessageProps> = ({
+  message,
+  className = '',
 }) => {
   const isUser = message.type === 'user'
   const isAssistant = message.type === 'assistant'
-  
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} ${className}`}>
       <div
@@ -36,15 +36,15 @@ export const MedicalChatMessage: React.FC<MedicalChatMessageProps> = ({
             <span className="text-xs font-semibold text-gray-400">Asistente IA</span>
           </div>
         )}
-        
+
         <div className="text-sm prose prose-invert max-w-none">
           <ReactMarkdown>{message.content}</ReactMarkdown>
         </div>
-        
+
         <p className="text-xs opacity-70 mt-1">
           {new Date(message.timestamp).toLocaleTimeString()}
         </p>
-        
+
         {message.confidence && (
           <div className="mt-1">
             <span className="text-xs bg-gray-700 text-cyan-400 px-2 py-0.5 rounded">

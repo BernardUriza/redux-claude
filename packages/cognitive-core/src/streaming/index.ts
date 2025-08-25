@@ -11,7 +11,7 @@ export interface StreamingChunk {
 
 export class StreamingService {
   constructor(config: any) {}
-  
+
   async *streamMedicalEvaluation(message: string): AsyncGenerator<StreamingChunk> {
     // Placeholder - implementar después
     yield {
@@ -19,7 +19,7 @@ export class StreamingService {
       type: 'diagnosis',
       content: 'Streaming implementation pending',
       isComplete: true,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
   }
 }

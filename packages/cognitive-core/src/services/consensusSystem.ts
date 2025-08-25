@@ -1,13 +1,7 @@
 // src/services/consensusSystem.ts
 // Sistema de Consenso Multi-Agente - Bernard Orozco
 
-import {
-  ConsensusSystem,
-  VotingRound,
-  AgentVote,
-  Debate,
-  Argument
-} from '../types/cognitive'
+import { ConsensusSystem, VotingRound, AgentVote, Debate, Argument } from '../types/cognitive'
 import { AgentType, DecisionResult } from '../types/agents'
 import { nanoid } from '@reduxjs/toolkit'
 import { reinforcementLearning } from './reinforcementLearning'
@@ -26,7 +20,7 @@ export class MultiAgentConsensusSystem {
       votingRounds: [],
       consensusThreshold: this.DEFAULT_CONSENSUS_THRESHOLD,
       conflictResolution: 'weighted',
-      activeDebates: []
+      activeDebates: [],
     }
   }
 
@@ -42,7 +36,7 @@ export class MultiAgentConsensusSystem {
       participants: [],
       consensusReached: false,
       confidence: 0,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
 
     // Convertir decisiones en votos
@@ -61,7 +55,7 @@ export class MultiAgentConsensusSystem {
     if (!votingRound.consensusReached && decisions.length > 1) {
       const debate = this.initiateDebate(question, decisions)
       this.consensus.activeDebates.push(debate)
-      
+
       // Resolver debate
       const resolution = await this.resolveDebate(debate, decisions)
       if (resolution) {
@@ -81,7 +75,7 @@ export class MultiAgentConsensusSystem {
     // Obtener peso basado en rendimiento del agente
     const performance = reinforcementLearning.getPerformanceMetrics(decision.agentType)
     const contextualSuccess = performance.contextualSuccess[context] || performance.successRate
-    
+
     // Calcular peso del voto
     const weight = this.calculateVoteWeight(
       decision.confidence,
@@ -94,7 +88,7 @@ export class MultiAgentConsensusSystem {
       vote: decision, // Pass the full DecisionResult as vote
       confidence: decision.confidence,
       reasoning: this.extractReasoning(decision),
-      weight
+      weight,
     }
   }
 
@@ -124,20 +118,22 @@ export class MultiAgentConsensusSystem {
   private extractReasoning(decision: DecisionResult): string {
     // Extraer razonamiento basado en el tipo de decisión
     const decisionData = decision.decision as any
-    
+
     if (decision.agentType === AgentType.DIAGNOSTIC && decisionData.differentials) {
-      return `Primary diagnosis: ${decisionData.differentials[0]?.condition || 'Unknown'} ` +
-             `with ${decisionData.differentials[0]?.probability * 100 || 0}% probability`
+      return (
+        `Primary diagnosis: ${decisionData.differentials[0]?.condition || 'Unknown'} ` +
+        `with ${decisionData.differentials[0]?.probability * 100 || 0}% probability`
+      )
     }
-    
+
     if (decision.agentType === AgentType.TRIAGE && decisionData.acuity_level) {
       return `Acuity level ${decisionData.acuity_level} - ${decisionData.disposition}`
     }
-    
+
     if (decision.agentType === AgentType.VALIDATION) {
-      return decisionData.valid ? 
-        'Decision validated - safe to proceed' : 
-        `Concerns identified: ${decisionData.concerns?.join(', ') || 'Unknown'}`
+      return decisionData.valid
+        ? 'Decision validated - safe to proceed'
+        : `Concerns identified: ${decisionData.concerns?.join(', ') || 'Unknown'}`
     }
 
     return 'Decision based on clinical analysis'
@@ -153,21 +149,21 @@ export class MultiAgentConsensusSystem {
     }
 
     if (votes.length === 1) {
-      return { 
-        reached: true, 
-        confidence: votes[0].confidence, 
-        decision: votes[0].vote 
+      return {
+        reached: true,
+        confidence: votes[0].confidence,
+        decision: votes[0].vote,
       }
     }
 
     // Agrupar votos similares
     const voteGroups = this.groupSimilarVotes(votes)
-    
+
     // Calcular peso total de cada grupo
     const groupWeights = voteGroups.map(group => ({
       group,
       totalWeight: group.reduce((sum, vote) => sum + vote.weight, 0),
-      avgConfidence: group.reduce((sum, vote) => sum + vote.confidence, 0) / group.length
+      avgConfidence: group.reduce((sum, vote) => sum + vote.confidence, 0) / group.length,
     }))
 
     // Ordenar por peso total
@@ -183,7 +179,7 @@ export class MultiAgentConsensusSystem {
       return {
         reached: true,
         confidence: Math.round(dominantGroup.avgConfidence * dominantRatio),
-        decision: this.mergeVotes(dominantGroup.group)
+        decision: this.mergeVotes(dominantGroup.group),
       }
     }
 
@@ -191,7 +187,7 @@ export class MultiAgentConsensusSystem {
     return {
       reached: false,
       confidence: Math.round(dominantGroup.avgConfidence * dominantRatio),
-      decision: this.mergeVotes(dominantGroup.group)
+      decision: this.mergeVotes(dominantGroup.group),
     }
   }
 
@@ -252,10 +248,8 @@ export class MultiAgentConsensusSystem {
 
     // Ejemplo de fusión para diagnósticos
     if (primaryVote.differentials) {
-      const allDifferentials = votes.flatMap((v: any) => 
-        (v.vote.differentials || [])
-      )
-      
+      const allDifferentials = votes.flatMap((v: any) => v.vote.differentials || [])
+
       // Agrupar y promediar probabilidades
       const differentialMap = new Map()
       for (const diff of allDifferentials) {
@@ -279,7 +273,7 @@ export class MultiAgentConsensusSystem {
   // ============= SISTEMA DE DEBATE =============
   private initiateDebate(question: string, decisions: DecisionResult[]): Debate {
     const participants = [...new Set(decisions.map(d => d.agentType))]
-    
+
     return {
       id: nanoid(),
       topic: question,
@@ -287,12 +281,12 @@ export class MultiAgentConsensusSystem {
       participants,
       arguments: [],
       status: 'open',
-      resolution: undefined
+      resolution: undefined,
     }
   }
 
   private async resolveDebate(
-    debate: Debate, 
+    debate: Debate,
     decisions: DecisionResult[]
   ): Promise<{ decision: any; confidence: number } | null> {
     let rounds = 0
@@ -309,13 +303,13 @@ export class MultiAgentConsensusSystem {
 
       // Evaluar argumentos y buscar convergencia
       const evaluation = this.evaluateArguments(debate.arguments)
-      
+
       if (evaluation.convergenceReached) {
         debate.status = 'resolved'
         debate.resolution = evaluation.resolution
         resolution = {
           decision: evaluation.finalDecision,
-          confidence: evaluation.confidence
+          confidence: evaluation.confidence,
         }
         break
       }
@@ -342,13 +336,13 @@ export class MultiAgentConsensusSystem {
       position,
       statement: this.formulateStatement(decision, position),
       evidence: this.extractEvidence(decision),
-      strength
+      strength,
     }
   }
 
   private calculateArgumentStrength(decision: DecisionResult): number {
     const performance = reinforcementLearning.getPerformanceMetrics(decision.agentType)
-    
+
     return (
       (decision.confidence / 100) * 0.4 +
       performance.successRate * 0.3 +
@@ -358,7 +352,7 @@ export class MultiAgentConsensusSystem {
   }
 
   private determinePosition(
-    decision: DecisionResult, 
+    decision: DecisionResult,
     debate: Debate
   ): 'support' | 'oppose' | 'neutral' {
     // Simplificado - determinar posición basada en confianza
@@ -368,12 +362,11 @@ export class MultiAgentConsensusSystem {
   }
 
   private formulateStatement(
-    decision: DecisionResult, 
+    decision: DecisionResult,
     position: 'support' | 'oppose' | 'neutral'
   ): string {
-    const agentName = decision.agentType.charAt(0).toUpperCase() + 
-                     decision.agentType.slice(1)
-    
+    const agentName = decision.agentType.charAt(0).toUpperCase() + decision.agentType.slice(1)
+
     if (position === 'support') {
       return `${agentName} strongly supports this decision with ${decision.confidence}% confidence`
     } else if (position === 'oppose') {
@@ -422,13 +415,13 @@ export class MultiAgentConsensusSystem {
         convergenceReached: true,
         resolution: `Consensus reached through deliberation`,
         finalDecision: {}, // Would extract from strongest supporter
-        confidence: Math.round(avgStrength * 100)
+        confidence: Math.round(avgStrength * 100),
       }
     }
 
     return {
       convergenceReached: false,
-      confidence: Math.round(avgStrength * 100)
+      confidence: Math.round(avgStrength * 100),
     }
   }
 
@@ -447,15 +440,15 @@ export class MultiAgentConsensusSystem {
       const performance = reinforcementLearning.getPerformanceMetrics(d.agentType)
       return {
         decision: d,
-        weightedConfidence: d.confidence * performance.successRate
+        weightedConfidence: d.confidence * performance.successRate,
       }
     })
 
     weightedDecisions.sort((a, b) => b.weightedConfidence - a.weightedConfidence)
-    
+
     return {
       decision: weightedDecisions[0].decision.decision,
-      confidence: Math.round(weightedDecisions[0].weightedConfidence)
+      confidence: Math.round(weightedDecisions[0].weightedConfidence),
     }
   }
 
@@ -477,15 +470,14 @@ export class MultiAgentConsensusSystem {
   } {
     const rounds = this.consensus.votingRounds
     const consensusReached = rounds.filter(r => r.consensusReached).length
-    const avgConfidence = rounds.reduce((sum, r) => sum + r.confidence, 0) / 
-                         (rounds.length || 1)
+    const avgConfidence = rounds.reduce((sum, r) => sum + r.confidence, 0) / (rounds.length || 1)
 
     return {
       totalVotingRounds: rounds.length,
       consensusRate: rounds.length > 0 ? consensusReached / rounds.length : 0,
       avgConfidence,
       activeDebates: this.getActiveDebates().length,
-      conflictResolutionMethod: this.consensus.conflictResolution
+      conflictResolutionMethod: this.consensus.conflictResolution,
     }
   }
 
@@ -494,9 +486,7 @@ export class MultiAgentConsensusSystem {
     this.consensus.consensusThreshold = Math.max(0.5, Math.min(1.0, threshold))
   }
 
-  setConflictResolution(
-    method: 'majority' | 'weighted' | 'expert' | 'hierarchical'
-  ): void {
+  setConflictResolution(method: 'majority' | 'weighted' | 'expert' | 'hierarchical'): void {
     this.consensus.conflictResolution = method
   }
 

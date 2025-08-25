@@ -3,15 +3,15 @@
 
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit'
 import { DecisionResult } from '../types/agents'
-import { 
-  CognitiveEvent, 
+import {
+  CognitiveEvent,
   CognitiveEventType,
-  Goal, 
+  Goal,
   SelfAssessment,
   VotingRound,
   LearningUpdate,
   MedicalConsensus,
-  CognitiveInsights
+  CognitiveInsights,
 } from '../types/cognitive'
 // Dynamic import to avoid circular dependency
 
@@ -29,22 +29,22 @@ interface CognitiveState {
   activeGoals: Goal[]
   knowledgeGaps: string[]
   selfAssessment: SelfAssessment
-  
+
   // Resultados de procesamiento
   lastDecisions: DecisionResult[]
   lastConsensus: MedicalConsensus | null
   lastInsights: CognitiveInsights | null
-  
+
   // Métricas de salud
   overallHealth: number
   memoryHealth: HealthMetrics | null
   learningHealth: HealthMetrics | null
   consensusHealth: HealthMetrics | null
   pipelineHealth: HealthMetrics | null
-  
+
   // Eventos cognitivos
   recentEvents: CognitiveEvent[]
-  
+
   // Estado de procesamiento
   isProcessing: boolean
   error: string | null
@@ -60,7 +60,7 @@ const initialState: CognitiveState = {
     weaknesses: [],
     improvementAreas: [],
     learningProgress: 0,
-    adaptationRate: 0
+    adaptationRate: 0,
   },
   lastDecisions: [],
   lastConsensus: null,
@@ -72,39 +72,39 @@ const initialState: CognitiveState = {
   pipelineHealth: null,
   recentEvents: [],
   isProcessing: false,
-  error: null
+  error: null,
 }
 
 // Async thunk para procesamiento cognitivo
-export const processCognitively = createAsyncThunk(
-  'cognitive/process',
-  async (input: string) => {
-    // Dynamic import to avoid circular dependency
-    const { cognitiveOrchestrator } = await import('../services/cognitiveOrchestrator')
-    
-    const result = await cognitiveOrchestrator.processWithCognition(input)
-    const cognitiveState = cognitiveOrchestrator.getCognitiveState()
-    const systemHealth = cognitiveOrchestrator.getSystemHealth()
-    
-    return {
-      ...result,
-      cognitiveState,
-      systemHealth
-    }
+export const processCognitively = createAsyncThunk('cognitive/process', async (input: string) => {
+  // Dynamic import to avoid circular dependency
+  const { cognitiveOrchestrator } = await import('../services/cognitiveOrchestrator')
+
+  const result = await cognitiveOrchestrator.processWithCognition(input)
+  const cognitiveState = cognitiveOrchestrator.getCognitiveState()
+  const systemHealth = cognitiveOrchestrator.getSystemHealth()
+
+  return {
+    ...result,
+    cognitiveState,
+    systemHealth,
   }
-)
+})
 
 const cognitiveSlice = createSlice({
   name: 'cognitive',
   initialState,
   reducers: {
-    updateCognitiveState: (state, action: PayloadAction<{
-      confidence: number
-      uncertainty: number
-      activeGoals: Goal[]
-      knowledgeGaps: string[]
-      selfAssessment: SelfAssessment
-    }>) => {
+    updateCognitiveState: (
+      state,
+      action: PayloadAction<{
+        confidence: number
+        uncertainty: number
+        activeGoals: Goal[]
+        knowledgeGaps: string[]
+        selfAssessment: SelfAssessment
+      }>
+    ) => {
       const { confidence, uncertainty, activeGoals, knowledgeGaps, selfAssessment } = action.payload
       state.systemConfidence = confidence
       state.uncertaintyLevel = uncertainty
@@ -112,64 +112,73 @@ const cognitiveSlice = createSlice({
       state.knowledgeGaps = knowledgeGaps
       state.selfAssessment = selfAssessment
     },
-    
+
     addCognitiveEvent: (state, action: PayloadAction<CognitiveEvent>) => {
       state.recentEvents.unshift(action.payload)
       if (state.recentEvents.length > 50) {
         state.recentEvents.pop()
       }
     },
-    
-    updateSystemHealth: (state, action: PayloadAction<{
-      overallHealth: number
-      memoryHealth: HealthMetrics
-      learningHealth: HealthMetrics
-      consensusHealth: HealthMetrics
-      pipelineHealth: HealthMetrics
-    }>) => {
+
+    updateSystemHealth: (
+      state,
+      action: PayloadAction<{
+        overallHealth: number
+        memoryHealth: HealthMetrics
+        learningHealth: HealthMetrics
+        consensusHealth: HealthMetrics
+        pipelineHealth: HealthMetrics
+      }>
+    ) => {
       state.overallHealth = action.payload.overallHealth
       state.memoryHealth = action.payload.memoryHealth
       state.learningHealth = action.payload.learningHealth
       state.consensusHealth = action.payload.consensusHealth
       state.pipelineHealth = action.payload.pipelineHealth
     },
-    
-    updateGoalProgress: (state, action: PayloadAction<{
-      goalId: string
-      progress: number
-    }>) => {
+
+    updateGoalProgress: (
+      state,
+      action: PayloadAction<{
+        goalId: string
+        progress: number
+      }>
+    ) => {
       const goal = state.activeGoals.find(g => g.id === action.payload.goalId)
       if (goal) {
         goal.progress = action.payload.progress
       }
     },
-    
-    clearCognitiveEvents: (state) => {
+
+    clearCognitiveEvents: state => {
       state.recentEvents = []
     },
-    
-    emitProcessingStep: (state, action: PayloadAction<{
-      step: string
-      type: 'diagnostic' | 'triage' | 'validation' | 'treatment' | 'memory' | 'consensus'
-      status: 'started' | 'completed' | 'error'
-      confidence?: number
-    }>) => {
+
+    emitProcessingStep: (
+      state,
+      action: PayloadAction<{
+        step: string
+        type: 'diagnostic' | 'triage' | 'validation' | 'treatment' | 'memory' | 'consensus'
+        status: 'started' | 'completed' | 'error'
+        confidence?: number
+      }>
+    ) => {
       const event: CognitiveEvent = {
         type: CognitiveEventType.PROCESSING_STEP,
         timestamp: Date.now(),
         data: action.payload,
         impact: 'low' as const,
-        requiresAttention: false
+        requiresAttention: false,
       }
       state.recentEvents.unshift(event)
       if (state.recentEvents.length > 50) {
         state.recentEvents.pop()
       }
-    }
+    },
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
-      .addCase(processCognitively.pending, (state) => {
+      .addCase(processCognitively.pending, state => {
         state.isProcessing = true
         state.error = null
       })
@@ -178,7 +187,7 @@ const cognitiveSlice = createSlice({
         state.lastDecisions = action.payload.decisions
         state.lastConsensus = action.payload.consensus
         state.lastInsights = action.payload.insights
-        
+
         // Update cognitive state
         const { cognitiveState, systemHealth } = action.payload
         state.systemConfidence = cognitiveState.confidence
@@ -186,7 +195,7 @@ const cognitiveSlice = createSlice({
         state.activeGoals = cognitiveState.activeGoals
         state.knowledgeGaps = cognitiveState.knowledgeGaps
         state.selfAssessment = cognitiveState.selfAssessment
-        
+
         // Update health metrics
         state.overallHealth = systemHealth.overallHealth
         state.memoryHealth = systemHealth.memoryHealth
@@ -198,7 +207,7 @@ const cognitiveSlice = createSlice({
         state.isProcessing = false
         state.error = action.error.message || 'Cognitive processing failed'
       })
-  }
+  },
 })
 
 export const {
@@ -207,7 +216,7 @@ export const {
   updateSystemHealth,
   updateGoalProgress,
   clearCognitiveEvents,
-  emitProcessingStep
+  emitProcessingStep,
 } = cognitiveSlice.actions
 
 export default cognitiveSlice.reducer

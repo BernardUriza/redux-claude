@@ -128,7 +128,7 @@ export interface SOAPData {
 
 /**
  * 🏥 SOAP ANALYSIS COMPLETO - UNIFICADO Y PODEROSO
- * 
+ *
  * Versión única que incluye:
  * - Estructura SOAP formal NOM-004-SSA3-2012
  * - Sistema de Medicina Defensiva (Fase 3)
@@ -138,11 +138,11 @@ export interface SOAPData {
 export interface SOAPAnalysis {
   // === NUEVO: ESTRUCTURA SOAP COMPLETA ===
   soap?: SOAPData
-  
+
   // === NUEVO: MEDICINA DEFENSIVA ===
   defensiveAssessment?: UrgencyAssessment
   triageResult?: TriageResult
-  
+
   // === METADATOS AVANZADOS ===
   metadata?: {
     version: string
@@ -170,7 +170,7 @@ export interface SOAPAnalysis {
       immediateActionsRequired: boolean
     }
   }
-  
+
   // === COMPATIBILIDAD LEGACY ===
   // Campos para retrocompatibilidad con código existente
   subjetivo?: string // Mapea a soap.subjetivo.motivoConsulta + soap.subjetivo.historiaActual
@@ -261,14 +261,14 @@ export enum DiagnosticConfidenceLevel {
   LOW = 'low', // < 0.6
   MEDIUM = 'medium', // 0.6-0.8
   HIGH = 'high', // 0.8-0.95
-  VERY_HIGH = 'very_high' // > 0.95
+  VERY_HIGH = 'very_high', // > 0.95
 }
 
 export enum UrgencyLevel {
   LOW = 'low',
-  MEDIUM = 'medium', 
+  MEDIUM = 'medium',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 export enum ClinicalSpecialty {
@@ -279,7 +279,7 @@ export enum ClinicalSpecialty {
   ENDOCRINOLOGY = 'endocrinology',
   PSYCHIATRY = 'psychiatry',
   EMERGENCY_MEDICINE = 'emergency_medicine',
-  PEDIATRICS = 'pediatrics'
+  PEDIATRICS = 'pediatrics',
 }
 
 // Tipos para análisis defensivo

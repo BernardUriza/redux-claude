@@ -2,7 +2,8 @@
 
 ## Environment Variables Setup
 
-This application requires a Claude API key to function. The key is kept server-side only for security.
+This application requires a Claude API key to function. The key is kept
+server-side only for security.
 
 ### Setting up Environment Variables in Netlify:
 
@@ -32,6 +33,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0
 ### Build Configuration:
 
 The application is configured to:
+
 - Use server-side API routes to protect the Claude API key
 - Static export is configured in `next.config.mjs`
 - All Claude API calls go through `/api/claude` endpoint
@@ -39,11 +41,14 @@ The application is configured to:
 ### Troubleshooting:
 
 If you encounter build errors related to secrets:
+
 1. Ensure you're not using `NEXT_PUBLIC_CLAUDE_API_KEY` anywhere
 2. Check that the API key is only in server-side code
-3. Verify the environment variable is named `CLAUDE_API_KEY` (without `NEXT_PUBLIC_` prefix)
+3. Verify the environment variable is named `CLAUDE_API_KEY` (without
+   `NEXT_PUBLIC_` prefix)
 
 If you encounter SSL certificate errors:
+
 1. Add `NODE_TLS_REJECT_UNAUTHORIZED=0` to your `.env.local` file
 2. This is common in corporate networks with proxies/firewalls
 3. For production deployment, configure proper SSL certificates instead

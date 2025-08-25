@@ -16,7 +16,6 @@ export interface ClinicalData {
  * 🧠 SERVICIO que extrae datos clínicos usando IA en lugar de regex
  */
 export class ClinicalExtractionService {
-  
   /**
    * 🔍 Extrae TODOS los datos clínicos usando decisionalMiddleware
    */
@@ -27,14 +26,14 @@ export class ClinicalExtractionService {
         this.buildExtractionPrompt(clinicalText),
         'claude'
       )
-      
+
       if (response.success) {
         return this.parseClinicalData(response.decision)
       }
     } catch (error) {
       console.warn('ClinicalExtractionService fallback:', error)
     }
-    
+
     // Fallback con extracción básica
     return this.getFallbackExtraction(clinicalText)
   }
@@ -82,39 +81,39 @@ FORMATO REQUERIDO - Devuelve como validación:
       physicalFindings: [],
       medications: [],
       vitalSigns: {},
-      riskFactors: []
+      riskFactors: [],
     }
-    
+
     if (decision.recommendations && Array.isArray(decision.recommendations)) {
       decision.recommendations.forEach((rec: string) => {
         if (rec.startsWith('edad:')) {
           const ageMatch = rec.match(/\\d+/)
           data.patientAge = ageMatch ? parseInt(ageMatch[0]) : undefined
         }
-        
+
         if (rec.startsWith('síntomas:')) {
           data.symptoms = this.parseList(rec)
         }
-        
+
         if (rec.startsWith('hallazgos_físicos:')) {
           data.physicalFindings = this.parseList(rec)
         }
-        
+
         if (rec.startsWith('medicamentos:')) {
           data.medications = this.parseList(rec)
         }
-        
+
         if (rec.startsWith('signos_vitales:')) {
           data.vitalSigns = this.parseVitalSigns(rec)
         }
       })
     }
-    
+
     // Factores de riesgo del risk_assessment
     if (decision.risk_assessment?.factors) {
       data.riskFactors = decision.risk_assessment.factors
     }
-    
+
     return data
   }
 
@@ -124,11 +123,14 @@ FORMATO REQUERIDO - Devuelve como validación:
   private parseList(text: string): string[] {
     const colonIndex = text.indexOf(':')
     if (colonIndex === -1) return []
-    
+
     const listText = text.substring(colonIndex + 1).trim()
     if (listText === 'no especificado' || listText === '') return []
-    
-    return listText.split(',').map(item => item.trim()).filter(item => item)
+
+    return listText
+      .split(',')
+      .map(item => item.trim())
+      .filter(item => item)
   }
 
   /**
@@ -138,27 +140,33 @@ FORMATO REQUERIDO - Devuelve como validación:
     const vitals: Record<string, string> = {}
     const colonIndex = text.indexOf(':')
     if (colonIndex === -1) return vitals
-    
+
     const vitalsText = text.substring(colonIndex + 1).trim()
-    
+
     // Parsear patrones comunes: PA: 120/80, FC: 80, etc.
     const patterns = [
       /PA:\\s*([\\d/]+)/i,
       /FC:\\s*(\\d+)/i,
       /FR:\\s*(\\d+)/i,
       /Temp:\\s*([\\d.]+)/i,
-      /SatO2:\\s*(\\d+%?)/i
+      /SatO2:\\s*(\\d+%?)/i,
     ]
-    
-    const keys = ['presion_arterial', 'frecuencia_cardiaca', 'frecuencia_respiratoria', 'temperatura', 'saturacion_oxigeno']
-    
+
+    const keys = [
+      'presion_arterial',
+      'frecuencia_cardiaca',
+      'frecuencia_respiratoria',
+      'temperatura',
+      'saturacion_oxigeno',
+    ]
+
     patterns.forEach((pattern, index) => {
       const match = vitalsText.match(pattern)
       if (match) {
         vitals[keys[index]] = match[1]
       }
     })
-    
+
     return vitals
   }
 
@@ -167,14 +175,14 @@ FORMATO REQUERIDO - Devuelve como validación:
    */
   private getFallbackExtraction(clinicalText: string): ClinicalData {
     const textLower = clinicalText.toLowerCase()
-    
+
     return {
       patientAge: this.extractAge(textLower),
       symptoms: this.extractSymptoms(textLower),
       physicalFindings: this.extractPhysicalFindings(textLower),
       medications: this.extractMedications(textLower),
       vitalSigns: {},
-      riskFactors: []
+      riskFactors: [],
     }
   }
 

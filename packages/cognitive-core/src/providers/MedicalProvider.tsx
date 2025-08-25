@@ -15,11 +15,7 @@ export interface MedicalProviderProps {
 }
 
 export const MedicalProvider: React.FC<MedicalProviderProps> = ({ children }) => {
-  return (
-    <Provider store={medicalStore}>
-      {children}
-    </Provider>
-  )
+  return <Provider store={medicalStore}>{children}</Provider>
 }
 
 export default MedicalProvider

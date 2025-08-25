@@ -7,16 +7,16 @@ import medicalChatReducer from './medicalChatSlice'
 export const createMedicalStore = () => {
   return configureStore({
     reducer: {
-      medicalChat: medicalChatReducer
+      medicalChat: medicalChatReducer,
     },
-    middleware: (getDefaultMiddleware) =>
+    middleware: getDefaultMiddleware =>
       getDefaultMiddleware({
         serializableCheck: {
           // Ignorar estos action types para optimizar performance
           ignoredActions: ['medicalChat/updateStreamingProgress'],
         },
       }),
-    devTools: process.env.NODE_ENV !== 'production'
+    devTools: process.env.NODE_ENV !== 'production',
   })
 }
 

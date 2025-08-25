@@ -6,12 +6,12 @@ import { callClaudeForDecision } from '../services/decisionalMiddleware'
 import { SOAPProcessor } from './SOAPProcessor'
 import type { SOAPAnalysis } from '../types/medical'
 import { SOAPPrompts } from './SOAPPrompts'
-import type { 
-  DiagnosticDecision, 
-  ValidationDecision, 
-  TreatmentDecision, 
+import type {
+  DiagnosticDecision,
+  ValidationDecision,
+  TreatmentDecision,
   TriageDecision,
-  DocumentationDecision 
+  DocumentationDecision,
 } from '../types/agents'
 
 export interface SOAPSection {
@@ -47,16 +47,16 @@ export interface AgentPersonalityResult {
 
 // 🎭 PERSONALIDADES DE AGENTES MÉDICOS ESPECÍFICAS
 export enum AgentPersonality {
-  EMERGENCY_PHYSICIAN = 'emergency_physician',    // Medicina defensiva, prioriza gravedad
-  INTERNAL_MEDICINE = 'internal_medicine',        // Analítico, sistemático, diferencial amplio
-  FAMILY_MEDICINE = 'family_medicine',            // Holístico, preventivo, biopsicosocial
+  EMERGENCY_PHYSICIAN = 'emergency_physician', // Medicina defensiva, prioriza gravedad
+  INTERNAL_MEDICINE = 'internal_medicine', // Analítico, sistemático, diferencial amplio
+  FAMILY_MEDICINE = 'family_medicine', // Holístico, preventivo, biopsicosocial
   SPECIALIST_CONSULTANT = 'specialist_consultant', // Experto profundo, evidencia específica
-  CLINICAL_VALIDATOR = 'clinical_validator'       // Auditor clínico, valida coherencia
+  CLINICAL_VALIDATOR = 'clinical_validator', // Auditor clínico, valida coherencia
 }
 
 /**
  * 🧠 Resolver SOAP con Agentes Multi-Máscara
- * 
+ *
  * Cada sección SOAP es resuelta por agentes con personalidades específicas:
  * - SUBJETIVO: Family Medicine (escucha holística)
  * - OBJETIVO: Internal Medicine (sistematización)
@@ -86,7 +86,9 @@ export class SOAPResolver {
       // 🏥 FASE 1: Procesamiento SOAP Formal (NOM-004-SSA3-2012)
       console.log('📋 Generando estructura SOAP formal...')
       const soapFormalAnalysis = await this.soapProcessor.processCase(clinicalInput)
-      console.log(`✅ SOAP formal completado: ${soapFormalAnalysis.metadata?.calidad?.cumplimientoNormativo || 0}% normativo`)
+      console.log(
+        `✅ SOAP formal completado: ${soapFormalAnalysis.metadata?.calidad?.cumplimientoNormativo || 0}% normativo`
+      )
 
       // 🎭 FASE 2: Procesamiento Multi-Agente (Enriquecimiento)
       // 📋 SECCIÓN S - SUBJETIVO (Family Medicine)
@@ -94,14 +96,18 @@ export class SOAPResolver {
       const subjetivoResult = await this.resolveSubjetivo(clinicalInput)
       agentDecisions.push(subjetivoResult)
 
-      // 🔬 SECCIÓN O - OBJETIVO (Internal Medicine) 
+      // 🔬 SECCIÓN O - OBJETIVO (Internal Medicine)
       console.log('🔬 Procesando OBJETIVO con Internal Medicine...')
       const objetivoResult = await this.resolveObjetivo(clinicalInput, subjetivoResult)
       agentDecisions.push(objetivoResult)
 
       // ⚡ SECCIÓN A - ANÁLISIS (Emergency + Specialist Consensus)
       console.log('⚡ Procesando ANÁLISIS con Emergency + Specialist...')
-      const analisisResults = await this.resolveAnalisis(clinicalInput, subjetivoResult, objetivoResult)
+      const analisisResults = await this.resolveAnalisis(
+        clinicalInput,
+        subjetivoResult,
+        objetivoResult
+      )
       agentDecisions.push(...analisisResults)
 
       // 📝 SECCIÓN P - PLAN (Internal + Validator)
@@ -112,7 +118,7 @@ export class SOAPResolver {
       // 🔄 Síntesis final
       const soapSynthesis = this.synthesizeSOAPSections(agentDecisions)
       const consensusLevel = this.calculateConsensusLevel(agentDecisions)
-      
+
       // ⚠️ Detectar flags de advertencia
       warningFlags = this.detectWarningFlags(agentDecisions)
 
@@ -127,13 +133,13 @@ export class SOAPResolver {
           consensusLevel,
           warningFlags,
           version: 'v2.0-NOM-004',
-          normativaCompliant: (soapFormalAnalysis.metadata?.calidad?.cumplimientoNormativo || 0) >= 90
-        }
+          normativaCompliant:
+            (soapFormalAnalysis.metadata?.calidad?.cumplimientoNormativo || 0) >= 90,
+        },
       }
 
       console.log('✅ SOAP resuelto exitosamente:', result.metadata)
       return result
-
     } catch (error) {
       console.error('❌ Error en resolución SOAP:', error)
       throw new Error(`SOAP Resolution failed: ${error}`)
@@ -145,17 +151,17 @@ export class SOAPResolver {
    */
   private async resolveSubjetivo(input: string): Promise<AgentPersonalityResult> {
     const personality = this.agentPersonalities.get(AgentPersonality.FAMILY_MEDICINE)!
-    
+
     const decision = await callClaudeForDecision(
       'diagnosis',
       input,
       'claude',
       undefined,
       undefined,
-      { 
+      {
         agentPersonality: AgentPersonality.FAMILY_MEDICINE,
         soapSection: 'subjetivo',
-        systemPrompt: personality.systemPrompt
+        systemPrompt: personality.systemPrompt,
       }
     )
 
@@ -165,27 +171,30 @@ export class SOAPResolver {
       decision: decision.decision,
       confidence: decision.confidence,
       reasoning: 'Análisis holístico del relato del paciente con enfoque biopsicosocial',
-      sectionContribution: 'subjetivo'
+      sectionContribution: 'subjetivo',
     }
   }
 
   /**
    * 🔬 O - OBJETIVO: Hallazgos verificables (Internal Medicine)
    */
-  private async resolveObjetivo(input: string, subjetivoResult: AgentPersonalityResult): Promise<AgentPersonalityResult> {
+  private async resolveObjetivo(
+    input: string,
+    subjetivoResult: AgentPersonalityResult
+  ): Promise<AgentPersonalityResult> {
     const personality = this.agentPersonalities.get(AgentPersonality.INTERNAL_MEDICINE)!
-    
+
     const decision = await callClaudeForDecision(
       'validation',
       input,
       'claude',
       undefined,
       [subjetivoResult.decision],
-      { 
+      {
         agentPersonality: AgentPersonality.INTERNAL_MEDICINE,
         soapSection: 'objetivo',
         systemPrompt: personality.systemPrompt,
-        previousSection: subjetivoResult
+        previousSection: subjetivoResult,
       }
     )
 
@@ -195,7 +204,7 @@ export class SOAPResolver {
       decision: decision.decision,
       confidence: decision.confidence,
       reasoning: 'Sistematización de hallazgos físicos y datos objetivos correlacionados',
-      sectionContribution: 'objetivo'
+      sectionContribution: 'objetivo',
     }
   }
 
@@ -203,13 +212,12 @@ export class SOAPResolver {
    * ⚡ A - ANÁLISIS: Diagnóstico diferencial (Emergency + Specialist)
    */
   private async resolveAnalisis(
-    input: string, 
+    input: string,
     subjetivoResult: AgentPersonalityResult,
     objetivoResult: AgentPersonalityResult
   ): Promise<AgentPersonalityResult[]> {
-    
     const previousDecisions = [subjetivoResult.decision, objetivoResult.decision]
-    
+
     // 🚨 Emergency Physician: Medicina defensiva, prioriza gravedad
     const emergencyPersonality = this.agentPersonalities.get(AgentPersonality.EMERGENCY_PHYSICIAN)!
     const emergencyDecision = await callClaudeForDecision(
@@ -218,27 +226,29 @@ export class SOAPResolver {
       'claude',
       undefined,
       previousDecisions,
-      { 
+      {
         agentPersonality: AgentPersonality.EMERGENCY_PHYSICIAN,
         soapSection: 'analisis',
         systemPrompt: emergencyPersonality.systemPrompt,
-        focus: 'gravity_priority'
+        focus: 'gravity_priority',
       }
     )
 
     // 🎯 Specialist: Expertise profundo, diagnóstico específico
-    const specialistPersonality = this.agentPersonalities.get(AgentPersonality.SPECIALIST_CONSULTANT)!
+    const specialistPersonality = this.agentPersonalities.get(
+      AgentPersonality.SPECIALIST_CONSULTANT
+    )!
     const specialistDecision = await callClaudeForDecision(
       'diagnosis',
       input,
       'claude',
       undefined,
       previousDecisions,
-      { 
+      {
         agentPersonality: AgentPersonality.SPECIALIST_CONSULTANT,
         soapSection: 'analisis',
         systemPrompt: specialistPersonality.systemPrompt,
-        focus: 'differential_expertise'
+        focus: 'differential_expertise',
       }
     )
 
@@ -249,7 +259,7 @@ export class SOAPResolver {
         decision: emergencyDecision.decision,
         confidence: emergencyDecision.confidence,
         reasoning: 'Medicina defensiva: priorización por gravedad y urgencia',
-        sectionContribution: 'analisis'
+        sectionContribution: 'analisis',
       },
       {
         agentName: 'Specialist Consultant',
@@ -257,8 +267,8 @@ export class SOAPResolver {
         decision: specialistDecision.decision,
         confidence: specialistDecision.confidence,
         reasoning: 'Expertise especializado: diagnóstico diferencial profundo',
-        sectionContribution: 'analisis'
-      }
+        sectionContribution: 'analisis',
+      },
     ]
   }
 
@@ -269,9 +279,8 @@ export class SOAPResolver {
     input: string,
     allPreviousDecisions: AgentPersonalityResult[]
   ): Promise<AgentPersonalityResult[]> {
-    
     const previousDecisions = allPreviousDecisions.map(d => d.decision)
-    
+
     // 🎯 Internal Medicine: Plan de tratamiento integrado
     const internalPersonality = this.agentPersonalities.get(AgentPersonality.INTERNAL_MEDICINE)!
     const treatmentDecision = await callClaudeForDecision(
@@ -280,11 +289,11 @@ export class SOAPResolver {
       'claude',
       undefined,
       previousDecisions,
-      { 
+      {
         agentPersonality: AgentPersonality.INTERNAL_MEDICINE,
         soapSection: 'plan',
         systemPrompt: internalPersonality.systemPrompt,
-        focus: 'comprehensive_treatment'
+        focus: 'comprehensive_treatment',
       }
     )
 
@@ -296,11 +305,11 @@ export class SOAPResolver {
       'claude',
       undefined,
       previousDecisions,
-      { 
+      {
         agentPersonality: AgentPersonality.CLINICAL_VALIDATOR,
         soapSection: 'plan',
         systemPrompt: validatorPersonality.systemPrompt,
-        focus: 'safety_validation'
+        focus: 'safety_validation',
       }
     )
 
@@ -311,7 +320,7 @@ export class SOAPResolver {
         decision: treatmentDecision.decision,
         confidence: treatmentDecision.confidence,
         reasoning: 'Coordinación de plan terapéutico integral basado en análisis previo',
-        sectionContribution: 'plan'
+        sectionContribution: 'plan',
       },
       {
         agentName: 'Clinical Safety Validator',
@@ -319,8 +328,8 @@ export class SOAPResolver {
         decision: validationDecision.decision,
         confidence: validationDecision.confidence,
         reasoning: 'Validación de seguridad clínica y coherencia del plan integral',
-        sectionContribution: 'plan'
-      }
+        sectionContribution: 'plan',
+      },
     ]
   }
 
@@ -337,7 +346,7 @@ export class SOAPResolver {
       subjetivo: this.synthesizeSubjetivo(subjetivoAgents),
       objetivo: this.synthesizeObjetivo(objetivoAgents),
       analisis: this.synthesizeAnalisis(analisisAgents),
-      plan: this.synthesizePlan(planAgents)
+      plan: this.synthesizePlan(planAgents),
     }
   }
 
@@ -351,35 +360,35 @@ export class SOAPResolver {
       name: 'Family Medicine Physician',
       systemPrompt: SOAPPrompts.getPersonalityPrompt('family_medicine', 'S'),
       specialty: 'Medicina Familiar',
-      focus: 'holistic_patient_narrative'
+      focus: 'holistic_patient_narrative',
     })
 
     personalities.set(AgentPersonality.INTERNAL_MEDICINE, {
       name: 'Internal Medicine Specialist',
       systemPrompt: SOAPPrompts.getPersonalityPrompt('internal_medicine', 'O'),
       specialty: 'Medicina Interna',
-      focus: 'systematic_correlation'
+      focus: 'systematic_correlation',
     })
 
     personalities.set(AgentPersonality.EMERGENCY_PHYSICIAN, {
       name: 'Emergency Physician',
       systemPrompt: SOAPPrompts.getPersonalityPrompt('emergency_physician', 'A'),
       specialty: 'Medicina de Urgencias',
-      focus: 'gravity_over_probability'
+      focus: 'gravity_over_probability',
     })
 
     personalities.set(AgentPersonality.SPECIALIST_CONSULTANT, {
       name: 'Specialist Consultant',
       systemPrompt: SOAPPrompts.getPersonalityPrompt('specialist_consultant', 'A'),
       specialty: 'Consultoría Especializada',
-      focus: 'expert_differential'
+      focus: 'expert_differential',
     })
 
     personalities.set(AgentPersonality.CLINICAL_VALIDATOR, {
       name: 'Clinical Safety Validator',
       systemPrompt: SOAPPrompts.getPersonalityPrompt('clinical_validator', 'P'),
       specialty: 'Validación Clínica',
-      focus: 'safety_quality_assurance'
+      focus: 'safety_quality_assurance',
     })
 
     return personalities
@@ -388,30 +397,36 @@ export class SOAPResolver {
   // Métodos auxiliares de síntesis
   private synthesizeSubjetivo(agents: AgentPersonalityResult[]): string {
     const familyAgent = agents.find(a => a.personality === AgentPersonality.FAMILY_MEDICINE)
-    if (!familyAgent) return "Paciente refiere síntomas que requieren evaluación médica."
-    
+    if (!familyAgent) return 'Paciente refiere síntomas que requieren evaluación médica.'
+
     const decision = familyAgent.decision as DiagnosticDecision
-    return `**Motivo de consulta:** ${decision.differentials?.[0]?.condition || 'Síntomas reportados'}\n\n` +
-           `**Historia actual:** ${decision.differentials?.map(d => d.evidence?.join(', ')).join('; ') || 'Según relato del paciente'}\n\n` +
-           `**Contexto:** ${familyAgent.reasoning}`
+    return (
+      `**Motivo de consulta:** ${decision.differentials?.[0]?.condition || 'Síntomas reportados'}\n\n` +
+      `**Historia actual:** ${decision.differentials?.map(d => d.evidence?.join(', ')).join('; ') || 'Según relato del paciente'}\n\n` +
+      `**Contexto:** ${familyAgent.reasoning}`
+    )
   }
 
   private synthesizeObjetivo(agents: AgentPersonalityResult[]): string {
     const internalAgent = agents.find(a => a.personality === AgentPersonality.INTERNAL_MEDICINE)
-    if (!internalAgent) return "Pendiente exploración física completa."
-    
+    if (!internalAgent) return 'Pendiente exploración física completa.'
+
     const decision = internalAgent.decision as ValidationDecision
-    return `**Signos vitales:** Pendientes de medición\n\n` +
-           `**Exploración física:** ${decision.recommendations?.join(', ') || 'Exploración dirigida pendiente'}\n\n` +
-           `**Hallazgos relevantes:** ${decision.concerns?.join(', ') || 'A determinar por exploración'}`
+    return (
+      `**Signos vitales:** Pendientes de medición\n\n` +
+      `**Exploración física:** ${decision.recommendations?.join(', ') || 'Exploración dirigida pendiente'}\n\n` +
+      `**Hallazgos relevantes:** ${decision.concerns?.join(', ') || 'A determinar por exploración'}`
+    )
   }
 
   private synthesizeAnalisis(agents: AgentPersonalityResult[]): string {
     const emergencyAgent = agents.find(a => a.personality === AgentPersonality.EMERGENCY_PHYSICIAN)
-    const specialistAgent = agents.find(a => a.personality === AgentPersonality.SPECIALIST_CONSULTANT)
-    
-    let analisis = "## ANÁLISIS CLÍNICO\n\n"
-    
+    const specialistAgent = agents.find(
+      a => a.personality === AgentPersonality.SPECIALIST_CONSULTANT
+    )
+
+    let analisis = '## ANÁLISIS CLÍNICO\n\n'
+
     if (emergencyAgent) {
       const triageDecision = emergencyAgent.decision as TriageDecision
       analisis += `**Triage de gravedad (Medicina defensiva):**\n`
@@ -419,7 +434,7 @@ export class SOAPResolver {
       analisis += `- Disposición: ${triageDecision.disposition}\n`
       analisis += `- Señales de alarma: ${triageDecision.warning_signs?.join(', ') || 'Ninguna identificada'}\n\n`
     }
-    
+
     if (specialistAgent) {
       const diagDecision = specialistAgent.decision as DiagnosticDecision
       analisis += `**Diagnóstico diferencial especializado:**\n`
@@ -429,19 +444,21 @@ export class SOAPResolver {
         analisis += `   - Evidencia: ${diff.evidence?.join(', ')}\n\n`
       })
     }
-    
+
     return analisis
   }
 
   private synthesizePlan(agents: AgentPersonalityResult[]): string {
-    const treatmentAgent = agents.find(a => a.personality === AgentPersonality.INTERNAL_MEDICINE && a.sectionContribution === 'plan')
+    const treatmentAgent = agents.find(
+      a => a.personality === AgentPersonality.INTERNAL_MEDICINE && a.sectionContribution === 'plan'
+    )
     const validatorAgent = agents.find(a => a.personality === AgentPersonality.CLINICAL_VALIDATOR)
-    
-    let plan = "## PLAN TERAPÉUTICO\n\n"
-    
+
+    let plan = '## PLAN TERAPÉUTICO\n\n'
+
     if (treatmentAgent) {
       const treatment = treatmentAgent.decision as TreatmentDecision
-      
+
       if (treatment.medications?.length > 0) {
         plan += `**Tratamiento farmacológico:**\n`
         treatment.medications.forEach(med => {
@@ -452,20 +469,20 @@ export class SOAPResolver {
         })
         plan += '\n'
       }
-      
+
       if (treatment.procedures?.length > 0) {
         plan += `**Procedimientos:**\n`
-        treatment.procedures.forEach(proc => plan += `- ${proc}\n`)
+        treatment.procedures.forEach(proc => (plan += `- ${proc}\n`))
         plan += '\n'
       }
-      
+
       if (treatment.monitoring_plan?.length > 0) {
         plan += `**Seguimiento:**\n`
-        treatment.monitoring_plan.forEach(monitor => plan += `- ${monitor}\n`)
+        treatment.monitoring_plan.forEach(monitor => (plan += `- ${monitor}\n`))
         plan += '\n'
       }
     }
-    
+
     if (validatorAgent) {
       const validation = validatorAgent.decision as ValidationDecision
       if (!validation.valid || validation.requires_human_review) {
@@ -477,7 +494,7 @@ export class SOAPResolver {
         plan += `- Nivel de riesgo: ${validation.risk_assessment?.level || 'A evaluar'}\n\n`
       }
     }
-    
+
     return plan
   }
 
@@ -492,19 +509,20 @@ export class SOAPResolver {
 
   private detectWarningFlags(decisions: AgentPersonalityResult[]): string[] {
     const flags: string[] = []
-    
+
     // Flag si hay baja confianza en algún agente crítico
-    const criticalAgents = decisions.filter(d => 
-      d.personality === AgentPersonality.EMERGENCY_PHYSICIAN || 
-      d.personality === AgentPersonality.CLINICAL_VALIDATOR
+    const criticalAgents = decisions.filter(
+      d =>
+        d.personality === AgentPersonality.EMERGENCY_PHYSICIAN ||
+        d.personality === AgentPersonality.CLINICAL_VALIDATOR
     )
-    
+
     criticalAgents.forEach(agent => {
       if (agent.confidence < 0.7) {
         flags.push(`Baja confianza en ${agent.agentName}: ${Math.round(agent.confidence * 100)}%`)
       }
     })
-    
+
     // Flag si validator encuentra problemas
     const validator = decisions.find(d => d.personality === AgentPersonality.CLINICAL_VALIDATOR)
     if (validator) {
@@ -516,7 +534,7 @@ export class SOAPResolver {
         flags.push('Requiere revisión médica humana')
       }
     }
-    
+
     return flags
   }
 }

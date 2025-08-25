@@ -2,13 +2,13 @@
 // Creado por Bernard Orozco
 export enum AgentType {
   DIAGNOSTIC = 'diagnostic',
-  VALIDATION = 'validation', 
+  VALIDATION = 'validation',
   DOCUMENTATION = 'documentation',
   TREATMENT = 'treatment',
   TRIAGE = 'triage',
   RESPONSE_QUALITY = 'response_quality',
   CLINICAL_PHARMACOLOGY = 'clinical_pharmacology',
-  PEDIATRIC_SPECIALIST = 'pediatric_specialist', 
+  PEDIATRIC_SPECIALIST = 'pediatric_specialist',
   HOSPITALIZATION_CRITERIA = 'hospitalization_criteria',
   FAMILY_EDUCATION = 'family_education',
   OBJECTIVE_VALIDATION = 'objective_validation',
@@ -16,20 +16,20 @@ export enum AgentType {
   MEDICAL_AUTOCOMPLETION = 'medical_autocompletion',
   CRITICAL_DATA_VALIDATION = 'critical_data_validation',
   SPECIALTY_DETECTION = 'specialty_detection',
-  INTELLIGENT_MEDICAL_CHAT = 'intelligent_medical_chat'
+  INTELLIGENT_MEDICAL_CHAT = 'intelligent_medical_chat',
 }
 
 export enum AgentStatus {
   READY = 'ready',
   PROCESSING = 'processing',
   FAILED = 'failed',
-  DISABLED = 'disabled'
+  DISABLED = 'disabled',
 }
 
 export enum CircuitBreakerState {
   CLOSED = 'closed',
-  OPEN = 'open', 
-  HALF_OPEN = 'half_open'
+  OPEN = 'open',
+  HALF_OPEN = 'half_open',
 }
 
 // Agent-specific decision types
@@ -252,11 +252,11 @@ export type IntelligentMedicalChatDecision = {
   conversation_stage: 'initial' | 'gathering' | 'analyzing' | 'concluding'
 }
 
-export type AgentDecision = 
-  | DiagnosticDecision 
-  | ValidationDecision 
-  | DocumentationDecision 
-  | TreatmentDecision 
+export type AgentDecision =
+  | DiagnosticDecision
+  | ValidationDecision
+  | DocumentationDecision
+  | TreatmentDecision
   | TriageDecision
   | ClinicalPharmacologyDecision
   | PediatricSpecialistDecision

@@ -2,11 +2,7 @@
 // Estrategia del dominio psicológico - Bernard Orozco
 // EJEMPLO PREPARADO PARA FUTURO
 
-import type { 
-  DomainStrategy, 
-  BaseDecisionRequest, 
-  ValidationResult 
-} from '../core/types'
+import type { DomainStrategy, BaseDecisionRequest, ValidationResult } from '../core/types'
 
 // Tipos específicos del dominio psicológico
 export interface PsychologicalAssessment {
@@ -40,18 +36,16 @@ export interface CrisisAssessment {
   safety_plan: string[]
 }
 
-export type PsychologyDecision = 
-  | PsychologicalAssessment 
-  | TherapyPlan 
-  | CrisisAssessment
+export type PsychologyDecision = PsychologicalAssessment | TherapyPlan | CrisisAssessment
 
 export class PsychologyStrategy implements DomainStrategy<PsychologyDecision> {
   readonly domain = 'psychology' as const
   readonly supportedTypes = ['assessment', 'therapy_plan', 'crisis_evaluation']
 
   buildSystemPrompt(decisionType: string, request: BaseDecisionRequest): string {
-    const basePrompt = "You are a licensed clinical psychologist providing professional psychological assessment."
-    
+    const basePrompt =
+      'You are a licensed clinical psychologist providing professional psychological assessment.'
+
     switch (decisionType) {
       case 'assessment':
         return `${basePrompt}
@@ -140,7 +134,7 @@ Evaluate crisis situation focusing on:
       valid: true,
       errors,
       warnings,
-      confidence: 0.8
+      confidence: 0.8,
     }
   }
 
@@ -154,13 +148,13 @@ Evaluate crisis situation focusing on:
       primary_concerns: ['Requires professional psychological evaluation'],
       mental_status: {
         mood: 'unable_to_assess',
-        affect: 'unable_to_assess', 
+        affect: 'unable_to_assess',
         thought_process: 'unable_to_assess',
-        risk_factors: ['Requires in-person assessment']
+        risk_factors: ['Requires in-person assessment'],
       },
       recommended_interventions: ['Schedule psychological consultation'],
       urgency_level: 3,
-      follow_up_plan: ['Professional psychological evaluation required']
+      follow_up_plan: ['Professional psychological evaluation required'],
     } as PsychologicalAssessment
   }
 }

@@ -29,7 +29,6 @@ export interface ChatAnalysisRequest {
 }
 
 export class IntelligentMedicalChat {
-  
   /**
    * Procesa input del usuario con inferencia inteligente tipo MAI-DxO
    * Nunca rechaza - siempre ayuda con lo que tiene
@@ -38,7 +37,7 @@ export class IntelligentMedicalChat {
     try {
       // Detectar patrones médicos automáticamente
       const medicalContext = this.extractMedicalContext(request.user_input)
-      
+
       // Usar DecisionalMiddleware para inferencia inteligente
       const response = await callClaudeForDecision(
         'intelligent_medical_chat',
@@ -49,7 +48,7 @@ export class IntelligentMedicalChat {
         {
           conversation_history: request.conversation_history,
           previous_inferences: request.previous_inferences,
-          medical_context: medicalContext
+          medical_context: medicalContext,
         }
       )
 
@@ -59,7 +58,6 @@ export class IntelligentMedicalChat {
       }
 
       return response.decision as IntelligentChatResponse
-      
     } catch (error) {
       console.error('Error en chat inteligente:', error)
       return this.createFallbackResponse(request.user_input)
@@ -76,7 +74,7 @@ export class IntelligentMedicalChat {
       has_timeline: false,
       has_medical_terms: false,
       urgency_indicators: [],
-      specialty_indicators: []
+      specialty_indicators: [],
     }
 
     const cleanInput = input.toLowerCase()
@@ -87,21 +85,27 @@ export class IntelligentMedicalChat {
       /fiebre|fever|calentura/i,
       /náusea|vómito|nausea/i,
       /mareo|dizzy|vertigo/i,
-      /cansancio|fatiga|tired/i
+      /cansancio|fatiga|tired/i,
     ]
     context.has_symptoms = symptomPatterns.some(pattern => pattern.test(cleanInput))
 
     // Detectar demografía (inferir si no está explícita)
-    context.has_demographics = /\d+\s*(años?|year|age)|masculino|femenino|male|female|hombre|mujer/i.test(cleanInput)
+    context.has_demographics =
+      /\d+\s*(años?|year|age)|masculino|femenino|male|female|hombre|mujer/i.test(cleanInput)
 
     // Detectar timeline
     context.has_timeline = /desde|hace|during|for|yesterday|hoy|ayer|semana|week/i.test(cleanInput)
 
     // Detectar términos médicos
-    context.has_medical_terms = /paciente|patient|síntoma|symptom|diagnóstico|diagnosis|medicamento|medication/i.test(cleanInput)
+    context.has_medical_terms =
+      /paciente|patient|síntoma|symptom|diagnóstico|diagnosis|medicamento|medication/i.test(
+        cleanInput
+      )
 
     // Detectar urgencia
-    if (/severo|severe|intenso|intense|insoportable|unbearable|emergencia|emergency/i.test(cleanInput)) {
+    if (
+      /severo|severe|intenso|intense|insoportable|unbearable|emergencia|emergency/i.test(cleanInput)
+    ) {
       context.urgency_indicators.push('high_intensity')
     }
     if (/pecho|chest|corazón|heart|respirar|breathe/i.test(cleanInput)) {
@@ -127,8 +131,12 @@ export class IntelligentMedicalChat {
    */
   private buildInferentialPrompt(request: ChatAnalysisRequest, medicalContext: any): string {
     const hasHistory = request.conversation_history && request.conversation_history.length > 0
-    const historyContext = hasHistory ? 
-      `\n\nCONTEXTO DE CONVERSACIÓN PREVIA:\n${request.conversation_history.slice(-3).map(msg => `${msg.type}: ${msg.content}`).join('\n')}` : ''
+    const historyContext = hasHistory
+      ? `\n\nCONTEXTO DE CONVERSACIÓN PREVIA:\n${request.conversation_history
+          .slice(-3)
+          .map(msg => `${msg.type}: ${msg.content}`)
+          .join('\n')}`
+      : ''
 
     return `Eres un ANIMAL PARLANTE MÉDICO INTELIGENTE que NUNCA rechaza pacientes por datos incompletos.
 
@@ -186,9 +194,9 @@ RESPONDE SOLO CON EL JSON, SIN TEXTO ADICIONAL.`
    */
   private createFallbackResponse(userInput: string, medicalContext?: any): IntelligentChatResponse {
     const hasSymptoms = medicalContext?.has_symptoms || /dolor|molestia|síntoma/i.test(userInput)
-    const baseMessage = hasSymptoms ? 
-      "🦁 Hola Doctor Edmund, veo que mencionas síntomas médicos. Aunque mi sistema tuvo un pequeño problema, puedo ayudarte basándome en patrones comunes." :
-      "🦁 Hola Doctor Edmund, entiendo que tienes una consulta médica. Déjame ayudarte con lo que puedo inferir."
+    const baseMessage = hasSymptoms
+      ? '🦁 Hola Doctor Edmund, veo que mencionas síntomas médicos. Aunque mi sistema tuvo un pequeño problema, puedo ayudarte basándome en patrones comunes.'
+      : '🦁 Hola Doctor Edmund, entiendo que tienes una consulta médica. Déjame ayudarte con lo que puedo inferir.'
 
     return {
       message: `${baseMessage} ¿Podrías confirmar si mis inferencias básicas van por buen camino?`,
@@ -197,15 +205,17 @@ RESPONDE SOLO CON EL JSON, SIN TEXTO ADICIONAL.`
           id: 'basic_medical_context',
           category: 'context',
           confidence: 0.6,
-          inference: hasSymptoms ? 'Consulta médica con síntomas reportados' : 'Consulta médica general',
+          inference: hasSymptoms
+            ? 'Consulta médica con síntomas reportados'
+            : 'Consulta médica general',
           evidence: ['patrón de entrada detectado'],
-          needs_confirmation: true
-        }
+          needs_confirmation: true,
+        },
       ],
       suggested_actions: ['Proporcionar más detalles específicos', 'Confirmar contexto inicial'],
       confidence_level: 'low',
       requires_user_input: true,
-      conversation_stage: 'initial'
+      conversation_stage: 'initial',
     }
   }
 }

@@ -1,12 +1,8 @@
-// src/decision-engine/domains/financial.ts  
+// src/decision-engine/domains/financial.ts
 // Estrategia del dominio financiero - Bernard Orozco
 // EJEMPLO PREPARADO PARA FUTURO
 
-import type { 
-  DomainStrategy, 
-  BaseDecisionRequest, 
-  ValidationResult 
-} from '../core/types'
+import type { DomainStrategy, BaseDecisionRequest, ValidationResult } from '../core/types'
 
 // Tipos específicos del dominio financiero
 export interface InvestmentAnalysis {
@@ -43,18 +39,16 @@ export interface PortfolioRecommendation {
   volatility_estimate: number
 }
 
-export type FinancialDecision = 
-  | InvestmentAnalysis 
-  | RiskAssessment 
-  | PortfolioRecommendation
+export type FinancialDecision = InvestmentAnalysis | RiskAssessment | PortfolioRecommendation
 
 export class FinancialStrategy implements DomainStrategy<FinancialDecision> {
   readonly domain = 'financial' as const
   readonly supportedTypes = ['investment_analysis', 'risk_assessment', 'portfolio_recommendation']
 
   buildSystemPrompt(decisionType: string, request: BaseDecisionRequest): string {
-    const basePrompt = "You are a qualified financial analyst providing professional investment guidance."
-    
+    const basePrompt =
+      'You are a qualified financial analyst providing professional investment guidance.'
+
     switch (decisionType) {
       case 'investment_analysis':
         return `${basePrompt}
@@ -141,7 +135,10 @@ Develop portfolio recommendations considering:
 
     // Financial-specific validation would go here
     if (decisionType === 'portfolio_recommendation' && decision.asset_allocation) {
-      const total = Object.values(decision.asset_allocation).reduce((sum: number, val: any) => sum + val, 0)
+      const total = Object.values(decision.asset_allocation).reduce(
+        (sum: number, val: any) => sum + val,
+        0
+      )
       if (Math.abs(total - 100) > 1) {
         warnings.push('Asset allocation should sum to 100%')
       }
@@ -151,7 +148,7 @@ Develop portfolio recommendations considering:
       valid: errors.length === 0,
       errors,
       warnings,
-      confidence: 0.8
+      confidence: 0.8,
     }
   }
 
@@ -166,7 +163,7 @@ Develop portfolio recommendations considering:
       potential_return: 0,
       time_horizon: 'medium',
       key_factors: ['Requires detailed financial analysis'],
-      warnings: ['Consult with qualified financial advisor']
+      warnings: ['Consult with qualified financial advisor'],
     } as InvestmentAnalysis
   }
 }

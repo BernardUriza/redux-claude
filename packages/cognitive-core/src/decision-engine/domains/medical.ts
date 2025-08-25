@@ -1,13 +1,14 @@
 // src/decision-engine/domains/medical.ts
 // Estrategia del dominio médico - Bernard Orozco
 
-import type { 
-  DomainStrategy, 
-  BaseDecisionRequest, 
-  ValidationResult 
-} from '../core/types'
+import type { DomainStrategy, BaseDecisionRequest, ValidationResult } from '../core/types'
 import { getAgentDefinition } from '../../services/agentRegistry'
-import { AgentType, MedicalAutocompletionDecision, CriticalDataValidationDecision, SpecialtyDetectionDecision } from '../../types/agents'
+import {
+  AgentType,
+  MedicalAutocompletionDecision,
+  CriticalDataValidationDecision,
+  SpecialtyDetectionDecision,
+} from '../../types/agents'
 
 // Tipos específicos del dominio médico
 export interface DiagnosticDecision {
@@ -67,11 +68,11 @@ export interface DocumentationDecision {
   follow_up_required: boolean
 }
 
-export type MedicalDecision = 
-  | DiagnosticDecision 
-  | TriageDecision 
-  | ValidationDecision 
-  | TreatmentDecision 
+export type MedicalDecision =
+  | DiagnosticDecision
+  | TriageDecision
+  | ValidationDecision
+  | TreatmentDecision
   | DocumentationDecision
   | MedicalAutocompletionDecision
   | CriticalDataValidationDecision
@@ -79,22 +80,37 @@ export type MedicalDecision =
 
 export class MedicalStrategy implements DomainStrategy<MedicalDecision> {
   readonly domain = 'medical' as const
-  readonly supportedTypes = ['diagnosis', 'triage', 'validation', 'treatment', 'documentation', 'clinical_pharmacology', 'pediatric_specialist', 'hospitalization_criteria', 'family_education', 'objective_validation', 'defensive_differential', 'medical_autocompletion', 'critical_data_validation', 'specialty_detection']
+  readonly supportedTypes = [
+    'diagnosis',
+    'triage',
+    'validation',
+    'treatment',
+    'documentation',
+    'clinical_pharmacology',
+    'pediatric_specialist',
+    'hospitalization_criteria',
+    'family_education',
+    'objective_validation',
+    'defensive_differential',
+    'medical_autocompletion',
+    'critical_data_validation',
+    'specialty_detection',
+  ]
 
   buildSystemPrompt(decisionType: string, request: BaseDecisionRequest): string {
     // Para los nuevos tipos especializados, usar prompts del AGENT_REGISTRY
     const agentTypeMap: Record<string, AgentType> = {
-      'clinical_pharmacology': AgentType.CLINICAL_PHARMACOLOGY,
-      'pediatric_specialist': AgentType.PEDIATRIC_SPECIALIST,
-      'hospitalization_criteria': AgentType.HOSPITALIZATION_CRITERIA,
-      'family_education': AgentType.FAMILY_EDUCATION,
-      'objective_validation': AgentType.OBJECTIVE_VALIDATION,
-      'defensive_differential': AgentType.DEFENSIVE_DIFFERENTIAL,
-      'medical_autocompletion': AgentType.MEDICAL_AUTOCOMPLETION,
-      'critical_data_validation': AgentType.CRITICAL_DATA_VALIDATION,
-      'specialty_detection': AgentType.SPECIALTY_DETECTION
+      clinical_pharmacology: AgentType.CLINICAL_PHARMACOLOGY,
+      pediatric_specialist: AgentType.PEDIATRIC_SPECIALIST,
+      hospitalization_criteria: AgentType.HOSPITALIZATION_CRITERIA,
+      family_education: AgentType.FAMILY_EDUCATION,
+      objective_validation: AgentType.OBJECTIVE_VALIDATION,
+      defensive_differential: AgentType.DEFENSIVE_DIFFERENTIAL,
+      medical_autocompletion: AgentType.MEDICAL_AUTOCOMPLETION,
+      critical_data_validation: AgentType.CRITICAL_DATA_VALIDATION,
+      specialty_detection: AgentType.SPECIALTY_DETECTION,
     }
-    
+
     const agentType = agentTypeMap[decisionType]
     if (agentType) {
       try {
@@ -104,10 +120,10 @@ export class MedicalStrategy implements DomainStrategy<MedicalDecision> {
         console.warn(`Could not get agent definition for ${agentType}, using fallback`)
       }
     }
-    
+
     // Fallback para tipos existentes
-    const basePrompt = "You are a specialist medical AI assistant helping a licensed doctor."
-    
+    const basePrompt = 'You are a specialist medical AI assistant helping a licensed doctor.'
+
     switch (decisionType) {
       case 'diagnosis':
         return `${basePrompt}
@@ -344,7 +360,7 @@ Generate structured medical documentation using SOAP format:
       valid: errors.length === 0,
       errors,
       warnings,
-      confidence: errors.length === 0 ? (warnings.length === 0 ? 1.0 : 0.8) : 0.3
+      confidence: errors.length === 0 ? (warnings.length === 0 ? 1.0 : 0.8) : 0.3,
     }
   }
 
@@ -371,15 +387,17 @@ Generate structured medical documentation using SOAP format:
     switch (decisionType) {
       case 'diagnosis':
         return {
-          differentials: [{
-            condition: 'Unable to determine - requires human evaluation',
-            probability: 1.0,
-            evidence: ['System error - fallback response']
-          }],
+          differentials: [
+            {
+              condition: 'Unable to determine - requires human evaluation',
+              probability: 1.0,
+              evidence: ['System error - fallback response'],
+            },
+          ],
           tests_recommended: ['Complete clinical evaluation'],
           red_flags: ['System unable to process - immediate human review required'],
           urgency_level: 2,
-          next_steps: ['Immediate physician consultation required']
+          next_steps: ['Immediate physician consultation required'],
         } as DiagnosticDecision
 
       case 'triage':
@@ -388,7 +406,7 @@ Generate structured medical documentation using SOAP format:
           disposition: 'urgent',
           time_to_physician: '15min',
           required_resources: ['physician evaluation'],
-          warning_signs: ['System error - requires immediate human assessment']
+          warning_signs: ['System error - requires immediate human assessment'],
         } as TriageDecision
 
       case 'validation':
@@ -397,10 +415,10 @@ Generate structured medical documentation using SOAP format:
           concerns: ['System unable to validate - requires human review'],
           risk_assessment: {
             level: 'high',
-            factors: ['System error', 'Unable to process decision']
+            factors: ['System error', 'Unable to process decision'],
           },
           requires_human_review: true,
-          recommendations: ['Immediate human validation required']
+          recommendations: ['Immediate human validation required'],
         } as ValidationDecision
 
       case 'treatment':
@@ -408,7 +426,7 @@ Generate structured medical documentation using SOAP format:
           medications: [],
           procedures: [],
           lifestyle_modifications: ['Consult with physician for treatment plan'],
-          monitoring_plan: ['Immediate physician consultation required']
+          monitoring_plan: ['Immediate physician consultation required'],
         } as TreatmentDecision
 
       case 'documentation':
@@ -417,11 +435,11 @@ Generate structured medical documentation using SOAP format:
             subjective: 'System error - unable to process',
             objective: 'Documentation requires human input',
             assessment: 'System fallback - physician review needed',
-            plan: 'Complete documentation with physician oversight'
+            plan: 'Complete documentation with physician oversight',
           },
           icd10_codes: [],
           billing_codes: [],
-          follow_up_required: true
+          follow_up_required: true,
         } as DocumentationDecision
 
       case 'medical_autocompletion':
@@ -431,26 +449,29 @@ Generate structured medical documentation using SOAP format:
               id: 'basic_fallback',
               title: 'Consulta Básica',
               description: 'Estructura mínima requerida',
-              template: 'Paciente [género] de [edad] años presenta [síntoma principal] desde hace [tiempo]. [Características del síntoma]. Antecedentes: [antecedentes].',
+              template:
+                'Paciente [género] de [edad] años presenta [síntoma principal] desde hace [tiempo]. [Características del síntoma]. Antecedentes: [antecedentes].',
               confidence: 0.7,
-              category: 'basic'
+              category: 'basic',
             },
             {
               id: 'detailed_fallback',
               title: 'Consulta Detallada',
               description: 'Con exploración física',
-              template: 'Paciente [género] de [edad] años consulta por [síntoma principal] de [tiempo]. SUBJETIVO: [síntomas]. OBJETIVO: [exploración]. Antecedentes: [antecedentes].',
+              template:
+                'Paciente [género] de [edad] años consulta por [síntoma principal] de [tiempo]. SUBJETIVO: [síntomas]. OBJETIVO: [exploración]. Antecedentes: [antecedentes].',
               confidence: 0.75,
-              category: 'detailed'
+              category: 'detailed',
             },
             {
               id: 'specialized_fallback',
               title: 'Consulta Especializada',
               description: 'Formato SOAP completo',
-              template: 'CASO CLÍNICO: Paciente [género], [edad] años, presenta [síntoma principal]. SUBJETIVO: [historia]. OBJETIVO: [exploración]. ANÁLISIS: [diagnósticos]. PLAN: [tratamiento].',
+              template:
+                'CASO CLÍNICO: Paciente [género], [edad] años, presenta [síntoma principal]. SUBJETIVO: [historia]. OBJETIVO: [exploración]. ANÁLISIS: [diagnósticos]. PLAN: [tratamiento].',
               confidence: 0.8,
-              category: 'specialized'
-            }
+              category: 'specialized',
+            },
           ],
           enhanced_template: 'Consulta médica estructurada requerida',
           detected_specialty: undefined,
@@ -458,8 +479,8 @@ Generate structured medical documentation using SOAP format:
             age_inferred: undefined,
             gender_inferred: undefined,
             main_complaint: 'síntomas reportados',
-            specialty_indicators: []
-          }
+            specialty_indicators: [],
+          },
         } as MedicalAutocompletionDecision
 
       case 'critical_data_validation':
@@ -469,13 +490,13 @@ Generate structured medical documentation using SOAP format:
               field: 'datos_básicos',
               reason: 'Error del sistema - información crítica no disponible',
               criticality: 'high',
-              suggested_prompt: 'Complete los datos básicos del paciente'
-            }
+              suggested_prompt: 'Complete los datos básicos del paciente',
+            },
           ],
           can_proceed: false,
           completion_percentage: 0.1,
           next_required_action: 'Sistema en fallback - completar información manualmente',
-          required_form_fields: ['age', 'gender', 'chief_complaint']
+          required_form_fields: ['age', 'gender', 'chief_complaint'],
         } as CriticalDataValidationDecision
 
       case 'specialty_detection':
@@ -489,9 +510,9 @@ Generate structured medical documentation using SOAP format:
             {
               tab_name: 'general_form',
               priority: 1,
-              fields: ['age', 'gender', 'symptoms']
-            }
-          ]
+              fields: ['age', 'gender', 'symptoms'],
+            },
+          ],
         } as SpecialtyDetectionDecision
 
       default:
@@ -556,19 +577,26 @@ Generate structured medical documentation using SOAP format:
     }
   }
 
-  private validateMedicalAutocompletionDecision(decision: any, errors: string[], warnings: string[]): void {
+  private validateMedicalAutocompletionDecision(
+    decision: any,
+    errors: string[],
+    warnings: string[]
+  ): void {
     if (!decision.suggestions || !Array.isArray(decision.suggestions)) {
       errors.push('Missing or invalid suggestions array')
     } else {
       if (decision.suggestions.length !== 3) {
         errors.push('Must have exactly 3 suggestions')
       }
-      
+
       decision.suggestions.forEach((suggestion: any, index: number) => {
         if (!suggestion.id || !suggestion.title || !suggestion.template) {
           errors.push(`Suggestion ${index + 1} missing required fields (id, title, template)`)
         }
-        if (!suggestion.category || !['basic', 'detailed', 'specialized'].includes(suggestion.category)) {
+        if (
+          !suggestion.category ||
+          !['basic', 'detailed', 'specialized'].includes(suggestion.category)
+        ) {
           errors.push(`Suggestion ${index + 1} has invalid category`)
         }
       })
@@ -579,7 +607,11 @@ Generate structured medical documentation using SOAP format:
     }
   }
 
-  private validateCriticalDataValidationDecision(decision: any, errors: string[], warnings: string[]): void {
+  private validateCriticalDataValidationDecision(
+    decision: any,
+    errors: string[],
+    warnings: string[]
+  ): void {
     if (typeof decision.can_proceed !== 'boolean') {
       errors.push('Missing or invalid can_proceed field')
     }
@@ -597,17 +629,29 @@ Generate structured medical documentation using SOAP format:
       })
     }
 
-    if (typeof decision.completion_percentage !== 'number' || decision.completion_percentage < 0 || decision.completion_percentage > 1) {
+    if (
+      typeof decision.completion_percentage !== 'number' ||
+      decision.completion_percentage < 0 ||
+      decision.completion_percentage > 1
+    ) {
       errors.push('Invalid completion_percentage (must be number between 0-1)')
     }
   }
 
-  private validateSpecialtyDetectionDecision(decision: any, errors: string[], warnings: string[]): void {
+  private validateSpecialtyDetectionDecision(
+    decision: any,
+    errors: string[],
+    warnings: string[]
+  ): void {
     if (!decision.detected_specialty || typeof decision.detected_specialty !== 'string') {
       errors.push('Missing or invalid detected_specialty')
     }
 
-    if (typeof decision.confidence !== 'number' || decision.confidence < 0 || decision.confidence > 1) {
+    if (
+      typeof decision.confidence !== 'number' ||
+      decision.confidence < 0 ||
+      decision.confidence > 1
+    ) {
       errors.push('Invalid confidence (must be number between 0-1)')
     }
 
@@ -632,7 +676,8 @@ Generate structured medical documentation using SOAP format:
     if ('valid' in decision && 'risk_assessment' in decision) return 'validation'
     if ('medications' in decision) return 'treatment'
     if ('soap' in decision) return 'documentation'
-    if ('suggestions' in decision && Array.isArray(decision.suggestions)) return 'medical_autocompletion'
+    if ('suggestions' in decision && Array.isArray(decision.suggestions))
+      return 'medical_autocompletion'
     if ('can_proceed' in decision && 'missing_fields' in decision) return 'critical_data_validation'
     if ('detected_specialty' in decision && 'confidence' in decision) return 'specialty_detection'
     return 'unknown'
@@ -651,11 +696,21 @@ Generate structured medical documentation using SOAP format:
       case 'documentation':
         return 'soap' in decision
       case 'medical_autocompletion':
-        return 'suggestions' in decision && Array.isArray(decision.suggestions) && decision.suggestions.length === 3
+        return (
+          'suggestions' in decision &&
+          Array.isArray(decision.suggestions) &&
+          decision.suggestions.length === 3
+        )
       case 'critical_data_validation':
-        return 'can_proceed' in decision && 'missing_fields' in decision && 'completion_percentage' in decision
+        return (
+          'can_proceed' in decision &&
+          'missing_fields' in decision &&
+          'completion_percentage' in decision
+        )
       case 'specialty_detection':
-        return 'detected_specialty' in decision && 'confidence' in decision && 'indicators' in decision
+        return (
+          'detected_specialty' in decision && 'confidence' in decision && 'indicators' in decision
+        )
       default:
         return false
     }

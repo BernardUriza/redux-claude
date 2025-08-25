@@ -39,7 +39,7 @@ export abstract class BaseAgent<TDecision = any> {
     return {
       type: this.agentType,
       version: this.version,
-      lastExecutionTime: this.lastExecutionTime
+      lastExecutionTime: this.lastExecutionTime,
     }
   }
 
@@ -73,7 +73,7 @@ export abstract class BaseAgent<TDecision = any> {
       success: false,
       error,
       confidence: 0,
-      processingTimeMs: this.calculateProcessingTime(startTime)
+      processingTimeMs: this.calculateProcessingTime(startTime),
     }
   }
 
@@ -81,8 +81,8 @@ export abstract class BaseAgent<TDecision = any> {
    * Crear respuesta exitosa estándar
    */
   protected createSuccessResponse(
-    decision: TDecision, 
-    confidence: number, 
+    decision: TDecision,
+    confidence: number,
     startTime: number,
     reasoning?: string
   ) {
@@ -92,7 +92,7 @@ export abstract class BaseAgent<TDecision = any> {
       decision,
       confidence,
       processingTimeMs: this.calculateProcessingTime(startTime),
-      reasoning
+      reasoning,
     }
   }
 }

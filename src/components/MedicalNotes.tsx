@@ -31,7 +31,9 @@ interface AddNoteModalProps {
 }
 
 const AddNoteModal = ({ isOpen, onClose, onAdd }: AddNoteModalProps) => {
-  const [type, setType] = useState<'clinical' | 'administrative' | 'legal' | 'observation'>('clinical')
+  const [type, setType] = useState<'clinical' | 'administrative' | 'legal' | 'observation'>(
+    'clinical'
+  )
   const [content, setContent] = useState('')
   const [category, setCategory] = useState('')
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'critical'>('medium')
@@ -46,7 +48,7 @@ const AddNoteModal = ({ isOpen, onClose, onAdd }: AddNoteModalProps) => {
       category: category.trim() || 'General',
       priority,
       physicianId: 'current-physician', // In real app, get from auth
-      physicianName: 'Dr. Sistema' // In real app, get from auth
+      physicianName: 'Dr. Sistema', // In real app, get from auth
     })
 
     // Reset form
@@ -63,12 +65,14 @@ const AddNoteModal = ({ isOpen, onClose, onAdd }: AddNoteModalProps) => {
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 w-full max-w-2xl border border-slate-600/40 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-white">Nueva Nota Médica</h3>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
-          >
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -79,7 +83,7 @@ const AddNoteModal = ({ isOpen, onClose, onAdd }: AddNoteModalProps) => {
               <label className="block text-sm font-medium text-slate-200 mb-2">Tipo de Nota</label>
               <select
                 value={type}
-                onChange={(e) => setType(e.target.value as any)}
+                onChange={e => setType(e.target.value as any)}
                 className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="clinical">Clínica</option>
@@ -93,7 +97,7 @@ const AddNoteModal = ({ isOpen, onClose, onAdd }: AddNoteModalProps) => {
               <label className="block text-sm font-medium text-slate-200 mb-2">Prioridad</label>
               <select
                 value={priority}
-                onChange={(e) => setPriority(e.target.value as any)}
+                onChange={e => setPriority(e.target.value as any)}
                 className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="low">Baja</option>
@@ -109,17 +113,19 @@ const AddNoteModal = ({ isOpen, onClose, onAdd }: AddNoteModalProps) => {
             <input
               type="text"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={e => setCategory(e.target.value)}
               className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Ej: Diagnóstico, Tratamiento, Evolución..."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-2">Contenido de la Nota</label>
+            <label className="block text-sm font-medium text-slate-200 mb-2">
+              Contenido de la Nota
+            </label>
             <textarea
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={e => setContent(e.target.value)}
               className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={6}
               placeholder="Escriba la nota médica aquí..."
@@ -151,31 +157,46 @@ const AddNoteModal = ({ isOpen, onClose, onAdd }: AddNoteModalProps) => {
 const NoteCard = ({ note }: { note: PhysicianNote }) => {
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'clinical': return 'from-blue-500 to-cyan-500'
-      case 'administrative': return 'from-gray-500 to-slate-500'
-      case 'legal': return 'from-red-500 to-pink-500'
-      case 'observation': return 'from-green-500 to-emerald-500'
-      default: return 'from-gray-500 to-slate-500'
+      case 'clinical':
+        return 'from-blue-500 to-cyan-500'
+      case 'administrative':
+        return 'from-gray-500 to-slate-500'
+      case 'legal':
+        return 'from-red-500 to-pink-500'
+      case 'observation':
+        return 'from-green-500 to-emerald-500'
+      default:
+        return 'from-gray-500 to-slate-500'
     }
   }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critical': return 'text-red-400 bg-red-900/20 border-red-500/30'
-      case 'high': return 'text-orange-400 bg-orange-900/20 border-orange-500/30'
-      case 'medium': return 'text-yellow-400 bg-yellow-900/20 border-yellow-500/30'
-      case 'low': return 'text-green-400 bg-green-900/20 border-green-500/30'
-      default: return 'text-gray-400 bg-gray-900/20 border-gray-500/30'
+      case 'critical':
+        return 'text-red-400 bg-red-900/20 border-red-500/30'
+      case 'high':
+        return 'text-orange-400 bg-orange-900/20 border-orange-500/30'
+      case 'medium':
+        return 'text-yellow-400 bg-yellow-900/20 border-yellow-500/30'
+      case 'low':
+        return 'text-green-400 bg-green-900/20 border-green-500/30'
+      default:
+        return 'text-gray-400 bg-gray-900/20 border-gray-500/30'
     }
   }
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'clinical': return '🩺'
-      case 'administrative': return '📋'
-      case 'legal': return '⚖️'
-      case 'observation': return '👁️'
-      default: return '📄'
+      case 'clinical':
+        return '🩺'
+      case 'administrative':
+        return '📋'
+      case 'legal':
+        return '⚖️'
+      case 'observation':
+        return '👁️'
+      default:
+        return '📄'
     }
   }
 
@@ -187,14 +208,16 @@ const NoteCard = ({ note }: { note: PhysicianNote }) => {
           <div>
             <div className="flex items-center space-x-2">
               <h4 className="text-white font-medium capitalize">{note.type}</h4>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(note.priority)}`}>
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(note.priority)}`}
+              >
                 {note.priority}
               </span>
             </div>
             <div className="text-sm text-slate-400">{note.category}</div>
           </div>
         </div>
-        
+
         <div className="text-right text-xs text-slate-400">
           <div>{new Date(note.timestamp).toLocaleDateString('es-ES')}</div>
           <div>{new Date(note.timestamp).toLocaleTimeString('es-ES')}</div>
@@ -210,9 +233,7 @@ const NoteCard = ({ note }: { note: PhysicianNote }) => {
           <span>👨‍⚕️</span>
           <span>{note.physicianName}</span>
         </div>
-        <div className="text-slate-500">
-          ID: {note.id.slice(-8)}
-        </div>
+        <div className="text-slate-500">ID: {note.id.slice(-8)}</div>
       </div>
     </div>
   )
@@ -223,25 +244,32 @@ export const MedicalNotes = () => {
   // 🧠 MULTINÚCLEO: Mock data temporal para mantener funcionalidad
   const mockNotes: PhysicianNote[] = []
   const [showAddModal, setShowAddModal] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'clinical' | 'administrative' | 'legal' | 'observation'>('all')
+  const [filter, setFilter] = useState<
+    'all' | 'clinical' | 'administrative' | 'legal' | 'observation'
+  >('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'priority'>('newest')
 
   const filteredNotes = mockNotes
     .filter(note => filter === 'all' || note.type === filter)
     .sort((a, b) => {
       switch (sortBy) {
-        case 'newest': return b.timestamp - a.timestamp
-        case 'oldest': return a.timestamp - b.timestamp
+        case 'newest':
+          return b.timestamp - a.timestamp
+        case 'oldest':
+          return a.timestamp - b.timestamp
         case 'priority': {
           const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 }
           return priorityOrder[b.priority] - priorityOrder[a.priority]
         }
-        default: return b.timestamp - a.timestamp
+        default:
+          return b.timestamp - a.timestamp
       }
     })
 
   const notesCount = mockNotes.length
-  const urgentCount = mockNotes.filter(n => n.priority === 'critical' || n.priority === 'high').length
+  const urgentCount = mockNotes.filter(
+    n => n.priority === 'critical' || n.priority === 'high'
+  ).length
 
   return (
     <div className="space-y-6">
@@ -250,13 +278,9 @@ export const MedicalNotes = () => {
         <div>
           <h2 className="text-xl font-bold text-white mb-1">Notas Médicas</h2>
           <div className="flex items-center space-x-4 text-sm">
-            <span className="text-slate-300">
-              {notesCount} notas totales
-            </span>
+            <span className="text-slate-300">{notesCount} notas totales</span>
             {urgentCount > 0 && (
-              <span className="text-orange-400 font-medium">
-                {urgentCount} urgentes
-              </span>
+              <span className="text-orange-400 font-medium">{urgentCount} urgentes</span>
             )}
           </div>
         </div>
@@ -276,9 +300,21 @@ export const MedicalNotes = () => {
         <div className="flex space-x-1 bg-slate-800/50 rounded-lg p-1">
           {[
             { key: 'all' as const, label: 'Todas', count: notesCount },
-            { key: 'clinical' as const, label: 'Clínicas', count: mockNotes.filter(n => n.type === 'clinical').length },
-            { key: 'administrative' as const, label: 'Admin', count: mockNotes.filter(n => n.type === 'administrative').length },
-            { key: 'legal' as const, label: 'Legales', count: mockNotes.filter(n => n.type === 'legal').length }
+            {
+              key: 'clinical' as const,
+              label: 'Clínicas',
+              count: mockNotes.filter(n => n.type === 'clinical').length,
+            },
+            {
+              key: 'administrative' as const,
+              label: 'Admin',
+              count: mockNotes.filter(n => n.type === 'administrative').length,
+            },
+            {
+              key: 'legal' as const,
+              label: 'Legales',
+              count: mockNotes.filter(n => n.type === 'legal').length,
+            },
           ].map(tab => (
             <button
               key={tab.key}
@@ -296,7 +332,7 @@ export const MedicalNotes = () => {
 
         <select
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as any)}
+          onChange={e => setSortBy(e.target.value as any)}
           className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="newest">Más recientes</option>
@@ -316,15 +352,13 @@ export const MedicalNotes = () => {
               {filter === 'all' ? 'No hay notas médicas' : `No hay notas ${filter}`}
             </h3>
             <p className="text-slate-400 text-sm">
-              {filter === 'all' 
-                ? 'Agrega la primera nota médica para comenzar el registro' 
+              {filter === 'all'
+                ? 'Agrega la primera nota médica para comenzar el registro'
                 : 'No se encontraron notas en esta categoría'}
             </p>
           </div>
         ) : (
-          filteredNotes.map(note => (
-            <NoteCard key={note.id} note={note} />
-          ))
+          filteredNotes.map(note => <NoteCard key={note.id} note={note} />)
         )}
       </div>
 
@@ -335,8 +369,8 @@ export const MedicalNotes = () => {
           <h4 className="text-sm font-semibold text-purple-300">Trazabilidad Legal</h4>
         </div>
         <p className="text-xs text-slate-300 leading-relaxed">
-          Todas las notas médicas son registradas con marca temporal inmutable y firma digital. 
-          Este sistema cumple con la normativa NOM-004-SSA3-2012 para expedientes clínicos electrónicos.
+          Todas las notas médicas son registradas con marca temporal inmutable y firma digital. Este
+          sistema cumple con la normativa NOM-004-SSA3-2012 para expedientes clínicos electrónicos.
           Las notas forman parte integral del expediente médico legal del paciente.
         </p>
         <div className="mt-2 flex items-center space-x-4 text-xs text-slate-400">
@@ -351,7 +385,7 @@ export const MedicalNotes = () => {
       <AddNoteModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onAdd={(noteData) => dispatch(addPhysicianNote(noteData))}
+        onAdd={noteData => dispatch(addPhysicianNote(noteData))}
       />
     </div>
   )

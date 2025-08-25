@@ -11,7 +11,7 @@ import {
   OptimizationResult,
   ExecutionCondition,
   ContextualMemory,
-  PerformanceMetrics
+  PerformanceMetrics,
 } from '../types/cognitive'
 import { AgentType, DecisionResult } from '../types/agents'
 import { nanoid } from '@reduxjs/toolkit'
@@ -31,7 +31,7 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
       currentPipeline: this.createDefaultPipeline(),
       pipelineTemplates: this.createPipelineTemplates(),
       contextAnalyzer: this,
-      performanceOptimizer: this
+      performanceOptimizer: this,
     }
   }
 
@@ -42,14 +42,14 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
         agents: [AgentType.TRIAGE],
         executionMode: 'parallel',
         timeout: 5000,
-        required: true
+        required: true,
       },
       {
         stageId: 'diagnosis',
         agents: [AgentType.DIAGNOSTIC],
         executionMode: 'parallel',
         timeout: 8000,
-        required: true
+        required: true,
       },
       {
         stageId: 'validation',
@@ -60,12 +60,12 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
             type: 'confidence',
             operator: 'lt',
             value: 80,
-            action: 'include'
-          }
+            action: 'include',
+          },
         ],
         timeout: 6000,
-        required: false
-      }
+        required: false,
+      },
     ]
   }
 
@@ -81,25 +81,25 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
             agents: [AgentType.TRIAGE],
             executionMode: 'parallel',
             timeout: 2000,
-            required: true
+            required: true,
           },
           {
             stageId: 'parallel-assessment',
             agents: [AgentType.DIAGNOSTIC, AgentType.VALIDATION],
             executionMode: 'parallel',
             timeout: 5000,
-            required: true
+            required: true,
           },
           {
             stageId: 'immediate-treatment',
             agents: [AgentType.TREATMENT],
             executionMode: 'sequential',
             timeout: 3000,
-            required: true
-          }
+            required: true,
+          },
         ],
         expectedLatency: 10000,
-        successRate: 0.85
+        successRate: 0.85,
       },
 
       diagnostic: {
@@ -112,21 +112,21 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
             agents: [AgentType.TRIAGE],
             executionMode: 'sequential',
             timeout: 5000,
-            required: true
+            required: true,
           },
           {
             stageId: 'deep-diagnosis',
             agents: [AgentType.DIAGNOSTIC],
             executionMode: 'sequential',
             timeout: 10000,
-            required: true
+            required: true,
           },
           {
             stageId: 'cross-validation',
             agents: [AgentType.VALIDATION],
             executionMode: 'sequential',
             timeout: 8000,
-            required: true
+            required: true,
           },
           {
             stageId: 'treatment-planning',
@@ -137,11 +137,11 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
                 type: 'previous_result',
                 operator: 'eq',
                 value: 'validated',
-                action: 'include'
-              }
+                action: 'include',
+              },
             ],
             timeout: 7000,
-            required: false
+            required: false,
           },
           {
             stageId: 'documentation',
@@ -154,13 +154,13 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
                 type: 'confidence',
                 operator: 'gt',
                 value: 70,
-                action: 'include'
-              }
-            ]
-          }
+                action: 'include',
+              },
+            ],
+          },
         ],
         expectedLatency: 40000,
-        successRate: 0.92
+        successRate: 0.92,
       },
 
       routine: {
@@ -173,25 +173,25 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
             agents: [AgentType.TRIAGE],
             executionMode: 'sequential',
             timeout: 5000,
-            required: false
+            required: false,
           },
           {
             stageId: 'standard-diagnosis',
             agents: [AgentType.DIAGNOSTIC],
             executionMode: 'sequential',
             timeout: 8000,
-            required: true
+            required: true,
           },
           {
             stageId: 'documentation',
             agents: [AgentType.DOCUMENTATION],
             executionMode: 'sequential',
             timeout: 10000,
-            required: false
-          }
+            required: false,
+          },
         ],
         expectedLatency: 23000,
-        successRate: 0.88
+        successRate: 0.88,
       },
 
       treatment: {
@@ -204,25 +204,25 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
             agents: [AgentType.TREATMENT],
             executionMode: 'sequential',
             timeout: 7000,
-            required: true
+            required: true,
           },
           {
             stageId: 'safety-validation',
             agents: [AgentType.VALIDATION],
             executionMode: 'sequential',
             timeout: 6000,
-            required: true
+            required: true,
           },
           {
             stageId: 'documentation',
             agents: [AgentType.DOCUMENTATION],
             executionMode: 'sequential',
             timeout: 10000,
-            required: false
-          }
+            required: false,
+          },
         ],
         expectedLatency: 23000,
-        successRate: 0.90
+        successRate: 0.9,
       },
 
       consensus: {
@@ -235,14 +235,14 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
             agents: [AgentType.TRIAGE],
             executionMode: 'sequential',
             timeout: 5000,
-            required: true
+            required: true,
           },
           {
             stageId: 'parallel-diagnosis',
             agents: [AgentType.DIAGNOSTIC, AgentType.VALIDATION],
             executionMode: 'parallel',
             timeout: 10000,
-            required: true
+            required: true,
           },
           {
             stageId: 'consensus-treatment',
@@ -253,16 +253,16 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
                 type: 'confidence',
                 operator: 'gt',
                 value: 60,
-                action: 'include'
-              }
+                action: 'include',
+              },
             ],
             timeout: 8000,
-            required: false
-          }
+            required: false,
+          },
         ],
         expectedLatency: 23000,
-        successRate: 0.95
-      }
+        successRate: 0.95,
+      },
     }
   }
 
@@ -274,10 +274,10 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
 
     // Analizar urgencia
     const urgencyScore = this.calculateUrgencyScore(input, symptoms)
-    
+
     // Analizar complejidad
     const complexityScore = this.calculateComplexityScore(symptoms, hypotheses)
-    
+
     // Analizar confianza necesaria
     const confidenceRequirement = this.calculateConfidenceRequirement(context, urgencyScore)
 
@@ -325,16 +325,23 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
       confidence,
       reasoning: reasoning.join('. '),
       alternativeTemplates: this.getAlternativeTemplates(recommendedTemplate),
-      customStages: customStages.length > 0 ? customStages : undefined
+      customStages: customStages.length > 0 ? customStages : undefined,
     }
   }
 
   private calculateUrgencyScore(input: string, symptoms: string[]): number {
     let score = 0
     const urgentKeywords = [
-      'emergency', 'urgent', 'severe', 'critical',
-      'chest pain', 'difficulty breathing', 'unconscious',
-      'bleeding', 'stroke', 'heart attack'
+      'emergency',
+      'urgent',
+      'severe',
+      'critical',
+      'chest pain',
+      'difficulty breathing',
+      'unconscious',
+      'bleeding',
+      'stroke',
+      'heart attack',
     ]
 
     const inputLower = input.toLowerCase()
@@ -390,19 +397,19 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
     reason: string
   } {
     const templatePerformance = this.getTemplatePerformance(template)
-    
+
     if (templatePerformance.successRate < 0.5) {
       // Template performing poorly, suggest alternative
       const alternatives = this.getAlternativeTemplates(template)
-      const bestAlternative = alternatives.find(alt => 
-        this.getTemplatePerformance(alt).successRate > templatePerformance.successRate
+      const bestAlternative = alternatives.find(
+        alt => this.getTemplatePerformance(alt).successRate > templatePerformance.successRate
       )
 
       if (bestAlternative) {
         return {
           shouldChange: true,
           newTemplate: bestAlternative,
-          reason: `Historical performance suggests ${bestAlternative} pipeline is more effective`
+          reason: `Historical performance suggests ${bestAlternative} pipeline is more effective`,
         }
       }
     }
@@ -410,7 +417,7 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
     return {
       shouldChange: false,
       newTemplate: template,
-      reason: ''
+      reason: '',
     }
   }
 
@@ -423,7 +430,7 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
     if (template) {
       return {
         successRate: template.successRate,
-        avgLatency: template.expectedLatency
+        avgLatency: template.expectedLatency,
       }
     }
     return { successRate: 0.5, avgLatency: 10000 }
@@ -437,7 +444,7 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
   ): PipelineStage[] {
     const customStages: PipelineStage[] = []
     const template = this.pipeline.pipelineTemplates[baseTemplate]
-    
+
     if (!template) return []
 
     // Clone base stages
@@ -459,7 +466,7 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
         agents: [AgentType.VALIDATION],
         executionMode: 'sequential',
         timeout: 6000,
-        required: true
+        required: true,
       })
     }
 
@@ -478,9 +485,8 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
   }
 
   private getAlternativeTemplates(primary: string): string[] {
-    const alternatives = Object.keys(this.pipeline.pipelineTemplates)
-      .filter(t => t !== primary)
-    
+    const alternatives = Object.keys(this.pipeline.pipelineTemplates).filter(t => t !== primary)
+
     // Sort by similarity to primary
     return alternatives.slice(0, 3)
   }
@@ -499,20 +505,22 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
     for (const stage of optimized) {
       for (const agentType of stage.agents) {
         const agentPerf = reinforcementLearning.getPerformanceMetrics(agentType)
-        
+
         // Remover agentes con bajo rendimiento
         if (agentPerf.successRate < 0.3 && !stage.required) {
           stage.agents = stage.agents.filter(a => a !== agentType)
           improvements.push(`Removed underperforming ${agentType} agent`)
           expectedAccuracyGain += 0.05
         }
-        
+
         // Ajustar timeouts basado en latencia real
         if (agentPerf.avgLatency < stage.timeout * 0.5) {
           const oldTimeout = stage.timeout
           stage.timeout = Math.ceil(agentPerf.avgLatency * 1.5)
           expectedLatencyGain += oldTimeout - stage.timeout
-          improvements.push(`Optimized ${agentType} timeout from ${oldTimeout}ms to ${stage.timeout}ms`)
+          improvements.push(
+            `Optimized ${agentType} timeout from ${oldTimeout}ms to ${stage.timeout}ms`
+          )
         }
       }
     }
@@ -524,7 +532,7 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
           const perf = reinforcementLearning.getPerformanceMetrics(agent)
           return perf.successRate > 0.7
         })
-        
+
         if (canParallelize) {
           stage.executionMode = 'parallel'
           improvements.push(`Changed ${stage.stageId} to parallel execution`)
@@ -535,14 +543,14 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
 
     // Reordenar stages por prioridad adaptativa
     optimized.sort((a, b) => {
-      const aPriority = a.agents.reduce((sum, agent) => 
-        sum + reinforcementLearning.getDynamicPriority(agent), 0
-      ) / a.agents.length
-      
-      const bPriority = b.agents.reduce((sum, agent) => 
-        sum + reinforcementLearning.getDynamicPriority(agent), 0
-      ) / b.agents.length
-      
+      const aPriority =
+        a.agents.reduce((sum, agent) => sum + reinforcementLearning.getDynamicPriority(agent), 0) /
+        a.agents.length
+
+      const bPriority =
+        b.agents.reduce((sum, agent) => sum + reinforcementLearning.getDynamicPriority(agent), 0) /
+        b.agents.length
+
       return bPriority - aPriority
     })
 
@@ -556,8 +564,8 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
       expectedGains: {
         latency: expectedLatencyGain,
         accuracy: expectedAccuracyGain,
-        cost: -expectedLatencyGain * 0.001 // Rough cost estimate
-      }
+        cost: -expectedLatencyGain * 0.001, // Rough cost estimate
+      },
     }
   }
 
@@ -601,16 +609,16 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
 
       switch (condition.type) {
         case 'confidence':
-          const avgConfidence = previousResults.reduce((sum, r) => 
-            sum + r.confidence, 0
-          ) / (previousResults.length || 1)
-          
+          const avgConfidence =
+            previousResults.reduce((sum, r) => sum + r.confidence, 0) /
+            (previousResults.length || 1)
+
           conditionMet = this.compareValue(avgConfidence, condition.operator, condition.value)
           break
 
         case 'previous_result':
           // Check if previous results match condition
-          conditionMet = previousResults.some(r => 
+          conditionMet = previousResults.some(r =>
             this.compareValue(r.success, condition.operator, condition.value)
           )
           break
@@ -636,12 +644,18 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
 
   private compareValue(actual: any, operator: string, expected: any): boolean {
     switch (operator) {
-      case 'gt': return actual > expected
-      case 'lt': return actual < expected
-      case 'eq': return actual === expected
-      case 'contains': return String(actual).includes(String(expected))
-      case 'matches': return new RegExp(expected).test(String(actual))
-      default: return false
+      case 'gt':
+        return actual > expected
+      case 'lt':
+        return actual < expected
+      case 'eq':
+        return actual === expected
+      case 'contains':
+        return String(actual).includes(String(expected))
+      case 'matches':
+        return new RegExp(expected).test(String(actual))
+      default:
+        return false
     }
   }
 
@@ -653,7 +667,7 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
     // This would integrate with multiAgentOrchestrator
     // Simplified mock implementation
     const results: DecisionResult[] = []
-    
+
     for (const agentType of stage.agents) {
       results.push({
         id: nanoid(),
@@ -666,7 +680,7 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
         latency: Math.random() * stage.timeout,
         timestamp: Date.now(),
         retryCount: 0,
-        success: Math.random() > 0.2
+        success: Math.random() > 0.2,
       })
     }
 
@@ -699,7 +713,7 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
   } {
     const currentStages = this.pipeline.currentPipeline
     const activeAgents = [...new Set(currentStages.flatMap(s => s.agents))]
-    
+
     // Calculate average metrics
     let totalLatency = 0
     let totalSuccess = 0
@@ -718,7 +732,7 @@ export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptim
       avgLatency: count > 0 ? totalLatency / count : 0,
       successRate: count > 0 ? totalSuccess / count : 0,
       stageCount: currentStages.length,
-      activeAgents
+      activeAgents,
     }
   }
 

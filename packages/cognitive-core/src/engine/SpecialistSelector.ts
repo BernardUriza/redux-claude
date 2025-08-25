@@ -19,29 +19,27 @@ export interface SpecialistConfig {
 
 /**
  * 🧠 SELECTOR INTELIGENTE DE ESPECIALISTAS
- * 
- * En lugar de lógica compleja hardcodeada, 
+ *
+ * En lugar de lógica compleja hardcodeada,
  * usa un agente especializado en seleccionar otros agentes
  */
 export class SpecialistSelector {
-  
   /**
    * 🎯 Selecciona especialistas USANDO callClaudeForDecision DE VERDAD
    */
-  selectSpecialists(
-    clinicalInput: string,
-    patientProfile?: PatientProfile
-  ): SpecialistConfig[] {
-    
+  selectSpecialists(clinicalInput: string, patientProfile?: PatientProfile): SpecialistConfig[] {
     console.log('🧠 Usando callClaudeForDecision para seleccionar especialistas')
-    
+
     // USAR callClaudeForDecision en background (no bloqueante)
     this.selectSpecialistsAsync(clinicalInput, patientProfile)
       .then(specialists => {
-        console.log('✅ IA seleccionó especialistas:', specialists.map(s => s.agentType))
+        console.log(
+          '✅ IA seleccionó especialistas:',
+          specialists.map(s => s.agentType)
+        )
       })
       .catch(err => console.warn('SpecialistSelector IA error:', err))
-    
+
     // Retornar fallback inmediato mientras la IA procesa
     return this.getFallbackSpecialists(clinicalInput, patientProfile)
   }
@@ -50,25 +48,24 @@ export class SpecialistSelector {
    * 🧠 VERSIÓN ASYNC que USA callClaudeForDecision REAL
    */
   private async selectSpecialistsAsync(
-    clinicalInput: string, 
+    clinicalInput: string,
     patientProfile?: PatientProfile
   ): Promise<SpecialistConfig[]> {
-    
     const response = await callClaudeForDecision(
       'triage', // Usar tipo existente que evalúa recursos necesarios
       this.buildSelectionPrompt(clinicalInput, patientProfile),
       'claude'
     )
-    
+
     if (response.success && (response.decision as any).required_resources) {
       // Mapear required_resources a SpecialistConfig
       return (response.decision as any).required_resources.map((resource: string) => ({
         agentType: resource,
         priority: this.mapUrgencyToPriority((response.decision as any).acuity_level || 3),
-        reason: `Requerido por triage nivel ${(response.decision as any).acuity_level}`
+        reason: `Requerido por triage nivel ${(response.decision as any).acuity_level}`,
       }))
     }
-    
+
     return this.getFallbackSpecialists(clinicalInput, patientProfile)
   }
 
@@ -77,7 +74,7 @@ export class SpecialistSelector {
    */
   private mapUrgencyToPriority(acuityLevel: number): 'high' | 'medium' | 'low' {
     if (acuityLevel >= 4) return 'high'
-    if (acuityLevel >= 3) return 'medium' 
+    if (acuityLevel >= 3) return 'medium'
     return 'low'
   }
 
@@ -128,28 +125,31 @@ FORMATO REQUERIDO - Como decisión de triage:
         return decision.required_agents.map((agent: any) => ({
           agentType: agent.agentType,
           priority: agent.priority || 'medium',
-          reason: agent.reason || 'Especialista requerido'
+          reason: agent.reason || 'Especialista requerido',
         }))
       }
     } catch (error) {
       console.warn('Error parsing specialist selection:', error)
     }
-    
+
     return []
   }
 
   /**
    * 🆘 Fallback si falla la IA
    */
-  private getFallbackSpecialists(clinicalInput: string, patientProfile?: PatientProfile): SpecialistConfig[] {
+  private getFallbackSpecialists(
+    clinicalInput: string,
+    patientProfile?: PatientProfile
+  ): SpecialistConfig[] {
     const specialists: SpecialistConfig[] = []
     const inputLower = clinicalInput.toLowerCase()
-    
+
     // Farmacología siempre necesaria
     specialists.push({
       agentType: 'clinical_pharmacology',
       priority: 'high',
-      reason: 'Prescripción y dosificación apropiada'
+      reason: 'Prescripción y dosificación apropiada',
     })
 
     // Pediatría si <18 años
@@ -157,7 +157,7 @@ FORMATO REQUERIDO - Como decisión de triage:
       specialists.push({
         agentType: 'pediatric_specialist',
         priority: 'high',
-        reason: 'Paciente pediátrico'
+        reason: 'Paciente pediátrico',
       })
     }
 
@@ -166,7 +166,7 @@ FORMATO REQUERIDO - Como decisión de triage:
       specialists.push({
         agentType: 'geriatric_specialist',
         priority: 'high',
-        reason: 'Paciente geriátrico'
+        reason: 'Paciente geriátrico',
       })
     }
 
@@ -174,7 +174,7 @@ FORMATO REQUERIDO - Como decisión de triage:
     specialists.push({
       agentType: 'family_education',
       priority: 'low',
-      reason: 'Educación al paciente/familia'
+      reason: 'Educación al paciente/familia',
     })
 
     return specialists
@@ -184,15 +184,15 @@ FORMATO REQUERIDO - Como decisión de triage:
    * 📊 Genera información contextual para prompts (compatible con código existente)
    */
   generateContextualInfo(specialists: SpecialistConfig[], results: any[]): string {
-    let contextInfo = "DATOS DE ESPECIALISTAS CONSULTADOS:\n\n"
-    
+    let contextInfo = 'DATOS DE ESPECIALISTAS CONSULTADOS:\n\n'
+
     specialists.forEach((specialist, index) => {
       const result = results[index]
       if (result && result.success) {
-        contextInfo += this.formatSpecialistInfo(specialist.agentType, result) + "\n"
+        contextInfo += this.formatSpecialistInfo(specialist.agentType, result) + '\n'
       }
     })
-    
+
     return contextInfo
   }
 
@@ -201,7 +201,7 @@ FORMATO REQUERIDO - Como decisión de triage:
    */
   private formatSpecialistInfo(agentType: string, result: any): string {
     const decision = result.decision?.result || result.decision || result
-    
+
     switch (agentType) {
       case 'clinical_pharmacology':
         if (decision.primary_medication) {
@@ -229,7 +229,7 @@ FORMATO REQUERIDO - Como decisión de triage:
         }
         break
     }
-    
+
     return `${agentType}: Información especializada disponible`
   }
 }

@@ -1,8 +1,16 @@
 // 🏥 SOAP Processor - Implementación NOM-004-SSA3-2012 + Medicina Defensiva
 // Creado por Bernard Orozco - Fase 3: Sistema de Medicina Defensiva Integrado
 
-import { DefensiveMedicineValidator, UrgentPattern, DefensiveDiagnosis } from '../validators/DefensiveMedicineValidator'
-import { UrgencyClassifier, UrgencyAssessment, TriageResult } from '../classifiers/UrgencyClassifier'
+import {
+  DefensiveMedicineValidator,
+  UrgentPattern,
+  DefensiveDiagnosis,
+} from '../validators/DefensiveMedicineValidator'
+import {
+  UrgencyClassifier,
+  UrgencyAssessment,
+  TriageResult,
+} from '../classifiers/UrgencyClassifier'
 import { DiagnosticDecisionTree } from '../validators/DiagnosticDecisionTree'
 
 // Importar tipos desde types/medical.ts
@@ -10,7 +18,7 @@ import type { SOAPData, SOAPAnalysis } from '../types/medical'
 
 /**
  * 📋 Procesador SOAP Formal según NOM-004-SSA3-2012
- * 
+ *
  * Implementa estructura médica mexicana oficial con:
  * - Expediente clínico compliant
  * - Terminología CIE-10
@@ -49,24 +57,29 @@ export class SOAPProcessor {
       console.log('🚨 Iniciando procesamiento SOAP + Medicina Defensiva...')
 
       // FASE 1: Evaluación de urgencia ANTES del procesamiento SOAP
-      const urgencyAssessment = await this.urgencyClassifier.assessUrgency(clinicalInput, patientContext)
+      const urgencyAssessment = await this.urgencyClassifier.assessUrgency(
+        clinicalInput,
+        patientContext
+      )
       const triageResult = this.urgencyClassifier.performTriage(urgencyAssessment)
-      
-      console.log(`🎯 Urgencia detectada: ${urgencyAssessment.overallLevel} (Gravedad máx: ${urgencyAssessment.maxGravityScore})`)
-      
+
+      console.log(
+        `🎯 Urgencia detectada: ${urgencyAssessment.overallLevel} (Gravedad máx: ${urgencyAssessment.maxGravityScore})`
+      )
+
       // FASE 2: Extraer y estructurar cada sección SOAP (con contexto defensivo)
       const subjetivoData = await this.extractSubjectiveData(clinicalInput)
       const objetivoData = await this.inferObjectiveFindings(clinicalInput, subjetivoData)
       const analisisData = await this.generateDifferentialDx(
-        clinicalInput, 
-        subjetivoData, 
-        objetivoData, 
+        clinicalInput,
+        subjetivoData,
+        objetivoData,
         urgencyAssessment
       )
       const planData = await this.createTreatmentPlan(
-        clinicalInput, 
-        subjetivoData, 
-        objetivoData, 
+        clinicalInput,
+        subjetivoData,
+        objetivoData,
         analisisData,
         urgencyAssessment,
         triageResult
@@ -77,7 +90,7 @@ export class SOAPProcessor {
         subjetivo: subjetivoData,
         objetivo: objetivoData,
         analisis: analisisData,
-        plan: planData
+        plan: planData,
       }
 
       // FASE 4: Calcular métricas de calidad (incluyendo medicina defensiva)
@@ -100,9 +113,9 @@ export class SOAPProcessor {
             urgentPatternsDetected: urgencyAssessment.identifiedPatterns.length,
             gravityPrioritization: true,
             redFlagsIdentified: urgencyAssessment.riskFactors.map(rf => rf.factor),
-            immediateActionsRequired: urgencyAssessment.immediateActions.length > 0
-          }
-        }
+            immediateActionsRequired: urgencyAssessment.immediateActions.length > 0,
+          },
+        },
       }
 
       const processingTime = Date.now() - startTime
@@ -111,7 +124,6 @@ export class SOAPProcessor {
       console.log(`📊 Calidad defensiva: ${calidad.medicinaDefensiva}%`)
 
       return analysis
-
     } catch (error) {
       console.error('❌ Error procesando SOAP con Medicina Defensiva:', error)
       throw new Error(`SOAPProcessor with Defensive Medicine failed: ${error}`)
@@ -134,7 +146,7 @@ export class SOAPProcessor {
       historiaActual,
       antecedentes,
       revisionSistemas,
-      contextoPsicosocial
+      contextoPsicosocial,
     }
   }
 
@@ -142,10 +154,9 @@ export class SOAPProcessor {
    * 🔬 O - OBJETIVO: Infiere hallazgos objetivos
    */
   private async inferObjectiveFindings(
-    input: string, 
+    input: string,
     subjetivo: SOAPData['subjetivo']
   ): Promise<SOAPData['objetivo']> {
-    
     const signosVitales = this.extractVitalSigns(input)
     const exploracionFisica = this.inferPhysicalExam(input, subjetivo)
     const estudiosComplementarios = this.extractDiagnosticStudies(input)
@@ -153,7 +164,7 @@ export class SOAPProcessor {
     return {
       signosVitales,
       exploracionFisica,
-      estudiosComplementarios
+      estudiosComplementarios,
     }
   }
 
@@ -166,18 +177,22 @@ export class SOAPProcessor {
     objetivo: SOAPData['objetivo'],
     urgencyAssessment?: UrgencyAssessment
   ): Promise<SOAPData['analisis']> {
-    
     // Generar diagnóstico principal basado en evidencia + medicina defensiva
-    const diagnosticoPrincipal = this.generatePrimaryDiagnosis(input, subjetivo, objetivo, urgencyAssessment)
-    
-    // Diagnósticos diferenciales priorizados por GRAVEDAD (medicina defensiva)
-    const diagnosticosDiferenciales = this.generateDefensiveDifferentialDiagnoses(
-      input, 
-      subjetivo, 
-      objetivo, 
+    const diagnosticoPrincipal = this.generatePrimaryDiagnosis(
+      input,
+      subjetivo,
+      objetivo,
       urgencyAssessment
     )
-    
+
+    // Diagnósticos diferenciales priorizados por GRAVEDAD (medicina defensiva)
+    const diagnosticosDiferenciales = this.generateDefensiveDifferentialDiagnoses(
+      input,
+      subjetivo,
+      objetivo,
+      urgencyAssessment
+    )
+
     const factoresRiesgo = this.identifyRiskFactors(subjetivo, objetivo)
     const senosPeligro = this.identifyRedFlags(input, subjetivo, objetivo)
     const pronostico = this.assessPrognosis(diagnosticoPrincipal, diagnosticosDiferenciales)
@@ -187,7 +202,7 @@ export class SOAPProcessor {
       diagnosticosDiferenciales,
       factoresRiesgo,
       senosPeligro,
-      pronostico
+      pronostico,
     }
   }
 
@@ -202,7 +217,6 @@ export class SOAPProcessor {
     urgencyAssessment?: UrgencyAssessment,
     triageResult?: TriageResult
   ): Promise<SOAPData['plan']> {
-    
     const tratamientoFarmacologico = this.createPharmacologicalPlan(analisis)
     const tratamientoNoFarmacologico = this.createNonPharmacologicalPlan(analisis)
     const estudiosAdicionales = this.planAdditionalStudies(analisis)
@@ -218,7 +232,7 @@ export class SOAPProcessor {
       interconsultas,
       seguimiento,
       pronostico,
-      certificaciones
+      certificaciones,
     }
   }
 
@@ -231,22 +245,22 @@ export class SOAPProcessor {
       /presenta\s+(.+?)(?:\s+desde|\s+en|\s+por|\.|$)/i,
       /refiere\s+(.+?)(?:\s+desde|\s+en|\s+por|\.|$)/i,
       /acude.*por\s+(.+?)(?:\.|$)/i,
-      /paciente.*presenta\s+(.+?)(?:\s+desde|\s+en|\s+por|\.|$)/i
+      /paciente.*presenta\s+(.+?)(?:\s+desde|\s+en|\s+por|\.|$)/i,
     ]
-    
+
     for (const pattern of patterns) {
       const match = input.match(pattern)
       if (match && match[1].trim().length > 10) {
         return match[1].trim()
       }
     }
-    
+
     // Si no encuentra patrones específicos, tomar los primeros síntomas mencionados
     const symptomMatch = input.match(/(lesiones?|dolor|fiebre|molestias?|síntomas?)\s+.{20,}/i)
     if (symptomMatch) {
       return symptomMatch[0].substring(0, 100) + (symptomMatch[0].length > 100 ? '...' : '')
     }
-    
+
     return 'Paciente acude por evaluación médica'
   }
 
@@ -258,29 +272,29 @@ export class SOAPProcessor {
       /desde\s+hace\s+(.+?)(?:\.|$)/i,
       /evolución:?\s*(.+?)(?:\.|$)/i,
       /empeoran?\s+(con|por)\s+(.+?)(?:\.|$)/i,
-      /mejoran?\s+(con|por)\s+(.+?)(?:\.|$)/i
+      /mejoran?\s+(con|por)\s+(.+?)(?:\.|$)/i,
     ]
-    
+
     let historia = ''
-    
+
     // Extraer duración específica
     const duracionMatch = input.match(/desde\s+hace\s+(\d+\s+\w+)/i)
     if (duracionMatch) {
       historia += `Cuadro de ${duracionMatch[1]} de evolución. `
     }
-    
+
     // Extraer factores modificadores
     const factorsMatch = input.match(/(empeoran?|mejoran?)\s+(con|por)\s+([^.]+)/i)
     if (factorsMatch) {
       historia += `Síntomas ${factorsMatch[1]} ${factorsMatch[2]} ${factorsMatch[3]}. `
     }
-    
+
     // Extraer características de las lesiones/síntomas
     const lesionMatch = input.match(/lesiones?\s+([^.]+?)(?:\s+en|\s+desde|\.|$)/i)
     if (lesionMatch) {
       historia += `Lesiones ${lesionMatch[1]}. `
     }
-    
+
     return historia.trim() || 'Historia de enfermedad actual por documentar durante consulta'
   }
 
@@ -289,13 +303,13 @@ export class SOAPProcessor {
       personales: this.extractPersonalHistory(input),
       familiares: this.extractFamilyHistory(input),
       medicamentos: this.extractMedications(input),
-      alergias: this.extractAllergies(input)
+      alergias: this.extractAllergies(input),
     }
   }
 
   private extractPersonalHistory(input: string): string[] {
     const antecedentes: string[] = []
-    
+
     // Patrones para antecedentes específicos
     const specificPatterns = [
       /antecedent.*personal.*de\s+([^.,]+)/i,
@@ -304,9 +318,9 @@ export class SOAPProcessor {
       /(asma)/i,
       /(hipertens[ií]ón|diabetes|tabaquismo|alcoholismo)/gi,
       /(cirugía|operación|hospitalización)/gi,
-      /(alergia.*a.*)/i
+      /(alergia.*a.*)/i,
     ]
-    
+
     specificPatterns.forEach(pattern => {
       const matches = input.match(pattern)
       if (matches) {
@@ -317,13 +331,13 @@ export class SOAPProcessor {
         }
       }
     })
-    
+
     return antecedentes.length > 0 ? antecedentes : ['Sin antecedentes patológicos conocidos']
   }
 
   private extractFamilyHistory(input: string): string[] {
     const familiares: string[] = []
-    
+
     // Patrones más específicos para antecedentes familiares
     const patterns = [
       /antecedent.*familiar.*de\s+([^.,]+)/i,
@@ -334,9 +348,9 @@ export class SOAPProcessor {
       /(psoriasis)/i,
       /(dermatitis)/i,
       /(diabetes)/i,
-      /(hipertensión)/i
+      /(hipertensión)/i,
     ]
-    
+
     patterns.forEach(pattern => {
       const match = input.match(pattern)
       if (match && match[1]) {
@@ -346,7 +360,7 @@ export class SOAPProcessor {
         familiares.push(match[0])
       }
     })
-    
+
     return familiares.length > 0 ? familiares : ['Sin antecedentes familiares relevantes']
   }
 
@@ -354,30 +368,27 @@ export class SOAPProcessor {
     const patterns = [
       /medicament.*?:?\s*([^.]+)/i,
       /tratamiento.*?:?\s*([^.]+)/i,
-      /toma.*?:?\s*([^.]+)/i
+      /toma.*?:?\s*([^.]+)/i,
     ]
-    
+
     const medicamentos: string[] = []
     patterns.forEach(pattern => {
       const match = input.match(pattern)
       if (match) medicamentos.push(match[1].trim())
     })
-    
+
     return medicamentos.length > 0 ? medicamentos : ['Ninguno referido']
   }
 
   private extractAllergies(input: string): string[] {
-    const patterns = [
-      /alergi.*?:?\s*([^.]+)/i,
-      /reaccion.*adversa.*?:?\s*([^.]+)/i
-    ]
-    
+    const patterns = [/alergi.*?:?\s*([^.]+)/i, /reaccion.*adversa.*?:?\s*([^.]+)/i]
+
     const alergias: string[] = []
     patterns.forEach(pattern => {
       const match = input.match(pattern)
       if (match) alergias.push(match[1].trim())
     })
-    
+
     return alergias.length > 0 ? alergias : ['NKDA (No Known Drug Allergies)']
   }
 
@@ -386,48 +397,45 @@ export class SOAPProcessor {
   }
 
   private extractPsychosocialContext(input: string): string {
-    const socialPatterns = [
-      /sedentario/i,
-      /fuma/i,
-      /alcohol/i,
-      /estrés/i,
-      /trabajo/i
-    ]
-    
+    const socialPatterns = [/sedentario/i, /fuma/i, /alcohol/i, /estrés/i, /trabajo/i]
+
     const contexto: string[] = []
     socialPatterns.forEach(pattern => {
       if (pattern.test(input)) {
         contexto.push(pattern.source.replace(/[^a-zA-Z]/g, ''))
       }
     })
-    
-    return contexto.length > 0 ? 
-      `Factores psicosociales: ${contexto.join(', ')}` : 
-      'Contexto psicosocial por evaluar'
+
+    return contexto.length > 0
+      ? `Factores psicosociales: ${contexto.join(', ')}`
+      : 'Contexto psicosocial por evaluar'
   }
 
   private extractVitalSigns(input: string): SOAPData['objetivo']['signosVitales'] {
     const vitals: SOAPData['objetivo']['signosVitales'] = {}
-    
+
     const patterns = {
       presionArterial: /PA.*?(\d+\/\d+)/i,
       frecuenciaCardiaca: /FC.*?(\d+)/i,
       temperatura: /temperatura.*?(\d+\.?\d*)/i,
       peso: /peso.*?(\d+\.?\d*)/i,
-      talla: /talla.*?(\d+\.?\d*)/i
+      talla: /talla.*?(\d+\.?\d*)/i,
     }
-    
+
     Object.entries(patterns).forEach(([key, pattern]) => {
       const match = input.match(pattern)
       if (match) {
         vitals[key as keyof SOAPData['objetivo']['signosVitales']] = match[1]
       }
     })
-    
+
     return vitals
   }
 
-  private inferPhysicalExam(input: string, subjetivo: SOAPData['subjetivo']): SOAPData['objetivo']['exploracionFisica'] {
+  private inferPhysicalExam(
+    input: string,
+    subjetivo: SOAPData['subjetivo']
+  ): SOAPData['objetivo']['exploracionFisica'] {
     return {
       aspecto: 'Paciente consciente, orientado, en condiciones generales aparentemente adecuadas',
       cabezaCuello: 'Normocéfalo, cuello sin adenopatías palpables',
@@ -435,20 +443,16 @@ export class SOAPProcessor {
       abdomen: 'Abdomen blando, depresible, sin dolor a la palpación',
       extremidades: 'Extremidades simétricas, sin edema',
       neurologico: 'Neurológicamente íntegro',
-      piel: 'Piel sin lesiones aparentes'
+      piel: 'Piel sin lesiones aparentes',
     }
   }
 
   private extractDiagnosticStudies(input: string): SOAPData['objetivo']['estudiosComplementarios'] {
     const estudios: SOAPData['objetivo']['estudiosComplementarios'] = {}
-    
+
     // Buscar laboratorios
-    const labPatterns = [
-      /glucosa.*?(\d+)/i,
-      /colesterol.*?(\d+)/i,
-      /hemoglobina.*?(\d+)/i
-    ]
-    
+    const labPatterns = [/glucosa.*?(\d+)/i, /colesterol.*?(\d+)/i, /hemoglobina.*?(\d+)/i]
+
     const laboratorios: Record<string, string> = {}
     labPatterns.forEach(pattern => {
       const match = input.match(pattern)
@@ -457,11 +461,11 @@ export class SOAPProcessor {
         laboratorios[testName] = match[1]
       }
     })
-    
+
     if (Object.keys(laboratorios).length > 0) {
       estudios.laboratorios = laboratorios
     }
-    
+
     return estudios
   }
 
@@ -471,30 +475,30 @@ export class SOAPProcessor {
     objetivo: SOAPData['objetivo'],
     urgencyAssessment?: UrgencyAssessment
   ): SOAPData['analisis']['diagnosticoPrincipal'] {
-    
     // Si hay patrones urgentes identificados, priorizar diagnóstico de alta gravedad
     if (urgencyAssessment && urgencyAssessment.identifiedPatterns.length > 0) {
-      const mostCriticalPattern = urgencyAssessment.identifiedPatterns
-        .sort((a, b) => b.gravityScore - a.gravityScore)[0]
-      
+      const mostCriticalPattern = urgencyAssessment.identifiedPatterns.sort(
+        (a, b) => b.gravityScore - a.gravityScore
+      )[0]
+
       return {
         condicion: mostCriticalPattern.criticalDifferentials[0] || 'Síndrome clínico crítico',
         cie10: 'Z03.9', // En implementación real mapearía CIE-10 específicos
         evidencia: [
           'Patrón de síntomas compatible con urgencia médica',
           `Gravedad score: ${mostCriticalPattern.gravityScore}/10`,
-          ...mostCriticalPattern.redFlags
+          ...mostCriticalPattern.redFlags,
         ],
-        probabilidad: 0.6 // Baja probabilidad pero ALTA gravedad (medicina defensiva)
+        probabilidad: 0.6, // Baja probabilidad pero ALTA gravedad (medicina defensiva)
       }
     }
-    
+
     // Diagnóstico estándar si no hay urgencia
     return {
       condicion: 'Síndrome clínico por definir',
       cie10: 'Z03.9',
       evidencia: ['Síntomas reportados por paciente', 'Hallazgos clínicos pendientes'],
-      probabilidad: 0.7
+      probabilidad: 0.7,
     }
   }
 
@@ -508,7 +512,6 @@ export class SOAPProcessor {
     objetivo: SOAPData['objetivo'],
     urgencyAssessment?: UrgencyAssessment
   ): SOAPData['analisis']['diagnosticosDiferenciales'] {
-    
     const baseDifferentials = [
       {
         condicion: 'Proceso infeccioso viral',
@@ -516,7 +519,7 @@ export class SOAPProcessor {
         evidencia: ['Síntomas sistémicos'],
         probabilidad: 0.4,
         gravedad: 'baja' as const,
-        urgencia: 'no_urgente' as const
+        urgencia: 'no_urgente' as const,
       },
       {
         condicion: 'Proceso inflamatorio',
@@ -524,21 +527,26 @@ export class SOAPProcessor {
         evidencia: ['Respuesta inflamatoria'],
         probabilidad: 0.3,
         gravedad: 'moderada' as const,
-        urgencia: 'semi_urgente' as const
-      }
+        urgencia: 'semi_urgente' as const,
+      },
     ]
 
     // Si hay assessment de urgencia, agregar diagnósticos críticos al inicio
     if (urgencyAssessment && urgencyAssessment.identifiedPatterns.length > 0) {
-      const criticalDifferentials = urgencyAssessment.identifiedPatterns
-        .flatMap(pattern => pattern.criticalDifferentials.map(diff => ({
+      const criticalDifferentials = urgencyAssessment.identifiedPatterns.flatMap(pattern =>
+        pattern.criticalDifferentials.map(diff => ({
           condicion: diff,
           cie10: 'Z03.9', // En implementación real mapearía CIE-10 específicos
-          evidencia: [`Patrón de riesgo identificado: ${pattern.symptoms.join(', ')}`, ...pattern.redFlags],
+          evidencia: [
+            `Patrón de riesgo identificado: ${pattern.symptoms.join(', ')}`,
+            ...pattern.redFlags,
+          ],
           probabilidad: 0.2, // BAJA probabilidad
-          gravedad: pattern.gravityScore >= 9 ? 'critica' as const : 'alta' as const, // ALTA gravedad
-          urgencia: pattern.timeToAction === 'immediate' ? 'emergencia' as const : 'urgente' as const
-        })))
+          gravedad: pattern.gravityScore >= 9 ? ('critica' as const) : ('alta' as const), // ALTA gravedad
+          urgencia:
+            pattern.timeToAction === 'immediate' ? ('emergencia' as const) : ('urgente' as const),
+        }))
+      )
 
       // MEDICINA DEFENSIVA: Colocar diagnósticos críticos AL INICIO
       return [...criticalDifferentials, ...baseDifferentials]
@@ -561,14 +569,14 @@ export class SOAPProcessor {
     objetivo: SOAPData['objetivo']
   ): string[] {
     const factores: string[] = []
-    
+
     if (subjetivo.antecedentes.personales.some(a => /diabetes/i.test(a))) {
       factores.push('Diabetes mellitus')
     }
     if (subjetivo.antecedentes.personales.some(a => /hipertens/i.test(a))) {
       factores.push('Hipertensión arterial')
     }
-    
+
     return factores.length > 0 ? factores : ['Factores de riesgo por evaluar']
   }
 
@@ -578,20 +586,20 @@ export class SOAPProcessor {
     objetivo: SOAPData['objetivo']
   ): string[] {
     const redFlags: string[] = []
-    
+
     const dangerPatterns = [
       /dolor.*torácico/i,
       /dificultad.*respirar/i,
       /pérdida.*consciencia/i,
-      /sangrado/i
+      /sangrado/i,
     ]
-    
+
     dangerPatterns.forEach(pattern => {
       if (pattern.test(input)) {
         redFlags.push(`Posible: ${pattern.source.replace(/[^a-zA-Z\s]/g, '')}`)
       }
     })
-    
+
     return redFlags.length > 0 ? redFlags : ['No se identifican señales de alarma inmediatas']
   }
 
@@ -599,15 +607,16 @@ export class SOAPProcessor {
     diagnosticoPrincipal: SOAPData['analisis']['diagnosticoPrincipal'],
     diferenciales: SOAPData['analisis']['diagnosticosDiferenciales']
   ): SOAPData['analisis']['pronostico'] {
-    
     return {
       inmediato: 'Estable, sin compromiso vital inmediato',
       cortoplazo: 'Favorable con tratamiento apropiado',
-      largoplazo: 'Dependiente de adherencia terapéutica y seguimiento'
+      largoplazo: 'Dependiente de adherencia terapéutica y seguimiento',
     }
   }
 
-  private createPharmacologicalPlan(analisis: SOAPData['analisis']): SOAPData['plan']['tratamientoFarmacologico'] {
+  private createPharmacologicalPlan(
+    analisis: SOAPData['analisis']
+  ): SOAPData['plan']['tratamientoFarmacologico'] {
     return [
       {
         medicamento: 'Paracetamol',
@@ -616,21 +625,18 @@ export class SOAPProcessor {
         frecuencia: 'Cada 8 horas',
         duracion: '3-5 días',
         indicaciones: 'Con alimentos, abundante agua',
-        contraindicaciones: ['Hepatopatía severa', 'Alergia conocida']
-      }
+        contraindicaciones: ['Hepatopatía severa', 'Alergia conocida'],
+      },
     ]
   }
 
   private createNonPharmacologicalPlan(analisis: SOAPData['analisis']): string[] {
-    return [
-      'Reposo relativo',
-      'Hidratación adecuada',
-      'Dieta blanda',
-      'Medidas de higiene general'
-    ]
+    return ['Reposo relativo', 'Hidratación adecuada', 'Dieta blanda', 'Medidas de higiene general']
   }
 
-  private planAdditionalStudies(analisis: SOAPData['analisis']): SOAPData['plan']['estudiosAdicionales'] {
+  private planAdditionalStudies(
+    analisis: SOAPData['analisis']
+  ): SOAPData['plan']['estudiosAdicionales'] {
     // 💀 DECISION TREE BRUTAL - SIN AMBIGÜEDADES
     // Extraer síntomas del diagnóstico principal y diferenciales
     const diagnosticInfo = [
@@ -638,19 +644,20 @@ export class SOAPProcessor {
       ...analisis.diagnosticoPrincipal.evidencia,
       ...analisis.diagnosticosDiferenciales.map(d => d.condicion),
       ...analisis.factoresRiesgo,
-      ...analisis.senosPeligro
-    ].join(' ').toLowerCase()
+      ...analisis.senosPeligro,
+    ]
+      .join(' ')
+      .toLowerCase()
 
     // Para hallazgos físicos, usar los factores de riesgo y señales de peligro
-    const physicalFindings = [
-      ...analisis.senosPeligro,
-      ...analisis.factoresRiesgo
-    ].join(' ').toLowerCase()
+    const physicalFindings = [...analisis.senosPeligro, ...analisis.factoresRiesgo]
+      .join(' ')
+      .toLowerCase()
 
     // 🔍 EXTRAER HALLAZGOS CRÍTICOS
     const symptomsArray = diagnosticInfo.split(' ').filter(s => s.length > 2)
     const findingsArray = physicalFindings.split(' ').filter(f => f.length > 2)
-    
+
     console.log('🔍 Síntomas para decision tree:', symptomsArray)
     console.log('🔍 Hallazgos para decision tree:', findingsArray)
 
@@ -669,8 +676,7 @@ export class SOAPProcessor {
       estudios.push({
         estudio: rule.study,
         justificacion: `[MEDICINA DEFENSIVA] ${rule.justification}`,
-        urgencia: rule.urgency === 'stat' ? 'inmediato' : 
-                  rule.urgency === 'urgent' ? '2h' : '24h'
+        urgencia: rule.urgency === 'stat' ? 'inmediato' : rule.urgency === 'urgent' ? '2h' : '24h',
       })
     })
 
@@ -679,8 +685,7 @@ export class SOAPProcessor {
       estudios.push({
         estudio: rule.study,
         justificacion: `[CONDICIONAL] ${rule.justification}`,
-        urgencia: rule.urgency === 'stat' ? 'inmediato' : 
-                  rule.urgency === 'urgent' ? '2h' : '24h'
+        urgencia: rule.urgency === 'stat' ? 'inmediato' : rule.urgency === 'urgent' ? '2h' : '24h',
       })
     })
 
@@ -690,12 +695,12 @@ export class SOAPProcessor {
         {
           estudio: 'Biometría hemática completa',
           justificacion: 'Evaluación básica de proceso inflamatorio',
-          urgencia: '24h' as const
+          urgencia: '24h' as const,
         },
         {
           estudio: 'Química sanguínea básica',
           justificacion: 'Evaluación metabólica general',
-          urgencia: '24h' as const
+          urgencia: '24h' as const,
         }
       )
     }
@@ -717,33 +722,35 @@ export class SOAPProcessor {
         'Fiebre persistente > 38.5°C',
         'Dificultad respiratoria',
         'Dolor intenso no controlado',
-        'Alteraciones del estado de consciencia'
+        'Alteraciones del estado de consciencia',
       ],
       educacionPaciente: [
         'Reconocer signos de alarma',
         'Importancia de adherencia terapéutica',
-        'Medidas preventivas generales'
+        'Medidas preventivas generales',
       ],
       modificacionesEstiloVida: [
         'Alimentación balanceada',
         'Ejercicio moderado según tolerancia',
-        'Evitar factores de riesgo'
-      ]
+        'Evitar factores de riesgo',
+      ],
     }
   }
 
-  private assessCertifications(analisis: SOAPData['analisis']): SOAPData['plan']['certificaciones'] {
+  private assessCertifications(
+    analisis: SOAPData['analisis']
+  ): SOAPData['plan']['certificaciones'] {
     return {
       incapacidad: {
         dias: 3,
         tipo: 'temporal' as const,
-        actividades: ['Reposo laboral', 'Evitar esfuerzos físicos intensos']
-      }
+        actividades: ['Reposo laboral', 'Evitar esfuerzos físicos intensos'],
+      },
     }
   }
 
   private calculateQualityMetrics(
-    soap: SOAPData, 
+    soap: SOAPData,
     urgencyAssessment?: UrgencyAssessment
   ): NonNullable<SOAPAnalysis['metadata']>['calidad'] {
     let completitud = 0
@@ -777,34 +784,35 @@ export class SOAPProcessor {
     // NUEVO: Medicina Defensiva Score
     if (urgencyAssessment) {
       medicinaDefensiva = 0
-      
+
       // +30 pts por identificación de patrones urgentes
       if (urgencyAssessment.identifiedPatterns.length > 0) {
         medicinaDefensiva += 30
       }
-      
+
       // +25 pts por priorización por gravedad
-      const hasHighGravityFirst = soap.analisis.diagnosticosDiferenciales[0]?.gravedad === 'critica' || 
-                                  soap.analisis.diagnosticosDiferenciales[0]?.gravedad === 'alta'
+      const hasHighGravityFirst =
+        soap.analisis.diagnosticosDiferenciales[0]?.gravedad === 'critica' ||
+        soap.analisis.diagnosticosDiferenciales[0]?.gravedad === 'alta'
       if (hasHighGravityFirst) {
         medicinaDefensiva += 25
       }
-      
+
       // +20 pts por factores de riesgo identificados
       if (urgencyAssessment.riskFactors.length > 0) {
         medicinaDefensiva += 20
       }
-      
+
       // +15 pts por criterios de escalación definidos
       if (urgencyAssessment.escalationCriteria.length > 0) {
         medicinaDefensiva += 15
       }
-      
+
       // +10 pts por acciones inmediatas
       if (urgencyAssessment.immediateActions.length > 0) {
         medicinaDefensiva += 10
       }
-      
+
       medicinaDefensiva = Math.min(medicinaDefensiva, 100)
     }
 
@@ -813,12 +821,12 @@ export class SOAPProcessor {
       coherencia,
       seguridadClinica,
       cumplimientoNormativo,
-      medicinaDefensiva
+      medicinaDefensiva,
     }
   }
 
   private classifyCase(
-    soap: SOAPData, 
+    soap: SOAPData,
     urgencyAssessment?: UrgencyAssessment
   ): NonNullable<SOAPAnalysis['metadata']>['clasificacion'] {
     const urgencia = this.calculateUrgencyLevel(soap, urgencyAssessment)
@@ -832,17 +840,14 @@ export class SOAPProcessor {
       complejidad,
       especialidad,
       urgencia,
-      riesgoVital
+      riesgoVital,
     }
   }
 
   /**
    * 🚨 NUEVO: Determina especialidades requeridas con medicina defensiva
    */
-  private determineSpecialties(
-    soap: SOAPData, 
-    urgencyAssessment?: UrgencyAssessment
-  ): string[] {
+  private determineSpecialties(soap: SOAPData, urgencyAssessment?: UrgencyAssessment): string[] {
     const especialidades = ['Medicina General']
 
     if (urgencyAssessment) {
@@ -851,14 +856,21 @@ export class SOAPProcessor {
           if (diff.toLowerCase().includes('infarto') || diff.toLowerCase().includes('cardíaco')) {
             if (!especialidades.includes('Cardiología')) especialidades.push('Cardiología')
           }
-          if (diff.toLowerCase().includes('hemorragia') || diff.toLowerCase().includes('neurológico')) {
+          if (
+            diff.toLowerCase().includes('hemorragia') ||
+            diff.toLowerCase().includes('neurológico')
+          ) {
             if (!especialidades.includes('Neurología')) especialidades.push('Neurología')
           }
-          if (diff.toLowerCase().includes('apendicitis') || diff.toLowerCase().includes('abdominal')) {
+          if (
+            diff.toLowerCase().includes('apendicitis') ||
+            diff.toLowerCase().includes('abdominal')
+          ) {
             if (!especialidades.includes('Cirugía General')) especialidades.push('Cirugía General')
           }
           if (diff.toLowerCase().includes('embolia') || diff.toLowerCase().includes('pulmonar')) {
-            if (!especialidades.includes('Medicina Interna')) especialidades.push('Medicina Interna')
+            if (!especialidades.includes('Medicina Interna'))
+              especialidades.push('Medicina Interna')
           }
         })
       })
@@ -868,35 +880,37 @@ export class SOAPProcessor {
   }
 
   private calculateUrgencyLevel(
-    soap: SOAPData, 
+    soap: SOAPData,
     urgencyAssessment?: UrgencyAssessment
   ): 1 | 2 | 3 | 4 | 5 {
     // Medicina defensiva: Usar assessment de urgencia si disponible
     if (urgencyAssessment) {
       switch (urgencyAssessment.overallLevel) {
-        case 'critical': return 1 // Resucitación
-        case 'high': return 2 // Emergencia
-        case 'medium': return 3 // Urgente
-        default: return 4 // Semi-urgente
+        case 'critical':
+          return 1 // Resucitación
+        case 'high':
+          return 2 // Emergencia
+        case 'medium':
+          return 3 // Urgente
+        default:
+          return 4 // Semi-urgente
       }
     }
 
     // ESI (Emergency Severity Index) simplificado - fallback
-    const hasRedFlags = soap.analisis.senosPeligro.some(flag => 
-      !flag.includes('No se identifican')
-    )
-    
+    const hasRedFlags = soap.analisis.senosPeligro.some(flag => !flag.includes('No se identifican'))
+
     if (hasRedFlags) return 2 // Urgente
     return 3 // Semi-urgente
   }
 
   private assessComplexity(
-    soap: SOAPData, 
+    soap: SOAPData,
     urgencyAssessment?: UrgencyAssessment
   ): 'baja' | 'media' | 'alta' | 'critica' {
-    let factorsCount = soap.analisis.factoresRiesgo.length + 
-                      soap.analisis.diagnosticosDiferenciales.length
-    
+    let factorsCount =
+      soap.analisis.factoresRiesgo.length + soap.analisis.diagnosticosDiferenciales.length
+
     // Medicina defensiva: Incrementar complejidad si hay patrones urgentes
     if (urgencyAssessment) {
       factorsCount += urgencyAssessment.identifiedPatterns.length * 2
@@ -905,25 +919,21 @@ export class SOAPProcessor {
       if (urgencyAssessment.overallLevel === 'critical') return 'critica'
       if (urgencyAssessment.maxGravityScore >= 8) return 'alta'
     }
-    
+
     if (factorsCount > 5) return 'alta'
     if (factorsCount > 2) return 'media'
     return 'baja'
   }
 
-  private assessVitalRisk(
-    soap: SOAPData, 
-    urgencyAssessment?: UrgencyAssessment
-  ): boolean {
+  private assessVitalRisk(soap: SOAPData, urgencyAssessment?: UrgencyAssessment): boolean {
     // Medicina defensiva: Usar assessment de urgencia
     if (urgencyAssessment) {
-      return urgencyAssessment.overallLevel === 'critical' || 
-             urgencyAssessment.maxGravityScore >= 9
+      return urgencyAssessment.overallLevel === 'critical' || urgencyAssessment.maxGravityScore >= 9
     }
 
     // Evaluación estándar - fallback
-    return soap.analisis.diagnosticosDiferenciales.some(dx => 
-      dx.gravedad === 'critica' || dx.urgencia === 'emergencia'
+    return soap.analisis.diagnosticosDiferenciales.some(
+      dx => dx.gravedad === 'critica' || dx.urgencia === 'emergencia'
     )
   }
 }

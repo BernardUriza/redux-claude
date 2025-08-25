@@ -31,7 +31,7 @@ export class AdditionalInfoService {
    */
   public formatInfoRequestMessage(request: AdditionalInfoRequest): InfoRequestMessage {
     const messageId = `info_req_${Date.now()}_${request.currentCycle}`
-    
+
     // Almacenar la solicitud pendiente
     this.pendingRequests.set(messageId, request)
 
@@ -46,7 +46,7 @@ export class AdditionalInfoService {
       confidence: request.confidence,
       partialAnalysis: request.partialAnalysis,
       nextActions: request.nextActions,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
   }
 
@@ -55,7 +55,7 @@ export class AdditionalInfoService {
    */
   private buildInfoRequestContent(request: AdditionalInfoRequest): string {
     const confidencePercentage = Math.round(request.confidence * 100)
-    
+
     return `## 🔬 Análisis Médico en Progreso - Ciclo ${request.currentCycle}
 
 **Estado:** Información adicional requerida para completar diagnóstico  
@@ -102,16 +102,15 @@ ${request.nextActions.map((action, index) => `${index + 1}. ${action}`).join('\n
    * Procesa la respuesta del usuario con información adicional
    */
   public processInfoResponse(
-    requestId: string, 
+    requestId: string,
     additionalData: string
   ): { success: boolean; enhancedCase?: MedicalCase; error?: string } {
-    
     const originalRequest = this.pendingRequests.get(requestId)
-    
+
     if (!originalRequest) {
       return {
         success: false,
-        error: 'Solicitud de información no encontrada o expirada'
+        error: 'Solicitud de información no encontrada o expirada',
       }
     }
 
@@ -126,7 +125,7 @@ ${request.nextActions.map((action, index) => `${index + 1}. ${action}`).join('\n
 
     return {
       success: true,
-      enhancedCase
+      enhancedCase,
     }
   }
 
@@ -134,15 +133,14 @@ ${request.nextActions.map((action, index) => `${index + 1}. ${action}`).join('\n
    * Combina la información original con los datos adicionales proporcionados
    */
   private mergeAdditionalInfo(
-    originalRequest: AdditionalInfoRequest, 
+    originalRequest: AdditionalInfoRequest,
     additionalData: string
   ): MedicalCase {
-    
     const originalAnalysis = originalRequest.partialAnalysis
-    
+
     // Extraer presentación original desde el análisis parcial
     const originalPresentation = this.reconstructOriginalCase(originalAnalysis)
-    
+
     // Combinar datos
     const enhancedPresentation = `${originalPresentation}
 
@@ -153,7 +151,7 @@ ${additionalData}`
       id: `enhanced_${Date.now()}`,
       presentation: enhancedPresentation,
       context: `Caso mejorado después de ${originalRequest.currentCycle} ciclos de análisis iterativo`,
-      history: this.extractHistoryFromAdditionalData(additionalData)
+      history: this.extractHistoryFromAdditionalData(additionalData),
     }
   }
 
@@ -190,14 +188,16 @@ ${additionalData}`
       'medicamentos',
       'alergias',
       'cirugías',
-      'hospitalizaciones'
+      'hospitalizaciones',
     ]
 
-    const historyLines = additionalData.split('\n').filter(line =>
-      historyTerms.some(term => line.toLowerCase().includes(term))
-    )
+    const historyLines = additionalData
+      .split('\n')
+      .filter(line => historyTerms.some(term => line.toLowerCase().includes(term)))
 
-    return historyLines.length > 0 ? historyLines.join('\n') : 'Historia clínica complementaria proporcionada'
+    return historyLines.length > 0
+      ? historyLines.join('\n')
+      : 'Historia clínica complementaria proporcionada'
   }
 
   /**
@@ -254,7 +254,7 @@ ${additionalData}`
   } {
     return {
       pendingRequests: this.pendingRequests.size,
-      totalProcessed: 0 // Se podría trackear si fuera necesario
+      totalProcessed: 0, // Se podría trackear si fuera necesario
     }
   }
 }

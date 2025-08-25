@@ -1,15 +1,20 @@
 // src/services/multiAgentOrchestrator.ts
 // Creado por Bernard Orozco
-import { 
-  AgentType, 
+import {
+  AgentType,
   AgentDefinition,
   DecisionRequest,
   DecisionResult,
   AgentDecision,
   CircuitBreakerState,
-  AgentStatus
+  AgentStatus,
 } from '../types/agents'
-import { AGENT_REGISTRY, getEnabledAgents, getAgentDefinition, isAgentEnabled } from './agentRegistry'
+import {
+  AGENT_REGISTRY,
+  getEnabledAgents,
+  getAgentDefinition,
+  isAgentEnabled,
+} from './agentRegistry'
 import { callClaudeForDecision, mapAgentTypeToDecisionType } from './decisionalMiddleware'
 import { nanoid } from '@reduxjs/toolkit'
 import { store } from '../store/store'
@@ -45,20 +50,20 @@ export class MultiAgentOrchestrator {
       timestamp: Date.now(),
       priority: agentDef.priority,
       retryCount: 0,
-      parentRequestId
+      parentRequestId,
     }
 
     this.activeRequests.set(requestId, request)
-    
+
     // Dispatch call started
     // Simplified - no dispatch needed
-    
+
     const startTime = Date.now()
-    
+
     try {
       // Get contextual memory for agent
       const agentContext = contextualMemory.getRelevantContext(agentType)
-      
+
       // Simulate agent-specific system prompt call to Claude
       const response = await this.callAgentSpecificClaude(
         agentDef,
@@ -66,12 +71,12 @@ export class MultiAgentOrchestrator {
         abortController.signal,
         agentContext
       )
-      
+
       const latency = Date.now() - startTime
-      
+
       // Dispatch success
       // Success callback
-      
+
       const result: DecisionResult = {
         id: nanoid(),
         requestId,
@@ -83,23 +88,22 @@ export class MultiAgentOrchestrator {
         latency,
         timestamp: Date.now(),
         retryCount: 0,
-        success: true
+        success: true,
       }
-      
+
       this.cleanup(requestId)
       return result
-      
     } catch (error) {
       const latency = Date.now() - startTime
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      
+
       // Don't log circuit breaker failures
       if (!errorMessage.includes('aborted')) {
         // Error callback
       }
-      
+
       this.cleanup(requestId)
-      
+
       const result: DecisionResult = {
         id: nanoid(),
         requestId,
@@ -112,9 +116,9 @@ export class MultiAgentOrchestrator {
         timestamp: Date.now(),
         retryCount: 0,
         success: false,
-        error: errorMessage
+        error: errorMessage,
       }
-      
+
       return result
     }
   }
@@ -125,7 +129,7 @@ export class MultiAgentOrchestrator {
     input: string,
     signal: AbortSignal,
     context?: any
-  ): Promise<{ decision: AgentDecision, confidence: number }> {
+  ): Promise<{ decision: AgentDecision; confidence: number }> {
     try {
       if (signal?.aborted) {
         throw new Error('Request aborted')
@@ -133,10 +137,10 @@ export class MultiAgentOrchestrator {
 
       // Map agent type to decision type
       const decisionType = mapAgentTypeToDecisionType(agentDef.id)
-      
+
       // Prepare context for the middleware
       const middlewareContext: Record<string, unknown> = {}
-      
+
       if (context) {
         middlewareContext.currentContext = context.currentContext
         middlewareContext.activeSymptoms = context.activeSymptoms
@@ -144,7 +148,7 @@ export class MultiAgentOrchestrator {
         middlewareContext.relevantInsights = context.relevantInsights
         middlewareContext.recentInputs = context.recentInputs
       }
-      
+
       // Call the decisional middleware
       const response = await callClaudeForDecision(
         decisionType,
@@ -154,16 +158,15 @@ export class MultiAgentOrchestrator {
         [], // Previous decisions will be handled by cognitive system
         middlewareContext
       )
-      
+
       if (!response.success && response.error) {
         console.warn(`Decisional middleware warning for ${agentDef.id}:`, response.error)
       }
-      
+
       return {
         decision: response.decision,
-        confidence: response.confidence
+        confidence: response.confidence,
       }
-      
     } catch (error) {
       console.error(`Agent orchestrator error for ${agentDef.id}:`, error)
       throw error // Let the caller handle the error
@@ -180,36 +183,36 @@ export class MultiAgentOrchestrator {
   ): Promise<DecisionResult[]> {
     const sessionId = parentRequestId || nanoid()
     const targetAgents = agentTypes || getEnabledAgents().map(agent => agent.id)
-    
+
     // Filter agents that can be called (circuit breaker check)
     const availableAgents = targetAgents.filter(agentType => {
       if (!isAgentEnabled(agentType)) return false
       return this.canCallAgent(agentType)
     })
-    
+
     if (availableAgents.length === 0) {
       throw new Error('No agents available - all circuit breakers are open or disabled')
     }
-    
+
     // Sort by priority (lower number = higher priority)
     const sortedAgents = availableAgents.sort((a, b) => {
       const priorityA = getAgentDefinition(a).priority
       const priorityB = getAgentDefinition(b).priority
       return priorityA - priorityB
     })
-    
+
     // Execute all agents in parallel
     const agentPromises = sortedAgents.map(agentType => {
       const requestId = nanoid()
       return this.executeAgentCall(agentType, input, requestId, sessionId)
     })
-    
+
     // Wait for all agents to complete (successful or failed)
     const results = await Promise.allSettled(agentPromises)
-    
+
     // Process results
     const decisionsResults: DecisionResult[] = []
-    
+
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         decisionsResults.push(result.value)
@@ -217,7 +220,7 @@ export class MultiAgentOrchestrator {
         // Create error result for rejected promises
         const agentType = sortedAgents[index]
         const agentDef = getAgentDefinition(agentType)
-        
+
         decisionsResults.push({
           id: nanoid(),
           requestId: nanoid(),
@@ -230,11 +233,11 @@ export class MultiAgentOrchestrator {
           timestamp: Date.now(),
           retryCount: 0,
           success: false,
-          error: result.reason?.message || 'Agent execution failed'
+          error: result.reason?.message || 'Agent execution failed',
         })
       }
     })
-    
+
     return decisionsResults
   }
 
@@ -245,37 +248,37 @@ export class MultiAgentOrchestrator {
   ): Promise<DecisionResult[]> {
     const sessionId = nanoid()
     const allResults: DecisionResult[] = []
-    
+
     // Phase 1: Critical agents first (Triage)
-    const criticalAgents = [AgentType.TRIAGE].filter(agentType => 
-      isAgentEnabled(agentType) && this.canCallAgent(agentType)
+    const criticalAgents = [AgentType.TRIAGE].filter(
+      agentType => isAgentEnabled(agentType) && this.canCallAgent(agentType)
     )
-    
+
     if (criticalAgents.length > 0) {
       const criticalResults = await this.executeParallelAgents(input, criticalAgents, sessionId)
       allResults.push(...criticalResults)
     }
-    
+
     // Phase 2: Primary analysis agents (Diagnostic, Validation)
-    const primaryAgents = [AgentType.DIAGNOSTIC, AgentType.VALIDATION].filter(agentType => 
-      isAgentEnabled(agentType) && this.canCallAgent(agentType)
+    const primaryAgents = [AgentType.DIAGNOSTIC, AgentType.VALIDATION].filter(
+      agentType => isAgentEnabled(agentType) && this.canCallAgent(agentType)
     )
-    
+
     if (primaryAgents.length > 0) {
       const primaryResults = await this.executeParallelAgents(input, primaryAgents, sessionId)
       allResults.push(...primaryResults)
     }
-    
+
     // Phase 3: Secondary agents (Treatment, Documentation)
-    const secondaryAgents = [AgentType.TREATMENT, AgentType.DOCUMENTATION].filter(agentType => 
-      isAgentEnabled(agentType) && this.canCallAgent(agentType)
+    const secondaryAgents = [AgentType.TREATMENT, AgentType.DOCUMENTATION].filter(
+      agentType => isAgentEnabled(agentType) && this.canCallAgent(agentType)
     )
-    
+
     if (secondaryAgents.length > 0) {
       const secondaryResults = await this.executeParallelAgents(input, secondaryAgents, sessionId)
       allResults.push(...secondaryResults)
     }
-    
+
     return allResults
   }
 
@@ -288,35 +291,34 @@ export class MultiAgentOrchestrator {
     if (!this.canCallAgent(agentType)) {
       throw new Error(`Agent ${agentType} is not available (circuit breaker open or disabled)`)
     }
-    
+
     let lastError: Error | null = null
-    
+
     for (let retry = 0; retry <= maxRetries; retry++) {
       try {
         const requestId = nanoid()
         const result = await this.executeAgentCall(agentType, input, requestId)
-        
+
         if (result.success) {
           return result
         }
-        
+
         lastError = new Error(result.error || 'Agent call failed')
-        
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error')
-        
+
         // Don't retry if circuit breaker opened
         if (!this.canCallAgent(agentType)) {
           break
         }
-        
+
         // Exponential backoff for retries
         if (retry < maxRetries) {
           await this.delay(Math.pow(2, retry) * 1000)
         }
       }
     }
-    
+
     throw lastError || new Error('Max retries exceeded')
   }
 
@@ -328,12 +330,12 @@ export class MultiAgentOrchestrator {
   } {
     const state = store.getState()
     const medicalChat = state.medicalChat
-    
+
     // Calcular métricas basadas en estado médico
     return {
       totalAgents: 5,
       activeAgents: 5,
-      failedAgents: 0
+      failedAgents: 0,
     }
   }
 

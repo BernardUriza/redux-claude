@@ -4,15 +4,15 @@ import medicalChatReducer from './medicalChatSlice'
 
 export const store = configureStore({
   reducer: {
-    medicalChat: medicalChatReducer
+    medicalChat: medicalChatReducer,
     // 🔥 ELIMINADO: intelligentChat (ahora es cores.assistant)
   },
-  middleware: (getDefaultMiddleware) =>
+  middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['medicalChat/startStreaming', 'medicalChat/updateStreamingProgress']
-      }
-    })
+        ignoredActions: ['medicalChat/startStreaming', 'medicalChat/updateStreamingProgress'],
+      },
+    }),
 })
 
 export type RootState = ReturnType<typeof store.getState>

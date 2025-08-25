@@ -1,0 +1,20 @@
+# Same as .eslintignore for consistency
+node_modules/
+.next/
+out/
+dist/
+build/
+.env*
+*.log
+coverage/
+.eslintcache
+.turbo/
+packages/**/dist/
+packages/**/build/
+
+# Additional Prettier ignores
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+*.min.js
+*.min.css

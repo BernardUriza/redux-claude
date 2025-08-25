@@ -3,17 +3,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // MEJOR PRÁCTICA 2025: transpilePackages para workspaces
-  transpilePackages: ["@redux-claude/cognitive-core"],
-  
+  transpilePackages: ['@redux-claude/cognitive-core'],
+
   experimental: {
-    externalDir: true
+    externalDir: true,
   },
 
   // Netlify deployment with API routes
   // Removed 'export' to enable API routes
   trailingSlash: true,
   images: {
-    unoptimized: true
+    unoptimized: true,
   },
 
   // Environment variables for build
@@ -27,7 +27,7 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: false,
-  }
+  },
 }
 
 module.exports = nextConfig

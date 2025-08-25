@@ -2,13 +2,13 @@
 // Middleware híbrido para decisiones - Bernard Orozco
 // Mantiene compatibilidad pero usa la nueva arquitectura por debajo
 
-import { 
-  AgentType, 
-  AgentDecision, 
-  DiagnosticDecision, 
-  ValidationDecision, 
-  TreatmentDecision, 
-  TriageDecision, 
+import {
+  AgentType,
+  AgentDecision,
+  DiagnosticDecision,
+  ValidationDecision,
+  TreatmentDecision,
+  TriageDecision,
   DocumentationDecision,
   ClinicalPharmacologyDecision,
   PediatricSpecialistDecision,
@@ -18,14 +18,29 @@ import {
   DefensiveDifferentialDecision,
   MedicalAutocompletionDecision,
   CriticalDataValidationDecision,
-  SpecialtyDetectionDecision
+  SpecialtyDetectionDecision,
 } from '../types/agents'
 
 import { decisionEngineService } from '../decision-engine/DecisionEngineService'
 import { getAgentDefinition } from './agentRegistry'
 
 // Tipos para el middleware (mantenidos para compatibilidad)
-export type DecisionType = 'diagnosis' | 'validation' | 'treatment' | 'triage' | 'documentation' | 'clinical_pharmacology' | 'pediatric_specialist' | 'hospitalization_criteria' | 'family_education' | 'objective_validation' | 'defensive_differential' | 'medical_autocompletion' | 'critical_data_validation' | 'specialty_detection' | 'intelligent_medical_chat'
+export type DecisionType =
+  | 'diagnosis'
+  | 'validation'
+  | 'treatment'
+  | 'triage'
+  | 'documentation'
+  | 'clinical_pharmacology'
+  | 'pediatric_specialist'
+  | 'hospitalization_criteria'
+  | 'family_education'
+  | 'objective_validation'
+  | 'defensive_differential'
+  | 'medical_autocompletion'
+  | 'critical_data_validation'
+  | 'specialty_detection'
+  | 'intelligent_medical_chat'
 export type ProviderType = 'claude' | 'openai' | 'local'
 
 export interface DecisionRequest {
@@ -77,9 +92,8 @@ export async function callClaudeForDecision(
       latency: Date.now() - startTime,
       provider: provider as ProviderType,
       success: response.success,
-      error: response.error
+      error: response.error,
     }
-
   } catch (error) {
     // Fallback al método legacy si hay error
     console.warn('New engine failed, falling back to legacy method:', error)
@@ -99,7 +113,7 @@ async function callClaudeForDecisionLegacy(
   context?: Record<string, unknown>
 ): Promise<DecisionResponse> {
   const startTime = Date.now()
-  
+
   try {
     if (provider === 'claude') {
       const response = await callClaudeAPI({
@@ -108,31 +122,31 @@ async function callClaudeForDecisionLegacy(
         provider,
         signal,
         previousDecisions,
-        context
+        context,
       })
-      
+
       return {
         ...response,
         latency: Date.now() - startTime,
         provider,
-        success: true
+        success: true,
       }
     } else {
       throw new Error(`Provider ${provider} not implemented`)
     }
   } catch (error) {
     console.error(`Decision middleware error for ${type}:`, error)
-    
+
     // Fallback con mock decision
     const mockDecision = createFallbackDecision(type, input)
-    
+
     return {
       decision: mockDecision,
       confidence: 0.3, // Baja confianza para fallback
       latency: Date.now() - startTime,
       provider: 'local', // Indica que es fallback
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     }
   }
 }
@@ -140,36 +154,35 @@ async function callClaudeForDecisionLegacy(
 /**
  * Llamada directa a la API de Claude
  */
-async function callClaudeAPI(request: DecisionRequest): Promise<Omit<DecisionResponse, 'latency' | 'provider' | 'success'>> {
+async function callClaudeAPI(
+  request: DecisionRequest
+): Promise<Omit<DecisionResponse, 'latency' | 'provider' | 'success'>> {
   // Dynamic import para evitar bundle bloat
   const Anthropic = (await import('@anthropic-ai/sdk')).default
   const anthropic = new Anthropic({
     apiKey: process.env.CLAUDE_API_KEY!,
-    dangerouslyAllowBrowser: true 
+    dangerouslyAllowBrowser: true,
   })
-  
+
   if (request.signal?.aborted) {
     throw new Error('Request aborted')
   }
 
   // Construir system prompt específico para el tipo de decisión
   const systemPrompt = buildSystemPrompt(request.type, request.previousDecisions, request.context)
-  
+
   // Build conversation history if available in context
-  const conversationHistory = Array.isArray(request.context?.conversationHistory) 
-    ? request.context.conversationHistory 
+  const conversationHistory = Array.isArray(request.context?.conversationHistory)
+    ? request.context.conversationHistory
     : []
-  const messages = [
-    ...conversationHistory,
-    { role: 'user', content: request.input }
-  ]
+  const messages = [...conversationHistory, { role: 'user', content: request.input }]
 
   const response = await anthropic.messages.create({
     model: 'claude-3-haiku-20240307',
     max_tokens: 1000,
     system: systemPrompt,
     messages,
-    temperature: 0.3
+    temperature: 0.3,
   })
 
   const content = response.content[0]
@@ -186,13 +199,13 @@ async function callClaudeAPI(request: DecisionRequest): Promise<Omit<DecisionRes
     console.warn(`JSON parse error for ${request.type}:`, parseError)
     throw new Error(`Failed to parse Claude response: ${parseError}`)
   }
-  
+
   // Calcular confianza basada en la calidad de la respuesta
   const confidence = calculateConfidence(decision, request.type)
-  
+
   return {
     decision,
-    confidence
+    confidence,
   }
 }
 
@@ -200,12 +213,12 @@ async function callClaudeAPI(request: DecisionRequest): Promise<Omit<DecisionRes
  * Construir system prompt específico para cada tipo de agente
  */
 function buildSystemPrompt(
-  type: DecisionType, 
-  previousDecisions?: AgentDecision[], 
+  type: DecisionType,
+  previousDecisions?: AgentDecision[],
   context?: Record<string, unknown>
 ): string {
   let basePrompt = getAgentSystemPrompt(type)
-  
+
   // Agregar contexto de decisiones previas
   if (previousDecisions && previousDecisions.length > 0) {
     basePrompt += `\n\n## DECISIONES PREVIAS:\n`
@@ -213,16 +226,16 @@ function buildSystemPrompt(
       basePrompt += `${idx + 1}. ${JSON.stringify(decision, null, 2)}\n`
     })
   }
-  
+
   // Agregar contexto adicional
   if (context && Object.keys(context).length > 0) {
     basePrompt += `\n\n## CONTEXTO ADICIONAL:\n`
     basePrompt += JSON.stringify(context, null, 2)
   }
-  
+
   // Agregar formato JSON requerido
   basePrompt += getJsonFormatRequirements(type)
-  
+
   return basePrompt
 }
 
@@ -232,23 +245,23 @@ function buildSystemPrompt(
 function getAgentSystemPrompt(type: DecisionType): string {
   // Mapear DecisionType de vuelta a AgentType para usar el registry
   const agentTypeMap: Record<DecisionType, AgentType> = {
-    'diagnosis': AgentType.DIAGNOSTIC,
-    'validation': AgentType.VALIDATION,
-    'treatment': AgentType.TREATMENT,
-    'triage': AgentType.TRIAGE,
-    'documentation': AgentType.DOCUMENTATION,
-    'clinical_pharmacology': AgentType.CLINICAL_PHARMACOLOGY,
-    'pediatric_specialist': AgentType.PEDIATRIC_SPECIALIST,
-    'hospitalization_criteria': AgentType.HOSPITALIZATION_CRITERIA,
-    'family_education': AgentType.FAMILY_EDUCATION,
-    'objective_validation': AgentType.OBJECTIVE_VALIDATION,
-    'defensive_differential': AgentType.DEFENSIVE_DIFFERENTIAL,
-    'medical_autocompletion': AgentType.MEDICAL_AUTOCOMPLETION,
-    'critical_data_validation': AgentType.CRITICAL_DATA_VALIDATION,
-    'specialty_detection': AgentType.SPECIALTY_DETECTION,
-    'intelligent_medical_chat': AgentType.INTELLIGENT_MEDICAL_CHAT
+    diagnosis: AgentType.DIAGNOSTIC,
+    validation: AgentType.VALIDATION,
+    treatment: AgentType.TREATMENT,
+    triage: AgentType.TRIAGE,
+    documentation: AgentType.DOCUMENTATION,
+    clinical_pharmacology: AgentType.CLINICAL_PHARMACOLOGY,
+    pediatric_specialist: AgentType.PEDIATRIC_SPECIALIST,
+    hospitalization_criteria: AgentType.HOSPITALIZATION_CRITERIA,
+    family_education: AgentType.FAMILY_EDUCATION,
+    objective_validation: AgentType.OBJECTIVE_VALIDATION,
+    defensive_differential: AgentType.DEFENSIVE_DIFFERENTIAL,
+    medical_autocompletion: AgentType.MEDICAL_AUTOCOMPLETION,
+    critical_data_validation: AgentType.CRITICAL_DATA_VALIDATION,
+    specialty_detection: AgentType.SPECIALTY_DETECTION,
+    intelligent_medical_chat: AgentType.INTELLIGENT_MEDICAL_CHAT,
   }
-  
+
   const agentType = agentTypeMap[type]
   if (agentType) {
     try {
@@ -258,7 +271,7 @@ function getAgentSystemPrompt(type: DecisionType): string {
       console.warn(`Could not get agent definition for ${agentType}, using fallback`)
     }
   }
-  
+
   // Fallback to old prompts if agent definition not found
   switch (type) {
     case 'diagnosis':
@@ -501,8 +514,14 @@ function validateDecisionStructure(decision: AgentDecision, type: DecisionType):
       break
     case 'medical_autocompletion':
       const autocomp = decision as MedicalAutocompletionDecision
-      if (!autocomp.suggestions || !Array.isArray(autocomp.suggestions) || autocomp.suggestions.length !== 3) {
-        throw new Error('Invalid medical autocompletion decision structure: must have exactly 3 suggestions')
+      if (
+        !autocomp.suggestions ||
+        !Array.isArray(autocomp.suggestions) ||
+        autocomp.suggestions.length !== 3
+      ) {
+        throw new Error(
+          'Invalid medical autocompletion decision structure: must have exactly 3 suggestions'
+        )
       }
       break
   }
@@ -513,7 +532,7 @@ function validateDecisionStructure(decision: AgentDecision, type: DecisionType):
  */
 function calculateConfidence(decision: AgentDecision, type: DecisionType): number {
   let baseConfidence = 75 // Confianza base
-  
+
   // Ajustar según completitud de la respuesta
   switch (type) {
     case 'clinical_pharmacology':
@@ -559,7 +578,7 @@ function calculateConfidence(decision: AgentDecision, type: DecisionType): numbe
       if (autocomp.enhanced_template?.length > 100) baseConfidence += 5
       break
   }
-  
+
   return Math.min(95, Math.max(60, baseConfidence))
 }
 
@@ -571,28 +590,28 @@ function createFallbackDecision(type: DecisionType, input: string): AgentDecisio
     case 'clinical_pharmacology':
       return {
         primary_medication: {
-          generic_name: "consultar_medico",
+          generic_name: 'consultar_medico',
           brand_names: [],
-          exact_dose: "según indicación médica",
-          route: "oral",
-          frequency: "según prescripción",
-          duration: "según prescripción",
-          line_of_treatment: "first",
-          evidence_level: "A"
+          exact_dose: 'según indicación médica',
+          route: 'oral',
+          frequency: 'según prescripción',
+          duration: 'según prescripción',
+          line_of_treatment: 'first',
+          evidence_level: 'A',
         },
         alternative_medications: [],
-        contraindications: ["revisar con médico"],
+        contraindications: ['revisar con médico'],
         drug_interactions: [],
         monitoring_parameters: [],
-        dose_adjustments: {}
+        dose_adjustments: {},
       } as ClinicalPharmacologyDecision
     case 'pediatric_specialist':
       return {
-        age_specific_considerations: ["consultar pediatra"],
-        weight_based_calculations: { estimated_weight_kg: 0, dose_per_kg: "", max_dose: "" },
+        age_specific_considerations: ['consultar pediatra'],
+        weight_based_calculations: { estimated_weight_kg: 0, dose_per_kg: '', max_dose: '' },
         developmental_factors: [],
         pediatric_red_flags: [],
-        growth_development_impact: []
+        growth_development_impact: [],
       } as PediatricSpecialistDecision
     case 'hospitalization_criteria':
       return {
@@ -601,46 +620,55 @@ function createFallbackDecision(type: DecisionType, input: string): AgentDecisio
         observation_criteria: [],
         icu_criteria: [],
         risk_stratification: { low_risk: [], moderate_risk: [], high_risk: [] },
-        disposition_recommendation: "home"
+        disposition_recommendation: 'home',
       } as HospitalizationCriteriaDecision
     case 'family_education':
       return {
-        warning_signs: ["consultar médico si empeora"],
-        when_to_return: ["si síntomas empeoran"],
+        warning_signs: ['consultar médico si empeora'],
+        when_to_return: ['si síntomas empeoran'],
         home_care_instructions: [],
         medication_education: [],
         follow_up_instructions: [],
-        emergency_contacts: []
+        emergency_contacts: [],
       } as FamilyEducationDecision
     case 'objective_validation':
       return {
-        missing_critical_data: ["requiere evaluación presencial"],
-        vital_signs_assessment: { saturation_required: true, respiratory_rate_needed: true, blood_pressure_concern: false, temperature_monitoring: true },
+        missing_critical_data: ['requiere evaluación presencial'],
+        vital_signs_assessment: {
+          saturation_required: true,
+          respiratory_rate_needed: true,
+          blood_pressure_concern: false,
+          temperature_monitoring: true,
+        },
         physical_exam_gaps: [],
         recommended_studies: [],
-        confidence_impact: 0.5
+        confidence_impact: 0.5,
       } as ObjectiveValidationDecision
     case 'defensive_differential':
       return {
         must_exclude_diagnoses: [],
         gravity_vs_probability: [],
-        red_flags_analysis: { critical_signs: [], concerning_patterns: [], age_specific_concerns: [] },
-        disposition_recommendation: "routine_followup"
+        red_flags_analysis: {
+          critical_signs: [],
+          concerning_patterns: [],
+          age_specific_concerns: [],
+        },
+        disposition_recommendation: 'routine_followup',
       } as DefensiveDifferentialDecision
     case 'diagnosis':
       return {
         differentials: [
-          { 
-            condition: 'Requiere evaluación médica', 
-            icd10: 'Z00.00', 
-            probability: 0.5, 
-            evidence: ['Síntomas reportados'] 
-          }
+          {
+            condition: 'Requiere evaluación médica',
+            icd10: 'Z00.00',
+            probability: 0.5,
+            evidence: ['Síntomas reportados'],
+          },
         ],
         tests_recommended: ['Evaluación clínica completa'],
         red_flags: [],
         urgency_level: 3,
-        next_steps: ['Consulta médica presencial']
+        next_steps: ['Consulta médica presencial'],
       } as DiagnosticDecision
 
     case 'triage':
@@ -649,7 +677,7 @@ function createFallbackDecision(type: DecisionType, input: string): AgentDecisio
         disposition: 'standard',
         time_to_physician: '1 hour',
         required_resources: ['Evaluación médica estándar'],
-        warning_signs: []
+        warning_signs: [],
       } as TriageDecision
 
     case 'validation':
@@ -658,7 +686,7 @@ function createFallbackDecision(type: DecisionType, input: string): AgentDecisio
         concerns: ['Requiere revisión médica humana'],
         risk_assessment: { level: 'moderate', factors: ['Evaluación automática limitada'] },
         requires_human_review: true,
-        recommendations: ['Consulta con médico especialista']
+        recommendations: ['Consulta con médico especialista'],
       } as ValidationDecision
 
     case 'treatment':
@@ -666,7 +694,7 @@ function createFallbackDecision(type: DecisionType, input: string): AgentDecisio
         medications: [],
         procedures: ['Evaluación médica presencial'],
         lifestyle_modifications: ['Seguir indicaciones médicas'],
-        monitoring_plan: ['Seguimiento médico regular']
+        monitoring_plan: ['Seguimiento médico regular'],
       } as TreatmentDecision
 
     case 'documentation':
@@ -675,11 +703,11 @@ function createFallbackDecision(type: DecisionType, input: string): AgentDecisio
           subjective: 'Paciente presenta síntomas que requieren evaluación',
           objective: 'Pendiente evaluación clínica',
           assessment: 'Requiere evaluación médica completa',
-          plan: 'Referir para evaluación médica presencial'
+          plan: 'Referir para evaluación médica presencial',
         },
         icd10_codes: ['Z00.00'],
         billing_codes: [],
-        follow_up_required: true
+        follow_up_required: true,
       } as DocumentationDecision
 
     case 'medical_autocompletion':
@@ -691,15 +719,15 @@ function createFallbackDecision(type: DecisionType, input: string): AgentDecisio
             description: 'Estructura mínima requerida',
             template: `Paciente [género] de [edad] años presenta [síntoma principal] desde hace [tiempo]. [Características del síntoma]. Antecedentes: [antecedentes relevantes]. Medicamentos actuales: [medicamentos].`,
             confidence: 0.7,
-            category: 'basic'
+            category: 'basic',
           },
           {
             id: 'detailed_fallback',
-            title: 'Consulta Detallada', 
+            title: 'Consulta Detallada',
             description: 'Con exploración física',
             template: `Paciente [género] de [edad] años consulta por [síntoma principal] de [tiempo de evolución]. SUBJETIVO: [descripción detallada del síntoma], [factores asociados]. OBJETIVO: Signos vitales [TA/FC/FR/T°], [hallazgos en exploración]. Antecedentes: [antecedentes]. Medicación: [fármacos actuales].`,
             confidence: 0.75,
-            category: 'detailed'
+            category: 'detailed',
           },
           {
             id: 'specialized_fallback',
@@ -707,8 +735,8 @@ function createFallbackDecision(type: DecisionType, input: string): AgentDecisio
             description: 'Formato SOAP completo',
             template: `CASO CLÍNICO: Paciente [género], [edad] años, presenta [síntoma principal] de [tiempo de evolución]. SUBJETIVO: [historia detallada]. OBJETIVO: [signos vitales y exploración]. ANÁLISIS: [diagnósticos diferenciales]. PLAN: [estudios y tratamiento].`,
             confidence: 0.8,
-            category: 'specialized'
-          }
+            category: 'specialized',
+          },
         ],
         enhanced_template: 'Consulta médica estructurada requerida',
         detected_specialty: undefined,
@@ -716,8 +744,8 @@ function createFallbackDecision(type: DecisionType, input: string): AgentDecisio
           age_inferred: undefined,
           gender_inferred: undefined,
           main_complaint: 'síntomas reportados',
-          specialty_indicators: []
-        }
+          specialty_indicators: [],
+        },
       } as MedicalAutocompletionDecision
 
     default:
@@ -730,20 +758,35 @@ function createFallbackDecision(type: DecisionType, input: string): AgentDecisio
  */
 export function mapAgentTypeToDecisionType(agentType: AgentType): DecisionType {
   switch (agentType) {
-    case AgentType.DIAGNOSTIC: return 'diagnosis'
-    case AgentType.VALIDATION: return 'validation' 
-    case AgentType.TREATMENT: return 'treatment'
-    case AgentType.TRIAGE: return 'triage'
-    case AgentType.DOCUMENTATION: return 'documentation'
-    case AgentType.CLINICAL_PHARMACOLOGY: return 'clinical_pharmacology'
-    case AgentType.PEDIATRIC_SPECIALIST: return 'pediatric_specialist'
-    case AgentType.HOSPITALIZATION_CRITERIA: return 'hospitalization_criteria'
-    case AgentType.FAMILY_EDUCATION: return 'family_education'
-    case AgentType.OBJECTIVE_VALIDATION: return 'objective_validation'
-    case AgentType.DEFENSIVE_DIFFERENTIAL: return 'defensive_differential'
-    case AgentType.MEDICAL_AUTOCOMPLETION: return 'medical_autocompletion'
-    case AgentType.CRITICAL_DATA_VALIDATION: return 'critical_data_validation'
-    case AgentType.SPECIALTY_DETECTION: return 'specialty_detection'
-    default: return 'diagnosis'
+    case AgentType.DIAGNOSTIC:
+      return 'diagnosis'
+    case AgentType.VALIDATION:
+      return 'validation'
+    case AgentType.TREATMENT:
+      return 'treatment'
+    case AgentType.TRIAGE:
+      return 'triage'
+    case AgentType.DOCUMENTATION:
+      return 'documentation'
+    case AgentType.CLINICAL_PHARMACOLOGY:
+      return 'clinical_pharmacology'
+    case AgentType.PEDIATRIC_SPECIALIST:
+      return 'pediatric_specialist'
+    case AgentType.HOSPITALIZATION_CRITERIA:
+      return 'hospitalization_criteria'
+    case AgentType.FAMILY_EDUCATION:
+      return 'family_education'
+    case AgentType.OBJECTIVE_VALIDATION:
+      return 'objective_validation'
+    case AgentType.DEFENSIVE_DIFFERENTIAL:
+      return 'defensive_differential'
+    case AgentType.MEDICAL_AUTOCOMPLETION:
+      return 'medical_autocompletion'
+    case AgentType.CRITICAL_DATA_VALIDATION:
+      return 'critical_data_validation'
+    case AgentType.SPECIALTY_DETECTION:
+      return 'specialty_detection'
+    default:
+      return 'diagnosis'
   }
 }

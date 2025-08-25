@@ -3,14 +3,14 @@
 // This is the original implementation before refactoring
 // Created by Bernard Orozco
 
-import { 
-  AgentType, 
-  AgentDecision, 
-  DiagnosticDecision, 
-  ValidationDecision, 
-  TreatmentDecision, 
-  TriageDecision, 
-  DocumentationDecision 
+import {
+  AgentType,
+  AgentDecision,
+  DiagnosticDecision,
+  ValidationDecision,
+  TreatmentDecision,
+  TriageDecision,
+  DocumentationDecision,
 } from '../types/agents'
 
 // This is a backup of the original decisionalMiddleware.ts

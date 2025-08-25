@@ -1,19 +1,28 @@
 # Prompt para Claude Code - Gateway Decisional PoC
 
 ## Contexto
-Tengo un proyecto Next.js con Redux ya funcionando. Necesito agregar un PoC visual de un "Gateway Decisional" que muestre decisiones estructuradas de LLMs en tiempo real.
+
+Tengo un proyecto Next.js con Redux ya funcionando. Necesito agregar un PoC
+visual de un "Gateway Decisional" que muestre decisiones estructuradas de LLMs
+en tiempo real.
 
 ## Objetivo
+
 La página divide la pantalla en dos:
+
 - **Izquierda**: Chat médico simple, que ya tenemos.
-- **Derecha**: Visualización en tiempo real de decisiones estructuradas del Redux store
+- **Derecha**: Visualización en tiempo real de decisiones estructuradas del
+  Redux store
 
 ## Requisitos Técnicos
 
 ### Redux Store
+
 Necesito dos slices:
+
 1. **decisions**: Almacena decisiones estructuradas (JSON only, no texto)
-   - items: array de {id, provider, type, decision, confidence, latency, timestamp}
+   - items: array de {id, provider, type, decision, confidence, latency,
+     timestamp}
    - activeProvider: string (claude|openai|local)
    - loading: boolean
 
@@ -21,7 +30,9 @@ Necesito dos slices:
    - messages: array de {role, content, decisionId?}
 
 ### Hook Principal
+
 `useDecisionalGateway` que:
+
 - Intercepta mensajes del usuario
 - Ejecuta llamada a useClaudeChat (1 segundo delay)
 - Retorna decisión estructurada mock:
@@ -31,12 +42,15 @@ Necesito dos slices:
 - Maneja fallback si falla
 
 ### UI Component
+
 Split screen con:
 
 **Panel Izquierdo (Chat)**:
+
 - Lo que ya tenemos
 
 **Panel Derecho (Decisiones)**:
+
 - Cards mostrando:
   - Total decisiones (contador grande)
   - Provider activo (badge coloreado)
@@ -49,13 +63,15 @@ Split screen con:
 - Al final: Redux state viewer (JSON en terminal style)
 
 ### Comportamiento
+
 1. Usuario escribe síntomas
 2. Sistema detecta si es "diagnosis" o "validation" por keywords
-3. Muestra "Processing decision..." 
+3. Muestra "Processing decision..."
 4. Después de Xs, agrega decisión estructurada
 5. Panel derecho se actualiza instantáneamente
 
 ### Estilo Visual
+
 - Tailwind CSS
 - Panel chat: fondo gris claro
 - Decisiones: cards blancos con bordes
@@ -64,7 +80,9 @@ Split screen con:
 - Responsive pero optimizado para desktop
 
 ## Datos Mock
+
 Cuando se pida diagnosis, retornar por ejemplo:
+
 ```json
 {
   "differentials": ["Migraine", "Tension Headache"],
@@ -74,6 +92,7 @@ Cuando se pida diagnosis, retornar por ejemplo:
 ```
 
 Cuando se pida validation, retornar:
+
 ```json
 {
   "approved": true,
@@ -83,17 +102,21 @@ Cuando se pida validation, retornar:
 ```
 
 ## Importante
+
 - Decisiones SIEMPRE estructuradas (JSON), nunca texto
 - Mostrar metadata: provider usado, confidence, latency
 - Redux state debe ser visible y actualizado en tiempo real
 - Fallback automático si "falla" (simular con 20% probabilidad)
 
 ## Resultado Esperado
+
 Una visualización clara de cómo un gateway decisional:
+
 1. Abstrae múltiples providers
 2. Retorna solo decisiones estructuradas
 3. Mantiene transparencia total vía Redux
 4. Maneja fallbacks automáticamente
 5. Trackea metadata de cada decisión
 
-El usuario debe poder ver claramente el "thinking" del sistema transformado en decisiones JSON, no en texto.
+El usuario debe poder ver claramente el "thinking" del sistema transformado en
+decisiones JSON, no en texto.
