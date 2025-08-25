@@ -14,7 +14,7 @@ import {
   startNewSession,
   setError,
   clearError
-} from '../store/medicalChatSliceEvolved'
+} from '../store/medicalChatSlice'
 
 interface UseMedicalChatOptions {
   onValidationFailed?: (input: string, validationResult: any) => void

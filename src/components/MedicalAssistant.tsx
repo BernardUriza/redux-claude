@@ -6,7 +6,7 @@
 import { IntelligentMedicalChat } from './IntelligentMedicalChat'
 import { MedicalSummaryPanel } from './MedicalSummaryPanel'
 import { DynamicInferencePanel } from './DynamicInferencePanel'
-import { useMedicalChat } from '../hooks/useMedicalChat'
+import { useAssistantChat } from '../hooks/useMultinucleusChat'
 
 interface MedicalAssistantProps {
   partialInput: string
@@ -22,8 +22,8 @@ export const MedicalAssistant = ({
   onClose 
 }: MedicalAssistantProps) => {
   
-  // Hook para obtener las métricas desde el estado global
-  const { intelligentChatMetrics, currentCase, messages } = useMedicalChat()
+  // 🧠 MULTINÚCLEO: Usando Assistant Core para el asistente
+  const { messages, messageCount, currentSession } = useAssistantChat()
   
   // Obtener el último mensaje para las inferencias
   const lastUserMessage = messages.filter(m => m.type === 'user').pop()?.content || ''

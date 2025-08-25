@@ -1,6 +1,6 @@
 // 🧠 Store Médico Multinúcleo EVOLUCIONADO - Creado por Bernard Orozco + Gandalf el Blanco
 import { configureStore } from '@reduxjs/toolkit'
-import medicalChatReducer from './medicalChatSliceEvolved'
+import medicalChatReducer from './medicalChatSlice'
 
 export const store = configureStore({
   reducer: {
