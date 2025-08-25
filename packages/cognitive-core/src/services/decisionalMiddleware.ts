@@ -25,7 +25,7 @@ import { decisionEngineService } from '../decision-engine/DecisionEngineService'
 import { getAgentDefinition } from './agentRegistry'
 
 // Tipos para el middleware (mantenidos para compatibilidad)
-export type DecisionType = 'diagnosis' | 'validation' | 'treatment' | 'triage' | 'documentation' | 'clinical_pharmacology' | 'pediatric_specialist' | 'hospitalization_criteria' | 'family_education' | 'objective_validation' | 'defensive_differential' | 'medical_autocompletion' | 'critical_data_validation' | 'specialty_detection'
+export type DecisionType = 'diagnosis' | 'validation' | 'treatment' | 'triage' | 'documentation' | 'clinical_pharmacology' | 'pediatric_specialist' | 'hospitalization_criteria' | 'family_education' | 'objective_validation' | 'defensive_differential' | 'medical_autocompletion' | 'critical_data_validation' | 'specialty_detection' | 'intelligent_medical_chat'
 export type ProviderType = 'claude' | 'openai' | 'local'
 
 export interface DecisionRequest {
@@ -245,7 +245,8 @@ function getAgentSystemPrompt(type: DecisionType): string {
     'defensive_differential': AgentType.DEFENSIVE_DIFFERENTIAL,
     'medical_autocompletion': AgentType.MEDICAL_AUTOCOMPLETION,
     'critical_data_validation': AgentType.CRITICAL_DATA_VALIDATION,
-    'specialty_detection': AgentType.SPECIALTY_DETECTION
+    'specialty_detection': AgentType.SPECIALTY_DETECTION,
+    'intelligent_medical_chat': AgentType.INTELLIGENT_MEDICAL_CHAT
   }
   
   const agentType = agentTypeMap[type]

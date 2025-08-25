@@ -8,6 +8,18 @@ import { DiagnosticCycle, SOAPAnalysis } from '../types/medical'
 
 export type UrgencyLevel = 'low' | 'medium' | 'high' | 'critical'
 
+// Métricas del Chat Inteligente
+export interface IntelligentChatMetrics {
+  confidenceLevel: number
+  inferenceAccuracy: number
+  responseTime: number
+  totalInferences: number
+  confirmedInferences: number
+  urgencyDetected: UrgencyLevel
+  specialtyIdentified: string[]
+  conversationStage: 'initial' | 'gathering' | 'analyzing' | 'concluding'
+}
+
 export interface SubjectiveData {
   chiefComplaint: string
   presentIllness: string
@@ -165,6 +177,9 @@ export interface MedicalChatState {
     lastUpdated: number
   }
   
+  // Métricas del Chat Inteligente
+  intelligentChatMetrics: IntelligentChatMetrics
+  
   // NUEVO: Sesión Médica
   session: MedicalSession
   
@@ -232,6 +247,18 @@ Describa el caso clínico. El sistema analizará iterativamente hasta alcanzar a
     confidence: 0,
     urgencyLevel: 'low',
     lastUpdated: 0
+  },
+  
+  // Métricas del Chat Inteligente
+  intelligentChatMetrics: {
+    confidenceLevel: 0,
+    inferenceAccuracy: 0,
+    responseTime: 0,
+    totalInferences: 0,
+    confirmedInferences: 0,
+    urgencyDetected: 'low',
+    specialtyIdentified: [],
+    conversationStage: 'initial'
   },
   
   // NUEVO: Sesión Médica
@@ -425,6 +452,7 @@ const medicalChatSlice = createSlice({
     // Manejo de urgencia
     updateUrgencyLevel: (state, action: PayloadAction<UrgencyLevel>) => {
       state.currentCase.urgencyLevel = action.payload
+      state.intelligentChatMetrics.urgencyDetected = action.payload
       
       // Agregar log crítico si es urgencia alta
       if (action.payload === 'critical' || action.payload === 'high') {
@@ -516,6 +544,37 @@ const medicalChatSlice = createSlice({
         startTime: Date.now(),
         lastActivity: Date.now()
       }
+    },
+
+    // === MANEJO DE MÉTRICAS DEL CHAT INTELIGENTE ===
+    updateIntelligentChatMetrics: (state, action: PayloadAction<Partial<IntelligentChatMetrics>>) => {
+      state.intelligentChatMetrics = {
+        ...state.intelligentChatMetrics,
+        ...action.payload
+      }
+    },
+
+    addInference: (state, action: PayloadAction<{ confirmed: boolean }>) => {
+      state.intelligentChatMetrics.totalInferences += 1
+      if (action.payload.confirmed) {
+        state.intelligentChatMetrics.confirmedInferences += 1
+      }
+      // Actualizar precisión
+      state.intelligentChatMetrics.inferenceAccuracy = 
+        state.intelligentChatMetrics.totalInferences > 0 
+          ? state.intelligentChatMetrics.confirmedInferences / state.intelligentChatMetrics.totalInferences 
+          : 0
+    },
+
+
+    addSpecialtyIdentified: (state, action: PayloadAction<string>) => {
+      if (!state.intelligentChatMetrics.specialtyIdentified.includes(action.payload)) {
+        state.intelligentChatMetrics.specialtyIdentified.push(action.payload)
+      }
+    },
+
+    updateConversationStage: (state, action: PayloadAction<'initial' | 'gathering' | 'analyzing' | 'concluding'>) => {
+      state.intelligentChatMetrics.conversationStage = action.payload
     }
   }
 })
@@ -547,7 +606,13 @@ export const {
   updateReminder,
   completeReminder,
   resetCurrentCase,
-  resetMedicalSession
+  resetMedicalSession,
+  
+  // Nuevas acciones del chat inteligente
+  updateIntelligentChatMetrics,
+  addInference,
+  addSpecialtyIdentified,
+  updateConversationStage
 } = medicalChatSlice.actions
 
 export default medicalChatSlice.reducer

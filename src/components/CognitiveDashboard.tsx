@@ -508,20 +508,16 @@ export const CognitiveDashboard = () => {
       shouldBlock: isMedical && !hasPatientData
     })
     
-    if (isMedical && !hasPatientData) {
-      // Bloquear procesamiento y forzar uso del asistente avanzado
-      console.log('🚫 BLOQUEANDO CONSULTA MÉDICA INCOMPLETA')
+    if (isMedical) {
+      // Usar el chat inteligente para consultas médicas
+      console.log('🦁 ACTIVANDO CHAT MÉDICO INTELIGENTE')
       setLastRejectedInput(input)
-      setShowMedicalAssistant(true)
-      setShowDataRequiredAlert(true)
+      setShowMedicalAssistant(true) // Ahora MedicalAutocompletion muestra el chat inteligente
+      setInput('') // Limpiar input ya que el chat tiene su propio input
       
-      // Mensaje educativo para el usuario
-      triggerHaptic && triggerHaptic('error')
+      // Feedback háptico positivo
+      triggerHaptic && triggerHaptic('light')
       
-      // Ocultar alerta después de 5 segundos
-      setTimeout(() => setShowDataRequiredAlert(false), 5000)
-      
-      // NO limpiar el input para que el usuario vea qué fue rechazado
       return
     }
     
@@ -1337,6 +1333,7 @@ export const CognitiveDashboard = () => {
           }, 100)
         }}
       />
+      
     </div>
       
       <style jsx>{`

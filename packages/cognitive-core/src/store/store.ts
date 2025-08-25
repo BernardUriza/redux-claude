@@ -1,10 +1,12 @@
-// 🧠 Store Médico Completo - Creado por Bernard Orozco
+// 🧠 Store Médico Multinúcleo - Creado por Bernard Orozco
 import { configureStore } from '@reduxjs/toolkit'
 import medicalChatReducer from './medicalChatSlice'
+import intelligentChatReducer from './intelligentChatSlice'
 
 export const store = configureStore({
   reducer: {
-    medicalChat: medicalChatReducer
+    medicalChat: medicalChatReducer,
+    intelligentChat: intelligentChatReducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

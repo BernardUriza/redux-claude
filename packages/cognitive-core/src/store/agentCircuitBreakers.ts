@@ -65,7 +65,8 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.DEFENSIVE_DIFFERENTIAL]: createInitialCircuitBreaker({ maxFailures: 2, cooldownMs: 15000 }),
     [AgentType.MEDICAL_AUTOCOMPLETION]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 }),
     [AgentType.CRITICAL_DATA_VALIDATION]: createInitialCircuitBreaker({ maxFailures: 2, cooldownMs: 15000 }),
-    [AgentType.SPECIALTY_DETECTION]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 })
+    [AgentType.SPECIALTY_DETECTION]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 }),
+    [AgentType.INTELLIGENT_MEDICAL_CHAT]: createInitialCircuitBreaker({ maxFailures: 3, cooldownMs: 30000 })
   },
   metrics: {
     [AgentType.DIAGNOSTIC]: createInitialMetrics(),
@@ -82,7 +83,8 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.DEFENSIVE_DIFFERENTIAL]: createInitialMetrics(),
     [AgentType.MEDICAL_AUTOCOMPLETION]: createInitialMetrics(),
     [AgentType.CRITICAL_DATA_VALIDATION]: createInitialMetrics(),
-    [AgentType.SPECIALTY_DETECTION]: createInitialMetrics()
+    [AgentType.SPECIALTY_DETECTION]: createInitialMetrics(),
+    [AgentType.INTELLIGENT_MEDICAL_CHAT]: createInitialMetrics()
   },
   agentStatuses: {
     [AgentType.DIAGNOSTIC]: AgentStatus.READY,
@@ -99,11 +101,12 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.DEFENSIVE_DIFFERENTIAL]: AgentStatus.READY,
     [AgentType.MEDICAL_AUTOCOMPLETION]: AgentStatus.READY,
     [AgentType.CRITICAL_DATA_VALIDATION]: AgentStatus.READY,
-    [AgentType.SPECIALTY_DETECTION]: AgentStatus.READY
+    [AgentType.SPECIALTY_DETECTION]: AgentStatus.READY,
+    [AgentType.INTELLIGENT_MEDICAL_CHAT]: AgentStatus.READY
   },
   globalState: {
-    totalAgents: 15,
-    activeAgents: 15, // All 15 agents enabled
+    totalAgents: 16,
+    activeAgents: 16, // All 16 agents enabled
     failedAgents: 0,
     avgSystemLatency: 0,
     lastHealthCheck: Date.now()

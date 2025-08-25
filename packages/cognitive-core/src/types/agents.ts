@@ -15,7 +15,8 @@ export enum AgentType {
   DEFENSIVE_DIFFERENTIAL = 'defensive_differential',
   MEDICAL_AUTOCOMPLETION = 'medical_autocompletion',
   CRITICAL_DATA_VALIDATION = 'critical_data_validation',
-  SPECIALTY_DETECTION = 'specialty_detection'
+  SPECIALTY_DETECTION = 'specialty_detection',
+  INTELLIGENT_MEDICAL_CHAT = 'intelligent_medical_chat'
 }
 
 export enum AgentStatus {
@@ -235,6 +236,22 @@ export type SpecialtyDetectionDecision = {
   }>
 }
 
+export type IntelligentMedicalChatDecision = {
+  message: string
+  inferences: Array<{
+    id: string
+    category: 'demographic' | 'symptom' | 'specialty' | 'urgency' | 'context'
+    confidence: number
+    inference: string
+    evidence: string[]
+    needs_confirmation: boolean
+  }>
+  suggested_actions: string[]
+  confidence_level: 'low' | 'medium' | 'high'
+  requires_user_input: boolean
+  conversation_stage: 'initial' | 'gathering' | 'analyzing' | 'concluding'
+}
+
 export type AgentDecision = 
   | DiagnosticDecision 
   | ValidationDecision 
@@ -250,6 +267,7 @@ export type AgentDecision =
   | MedicalAutocompletionDecision
   | CriticalDataValidationDecision
   | SpecialtyDetectionDecision
+  | IntelligentMedicalChatDecision
 
 // Agent registry definition
 export type AgentDefinition = {
