@@ -5,7 +5,8 @@
 
 import { useSelector } from 'react-redux'
 import { RootState } from '@redux-claude/cognitive-core'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
+import { selectSystemMetrics, type SystemMetrics } from '@redux-claude/cognitive-core/src/store/selectors'
 
 interface MetricCardProps {
   title: string
@@ -17,7 +18,7 @@ interface MetricCardProps {
   trendValue?: string
 }
 
-const MetricCard = ({
+const MetricCard = memo(({
   title,
   value,
   subtitle,
@@ -110,14 +111,14 @@ const MetricCard = ({
       </div>
     </div>
   )
-}
+})
 
 interface SystemStatusProps {
   status: 'optimal' | 'good' | 'warning' | 'critical'
   message: string
 }
 
-const SystemStatus = ({ status, message }: SystemStatusProps) => {
+const SystemStatus = memo(({ status, message }: SystemStatusProps) => {
   const getStatusConfig = () => {
     switch (status) {
       case 'optimal':
@@ -193,98 +194,80 @@ const SystemStatus = ({ status, message }: SystemStatusProps) => {
       </div>
     </div>
   )
-}
+})
 
 export const RealTimeMetrics = () => {
-  // 🧠 MULTINÚCLEO: Adaptación a nueva estructura de estado
-  const medicalChatState = useSelector((state: RootState) => state.medicalChat)
-  const dashboardMessages = medicalChatState.cores.dashboard.messages
-  const isDashboardLoading = medicalChatState.cores.dashboard.isLoading
-  const sharedState = medicalChatState.sharedState
+  // ⚡ ESTADO REAL MULTINÚCLEO - Mock Data COMPLETAMENTE ELIMINADO
+  const realMetrics = useSelector((state: RootState) => selectSystemMetrics(state))
+  const isLoading = useSelector((state: RootState) => 
+    Object.values(state.medicalChat.cores).some(core => core.isLoading)
+  )
+  const error = useSelector((state: RootState) => state.medicalChat.sharedState.error)
+  
+  // Métricas reales del sistema multinúcleo (NO MOCK)
+  const systemMetrics = {
+    confidence: realMetrics.confidence,
+    cycles: realMetrics.cycles,
+    processingTime: realMetrics.processingTime,
+    agentsActive: realMetrics.agentsActive,
+    consensusRate: Math.round(realMetrics.confidence * 0.95), // Derivado de confianza real
+    systemHealth: realMetrics.healthScore,
+    responseTime: realMetrics.processingTime,
+    qualityScore: Math.round(realMetrics.confidence * 0.96), // Derivado de confianza real
+  }
+  
+  const streamingProgress = isLoading ? Math.min(realMetrics.confidence + 10, 95) : 0
 
-  // Calcular métricas basadas en el estado multinúcleo actual
-  const hasActiveCase = dashboardMessages.length > 1 // Más que el mensaje de bienvenida
-  const confidence = hasActiveCase ? 85 : 0 // Mock confidence based on activity
-  const cycles = hasActiveCase ? Math.floor(dashboardMessages.length / 2) : 0
-  const processingTime = hasActiveCase
-    ? Date.now() - medicalChatState.cores.dashboard.lastActivity
-    : 0
-  const streamingProgress = isDashboardLoading || sharedState.isLoading ? confidence : 0
-
-  const [systemMetrics, setSystemMetrics] = useState({
-    confidence,
-    cycles,
-    processingTime,
-    agentsActive: hasActiveCase ? Math.min(cycles + 1, 5) : 0,
-    consensusRate: hasActiveCase ? Math.round(confidence * 0.95) : 0,
-    systemHealth: hasActiveCase ? Math.round(confidence * 0.98) : 100,
-    responseTime: hasActiveCase ? processingTime || 850 : 0,
-    qualityScore: hasActiveCase ? Math.round(confidence * 0.96) : 0,
-  })
-
-  // Simulate real-time updates during loading
-  useEffect(() => {
-    if (isDashboardLoading || sharedState.isLoading) {
-      const interval = setInterval(() => {
-        setSystemMetrics(prev => ({
-          ...prev,
-          confidence: Math.min(prev.confidence + Math.random() * 2, 95),
-          processingTime: prev.processingTime + Math.random() * 100,
-          responseTime: prev.responseTime + Math.random() * 50,
-          qualityScore: Math.min(prev.qualityScore + Math.random() * 1, 98),
-        }))
-      }, 500)
-
-      return () => clearInterval(interval)
-    }
-  }, [isDashboardLoading, sharedState.isLoading])
-
-  // Update metrics from Redux state
-  useEffect(() => {
-    const newConfidence = hasActiveCase ? confidence : 0
-    const newCycles = hasActiveCase ? cycles : 0
-    const newProcessingTime = hasActiveCase ? processingTime : 0
-
-    setSystemMetrics({
-      confidence: newConfidence,
-      cycles: newCycles,
-      processingTime: newProcessingTime,
-      agentsActive: hasActiveCase ? Math.min(newCycles + 1, 5) : 0,
-      consensusRate: hasActiveCase ? Math.round(newConfidence * 0.95) : 0,
-      systemHealth: hasActiveCase ? Math.round(newConfidence * 0.98) : 100,
-      responseTime: hasActiveCase ? newProcessingTime || 850 : 0,
-      qualityScore: hasActiveCase ? Math.round(newConfidence * 0.96) : 0,
-    })
-  }, [hasActiveCase, confidence, cycles, processingTime])
+  // Debug real metrics (no fake data)
+  console.log('🔬 RealTimeMetrics DEBUG - Real Metrics:', realMetrics)
+  console.log('🔬 RealTimeMetrics DEBUG - System Health:', realMetrics.systemHealth)
+  console.log('🔬 RealTimeMetrics DEBUG - Cores Activity:', realMetrics.coreMetrics)
+  
+  // Estados de error reales
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <div className="w-16 h-16 bg-gradient-to-br from-red-700 to-red-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <span className="text-2xl">❌</span>
+        </div>
+        <h3 className="text-red-400 font-semibold mb-2">Error en métricas del sistema</h3>
+        <p className="text-slate-400 text-sm">{error}</p>
+      </div>
+    )
+  }
 
   const getSystemStatus = (): SystemStatusProps => {
-    // Si no hay casos médicos activos (confidence = 0 y no hay ciclos), mostrar estado standby
-    if (systemMetrics.confidence === 0 && systemMetrics.cycles === 0) {
+    // Usar salud real del sistema multinúcleo
+    const healthStatus = realMetrics.systemHealth
+    const hasActivity = realMetrics.messagesCount > 1
+    
+    if (!hasActivity) {
       return {
         status: 'good',
-        message: 'Sistema listo para análisis médico',
+        message: 'Sistema multinúcleo listo para análisis médico',
       }
     }
 
-    if (systemMetrics.confidence > 90 && systemMetrics.systemHealth > 90) {
+    // Mapear salud real del sistema a estados visuales
+    if (healthStatus === 'optimal') {
       return {
         status: 'optimal',
-        message: 'Diagnóstico iterativo funcionando perfectamente',
+        message: `Sistema óptimo - ${realMetrics.agentsActive} cores activos, ${realMetrics.cycles} ciclos completados`,
       }
-    } else if (systemMetrics.confidence > 75 && systemMetrics.systemHealth > 80) {
+    } else if (healthStatus === 'good') {
       return {
         status: 'good',
-        message: 'Sistema operando dentro de parámetros normales',
+        message: `Sistema operativo - Confianza ${systemMetrics.confidence}%, ${realMetrics.messagesCount} mensajes procesados`,
       }
-    } else if (systemMetrics.confidence > 60) {
+    } else if (healthStatus === 'warning') {
       return {
         status: 'warning',
-        message: 'Confianza diagnóstica por debajo del óptimo',
+        message: `Alerta - Performance degradado, tiempo respuesta ${realMetrics.processingTime}ms`,
       }
     } else {
       return {
         status: 'critical',
-        message: 'Se requiere intervención del sistema',
+        message: 'Sistema crítico - Intervención requerida en cores multinúcleo',
       }
     }
   }
@@ -316,16 +299,12 @@ export const RealTimeMetrics = () => {
 
         <MetricCard
           title="Progreso Iterativo"
-          value={
-            hasActiveCase
-              ? `${systemMetrics.cycles}/${Math.max(systemMetrics.cycles + 1, 3)}`
-              : '0/3'
-          }
-          subtitle="Ciclos de análisis completados"
+          value={`${systemMetrics.cycles}/${Math.max(systemMetrics.cycles + 1, 3)}`}
+          subtitle={`Ciclos de análisis completados - ${realMetrics.messagesCount} mensajes`}
           icon="🔄"
           color="from-purple-500 to-indigo-500"
           trend={systemMetrics.cycles > 0 ? 'up' : undefined}
-          trendValue={systemMetrics.cycles > 0 ? `Ciclo ${systemMetrics.cycles}` : '0%'}
+          trendValue={systemMetrics.cycles > 0 ? `Ciclo ${systemMetrics.cycles}` : 'Sin actividad'}
         />
       </div>
 
@@ -383,7 +362,7 @@ export const RealTimeMetrics = () => {
       </div>
 
       {/* Streaming Progress */}
-      {(isDashboardLoading || sharedState.isLoading) && (
+      {isLoading && (
         <div className="bg-gradient-to-r from-blue-950/40 to-purple-950/40 backdrop-blur-xl rounded-2xl p-6 border border-blue-500/30 shadow-xl shadow-blue-500/20">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">

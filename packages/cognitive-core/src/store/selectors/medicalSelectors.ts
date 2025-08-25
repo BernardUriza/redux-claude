@@ -12,7 +12,9 @@ import type {
   ReminderType,
   ReminderPriority,
   NoteCategory,
-  CoreMetrics,
+  CoreMetrics
+} from '../../types/medicalInterfaces'
+import {
   createEmptySOAPAnalysis,
   createEmptySystemMetrics,
   createEmptyDiagnosticProgress
@@ -385,7 +387,7 @@ export const selectPatientReminders = createSelector(
     followupMessages.forEach((message, index) => {
       // Extraer recordatorios del contenido
       const content = message.content.toLowerCase()
-      let type: ReminderType = 'general'
+      let type: ReminderType = 'followup'
       let priority: ReminderPriority = 'medium'
       
       // Clasificar tipo

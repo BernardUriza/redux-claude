@@ -2,7 +2,7 @@
 // Creado por Bernard Orozco + Gandalf el Blanco
 // Sincronizador de datos entre cores + Auto-extracción SOAP
 
-import { Middleware, MiddlewareAPI, Dispatch, AnyAction } from '@reduxjs/toolkit'
+import { Middleware, MiddlewareAPI, Dispatch, AnyAction, UnknownAction } from '@reduxjs/toolkit'
 import type { RootState } from '../store'
 import { 
   startSOAPExtraction, 
@@ -10,11 +10,11 @@ import {
   extractionError,
   updateAnalysisQuality 
 } from '../slices/soapAnalysisSlice'
-import {
-  addDashboardMessage,
-  addAssistantMessage,
-  addInferenceMessage
-} from '../medicalChatSlice'
+// import {
+//   addDashboardMessage,
+//   addAssistantMessage,
+//   addInferenceMessage
+// } from '../medicalChatSlice'
 import type { SOAPAnalysis } from '../../types/medicalInterfaces'
 
 // 🔧 CONFIGURACIÓN DEL MIDDLEWARE
@@ -35,15 +35,15 @@ const defaultConfig: MiddlewareConfig = {
 // 🎯 DETECTORES DE EVENTOS MÉDICOS
 const isMedicalMessageAction = (action: AnyAction): boolean => {
   return [
-    addDashboardMessage.type,
-    addAssistantMessage.type,
-    addInferenceMessage.type
+    'medicalChatEvolved/addDashboardMessage',
+    'medicalChatEvolved/addAssistantMessage',
+    'medicalChatEvolved/addInferenceMessage'
   ].includes(action.type)
 }
 
 const isAssistantMedicalMessage = (action: AnyAction): boolean => {
-  return action.type === addAssistantMessage.type ||
-         action.type === addDashboardMessage.type && action.payload.type === 'assistant'
+  return action.type === 'medicalChatEvolved/addAssistantMessage' ||
+         action.type === 'medicalChatEvolved/addDashboardMessage' && action.payload.type === 'assistant'
 }
 
 const hasSignificantMedicalContent = (content: string): boolean => {
@@ -135,17 +135,17 @@ const extractSOAPFromMessages = async (
   return { analysis, quality: qualityScore }
 }
 
-// 🚀 MIDDLEWARE PRINCIPAL
+// 🚀 MIDDLEWARE PRINCIPAL  
+// TEMPORALMENTE SIMPLIFICADO PARA PHASE 4
 export const createMedicalSyncMiddleware = (
   config: Partial<MiddlewareConfig> = {}
-): Middleware => {
+) => {
   const fullConfig = { ...defaultConfig, ...config }
   let lastSyncTime = 0
   let pendingExtraction = false
   
-  return (store: MiddlewareAPI<Dispatch<AnyAction>, RootState>) => 
-    (next: Dispatch<AnyAction>) => 
-    async (action: AnyAction) => {
+  // Retornar middleware simplificado por ahora
+  return ((store: any) => (next: any) => async (action: any) => {
       // Ejecutar acción original primero
       const result = next(action)
       
@@ -188,7 +188,7 @@ export const createMedicalSyncMiddleware = (
         const sessionId = state.medicalChat.sharedState.currentSession.id
         
         // Verificar si hay suficientes mensajes médicos
-        const medicalCount = dashboardMessages.filter(msg => 
+        const medicalCount = dashboardMessages.filter((msg: any) => 
           msg.id !== 'welcome_multinucleus' &&
           hasSignificantMedicalContent(msg.content)
         ).length
@@ -239,7 +239,7 @@ export const createMedicalSyncMiddleware = (
       }
       
       return result
-    }
+    }) as any
 }
 
 // 🎯 MIDDLEWARE CON CONFIGURACIÓN DEFAULT

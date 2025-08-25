@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState } from '@redux-claude/cognitive-core'
+import { selectPatientReminders } from '@redux-claude/cognitive-core/src/store/selectors'
 // 🧠 MULTINÚCLEO: Funciones legacy deshabilitadas - usando mocks
 // import { addReminder, updateReminder, completeReminder, addPhysicianNote } from '@redux-claude/cognitive-core'
 // import type { Reminder, PhysicianNote } from '@redux-claude/cognitive-core'
@@ -372,6 +373,7 @@ export const FollowUpTracker = () => {
           filteredReminders.map(reminder => <ReminderCard key={reminder.id} reminder={reminder} />)
         )}
       </div>
+      )
 
       {/* Add Reminder Modal */}
       <AddReminderModal

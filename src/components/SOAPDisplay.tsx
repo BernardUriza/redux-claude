@@ -7,18 +7,11 @@ import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import ReactMarkdown from 'react-markdown'
 import type { RootState } from '@redux-claude/cognitive-core'
-// 🧠 MULTINÚCLEO: Funciones legacy deshabilitadas - usando mocks
-// import { updateSOAPSection, addPhysicianNote, updateUrgencyLevel } from '@redux-claude/cognitive-core'
-
-// Mocks temporales para mantener funcionalidad
-const updateSOAPSection = (sectionData: any) => ({
-  type: 'UPDATE_SOAP_SECTION_MOCK',
-  payload: sectionData,
-})
-const addPhysicianNote = (note: any) => ({ type: 'ADD_PHYSICIAN_NOTE_MOCK', payload: note })
-const updateUrgencyLevel = (level: any) => ({ type: 'UPDATE_URGENCY_LEVEL_MOCK', payload: level })
-// Types temporarily removed - using mock data for now
-// TODO: Re-implement with proper SOAPData types from cognitive-core
+import { 
+  selectCurrentSOAPAnalysis,
+  updateSOAPSection,
+  type SOAPAnalysis 
+} from '@redux-claude/cognitive-core/src/store/selectors'
 
 interface SOAPSectionProps {
   section: 'S' | 'O' | 'A' | 'P'
@@ -310,18 +303,16 @@ const PlanContent = ({ data }: { data: any }) => (
 // Componente principal SOAPDisplay
 export const SOAPDisplay = () => {
   const dispatch = useDispatch()
-  // 🧠 MULTINÚCLEO: Mock data temporal para mantener funcionalidad
-  const mockCurrentCase = {
-    soap: null,
-    confidence: 0.8,
-    urgencyLevel: 'medium' as const,
-    lastUpdated: Date.now(),
-  }
+  // ⚡ ESTADO REAL MULTINÚCLEO - Mock Data ELIMINADO
+  const soapAnalysis = useSelector((state: RootState) => selectCurrentSOAPAnalysis(state))
+  const isLoading = useSelector((state: RootState) => state.medicalChat.cores.dashboard.isLoading)
+  const error = useSelector((state: RootState) => state.medicalChat.sharedState.error)
   const [viewMode, setViewMode] = useState<'structured' | 'markdown'>('structured')
 
-  // 🔬 DEBUG: Log current case to see what's actually in the store
-  console.log('🔬 SOAPDisplay DEBUG - mockCurrentCase:', mockCurrentCase)
-  console.log('🔬 SOAPDisplay DEBUG - mockCurrentCase.soap:', mockCurrentCase.soap)
+  // 🔬 DEBUG: Log real SOAP analysis from multinucleus state
+  console.log('🔬 SOAPDisplay DEBUG - Real Analysis:', soapAnalysis)
+  console.log('🔬 SOAPDisplay DEBUG - Loading:', isLoading)
+  console.log('🔬 SOAPDisplay DEBUG - Error:', error)
 
   const handleSectionEdit = (
     section: 'subjetivo' | 'objetivo' | 'analisis' | 'plan',
@@ -333,9 +324,8 @@ export const SOAPDisplay = () => {
   // Función para generar contenido markdown del SOAP
   const generateMarkdownContent = (soap: any) => {
     let markdown = `# Análisis SOAP Completo\n\n`
-    markdown += `**Confianza:** ${Math.round(mockCurrentCase.confidence * 100)}%\n`
-    markdown += `**Urgencia:** ${mockCurrentCase.urgencyLevel.toUpperCase()}\n`
-    markdown += `**Actualizado:** ${new Date(mockCurrentCase.lastUpdated).toLocaleString('es-ES')}\n\n`
+    markdown += `**Confianza:** ${Math.round((soapAnalysis?.confidence || 0) * 100)}%\n`
+    markdown += `**Actualizado:** ${new Date(soapAnalysis?.lastUpdated || Date.now()).toLocaleString('es-ES')}\n\n`
 
     // Sección Subjetivo
     if (soap.subjetivo) {
@@ -435,7 +425,34 @@ export const SOAPDisplay = () => {
     return markdown
   }
 
-  if (!mockCurrentCase.soap) {
+  // Estados de loading y error reales
+  if (isLoading) {
+    return (
+      <div className="text-center py-8">
+        <div className="w-16 h-16 bg-gradient-to-br from-blue-700 to-purple-800 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+          <span className="text-2xl">🧠</span>
+        </div>
+        <h3 className="text-slate-200 font-semibold mb-2">Extrayendo análisis SOAP...</h3>
+        <p className="text-slate-400 text-sm">
+          Procesando conversación médica con IA multinúcleo
+        </p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <div className="w-16 h-16 bg-gradient-to-br from-red-700 to-red-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <span className="text-2xl">❌</span>
+        </div>
+        <h3 className="text-red-400 font-semibold mb-2">Error al cargar análisis SOAP</h3>
+        <p className="text-slate-400 text-sm">{error}</p>
+      </div>
+    )
+  }
+
+  if (!soapAnalysis) {
     return (
       <div className="text-center py-8">
         <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -449,7 +466,30 @@ export const SOAPDisplay = () => {
     )
   }
 
-  const soap = mockCurrentCase.soap
+  // Usar datos reales del selector multinúcleo
+  const soap = {
+    subjetivo: soapAnalysis.subjective ? { 
+      chiefComplaint: soapAnalysis.subjective.split('\n')[0],
+      presentIllness: soapAnalysis.subjective,
+      medicalHistory: [],
+      familyHistory: []
+    } : null,
+    objetivo: soapAnalysis.objective ? {
+      vitalSigns: {},
+      physicalExam: { general: soapAnalysis.objective }
+    } : null,
+    analisis: soapAnalysis.assessment ? {
+      primaryDiagnosis: soapAnalysis.assessment,
+      confidence: soapAnalysis.confidence,
+      differentials: [],
+      reasoning: soapAnalysis.assessment
+    } : null,
+    plan: soapAnalysis.plan ? {
+      immediate: soapAnalysis.plan.split('\n').filter(line => line.trim()),
+      medications: [],
+      followUp: null
+    } : null
+  }
 
   return (
     <div className="space-y-6">
@@ -483,30 +523,28 @@ export const SOAPDisplay = () => {
             </div>
             <div className="text-sm text-slate-300">
               Confianza:{' '}
-              <span className="text-green-400 font-semibold">
-                {Math.round(mockCurrentCase.confidence * 100)}%
+              <span className={`font-semibold ${
+                (soapAnalysis.confidence || 0) > 0.8 ? 'text-green-400' :
+                (soapAnalysis.confidence || 0) > 0.6 ? 'text-yellow-400' : 'text-red-400'
+              }`}>
+                {Math.round((soapAnalysis.confidence || 0) * 100)}%
               </span>
             </div>
             <div className="text-sm text-slate-300">
-              Urgencia:{' '}
-              <span
-                className={`font-semibold ${
-                  mockCurrentCase.urgencyLevel === 'critical'
-                    ? 'text-red-400'
-                    : mockCurrentCase.urgencyLevel === 'high'
-                      ? 'text-orange-400'
-                      : mockCurrentCase.urgencyLevel === 'medium'
-                        ? 'text-yellow-400'
-                        : 'text-green-400'
-                }`}
-              >
-                {mockCurrentCase.urgencyLevel.toUpperCase()}
+              Completitud:{' '}
+              <span className={`font-semibold ${
+                soapAnalysis.completionPercentage > 80 ? 'text-green-400' :
+                soapAnalysis.completionPercentage > 50 ? 'text-yellow-400' : 'text-red-400'
+              }`}>
+                {Math.round(soapAnalysis.completionPercentage)}%
               </span>
             </div>
           </div>
         </div>
         <div className="text-sm text-slate-400">
-          Actualizado: {new Date(mockCurrentCase.lastUpdated).toLocaleString('es-ES')}
+          Actualizado: {new Date(soapAnalysis.lastUpdated).toLocaleString('es-ES')} | 
+          Sesión: {soapAnalysis.sessionId} |
+          Mensajes procesados: {soapAnalysis.totalMessages}
         </div>
       </div>
 

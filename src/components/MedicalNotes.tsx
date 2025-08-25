@@ -6,13 +6,12 @@
 import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState } from '@redux-claude/cognitive-core'
-// 🧠 MULTINÚCLEO: Funciones legacy deshabilitadas - usando mocks
-// import { addPhysicianNote } from '@redux-claude/cognitive-core'
-// import type { PhysicianNote } from '@redux-claude/cognitive-core'
+import { selectPhysicianNotes } from '@redux-claude/cognitive-core/src/store/selectors'
 
-// Mocks temporales para mantener funcionalidad
+// Mock action - En FASE 4 se implementará acción real
 const addPhysicianNote = (note: any) => ({ type: 'ADD_PHYSICIAN_NOTE_MOCK', payload: note })
 
+// Usar tipo del selector con compatibilidad legacy
 type PhysicianNote = {
   id: string
   type: 'clinical' | 'administrative' | 'legal' | 'observation'
@@ -241,15 +240,54 @@ const NoteCard = ({ note }: { note: PhysicianNote }) => {
 
 export const MedicalNotes = () => {
   const dispatch = useDispatch()
-  // 🧠 MULTINÚCLEO: Mock data temporal para mantener funcionalidad
-  const mockNotes: PhysicianNote[] = []
+  // ⚡ ESTADO REAL MULTINÚCLEO - Mock Data COMPLETAMENTE ELIMINADO
+  const realPhysicianNotes = useSelector(selectPhysicianNotes)
+  const isLoading = useSelector((state: RootState) => 
+    Object.values(state.medicalChat.cores).some(core => core.isLoading)
+  )
+  const error = useSelector((state: RootState) => state.medicalChat.sharedState.error)
   const [showAddModal, setShowAddModal] = useState(false)
   const [filter, setFilter] = useState<
     'all' | 'clinical' | 'administrative' | 'legal' | 'observation'
   >('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'priority'>('newest')
+  
+  // Transformar datos reales del selector a formato legacy para compatibilidad
+  const notes: PhysicianNote[] = realPhysicianNotes.map(note => ({
+    id: note.id,
+    type: note.category === 'diagnosis' ? 'clinical' :
+          note.category === 'treatment' ? 'clinical' :
+          note.category === 'observation' ? 'observation' :
+          note.category === 'plan' ? 'administrative' :
+          'clinical' as 'clinical' | 'administrative' | 'legal' | 'observation',
+    content: note.content,
+    category: note.title || note.category,
+    priority: note.confidence > 0.9 ? 'high' :
+              note.confidence > 0.7 ? 'medium' :
+              note.confidence > 0.5 ? 'low' : 'critical',
+    timestamp: note.createdAt,
+    physicianId: 'sistema-multinucleo',
+    physicianName: 'Sistema Multinúcleo IA'
+  }))
+  
+  // Debug real notes (no fake data)
+  console.log('📝 MedicalNotes DEBUG - Real Notes:', realPhysicianNotes)
+  console.log('📝 MedicalNotes DEBUG - Transformed Notes:', notes)
+  
+  // Estados de error reales
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <div className="w-16 h-16 bg-gradient-to-br from-red-700 to-red-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <span className="text-2xl">❌</span>
+        </div>
+        <h3 className="text-red-400 font-semibold mb-2">Error en notas médicas</h3>
+        <p className="text-slate-400 text-sm">{error}</p>
+      </div>
+    )
+  }
 
-  const filteredNotes = mockNotes
+  const filteredNotes = notes
     .filter(note => filter === 'all' || note.type === filter)
     .sort((a, b) => {
       switch (sortBy) {
@@ -266,8 +304,8 @@ export const MedicalNotes = () => {
       }
     })
 
-  const notesCount = mockNotes.length
-  const urgentCount = mockNotes.filter(
+  const notesCount = notes.length
+  const urgentCount = notes.filter(
     n => n.priority === 'critical' || n.priority === 'high'
   ).length
 
@@ -303,17 +341,17 @@ export const MedicalNotes = () => {
             {
               key: 'clinical' as const,
               label: 'Clínicas',
-              count: mockNotes.filter(n => n.type === 'clinical').length,
+              count: notes.filter(n => n.type === 'clinical').length,
             },
             {
               key: 'administrative' as const,
               label: 'Admin',
-              count: mockNotes.filter(n => n.type === 'administrative').length,
+              count: notes.filter(n => n.type === 'administrative').length,
             },
             {
               key: 'legal' as const,
               label: 'Legales',
-              count: mockNotes.filter(n => n.type === 'legal').length,
+              count: notes.filter(n => n.type === 'legal').length,
             },
           ].map(tab => (
             <button
@@ -341,7 +379,16 @@ export const MedicalNotes = () => {
         </select>
       </div>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="text-center py-8">
+          <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-400 text-sm">Cargando notas médicas del sistema...</p>
+        </div>
+      )}
+      
       {/* Notes List */}
+      {!isLoading && (
       <div className="space-y-3">
         {filteredNotes.length === 0 ? (
           <div className="text-center py-8">
@@ -353,7 +400,9 @@ export const MedicalNotes = () => {
             </h3>
             <p className="text-slate-400 text-sm">
               {filter === 'all'
-                ? 'Agrega la primera nota médica para comenzar el registro'
+                ? realPhysicianNotes.length === 0
+                  ? 'No se han generado notas médicas de los análisis del sistema'
+                  : 'Agrega la primera nota médica para comenzar el registro'
                 : 'No se encontraron notas en esta categoría'}
             </p>
           </div>
@@ -361,6 +410,7 @@ export const MedicalNotes = () => {
           filteredNotes.map(note => <NoteCard key={note.id} note={note} />)
         )}
       </div>
+      )}
 
       {/* Trazabilidad Legal Footer */}
       <div className="bg-gradient-to-r from-purple-900/20 to-indigo-900/20 rounded-xl p-4 border border-purple-500/20">
