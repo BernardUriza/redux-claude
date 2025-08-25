@@ -167,9 +167,13 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
   }, [currentMessage])
 
   const handleInferenceChange = (id: string, newValue: string | number) => {
-    setInferences(prev => prev.map(inf => 
-      inf.id === id ? { ...inf, value: newValue, confidence: 1.0 } : inf
-    ))
+    const updated = inferences.map(inf => 
+      inf.id === id ? { ...inf, value: newValue, confidence: 1.0, timestamp: Date.now() } : inf
+    )
+    setInferences(updated)
+    
+    // 🔥 ANILLO ÚNICO: También llamar callback cuando el usuario edita manualmente
+    onInferenceUpdate?.(updated)
   }
 
   const getConfidenceColor = (confidence: number): string => {

@@ -14,7 +14,7 @@ import { SOAPDisplay } from './SOAPDisplay'
 import { FollowUpTracker } from './FollowUpTracker'
 import { MedicalNotes } from './MedicalNotes'
 import { LoadingScreen } from './LoadingScreen'
-import { MedicalAutocompletion } from './MedicalAutocompletion'
+import { MedicalAssistant } from './MedicalAssistant'
 import { useMobileInteractions } from '../hooks/useMobileInteractions'
 import { useSelector } from 'react-redux'
 
@@ -512,7 +512,7 @@ export const CognitiveDashboard = () => {
       // Usar el chat inteligente para consultas médicas
       console.log('🦁 ACTIVANDO CHAT MÉDICO INTELIGENTE')
       setLastRejectedInput(input)
-      setShowMedicalAssistant(true) // Ahora MedicalAutocompletion muestra el chat inteligente
+      setShowMedicalAssistant(true) // Ahora MedicalAssistant muestra el chat inteligente
       setInput('') // Limpiar input ya que el chat tiene su propio input
       
       // Feedback háptico positivo
@@ -1297,7 +1297,7 @@ export const CognitiveDashboard = () => {
       )}
 
       {/* Medical Autocompletion Modal (Simple) */}
-      <MedicalAutocompletion
+      <MedicalAssistant
         partialInput={lastRejectedInput}
         onSelectTemplate={(template) => {
           setInput(template)
@@ -1316,7 +1316,7 @@ export const CognitiveDashboard = () => {
       />
 
       {/* Medical Assistant Modal (Unificado) */}
-      <MedicalAutocompletion
+      <MedicalAssistant
         partialInput={lastRejectedInput || input}
         isVisible={showMedicalAssistant}
         onClose={() => {
