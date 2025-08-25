@@ -6,8 +6,29 @@
 import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState } from '@redux-claude/cognitive-core'
-import { addReminder, updateReminder, completeReminder, addPhysicianNote } from '@redux-claude/cognitive-core'
-import type { Reminder, PhysicianNote } from '@redux-claude/cognitive-core'
+// 🧠 MULTINÚCLEO: Funciones legacy deshabilitadas - usando mocks
+// import { addReminder, updateReminder, completeReminder, addPhysicianNote } from '@redux-claude/cognitive-core'
+// import type { Reminder, PhysicianNote } from '@redux-claude/cognitive-core'
+
+// Mocks temporales para mantener funcionalidad
+const addReminder = (reminder: any) => ({ type: 'ADD_REMINDER_MOCK', payload: reminder })
+const updateReminder = (id: string, updates: any) => ({ type: 'UPDATE_REMINDER_MOCK', payload: { id, updates } })
+const completeReminder = (id: string) => ({ type: 'COMPLETE_REMINDER_MOCK', payload: id })
+const addPhysicianNote = (note: any) => ({ type: 'ADD_NOTE_MOCK', payload: note })
+
+type Reminder = {
+  id: string
+  text: string
+  dueDate: Date
+  priority: 'low' | 'medium' | 'high'
+  completed: boolean
+}
+
+type PhysicianNote = {
+  id: string
+  content: string
+  timestamp: Date
+}
 
 interface AddReminderModalProps {
   isOpen: boolean

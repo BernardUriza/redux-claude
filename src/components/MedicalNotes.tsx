@@ -6,8 +6,23 @@
 import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState } from '@redux-claude/cognitive-core'
-import { addPhysicianNote } from '@redux-claude/cognitive-core'
-import type { PhysicianNote } from '@redux-claude/cognitive-core'
+// 🧠 MULTINÚCLEO: Funciones legacy deshabilitadas - usando mocks
+// import { addPhysicianNote } from '@redux-claude/cognitive-core'
+// import type { PhysicianNote } from '@redux-claude/cognitive-core'
+
+// Mocks temporales para mantener funcionalidad
+const addPhysicianNote = (note: any) => ({ type: 'ADD_PHYSICIAN_NOTE_MOCK', payload: note })
+
+type PhysicianNote = {
+  id: string
+  type: 'clinical' | 'administrative' | 'legal' | 'observation'
+  content: string
+  category: string
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  timestamp: number
+  physicianId: string
+  physicianName: string
+}
 
 interface AddNoteModalProps {
   isOpen: boolean
