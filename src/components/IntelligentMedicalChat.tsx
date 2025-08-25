@@ -2,7 +2,7 @@
 // Creado por Bernard Orozco - Sistema de Diagnóstico con IA
 
 import React, { useState, useRef, useEffect } from 'react'
-import { useMedicalChat } from '../hooks/useMedicalChat'
+import { useAssistantChat } from '../hooks/useMultinucleusChat'
 import { MedicalChatMessage } from './MedicalChatMessage'
 import { InferenceCard } from './InferenceCard'
 import { DynamicInferencePanel } from './DynamicInferencePanel'
@@ -22,20 +22,17 @@ interface IntelligentMedicalChatProps {
  * - D: Inversión de Dependencias - depende de abstracciones (hooks)
  */
 export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({ className = '', showMetrics = true }) => {
-  // Hook unificado para manejo de estado (Inversión de Dependencias)
+  // 🧠 MULTINÚCLEO: Usando el Assistant Core específico
   const {
     messages,
     isLoading,
-    intelligentChatMetrics,
-    currentCase,
     addUserMessage,
     addAssistantMessage,
-    confirmInference,
-    setUrgencyLevel,
-    addSpecialty,
-    setConversationStage,
-    updateMetrics
-  } = useMedicalChat()
+    setLoading,
+    clearMessages,
+    currentSession,
+    error
+  } = useAssistantChat()
   
   // Estado local para inferencias (ya no usa slice separado)
   const [currentResponse, setCurrentResponse] = useState<any>(null)
@@ -80,9 +77,6 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({ 
 
   // Handler para confirmación de inferencias (SIMPLIFICADO)
   const handleInferenceConfirm = (inference: any, confirmed: boolean) => {
-    // Actualizar métricas básicas
-    confirmInference(confirmed)
-    
     // Mensaje simple de confirmación
     addAssistantMessage(confirmed ? 
       `✅ Inferencia confirmada: ${inference.inference}` : 
