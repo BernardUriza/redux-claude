@@ -111,7 +111,7 @@ export const MedicalAssistant = ({
           {/* Columna Derecha: Panel de Resumen Médico Completo */}
           <div className="w-full lg:w-2/5 bg-gray-800/50">
             <MedicalSummaryPanel 
-              currentCase={{ soap: null, confidence: 0.8, urgencyLevel: 'medium' }}
+              currentCase={{ soap: null, urgencyLevel: 'medium' }}
               className="h-full"
             />
           </div>

@@ -105,10 +105,16 @@ const DiagnosticCycleDisplay = ({ cycle, isActive, isCompleted }: DiagnosticCycl
 }
 
 export const IterativeDiagnosticProgress = () => {
-  const iterativeState = useSelector((state: RootState) => state.medicalChat.iterativeState)
-  const isStreaming = useSelector((state: RootState) => state.medicalChat.streaming.isActive)
+  // 🧠 MULTINÚCLEO: Mock data temporal para mantener funcionalidad
+  const mockIterativeState = {
+    diagnosticCycles: [],
+    currentCycle: 0,
+    confidence: 0.8,
+    isComplete: false
+  }
+  const mockIsStreaming = false
 
-  if (iterativeState.diagnosticCycles.length === 0) {
+  if (mockIterativeState.diagnosticCycles.length === 0) {
     return null
   }
 
@@ -123,9 +129,9 @@ export const IterativeDiagnosticProgress = () => {
         </div>
         <div className="flex items-center space-x-2">
           <span className="text-sm text-slate-400">
-            Ciclo {iterativeState.currentCycle}/{iterativeState.totalCycles || 3}
+            Ciclo {mockIterativeState.currentCycle}/{3}
           </span>
-          {isStreaming && (
+          {mockIsStreaming && (
             <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
           )}
         </div>
@@ -136,37 +142,37 @@ export const IterativeDiagnosticProgress = () => {
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-slate-400">Confianza Global</span>
           <span className="text-sm font-semibold text-white">
-            {Math.round(iterativeState.finalConfidence * 100)}%
+            {Math.round(mockIterativeState.confidence * 100)}%
           </span>
         </div>
         <div className="w-full bg-slate-700 rounded-full h-2">
           <div 
             className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-500"
-            style={{ width: `${Math.round(iterativeState.finalConfidence * 100)}%` }}
+            style={{ width: `${Math.round(mockIterativeState.confidence * 100)}%` }}
           />
         </div>
       </div>
 
       {/* Cycles Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {iterativeState.diagnosticCycles.map((cycle, index) => (
+        {mockIterativeState.diagnosticCycles.map((cycle: any, index: number) => (
           <DiagnosticCycleDisplay
             key={cycle.id}
             cycle={cycle}
-            isActive={isStreaming && index === iterativeState.diagnosticCycles.length - 1}
-            isCompleted={index < iterativeState.diagnosticCycles.length - 1 || !isStreaming}
+            isActive={mockIsStreaming && index === mockIterativeState.diagnosticCycles.length - 1}
+            isCompleted={index < mockIterativeState.diagnosticCycles.length - 1 || !mockIsStreaming}
           />
         ))}
         
         {/* Future cycles placeholder */}
-        {Array.from({ length: Math.max(0, 3 - iterativeState.diagnosticCycles.length) }).map((_, index) => (
+        {Array.from({ length: Math.max(0, 3 - mockIterativeState.diagnosticCycles.length) }).map((_, index) => (
           <div 
             key={`future-${index}`}
             className="bg-slate-800/20 border border-slate-700/50 rounded-xl p-4 border-dashed"
           >
             <div className="flex items-center space-x-3 mb-3">
               <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-500 flex items-center justify-center text-sm">
-                {iterativeState.diagnosticCycles.length + index + 1}
+                {mockIterativeState.diagnosticCycles.length + index + 1}
               </div>
               <div>
                 <h4 className="text-sm text-slate-500">Ciclo Pendiente</h4>
@@ -178,11 +184,11 @@ export const IterativeDiagnosticProgress = () => {
       </div>
 
       {/* Processing Time */}
-      {iterativeState.processingTimeMs > 0 && (
+      {false && (
         <div className="mt-4 pt-3 border-t border-slate-700">
           <div className="flex justify-between text-xs text-slate-400">
             <span>Tiempo de procesamiento:</span>
-            <span>{Math.round(iterativeState.processingTimeMs)}ms</span>
+            <span>{Math.round(0)}ms</span>
           </div>
         </div>
       )}
