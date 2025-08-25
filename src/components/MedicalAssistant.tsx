@@ -111,7 +111,7 @@ export const MedicalAssistant = ({
           {/* Columna Derecha: Panel de Resumen Médico Completo */}
           <div className="w-full lg:w-2/5 bg-gray-800/50">
             <MedicalSummaryPanel 
-              currentCase={currentCase}
+              currentCase={{ soap: null, confidence: 0.8, urgencyLevel: 'medium' }}
               className="h-full"
             />
           </div>
@@ -124,9 +124,9 @@ export const MedicalAssistant = ({
             <div className="flex items-center gap-4">
               <span>💡 Inferencias actualizándose automáticamente</span>
               <div className="flex items-center gap-2">
-                <span>Mensajes: {messages.length}</span>
+                <span>Mensajes: {messageCount}</span>
                 <span>•</span>
-                <span>Confianza: {Math.round((intelligentChatMetrics?.confidenceLevel || 0) * 100)}%</span>
+                <span>Session: {currentSession.id.slice(0, 8)}</span>
               </div>
               <div 
                 data-autoclose-indicator 

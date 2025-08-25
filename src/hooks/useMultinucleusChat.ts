@@ -15,7 +15,7 @@ import {
   startNewSession,
   setError,
   clearError
-} from '../../packages/cognitive-core/src/store/medicalChatSliceEvolved'
+} from '../../packages/cognitive-core/src/store/medicalChatSlice'
 
 export type CoreType = 'dashboard' | 'assistant' | 'inference'
 
