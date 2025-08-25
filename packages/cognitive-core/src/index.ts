@@ -1,11 +1,11 @@
-// 🧠 Cognitive Core - API Pública Completa
-// Creado por Bernard Orozco
+// 🧠 Cognitive Core MULTINÚCLEO - API Pública 
+// Creado por Bernard Orozco + Gandalf el Blanco
 
 // === DECISION ENGINE (CORE) ===
 import { decisionEngineService } from './decision-engine/DecisionEngineService'
 export { decisionEngineService }
 
-// === STORE & STATE ===
+// === STORE & STATE MULTINÚCLEO ===
 export { store } from './store/store'
 export type { RootState, AppDispatch } from './store/store'
 
@@ -21,8 +21,8 @@ export type { MedicalValidationResult } from './types/medical'
 export { DefensiveMedicineValidator, type UrgentPattern, type DefensiveDiagnosis } from './validators'
 export { UrgencyClassifier, type UrgencyAssessment, type TriageResult, type RiskFactor } from './classifiers'
 
-// === HOOKS ===
-export { useMedicalChat } from './hooks/useMedicalChat'
+// === HOOKS MULTINÚCLEO ===
+export { useMedicalChat } from './hooks/useMedicalChatEvolved'
 
 // === SOAP PROCESSING ===
 export { SOAPResolver } from './soap/SOAPResolver'
@@ -34,7 +34,12 @@ export { IterativeDiagnosticEngine } from './engine/IterativeDiagnosticEngine'
 export { AdditionalInfoService } from './services/AdditionalInfoService'
 
 // === MEDICAL TYPES ===
-export type { MedicalMessage, IterativeState } from './store/medicalChatSlice'
+export type { 
+  MedicalMessage,
+  ChatCore,
+  MedicalChatState
+} from './store/medicalChatSlice'
+
 export type { 
   MedicalCase, 
   SOAPData,
@@ -44,73 +49,30 @@ export type {
   DiagnosticResult 
 } from './types/medical'
 
-// === FASE 4: REDUX MÉDICO COMPLETO ===
-// Tipos
-export type { 
-  SubjectiveData, 
-  ObjectiveFindings, 
-  DifferentialDiagnosis, 
-  TreatmentPlan, 
-  SOAPStructure, 
-  PhysicianNote, 
-  Reminder, 
-  AuditLog, 
-  MedicalSession,
-  UrgencyLevel
-} from './store/medicalChatSlice'
-
-// Acciones Redux
+// === ACCIONES MULTINÚCLEO ===
 export { 
-  updateSOAPStructure,
-  updateSOAPSection,
-  updateUrgencyLevel,
-  addPhysicianNote,
-  updatePhysicianNote,
-  addReminder,
-  updateReminder,
-  completeReminder,
-  resetCurrentCase,
-  resetMedicalSession
+  addDashboardMessage,
+  addAssistantMessage,
+  addInferenceMessage,
+  setDashboardLoading,
+  setAssistantLoading,
+  clearDashboardMessages,
+  clearAssistantMessages,
+  startNewSession,
+  setError,
+  clearError
 } from './store/medicalChatSlice'
 
 // === STREAMING ===
 export { StreamingService } from './streaming'
 export type { StreamingChunk } from './streaming'
 
-// === AUTOCOMPLETADO MÉDICO ===
-export { MedicalAutocompletionService } from './services/MedicalAutocompletionService'
-export type { AutocompletionSuggestion, AutocompletionRequest, AutocompletionResult } from './services/MedicalAutocompletionService'
+// === COGNITIVE SERVICES ===
+export { AGENT_REGISTRY } from './services/agentRegistry'
 
-// === MEDICAL PROMPT ORCHESTRATOR ===
-export { medicalOrchestrator, MedicalPromptOrchestrator } from './services/MedicalPromptOrchestrator'
-export type { PatientFormData, OrchestrationResult } from './services/MedicalPromptOrchestrator'
+// === INTELLIGENT CHAT SERVICE ===
+export { IntelligentMedicalChat } from './services/IntelligentMedicalChat'
+export type { IntelligentChatResponse } from './services/IntelligentMedicalChat'
 
-// === CONFIGURACIÓN RÁPIDA ===
-export interface CognitiveCoreConfig {
-  claudeApiKey?: string
-  environment?: 'development' | 'production'
-  locale?: 'es' | 'en'
-  medicalDomain?: boolean
-}
-
-/**
- * Inicialización rápida del Cognitive Core
- */
-export function initializeCognitiveCore(config: CognitiveCoreConfig = {}) {
-  const {
-    claudeApiKey,
-    environment = 'development',
-    locale = 'es',
-    medicalDomain = true
-  } = config
-  
-  return {
-    decisionEngine: decisionEngineService,
-    config: {
-      environment,
-      locale,
-      medicalDomain,
-      hasClaudeApi: Boolean(claudeApiKey)
-    }
-  }
-}
+// === ADDITIONAL INFO SERVICE ===
+export type { InfoRequestMessage } from './services/AdditionalInfoService'
