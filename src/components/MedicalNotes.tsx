@@ -242,7 +242,7 @@ export const MedicalNotes = () => {
   const dispatch = useDispatch()
   // ⚡ ESTADO REAL MULTINÚCLEO - Mock Data COMPLETAMENTE ELIMINADO
   const realPhysicianNotes = useSelector(selectPhysicianNotes)
-  const isLoading = useSelector((state: RootState) => 
+  const isLoading = useSelector((state: RootState) =>
     Object.values(state.medicalChat.cores).some(core => core.isLoading)
   )
   const error = useSelector((state: RootState) => state.medicalChat.sharedState.error)
@@ -251,29 +251,39 @@ export const MedicalNotes = () => {
     'all' | 'clinical' | 'administrative' | 'legal' | 'observation'
   >('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'priority'>('newest')
-  
+
   // Transformar datos reales del selector a formato legacy para compatibilidad
   const notes: PhysicianNote[] = realPhysicianNotes.map(note => ({
     id: note.id,
-    type: note.category === 'diagnosis' ? 'clinical' :
-          note.category === 'treatment' ? 'clinical' :
-          note.category === 'observation' ? 'observation' :
-          note.category === 'plan' ? 'administrative' :
-          'clinical' as 'clinical' | 'administrative' | 'legal' | 'observation',
+    type:
+      note.category === 'diagnosis'
+        ? 'clinical'
+        : note.category === 'treatment'
+          ? 'clinical'
+          : note.category === 'observation'
+            ? 'observation'
+            : note.category === 'plan'
+              ? 'administrative'
+              : ('clinical' as 'clinical' | 'administrative' | 'legal' | 'observation'),
     content: note.content,
     category: note.title || note.category,
-    priority: note.confidence > 0.9 ? 'high' :
-              note.confidence > 0.7 ? 'medium' :
-              note.confidence > 0.5 ? 'low' : 'critical',
+    priority:
+      note.confidence > 0.9
+        ? 'high'
+        : note.confidence > 0.7
+          ? 'medium'
+          : note.confidence > 0.5
+            ? 'low'
+            : 'critical',
     timestamp: note.createdAt,
     physicianId: 'sistema-multinucleo',
-    physicianName: 'Sistema Multinúcleo IA'
+    physicianName: 'Sistema Multinúcleo IA',
   }))
-  
+
   // Debug real notes (no fake data)
   console.log('📝 MedicalNotes DEBUG - Real Notes:', realPhysicianNotes)
   console.log('📝 MedicalNotes DEBUG - Transformed Notes:', notes)
-  
+
   // Estados de error reales
   if (error) {
     return (
@@ -305,9 +315,7 @@ export const MedicalNotes = () => {
     })
 
   const notesCount = notes.length
-  const urgentCount = notes.filter(
-    n => n.priority === 'critical' || n.priority === 'high'
-  ).length
+  const urgentCount = notes.filter(n => n.priority === 'critical' || n.priority === 'high').length
 
   return (
     <div className="space-y-6">
@@ -386,30 +394,30 @@ export const MedicalNotes = () => {
           <p className="text-slate-400 text-sm">Cargando notas médicas del sistema...</p>
         </div>
       )}
-      
+
       {/* Notes List */}
       {!isLoading && (
-      <div className="space-y-3">
-        {filteredNotes.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">📝</span>
+        <div className="space-y-3">
+          {filteredNotes.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">📝</span>
+              </div>
+              <h3 className="text-slate-200 font-semibold mb-2">
+                {filter === 'all' ? 'No hay notas médicas' : `No hay notas ${filter}`}
+              </h3>
+              <p className="text-slate-400 text-sm">
+                {filter === 'all'
+                  ? realPhysicianNotes.length === 0
+                    ? 'No se han generado notas médicas de los análisis del sistema'
+                    : 'Agrega la primera nota médica para comenzar el registro'
+                  : 'No se encontraron notas en esta categoría'}
+              </p>
             </div>
-            <h3 className="text-slate-200 font-semibold mb-2">
-              {filter === 'all' ? 'No hay notas médicas' : `No hay notas ${filter}`}
-            </h3>
-            <p className="text-slate-400 text-sm">
-              {filter === 'all'
-                ? realPhysicianNotes.length === 0
-                  ? 'No se han generado notas médicas de los análisis del sistema'
-                  : 'Agrega la primera nota médica para comenzar el registro'
-                : 'No se encontraron notas en esta categoría'}
-            </p>
-          </div>
-        ) : (
-          filteredNotes.map(note => <NoteCard key={note.id} note={note} />)
-        )}
-      </div>
+          ) : (
+            filteredNotes.map(note => <NoteCard key={note.id} note={note} />)
+          )}
+        </div>
       )}
 
       {/* Trazabilidad Legal Footer */}

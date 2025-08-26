@@ -122,7 +122,7 @@ const DiagnosticCycleDisplay = ({ cycle, isActive, isCompleted }: DiagnosticCycl
 export const IterativeDiagnosticProgress = () => {
   // ⚡ ESTADO REAL MULTINÚCLEO - Mock Data COMPLETAMENTE ELIMINADO
   const diagnosticProgress = useSelector(selectDiagnosticProgress)
-  const isLoading = useSelector((state: RootState) => 
+  const isLoading = useSelector((state: RootState) =>
     Object.values(state.medicalChat.cores).some(core => core.isLoading)
   )
   const error = useSelector((state: RootState) => state.medicalChat.sharedState.error)
@@ -147,8 +147,14 @@ export const IterativeDiagnosticProgress = () => {
 
   // Debug real progress (no fake data)
   console.log('🔬 IterativeDiagnosticProgress DEBUG - Real Progress:', diagnosticProgress)
-  console.log('🔬 IterativeDiagnosticProgress DEBUG - Current Phase:', diagnosticProgress.currentPhase)
-  console.log('🔬 IterativeDiagnosticProgress DEBUG - Phases Completed:', diagnosticProgress.phasesCompleted)
+  console.log(
+    '🔬 IterativeDiagnosticProgress DEBUG - Current Phase:',
+    diagnosticProgress.currentPhase
+  )
+  console.log(
+    '🔬 IterativeDiagnosticProgress DEBUG - Phases Completed:',
+    diagnosticProgress.phasesCompleted
+  )
 
   return (
     <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl p-4 border border-slate-600/30 mb-4">
@@ -196,11 +202,14 @@ export const IterativeDiagnosticProgress = () => {
             qualityScore: diagnosticProgress.completionPercentage,
             analysis: {
               diagnostico_principal: `Fase ${phase} completada`,
-              subjetivo: `Progreso en ${diagnosticProgress.currentPhase}`
+              subjetivo: `Progreso en ${diagnosticProgress.currentPhase}`,
             },
-            insights: [`Fase ${phase} procesada con éxito`, `Avanzando hacia ${diagnosticProgress.currentPhase}`]
+            insights: [
+              `Fase ${phase} procesada con éxito`,
+              `Avanzando hacia ${diagnosticProgress.currentPhase}`,
+            ],
           }
-          
+
           return (
             <DiagnosticCycleDisplay
               key={cycleData.id}
@@ -224,12 +233,14 @@ export const IterativeDiagnosticProgress = () => {
               qualityScore: diagnosticProgress.completionPercentage,
               analysis: {
                 diagnostico_principal: `Procesando ${diagnosticProgress.currentPhase}`,
-                subjetivo: diagnosticProgress.isStalled ? 'Proceso estancado' : 'En progreso activo'
+                subjetivo: diagnosticProgress.isStalled
+                  ? 'Proceso estancado'
+                  : 'En progreso activo',
               },
               insights: [
                 `Fase actual: ${diagnosticProgress.currentPhase}`,
-                `Tiempo estimado: ${Math.round(diagnosticProgress.estimatedTimeRemaining / 1000)}s`
-              ]
+                `Tiempo estimado: ${Math.round(diagnosticProgress.estimatedTimeRemaining / 1000)}s`,
+              ],
             }}
             isActive={true}
             isCompleted={false}
@@ -237,8 +248,8 @@ export const IterativeDiagnosticProgress = () => {
         )}
 
         {/* Future cycles placeholder */}
-        {Array.from({ 
-          length: Math.max(0, diagnosticProgress.totalCycles - diagnosticProgress.currentCycle) 
+        {Array.from({
+          length: Math.max(0, diagnosticProgress.totalCycles - diagnosticProgress.currentCycle),
         }).map((_, index) => (
           <div
             key={`future-${index}`}
@@ -276,7 +287,9 @@ export const IterativeDiagnosticProgress = () => {
         <div className="mt-3 bg-yellow-950/30 border border-yellow-600/30 rounded-lg p-3">
           <div className="flex items-center space-x-2">
             <span className="text-yellow-400">⚠️</span>
-            <p className="text-xs text-yellow-300">El progreso diagnóstico parece haberse estancado</p>
+            <p className="text-xs text-yellow-300">
+              El progreso diagnóstico parece haberse estancado
+            </p>
           </div>
         </div>
       )}

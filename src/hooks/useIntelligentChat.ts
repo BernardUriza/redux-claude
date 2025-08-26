@@ -85,14 +85,7 @@ export const useIntelligentChat = (): UseIntelligentChatReturn => {
       addAssistantMessage: addAssistantMessageAction,
       setLoading: setLoadingAction,
     }),
-    [
-      messages,
-      isLoading,
-      sessionId,
-      addUserMessage,
-      addAssistantMessageAction,
-      setLoadingAction,
-    ]
+    [messages, isLoading, sessionId, addUserMessage, addAssistantMessageAction, setLoadingAction]
   )
 }
 

@@ -7,10 +7,10 @@ import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import ReactMarkdown from 'react-markdown'
 import type { RootState } from '@redux-claude/cognitive-core'
-import { 
+import {
   selectCurrentSOAPAnalysis,
   updateSOAPSection,
-  type SOAPAnalysis 
+  type SOAPAnalysis,
 } from '@redux-claude/cognitive-core/src/store/selectors'
 
 interface SOAPSectionProps {
@@ -320,18 +320,20 @@ export const SOAPDisplay = () => {
   ) => {
     // Mapear nombres españoles a ingleses para el slice
     const sectionMap = {
-      'subjetivo': 'subjective' as const,
-      'objetivo': 'objective' as const,
-      'analisis': 'assessment' as const,
-      'plan': 'plan' as const
+      subjetivo: 'subjective' as const,
+      objetivo: 'objective' as const,
+      analisis: 'assessment' as const,
+      plan: 'plan' as const,
     }
-    
+
     const englishSection = sectionMap[section]
-    dispatch(updateSOAPSection({ 
-      section: englishSection, 
-      content: data, 
-      confidence: 0.8 
-    }))
+    dispatch(
+      updateSOAPSection({
+        section: englishSection,
+        content: data,
+        confidence: 0.8,
+      })
+    )
   }
 
   // Función para generar contenido markdown del SOAP
@@ -446,9 +448,7 @@ export const SOAPDisplay = () => {
           <span className="text-2xl">🧠</span>
         </div>
         <h3 className="text-slate-200 font-semibold mb-2">Extrayendo análisis SOAP...</h3>
-        <p className="text-slate-400 text-sm">
-          Procesando conversación médica con IA multinúcleo
-        </p>
+        <p className="text-slate-400 text-sm">Procesando conversación médica con IA multinúcleo</p>
       </div>
     )
   }
@@ -481,27 +481,35 @@ export const SOAPDisplay = () => {
 
   // Usar datos reales del selector multinúcleo
   const soap = {
-    subjetivo: soapAnalysis.subjective ? { 
-      chiefComplaint: soapAnalysis.subjective.split('\n')[0],
-      presentIllness: soapAnalysis.subjective,
-      medicalHistory: [],
-      familyHistory: []
-    } : null,
-    objetivo: soapAnalysis.objective ? {
-      vitalSigns: {},
-      physicalExam: { general: soapAnalysis.objective }
-    } : null,
-    analisis: soapAnalysis.assessment ? {
-      primaryDiagnosis: soapAnalysis.assessment,
-      confidence: soapAnalysis.confidence,
-      differentials: [],
-      reasoning: soapAnalysis.assessment
-    } : null,
-    plan: soapAnalysis.plan ? {
-      immediate: soapAnalysis.plan.split('\n').filter(line => line.trim()),
-      medications: [],
-      followUp: null
-    } : null
+    subjetivo: soapAnalysis.subjective
+      ? {
+          chiefComplaint: soapAnalysis.subjective.split('\n')[0],
+          presentIllness: soapAnalysis.subjective,
+          medicalHistory: [],
+          familyHistory: [],
+        }
+      : null,
+    objetivo: soapAnalysis.objective
+      ? {
+          vitalSigns: {},
+          physicalExam: { general: soapAnalysis.objective },
+        }
+      : null,
+    analisis: soapAnalysis.assessment
+      ? {
+          primaryDiagnosis: soapAnalysis.assessment,
+          confidence: soapAnalysis.confidence,
+          differentials: [],
+          reasoning: soapAnalysis.assessment,
+        }
+      : null,
+    plan: soapAnalysis.plan
+      ? {
+          immediate: soapAnalysis.plan.split('\n').filter(line => line.trim()),
+          medications: [],
+          followUp: null,
+        }
+      : null,
   }
 
   return (
@@ -536,28 +544,37 @@ export const SOAPDisplay = () => {
             </div>
             <div className="text-sm text-slate-300">
               Confianza:{' '}
-              <span className={`font-semibold ${
-                (soapAnalysis.confidence || 0) > 0.8 ? 'text-green-400' :
-                (soapAnalysis.confidence || 0) > 0.6 ? 'text-yellow-400' : 'text-red-400'
-              }`}>
+              <span
+                className={`font-semibold ${
+                  (soapAnalysis.confidence || 0) > 0.8
+                    ? 'text-green-400'
+                    : (soapAnalysis.confidence || 0) > 0.6
+                      ? 'text-yellow-400'
+                      : 'text-red-400'
+                }`}
+              >
                 {Math.round((soapAnalysis.confidence || 0) * 100)}%
               </span>
             </div>
             <div className="text-sm text-slate-300">
               Completitud:{' '}
-              <span className={`font-semibold ${
-                soapAnalysis.completionPercentage > 80 ? 'text-green-400' :
-                soapAnalysis.completionPercentage > 50 ? 'text-yellow-400' : 'text-red-400'
-              }`}>
+              <span
+                className={`font-semibold ${
+                  soapAnalysis.completionPercentage > 80
+                    ? 'text-green-400'
+                    : soapAnalysis.completionPercentage > 50
+                      ? 'text-yellow-400'
+                      : 'text-red-400'
+                }`}
+              >
                 {Math.round(soapAnalysis.completionPercentage)}%
               </span>
             </div>
           </div>
         </div>
         <div className="text-sm text-slate-400">
-          Actualizado: {new Date(soapAnalysis.lastUpdated).toLocaleString('es-ES')} | 
-          Sesión: {soapAnalysis.sessionId} |
-          Mensajes procesados: {soapAnalysis.totalMessages}
+          Actualizado: {new Date(soapAnalysis.lastUpdated).toLocaleString('es-ES')} | Sesión:{' '}
+          {soapAnalysis.sessionId} | Mensajes procesados: {soapAnalysis.totalMessages}
         </div>
       </div>
 

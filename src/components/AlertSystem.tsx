@@ -17,7 +17,7 @@ export const AlertSystem: React.FC<AlertSystemProps> = ({
   maxVisible = 5,
   autoHide = true,
   hideDelay = 5000,
-  position = 'top-right'
+  position = 'top-right',
 }) => {
   const [alerts, setAlerts] = useState<PerformanceAlert[]>([])
   const [visibleAlerts, setVisibleAlerts] = useState<Set<string>>(new Set())
@@ -41,8 +41,9 @@ export const AlertSystem: React.FC<AlertSystemProps> = ({
 
   // 🎨 ESTILOS POR TIPO DE ALERTA
   const getAlertStyles = (alert: PerformanceAlert) => {
-    const baseClasses = 'rounded-lg p-4 shadow-lg backdrop-blur-sm border transition-all duration-300 transform'
-    
+    const baseClasses =
+      'rounded-lg p-4 shadow-lg backdrop-blur-sm border transition-all duration-300 transform'
+
     switch (alert.type) {
       case 'error':
         return `${baseClasses} bg-red-900/90 border-red-500/50 text-red-100`
@@ -58,7 +59,7 @@ export const AlertSystem: React.FC<AlertSystemProps> = ({
   // 🎯 ICONOS POR CATEGORÍA
   const getAlertIcon = (alert: PerformanceAlert) => {
     const iconClasses = 'w-5 h-5 flex-shrink-0'
-    
+
     switch (alert.category) {
       case 'performance':
         return <span className={`${iconClasses} text-yellow-400`}>⚡</span>
@@ -76,26 +77,29 @@ export const AlertSystem: React.FC<AlertSystemProps> = ({
   }
 
   // 🚨 MANEJAR NUEVAS ALERTAS
-  const handleNewAlert = useCallback((alert: PerformanceAlert) => {
-    setAlerts(prev => {
-      const updated = [alert, ...prev.filter(a => a.id !== alert.id)]
-      return updated.slice(0, maxVisible * 2) // Mantener buffer para rotación
-    })
+  const handleNewAlert = useCallback(
+    (alert: PerformanceAlert) => {
+      setAlerts(prev => {
+        const updated = [alert, ...prev.filter(a => a.id !== alert.id)]
+        return updated.slice(0, maxVisible * 2) // Mantener buffer para rotación
+      })
 
-    setVisibleAlerts(prev => new Set([...prev, alert.id]))
+      setVisibleAlerts(prev => new Set([...prev, alert.id]))
 
-    // Auto-hide si está habilitado
-    if (autoHide && alert.type !== 'error') {
-      setTimeout(() => {
-        hideAlert(alert.id)
-      }, hideDelay)
-    }
+      // Auto-hide si está habilitado
+      if (autoHide && alert.type !== 'error') {
+        setTimeout(() => {
+          hideAlert(alert.id)
+        }, hideDelay)
+      }
 
-    // Sonido de notificación (opcional)
-    if (alert.severity === 'high' || alert.severity === 'critical') {
-      playNotificationSound(alert.type)
-    }
-  }, [maxVisible, autoHide, hideDelay])
+      // Sonido de notificación (opcional)
+      if (alert.severity === 'high' || alert.severity === 'critical') {
+        playNotificationSound(alert.type)
+      }
+    },
+    [maxVisible, autoHide, hideDelay]
+  )
 
   // 🔇 OCULTAR ALERTA
   const hideAlert = useCallback((alertId: string) => {
@@ -124,9 +128,9 @@ export const AlertSystem: React.FC<AlertSystemProps> = ({
 
         // Frecuencias por tipo
         const frequencies = {
-          error: 440,    // A4 - Serio
-          warning: 660,  // E5 - Atención
-          info: 880     // A5 - Suave
+          error: 440, // A4 - Serio
+          warning: 660, // E5 - Atención
+          info: 880, // A5 - Suave
         }
 
         oscillator.frequency.value = frequencies[type]
@@ -142,10 +146,13 @@ export const AlertSystem: React.FC<AlertSystemProps> = ({
   }
 
   // ✅ RESOLVER ALERTA
-  const resolveAlert = useCallback((alertId: string) => {
-    medicalSystemMonitor.resolveAlert(alertId)
-    hideAlert(alertId)
-  }, [hideAlert])
+  const resolveAlert = useCallback(
+    (alertId: string) => {
+      medicalSystemMonitor.resolveAlert(alertId)
+      hideAlert(alertId)
+    },
+    [hideAlert]
+  )
 
   // 🎭 EFECTOS
   useEffect(() => {
@@ -166,7 +173,7 @@ export const AlertSystem: React.FC<AlertSystemProps> = ({
   const formatTimestamp = (timestamp: number) => {
     const now = Date.now()
     const diff = now - timestamp
-    
+
     if (diff < 60000) return 'Ahora'
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m`
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`
@@ -174,9 +181,7 @@ export const AlertSystem: React.FC<AlertSystemProps> = ({
   }
 
   // 🎨 RENDERIZADO
-  const visibleAlertsList = alerts
-    .filter(alert => visibleAlerts.has(alert.id))
-    .slice(0, maxVisible)
+  const visibleAlertsList = alerts.filter(alert => visibleAlerts.has(alert.id)).slice(0, maxVisible)
 
   if (visibleAlertsList.length === 0) return null
 
@@ -186,32 +191,31 @@ export const AlertSystem: React.FC<AlertSystemProps> = ({
         <div
           key={alert.id}
           className={`${getAlertStyles(alert)} ${
-            visibleAlerts.has(alert.id) 
-              ? 'opacity-100 translate-x-0' 
-              : 'opacity-0 translate-x-full'
+            visibleAlerts.has(alert.id) ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full'
           }`}
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
               {getAlertIcon(alert)}
-              <span className="font-semibold text-sm capitalize">
-                {alert.category}
-              </span>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                alert.severity === 'critical' ? 'bg-red-600 text-white' :
-                alert.severity === 'high' ? 'bg-orange-600 text-white' :
-                alert.severity === 'medium' ? 'bg-yellow-600 text-black' :
-                'bg-green-600 text-white'
-              }`}>
+              <span className="font-semibold text-sm capitalize">{alert.category}</span>
+              <span
+                className={`text-xs px-2 py-1 rounded-full ${
+                  alert.severity === 'critical'
+                    ? 'bg-red-600 text-white'
+                    : alert.severity === 'high'
+                      ? 'bg-orange-600 text-white'
+                      : alert.severity === 'medium'
+                        ? 'bg-yellow-600 text-black'
+                        : 'bg-green-600 text-white'
+                }`}
+              >
                 {alert.severity}
               </span>
             </div>
-            
+
             <div className="flex items-center space-x-1">
-              <span className="text-xs opacity-60">
-                {formatTimestamp(alert.timestamp)}
-              </span>
+              <span className="text-xs opacity-60">{formatTimestamp(alert.timestamp)}</span>
               <button
                 onClick={() => hideAlert(alert.id)}
                 className="ml-2 opacity-60 hover:opacity-100 transition-opacity"
@@ -222,9 +226,7 @@ export const AlertSystem: React.FC<AlertSystemProps> = ({
           </div>
 
           {/* Mensaje */}
-          <p className="text-sm leading-relaxed mb-3">
-            {alert.message}
-          </p>
+          <p className="text-sm leading-relaxed mb-3">{alert.message}</p>
 
           {/* Metadata (si existe) */}
           {alert.metadata && (
@@ -308,9 +310,9 @@ export const useAlertSystem = () => {
         message,
         timestamp: Date.now(),
         severity: 'low',
-        resolved: false
+        resolved: false,
       } as PerformanceAlert)
-    }
+    },
   }
 }
 

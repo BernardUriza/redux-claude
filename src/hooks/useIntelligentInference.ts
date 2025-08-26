@@ -8,9 +8,7 @@ import {
   MedicalInference,
   ChatAnalysisRequest,
 } from '../../packages/cognitive-core/src/services/IntelligentMedicalChat'
-import type {
-  MedicalMessage,
-} from '../../packages/cognitive-core/src/store/medicalChatSlice'
+import type { MedicalMessage } from '../../packages/cognitive-core/src/store/medicalChatSlice'
 
 export interface UseIntelligentInferenceReturn {
   // Estado

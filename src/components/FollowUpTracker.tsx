@@ -321,7 +321,6 @@ export const FollowUpTracker = () => {
           <span>Agregar</span>
         </button>
       </div>
-
       {/* Filter Tabs */}
       <div className="flex space-x-1 bg-slate-800/50 rounded-lg p-1">
         {[
@@ -346,7 +345,6 @@ export const FollowUpTracker = () => {
           </button>
         ))}
       </div>
-
       {/* Reminders List */}
       <div className="space-y-3">
         {filteredReminders.length === 0 ? (
@@ -373,9 +371,7 @@ export const FollowUpTracker = () => {
           filteredReminders.map(reminder => <ReminderCard key={reminder.id} reminder={reminder} />)
         )}
       </div>
-      )
-
-      {/* Add Reminder Modal */}
+      ){/* Add Reminder Modal */}
       <AddReminderModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}

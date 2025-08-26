@@ -8,14 +8,14 @@ import { EventEmitter } from 'events'
 // 📊 INTERFACES DE MONITOREO
 export interface SystemHealthMetrics {
   timestamp: number
-  cpu: number                    // % uso simulado
-  memory: number                 // % uso simulado  
-  selectorPerformance: number    // ms promedio de selectores
-  cacheHitRate: number          // % de cache hits
-  componentsLoaded: number      // Cantidad de componentes lazy cargados
-  errorsCount: number           // Errores en última hora
-  warningsCount: number         // Warnings en última hora
-  medicalDataQuality: number    // Calidad de datos médicos (0-100)
+  cpu: number // % uso simulado
+  memory: number // % uso simulado
+  selectorPerformance: number // ms promedio de selectores
+  cacheHitRate: number // % de cache hits
+  componentsLoaded: number // Cantidad de componentes lazy cargados
+  errorsCount: number // Errores en última hora
+  warningsCount: number // Warnings en última hora
+  medicalDataQuality: number // Calidad de datos médicos (0-100)
 }
 
 export interface PerformanceAlert {
@@ -51,24 +51,24 @@ export class MedicalSystemMonitor extends EventEmitter {
 
   // 📊 CONFIGURACIÓN
   private readonly config = {
-    updateInterval: 5000,        // 5 segundos
-    maxAlerts: 100,             // Máximo alertas almacenadas
+    updateInterval: 5000, // 5 segundos
+    maxAlerts: 100, // Máximo alertas almacenadas
     performanceThresholds: {
-      selectorLatency: 50,      // ms máximo por selector
-      cacheHitRate: 80,         // % mínimo de cache hits
-      memoryUsage: 80,          // % máximo memoria
-      errorRate: 5,             // máximo errores por hora
+      selectorLatency: 50, // ms máximo por selector
+      cacheHitRate: 80, // % mínimo de cache hits
+      memoryUsage: 80, // % máximo memoria
+      errorRate: 5, // máximo errores por hora
     },
     alertRetention: 24 * 60 * 60 * 1000, // 24 horas
   }
 
   constructor() {
     super()
-    
+
     // Inicializar métricas
     this.metrics = this.getInitialMetrics()
     this.medicalMetrics = this.getInitialMedicalMetrics()
-    
+
     // Auto-start en desarrollo
     if (process.env.NODE_ENV === 'development') {
       this.start()
@@ -108,7 +108,7 @@ export class MedicalSystemMonitor extends EventEmitter {
   // 📊 ACTUALIZAR MÉTRICAS
   private updateMetrics(): void {
     const now = Date.now()
-    
+
     // Simular métricas del sistema
     this.metrics = {
       timestamp: now,
@@ -119,14 +119,15 @@ export class MedicalSystemMonitor extends EventEmitter {
       componentsLoaded: this.getLoadedComponentsCount(),
       errorsCount: this.getErrorsInLastHour(),
       warningsCount: this.getWarningsInLastHour(),
-      medicalDataQuality: this.calculateMedicalDataQuality()
+      medicalDataQuality: this.calculateMedicalDataQuality(),
     }
 
     // Actualizar métricas médicas
     this.medicalMetrics = {
       ...this.medicalMetrics,
-      totalSelectorsExecuted: this.medicalMetrics.totalSelectorsExecuted + Math.floor(Math.random() * 5),
-      lastProcessingTime: now
+      totalSelectorsExecuted:
+        this.medicalMetrics.totalSelectorsExecuted + Math.floor(Math.random() * 5),
+      lastProcessingTime: now,
     }
   }
 
@@ -138,10 +139,13 @@ export class MedicalSystemMonitor extends EventEmitter {
     if (this.metrics.selectorPerformance > performanceThresholds.selectorLatency) {
       this.createAlert(
         'warning',
-        'performance', 
+        'performance',
         `Latencia de selectores alta: ${this.metrics.selectorPerformance}ms`,
         'medium',
-        { latency: this.metrics.selectorPerformance, threshold: performanceThresholds.selectorLatency }
+        {
+          latency: this.metrics.selectorPerformance,
+          threshold: performanceThresholds.selectorLatency,
+        }
       )
     }
 
@@ -158,13 +162,10 @@ export class MedicalSystemMonitor extends EventEmitter {
 
     // Alerta de uso de memoria alto
     if (this.metrics.memory > performanceThresholds.memoryUsage) {
-      this.createAlert(
-        'error',
-        'memory',
-        `Uso de memoria alto: ${this.metrics.memory}%`,
-        'high',
-        { memoryUsage: this.metrics.memory, threshold: performanceThresholds.memoryUsage }
-      )
+      this.createAlert('error', 'memory', `Uso de memoria alto: ${this.metrics.memory}%`, 'high', {
+        memoryUsage: this.metrics.memory,
+        threshold: performanceThresholds.memoryUsage,
+      })
     }
 
     // Alerta de calidad de datos médicos baja
@@ -195,11 +196,11 @@ export class MedicalSystemMonitor extends EventEmitter {
       timestamp: Date.now(),
       severity,
       resolved: false,
-      metadata
+      metadata,
     }
 
     this.alerts.unshift(alert) // Agregar al inicio
-    
+
     // Mantener solo las últimas alertas
     if (this.alerts.length > this.config.maxAlerts) {
       this.alerts = this.alerts.slice(0, this.config.maxAlerts)
@@ -218,9 +219,9 @@ export class MedicalSystemMonitor extends EventEmitter {
   private cleanupOldAlerts(): void {
     const cutoffTime = Date.now() - this.config.alertRetention
     const initialLength = this.alerts.length
-    
+
     this.alerts = this.alerts.filter(alert => alert.timestamp > cutoffTime)
-    
+
     if (this.alerts.length !== initialLength) {
       console.log(`🧹 Limpiadas ${initialLength - this.alerts.length} alertas antiguas`)
     }
@@ -235,7 +236,7 @@ export class MedicalSystemMonitor extends EventEmitter {
 
   private simulateMemoryUsage(): number {
     const componentsLoaded = this.getLoadedComponentsCount()
-    const base = 30 + (componentsLoaded * 5) // Base + componentes
+    const base = 30 + componentsLoaded * 5 // Base + componentes
     const variance = Math.random() * 15 - 7.5 // ±7.5%
     return Math.min(Math.max(Math.round(base + variance), 0), 100)
   }
@@ -270,7 +271,7 @@ export class MedicalSystemMonitor extends EventEmitter {
   private calculateMedicalDataQuality(): number {
     // Calidad basada en completitud y confianza de datos
     const completeness = 85 + Math.random() * 12 // 85-97%
-    const confidence = 80 + Math.random() * 15   // 80-95%
+    const confidence = 80 + Math.random() * 15 // 80-95%
     return Math.round((completeness + confidence) / 2)
   }
 
@@ -285,7 +286,7 @@ export class MedicalSystemMonitor extends EventEmitter {
       componentsLoaded: 0,
       errorsCount: 0,
       warningsCount: 0,
-      medicalDataQuality: 0
+      medicalDataQuality: 0,
     }
   }
 
@@ -298,7 +299,7 @@ export class MedicalSystemMonitor extends EventEmitter {
       notesLatency: 0,
       totalSelectorsExecuted: 0,
       averageConfidence: 0,
-      lastProcessingTime: Date.now()
+      lastProcessingTime: Date.now(),
     }
   }
 
@@ -309,14 +310,12 @@ export class MedicalSystemMonitor extends EventEmitter {
       medicalMetrics: this.medicalMetrics,
       alerts: this.alerts.slice(0, 20), // Últimas 20 alertas
       uptime: Date.now() - this.startTime,
-      isRunning: this.isRunning
+      isRunning: this.isRunning,
     }
   }
 
   getAlerts(category?: PerformanceAlert['category']): PerformanceAlert[] {
-    return category 
-      ? this.alerts.filter(alert => alert.category === category)
-      : this.alerts
+    return category ? this.alerts.filter(alert => alert.category === category) : this.alerts
   }
 
   resolveAlert(alertId: string): boolean {
@@ -332,7 +331,7 @@ export class MedicalSystemMonitor extends EventEmitter {
   // 📈 MÉTRICAS AVANZADAS
   getSystemHealth(): 'excellent' | 'good' | 'warning' | 'critical' {
     const { cpu, memory, selectorPerformance, cacheHitRate, medicalDataQuality } = this.metrics
-    
+
     // Scoring system
     let score = 100
     if (cpu > 80) score -= 20
@@ -340,7 +339,7 @@ export class MedicalSystemMonitor extends EventEmitter {
     if (selectorPerformance > 50) score -= 15
     if (cacheHitRate < 80) score -= 20
     if (medicalDataQuality < 70) score -= 20
-    
+
     if (score >= 90) return 'excellent'
     if (score >= 70) return 'good'
     if (score >= 50) return 'warning'
@@ -351,7 +350,7 @@ export class MedicalSystemMonitor extends EventEmitter {
   recordSelectorLatency(selectorName: string, latency: number): void {
     const key = `${selectorName}Latency` as keyof MedicalDataMetrics
     if (key in this.medicalMetrics) {
-      (this.medicalMetrics as any)[key] = latency
+      ;(this.medicalMetrics as any)[key] = latency
     }
   }
 
@@ -366,6 +365,6 @@ export const medicalSystemMonitor = new MedicalSystemMonitor()
 // 🎭 AUTO-START EN DESARROLLO
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   // Hacer disponible globalmente para debug
-  (window as any).medicalMonitor = medicalSystemMonitor
+  ;(window as any).medicalMonitor = medicalSystemMonitor
   console.log('🔍 Medical Monitor disponible como window.medicalMonitor')
 }

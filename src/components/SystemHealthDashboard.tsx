@@ -4,7 +4,11 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { medicalSystemMonitor, SystemHealthMetrics, PerformanceAlert } from '../monitoring/MedicalSystemMonitor'
+import {
+  medicalSystemMonitor,
+  SystemHealthMetrics,
+  PerformanceAlert,
+} from '../monitoring/MedicalSystemMonitor'
 
 interface HealthIndicatorProps {
   title: string
@@ -23,14 +27,12 @@ const HealthIndicator: React.FC<HealthIndicatorProps> = ({
   threshold = 80,
   invertThreshold = false,
   icon = '📊',
-  color
+  color,
 }) => {
   const getHealthColor = () => {
     if (color) return color
-    
-    const isHealthy = invertThreshold 
-      ? value >= threshold 
-      : value <= threshold
+
+    const isHealthy = invertThreshold ? value >= threshold : value <= threshold
 
     if (isHealthy) return 'from-emerald-500 to-green-500'
     if (value > threshold * 0.9) return 'from-yellow-500 to-orange-500'
@@ -38,9 +40,7 @@ const HealthIndicator: React.FC<HealthIndicatorProps> = ({
   }
 
   const getHealthStatus = () => {
-    const isHealthy = invertThreshold 
-      ? value >= threshold 
-      : value <= threshold
+    const isHealthy = invertThreshold ? value >= threshold : value <= threshold
 
     if (isHealthy) return '✅'
     if (value > threshold * 0.9) return '⚠️'
@@ -56,13 +56,15 @@ const HealthIndicator: React.FC<HealthIndicatorProps> = ({
         </div>
         <span className="text-lg">{getHealthStatus()}</span>
       </div>
-      
+
       <div className="mb-3">
         <div className="text-2xl font-bold text-white">
-          {typeof value === 'number' ? Math.round(value * 10) / 10 : value}{unit}
+          {typeof value === 'number' ? Math.round(value * 10) / 10 : value}
+          {unit}
         </div>
         <div className="text-xs text-slate-400">
-          Umbral: {threshold}{unit}
+          Umbral: {threshold}
+          {unit}
         </div>
       </div>
 
@@ -91,7 +93,7 @@ const AlertSummary: React.FC<AlertSummaryProps> = ({ alerts }) => {
       warning: 0,
       info: 0,
       resolved: 0,
-      unresolved: 0
+      unresolved: 0,
     }
 
     alerts.forEach(alert => {
@@ -175,14 +177,10 @@ const SystemUptime: React.FC<SystemUptimeProps> = ({ startTime }) => {
         <span className="text-lg">⏱️</span>
         <h3 className="text-lg font-semibold text-white">Sistema Activo</h3>
       </div>
-      
+
       <div className="text-center">
-        <div className="text-3xl font-bold text-emerald-400 mb-2">
-          {formatUptime(uptime)}
-        </div>
-        <div className="text-sm text-slate-400">
-          Desde: {new Date(startTime).toLocaleString()}
-        </div>
+        <div className="text-3xl font-bold text-emerald-400 mb-2">{formatUptime(uptime)}</div>
+        <div className="text-sm text-slate-400">Desde: {new Date(startTime).toLocaleString()}</div>
       </div>
 
       <div className="mt-4 flex items-center justify-center space-x-2">
@@ -197,7 +195,9 @@ export const SystemHealthDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<SystemHealthMetrics | null>(null)
   const [alerts, setAlerts] = useState<PerformanceAlert[]>([])
   const [isExpanded, setIsExpanded] = useState(false)
-  const [systemHealth, setSystemHealth] = useState<'excellent' | 'good' | 'warning' | 'critical'>('good')
+  const [systemHealth, setSystemHealth] = useState<'excellent' | 'good' | 'warning' | 'critical'>(
+    'good'
+  )
 
   // 📊 Actualizar métricas
   useEffect(() => {
@@ -226,21 +226,31 @@ export const SystemHealthDashboard: React.FC = () => {
   // 🎨 Color del sistema según salud
   const getSystemHealthColor = () => {
     switch (systemHealth) {
-      case 'excellent': return 'from-emerald-500 to-green-500'
-      case 'good': return 'from-blue-500 to-cyan-500'
-      case 'warning': return 'from-yellow-500 to-orange-500'
-      case 'critical': return 'from-red-500 to-pink-500'
-      default: return 'from-gray-500 to-slate-500'
+      case 'excellent':
+        return 'from-emerald-500 to-green-500'
+      case 'good':
+        return 'from-blue-500 to-cyan-500'
+      case 'warning':
+        return 'from-yellow-500 to-orange-500'
+      case 'critical':
+        return 'from-red-500 to-pink-500'
+      default:
+        return 'from-gray-500 to-slate-500'
     }
   }
 
   const getSystemHealthIcon = () => {
     switch (systemHealth) {
-      case 'excellent': return '🟢'
-      case 'good': return '🔵'
-      case 'warning': return '🟡'
-      case 'critical': return '🔴'
-      default: return '⚪'
+      case 'excellent':
+        return '🟢'
+      case 'good':
+        return '🔵'
+      case 'warning':
+        return '🟡'
+      case 'critical':
+        return '🔴'
+      default:
+        return '⚪'
     }
   }
 
@@ -261,7 +271,9 @@ export const SystemHealthDashboard: React.FC = () => {
       <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/40 rounded-xl p-6 border border-slate-600/40">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <div className={`w-10 h-10 bg-gradient-to-br ${getSystemHealthColor()} rounded-xl flex items-center justify-center text-xl shadow-lg`}>
+            <div
+              className={`w-10 h-10 bg-gradient-to-br ${getSystemHealthColor()} rounded-xl flex items-center justify-center text-xl shadow-lg`}
+            >
               {getSystemHealthIcon()}
             </div>
             <div>
@@ -269,13 +281,16 @@ export const SystemHealthDashboard: React.FC = () => {
               <p className="text-slate-400 text-sm capitalize">Estado: {systemHealth}</p>
             </div>
           </div>
-          
+
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
           >
             <span>{isExpanded ? 'Contraer' : 'Expandir'}</span>
-            <span className="transform transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+            <span
+              className="transform transition-transform duration-200"
+              style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            >
               ↓
             </span>
           </button>
@@ -288,22 +303,10 @@ export const SystemHealthDashboard: React.FC = () => {
 
       {/* Métricas Principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <HealthIndicator
-          title="Uso CPU"
-          value={metrics.cpu}
-          unit="%"
-          threshold={80}
-          icon="🖥️"
-        />
-        
-        <HealthIndicator
-          title="Memoria"
-          value={metrics.memory}
-          unit="%"
-          threshold={85}
-          icon="💾"
-        />
-        
+        <HealthIndicator title="Uso CPU" value={metrics.cpu} unit="%" threshold={80} icon="🖥️" />
+
+        <HealthIndicator title="Memoria" value={metrics.memory} unit="%" threshold={85} icon="💾" />
+
         <HealthIndicator
           title="Cache Hit Rate"
           value={metrics.cacheHitRate}
@@ -312,7 +315,7 @@ export const SystemHealthDashboard: React.FC = () => {
           invertThreshold={true}
           icon="🧠"
         />
-        
+
         <HealthIndicator
           title="Latencia Selectores"
           value={metrics.selectorPerformance}
@@ -335,7 +338,7 @@ export const SystemHealthDashboard: React.FC = () => {
               invertThreshold={true}
               icon="🏥"
             />
-            
+
             <HealthIndicator
               title="Componentes Cargados"
               value={metrics.componentsLoaded}
@@ -343,7 +346,7 @@ export const SystemHealthDashboard: React.FC = () => {
               threshold={5}
               icon="🧩"
             />
-            
+
             <HealthIndicator
               title="Errores (1h)"
               value={metrics.errorsCount}
@@ -357,14 +360,13 @@ export const SystemHealthDashboard: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <AlertSummary alerts={alerts} />
             <SystemUptime startTime={Date.now() - 3600000} /> {/* 1 hora simulada */}
-            
             {/* Controles del Sistema */}
             <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/40 rounded-xl p-4 border border-slate-600/40">
               <div className="flex items-center space-x-2 mb-4">
                 <span className="text-lg">⚙️</span>
                 <h3 className="text-lg font-semibold text-white">Controles</h3>
               </div>
-              
+
               <div className="space-y-3">
                 <button
                   onClick={() => medicalSystemMonitor.start()}
@@ -372,14 +374,14 @@ export const SystemHealthDashboard: React.FC = () => {
                 >
                   🟢 Iniciar Monitor
                 </button>
-                
+
                 <button
                   onClick={() => medicalSystemMonitor.stop()}
                   className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
                 >
                   🔴 Detener Monitor
                 </button>
-                
+
                 <button
                   onClick={() => {
                     const stats = medicalSystemMonitor.getSystemSnapshot()
@@ -401,16 +403,23 @@ export const SystemHealthDashboard: React.FC = () => {
                 <span className="mr-2">🚨</span>
                 Alertas Recientes ({alerts.length})
               </h3>
-              
+
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {alerts.slice(0, 10).map(alert => (
-                  <div key={alert.id} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
+                  <div
+                    key={alert.id}
+                    className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg"
+                  >
                     <div className="flex items-center space-x-3">
-                      <span className={`w-2 h-2 rounded-full ${
-                        alert.type === 'error' ? 'bg-red-400' :
-                        alert.type === 'warning' ? 'bg-yellow-400' :
-                        'bg-blue-400'
-                      }`}></span>
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          alert.type === 'error'
+                            ? 'bg-red-400'
+                            : alert.type === 'warning'
+                              ? 'bg-yellow-400'
+                              : 'bg-blue-400'
+                        }`}
+                      ></span>
                       <span className="text-sm text-white">{alert.message}</span>
                     </div>
                     <span className="text-xs text-slate-400">
