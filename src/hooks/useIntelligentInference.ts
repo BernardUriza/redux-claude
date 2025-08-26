@@ -10,7 +10,6 @@ import {
 } from '../../packages/cognitive-core/src/services/IntelligentMedicalChat'
 import type {
   MedicalMessage,
-  UrgencyLevel,
 } from '../../packages/cognitive-core/src/store/medicalChatSlice'
 
 export interface UseIntelligentInferenceReturn {
@@ -25,7 +24,7 @@ export interface UseIntelligentInferenceReturn {
 
 export interface InferenceResult {
   responseText: string
-  urgencyLevel?: UrgencyLevel
+  urgencyLevel?: 'low' | 'medium' | 'high' | 'critical'
   specialty?: string
   shouldUpdateMetrics: boolean
 }

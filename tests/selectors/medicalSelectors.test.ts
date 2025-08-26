@@ -19,25 +19,29 @@ const createMockRootState = (overrides?: Partial<RootState>): RootState => ({
       dashboard: {
         messages: [],
         isLoading: false,
-        lastActivity: Date.now()
+        lastActivity: Date.now(),
+        sessionId: 'test-session-123'
       },
       assistant: {
         messages: [],
         isLoading: false,
-        lastActivity: Date.now()
+        lastActivity: Date.now(),
+        sessionId: 'test-session-123'
       },
       inference: {
         messages: [],
         isLoading: false,
-        lastActivity: Date.now()
+        lastActivity: Date.now(),
+        sessionId: 'test-session-123'
       }
     },
     sharedState: {
       currentSession: {
         id: 'test-session-123',
-        startTime: Date.now() - 300000 // 5 minutes ago
+        startedAt: Date.now() - 300000 // 5 minutes ago
       },
-      error: null
+      isLoading: false,
+      error: undefined
     }
   },
   ...overrides
@@ -72,7 +76,7 @@ describe('Medical Selectors', () => {
         createMockMessage({
           type: 'user',
           content: 'Patient complains of headache and nausea',
-          metadata: { sectionType: 'symptoms' }
+          metadata: { sectionType: 'diagnosis' }
         }),
         createMockMessage({
           type: 'assistant', 
@@ -100,7 +104,8 @@ describe('Medical Selectors', () => {
             dashboard: {
               messages,
               isLoading: false,
-              lastActivity: Date.now()
+              lastActivity: Date.now(),
+              sessionId: 'test-session-123'
             }
           }
         }
@@ -129,7 +134,7 @@ describe('Medical Selectors', () => {
           ...createMockRootState().medicalChat,
           cores: {
             ...createMockRootState().medicalChat.cores,
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session-123' }
           }
         }
       })
@@ -156,7 +161,7 @@ describe('Medical Selectors', () => {
           ...createMockRootState().medicalChat,
           cores: {
             ...createMockRootState().medicalChat.cores,
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session-123' }
           }
         }
       })
@@ -197,17 +202,20 @@ describe('Medical Selectors', () => {
             dashboard: {
               messages: dashboardMessages,
               isLoading: false,
-              lastActivity: Date.now() - 1000
+              lastActivity: Date.now() - 1000,
+              sessionId: 'test-session-123'
             },
             assistant: {
               messages: assistantMessages,
               isLoading: false,
-              lastActivity: Date.now() - 2000
+              lastActivity: Date.now() - 2000,
+              sessionId: 'test-session-123'
             },
             inference: {
               messages: [],
               isLoading: false,
-              lastActivity: Date.now() - 10000 // Old activity
+              lastActivity: Date.now() - 10000, // Old activity
+              sessionId: 'test-session-123'
             }
           }
         }
@@ -233,7 +241,8 @@ describe('Medical Selectors', () => {
             dashboard: {
               messages: highConfidenceMessages,
               isLoading: false,
-              lastActivity: Date.now()
+              lastActivity: Date.now(),
+              sessionId: 'test-session-123'
             }
           }
         }
@@ -263,7 +272,7 @@ describe('Medical Selectors', () => {
         createMockMessage({ 
           type: 'user',
           content: 'Patient symptoms...',
-          metadata: { sectionType: 'symptoms' }
+          metadata: { sectionType: 'diagnosis' }
         }),
         createMockMessage({
           type: 'assistant',
@@ -289,7 +298,8 @@ describe('Medical Selectors', () => {
             dashboard: {
               messages,
               isLoading: false,
-              lastActivity: Date.now()
+              lastActivity: Date.now(),
+              sessionId: 'test-session-123'
             }
           }
         }
@@ -313,7 +323,8 @@ describe('Medical Selectors', () => {
             dashboard: {
               messages: [createMockMessage()],
               isLoading: false,
-              lastActivity: oldTimestamp
+              lastActivity: oldTimestamp,
+              sessionId: 'test-session-123'
             }
           }
         }
@@ -351,7 +362,7 @@ describe('Medical Selectors', () => {
           ...createMockRootState().medicalChat,
           cores: {
             ...createMockRootState().medicalChat.cores,
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session-123' }
           }
         }
       })
@@ -383,7 +394,8 @@ describe('Medical Selectors', () => {
             dashboard: { 
               messages: [medicationMessage, appointmentMessage], 
               isLoading: false, 
-              lastActivity: Date.now() 
+              lastActivity: Date.now(),
+              sessionId: 'test-session-123'
             }
           }
         }
@@ -429,7 +441,7 @@ describe('Medical Selectors', () => {
           ...createMockRootState().medicalChat,
           cores: {
             ...createMockRootState().medicalChat.cores,
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session-123' }
           }
         }
       })
@@ -462,7 +474,7 @@ describe('Medical Selectors', () => {
           ...createMockRootState().medicalChat,
           cores: {
             ...createMockRootState().medicalChat.cores,
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session-123' }
           }
         }
       })
@@ -480,7 +492,7 @@ describe('Medical Selectors', () => {
           content: 'Regular observation with moderate confidence level.',
           confidence: 0.6,
           timestamp: Date.now() - 1000,
-          metadata: { sectionType: 'observation' }
+          metadata: { sectionType: 'diagnosis' }
         }),
         createMockMessage({
           type: 'assistant',
@@ -496,7 +508,7 @@ describe('Medical Selectors', () => {
           ...createMockRootState().medicalChat,
           cores: {
             ...createMockRootState().medicalChat.cores,
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session-123' }
           }
         }
       })
@@ -520,7 +532,8 @@ describe('Medical Selectors', () => {
             dashboard: {
               messages: [createMockMessage()],
               isLoading: false,
-              lastActivity: Date.now()
+              lastActivity: Date.now(),
+              sessionId: 'test-session-123'
             }
           }
         }
@@ -541,7 +554,8 @@ describe('Medical Selectors', () => {
             dashboard: {
               messages: [createMockMessage()],
               isLoading: false,
-              lastActivity: Date.now()
+              lastActivity: Date.now(),
+              sessionId: 'test-session-123'
             }
           }
         }

@@ -318,7 +318,20 @@ export const SOAPDisplay = () => {
     section: 'subjetivo' | 'objetivo' | 'analisis' | 'plan',
     data: any
   ) => {
-    dispatch(updateSOAPSection({ section, data }))
+    // Mapear nombres españoles a ingleses para el slice
+    const sectionMap = {
+      'subjetivo': 'subjective' as const,
+      'objetivo': 'objective' as const,
+      'analisis': 'assessment' as const,
+      'plan': 'plan' as const
+    }
+    
+    const englishSection = sectionMap[section]
+    dispatch(updateSOAPSection({ 
+      section: englishSection, 
+      content: data, 
+      confidence: 0.8 
+    }))
   }
 
   // Función para generar contenido markdown del SOAP

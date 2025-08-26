@@ -35,37 +35,41 @@ const createTestStore = (initialState?: Partial<RootState>) => {
           dashboard: {
             messages: [],
             isLoading: false,
-            lastActivity: Date.now()
+            lastActivity: Date.now(),
+            sessionId: 'test-session'
           },
           assistant: {
             messages: [],
             isLoading: false,
-            lastActivity: Date.now()
+            lastActivity: Date.now(),
+            sessionId: 'test-session'
           },
           inference: {
             messages: [],
             isLoading: false,
-            lastActivity: Date.now()
+            lastActivity: Date.now(),
+            sessionId: 'test-session'
           }
         },
         sharedState: {
           currentSession: {
             id: 'test-session-integration',
-            startTime: Date.now() - 600000 // 10 minutes ago
+            startedAt: Date.now() - 600000 // 10 minutes ago
           },
-          error: null
+          isLoading: false,
+          error: undefined
         }
       },
       soapAnalysis: {
         currentAnalysis: null,
-        extractionStatus: 'idle',
-        history: [],
-        config: {
-          autoUpdate: true,
-          confidenceThreshold: 0.7,
-          enableValidation: true
-        },
-        validationErrors: []
+        analysisHistory: [],
+        isExtracting: false,
+        isUpdating: false,
+        lastProcessed: 0,
+        extractionQuality: 0,
+        validationErrors: [],
+        autoUpdate: true,
+        confidenceThreshold: 0.7
       },
       ...initialState
     }
@@ -79,7 +83,7 @@ const createMedicalMessageSet = (): MedicalMessage[] => [
     type: 'user',
     content: 'Patient is experiencing severe headaches and nausea for the past 3 days. Blood pressure measured at 180/110.',
     timestamp: Date.now() - 300000,
-    metadata: { sectionType: 'symptoms' }
+    metadata: { sectionType: 'diagnosis' }
   },
   {
     id: 'msg-assistant-1',
@@ -140,17 +144,19 @@ describe('Medical Components Integration Tests', () => {
             dashboard: {
               messages,
               isLoading: false,
-              lastActivity: Date.now()
+              lastActivity: Date.now(),
+              sessionId: 'test-session-integration'
             },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now() },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now() }
+            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session-integration' },
+            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session-integration' }
           },
           sharedState: {
             currentSession: {
               id: 'test-session-integration',
-              startTime: Date.now() - 600000
+              startedAt: Date.now() - 600000
             },
-            error: null
+            isLoading: false,
+            error: undefined
           }
         }
       })
@@ -178,13 +184,14 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now() },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
           },
           sharedState: {
-            currentSession: { id: 'test-session', startTime: Date.now() },
-            error: null
+            currentSession: { id: 'test-session', startedAt: Date.now() },
+            isLoading: false,
+            error: undefined
           }
         }
       })
@@ -209,13 +216,14 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages: [], isLoading: true, lastActivity: Date.now() },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now() },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages: [], isLoading: true, lastActivity: Date.now(), sessionId: 'test-session' },
+            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
           },
           sharedState: {
-            currentSession: { id: 'test-session', startTime: Date.now() },
-            error: null
+            currentSession: { id: 'test-session', startedAt: Date.now() },
+            isLoading: false,
+            error: undefined
           }
         }
       })
@@ -234,13 +242,14 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now() },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
           },
           sharedState: {
-            currentSession: { id: 'test-session', startTime: Date.now() },
-            error: null
+            currentSession: { id: 'test-session', startedAt: Date.now() },
+            isLoading: false,
+            error: undefined
           }
         }
       })
@@ -262,12 +271,13 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages: [], isLoading: false, lastActivity: Date.now() },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now() },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
           },
           sharedState: {
-            currentSession: { id: 'test-session', startTime: Date.now() },
+            currentSession: { id: 'test-session', startedAt: Date.now() },
+            isLoading: false,
             error: 'Sistema médico no disponible'
           }
         }
@@ -304,13 +314,14 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now() },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
           },
           sharedState: {
-            currentSession: { id: 'test-session', startTime: Date.now() },
-            error: null
+            currentSession: { id: 'test-session', startedAt: Date.now() },
+            isLoading: false,
+            error: undefined
           }
         }
       })
@@ -348,13 +359,14 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now() },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
           },
           sharedState: {
-            currentSession: { id: 'test-session', startTime: Date.now() },
-            error: null
+            currentSession: { id: 'test-session', startedAt: Date.now() },
+            isLoading: false,
+            error: undefined
           }
         }
       })
@@ -413,13 +425,14 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now() },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
           },
           sharedState: {
-            currentSession: { id: 'test-session', startTime: Date.now() },
-            error: null
+            currentSession: { id: 'test-session', startedAt: Date.now() },
+            isLoading: false,
+            error: undefined
           }
         }
       })
@@ -443,13 +456,14 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now() },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
           },
           sharedState: {
-            currentSession: { id: 'test-session', startTime: Date.now() },
-            error: null
+            currentSession: { id: 'test-session', startedAt: Date.now() },
+            isLoading: false,
+            error: undefined
           }
         }
       })
@@ -568,13 +582,14 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now() },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now() },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now() }
+            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
+            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
           },
           sharedState: {
-            currentSession: { id: 'test-session-complete', startTime: Date.now() },
-            error: null
+            currentSession: { id: 'test-session-complete', startedAt: Date.now() },
+            isLoading: false,
+            error: undefined
           }
         }
       })

@@ -5,30 +5,20 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useCallback, useMemo } from 'react'
 import type { RootState } from '../../packages/cognitive-core/src/store/store'
 import {
-  addIntelligentMessage,
-  updateIntelligentMessage,
-  clearIntelligentMessages,
-  setIntelligentLoading,
-  updatePatientInference,
-  updateInferenceFromMessage,
-  resetInferences,
-  type IntelligentMessage,
-  type PatientInference,
-} from '../../packages/cognitive-core/src/store/intelligentChatSlice'
+  addAssistantMessage,
+  setAssistantLoading,
+  type MedicalMessage,
+} from '../../packages/cognitive-core/src/store/medicalChatSlice'
 
 export interface UseIntelligentChatReturn {
   // Estado
-  messages: IntelligentMessage[]
+  messages: MedicalMessage[]
   isLoading: boolean
-  currentInferences: PatientInference[]
   sessionId: string
 
   // Acciones
   addUserMessage: (content: string) => void
   addAssistantMessage: (content: string, confidence?: number) => void
-  clearMessages: () => void
-  updateInference: (id: string, value: string | number, confidence?: number) => void
-  processMessageInferences: (message: string) => void
   setLoading: (loading: boolean) => void
 }
 
@@ -39,41 +29,38 @@ export interface UseIntelligentChatReturn {
 export const useIntelligentChat = (): UseIntelligentChatReturn => {
   const dispatch = useDispatch()
 
-  // Selector para el núcleo de chat inteligente
-  const { messages, isLoading, currentInferences, sessionId } = useSelector(
-    (state: RootState) => state.intelligentChat
+  // Selector para el núcleo de chat asistente
+  const { messages, isLoading, sessionId } = useSelector(
+    (state: RootState) => state.medicalChat.cores.assistant
   )
 
   // Acciones memoizadas
   const addUserMessage = useCallback(
     (content: string) => {
       dispatch(
-        addIntelligentMessage({
+        addAssistantMessage({
           type: 'user',
           content,
           metadata: {
             sessionId,
-            inferenceType: 'diagnosis',
+            sectionType: 'diagnosis',
           },
         })
       )
-
-      // Procesar inferencias automáticamente del mensaje del usuario
-      dispatch(updateInferenceFromMessage(content))
     },
     [dispatch, sessionId]
   )
 
-  const addAssistantMessage = useCallback(
+  const addAssistantMessageAction = useCallback(
     (content: string, confidence?: number) => {
       dispatch(
-        addIntelligentMessage({
+        addAssistantMessage({
           type: 'assistant',
           content,
           confidence,
           metadata: {
             sessionId,
-            inferenceType: 'diagnosis',
+            sectionType: 'diagnosis',
           },
         })
       )
@@ -81,27 +68,9 @@ export const useIntelligentChat = (): UseIntelligentChatReturn => {
     [dispatch, sessionId]
   )
 
-  const clearMessages = useCallback(() => {
-    dispatch(clearIntelligentMessages())
-  }, [dispatch])
-
-  const updateInference = useCallback(
-    (id: string, value: string | number, confidence?: number) => {
-      dispatch(updatePatientInference({ id, value, confidence }))
-    },
-    [dispatch]
-  )
-
-  const processMessageInferences = useCallback(
-    (message: string) => {
-      dispatch(updateInferenceFromMessage(message))
-    },
-    [dispatch]
-  )
-
-  const setLoading = useCallback(
+  const setLoadingAction = useCallback(
     (loading: boolean) => {
-      dispatch(setIntelligentLoading(loading))
+      dispatch(setAssistantLoading(loading))
     },
     [dispatch]
   )
@@ -111,26 +80,18 @@ export const useIntelligentChat = (): UseIntelligentChatReturn => {
     () => ({
       messages,
       isLoading,
-      currentInferences,
       sessionId,
       addUserMessage,
-      addAssistantMessage,
-      clearMessages,
-      updateInference,
-      processMessageInferences,
-      setLoading,
+      addAssistantMessage: addAssistantMessageAction,
+      setLoading: setLoadingAction,
     }),
     [
       messages,
       isLoading,
-      currentInferences,
       sessionId,
       addUserMessage,
-      addAssistantMessage,
-      clearMessages,
-      updateInference,
-      processMessageInferences,
-      setLoading,
+      addAssistantMessageAction,
+      setLoadingAction,
     ]
   )
 }
