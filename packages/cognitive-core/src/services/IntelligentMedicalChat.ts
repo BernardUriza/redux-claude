@@ -35,13 +35,21 @@ export class IntelligentMedicalChat {
    */
   async processUserInput(request: ChatAnalysisRequest): Promise<IntelligentChatResponse> {
     try {
+      // 🛡️ VALIDACIÓN DE REQUEST - Prevenir errores undefined
+      const userInput = request?.user_input || request?.message || ''
+      
+      if (!userInput || typeof userInput !== 'string') {
+        console.warn('⚠️ Input inválido en processUserInput:', request)
+        return this.createFallbackResponse('Sin input válido')
+      }
+
       // Detectar patrones médicos automáticamente
-      const medicalContext = this.extractMedicalContext(request.user_input)
+      const medicalContext = this.extractMedicalContext(userInput)
 
       // Usar DecisionalMiddleware para inferencia inteligente
       const response = await callClaudeForDecision(
         'intelligent_medical_chat',
-        this.buildInferentialPrompt(request, medicalContext),
+        this.buildInferentialPrompt(request, medicalContext, userInput),
         'claude',
         undefined,
         undefined,
@@ -54,13 +62,13 @@ export class IntelligentMedicalChat {
 
       if (!response.success) {
         // Fallback: Nunca fallar completamente
-        return this.createFallbackResponse(request.user_input, medicalContext)
+        return this.createFallbackResponse(userInput, medicalContext)
       }
 
       return response.decision as IntelligentChatResponse
     } catch (error) {
       console.error('Error en chat inteligente:', error)
-      return this.createFallbackResponse(request.user_input)
+      return this.createFallbackResponse(userInput)
     }
   }
 
@@ -68,6 +76,18 @@ export class IntelligentMedicalChat {
    * Extrae contexto médico básico sin validación estricta
    */
   private extractMedicalContext(input: string): any {
+    // 🛡️ VALIDACIÓN DE PARÁMETROS - Prevenir errores undefined
+    if (!input || typeof input !== 'string') {
+      return {
+        has_symptoms: false,
+        has_demographics: false,
+        has_timeline: false,
+        has_medical_terms: false,
+        urgency_indicators: [],
+        specialty_indicators: [],
+      }
+    }
+
     const context: any = {
       has_symptoms: false,
       has_demographics: false,
@@ -129,7 +149,7 @@ export class IntelligentMedicalChat {
   /**
    * Construye prompt para inferencia inteligente estilo MAI-DxO
    */
-  private buildInferentialPrompt(request: ChatAnalysisRequest, medicalContext: any): string {
+  private buildInferentialPrompt(request: ChatAnalysisRequest, medicalContext: any, userInput: string): string {
     const hasHistory = request.conversation_history && request.conversation_history.length > 0
     const historyContext = hasHistory
       ? `\n\nCONTEXTO DE CONVERSACIÓN PREVIA:\n${request.conversation_history
@@ -142,7 +162,7 @@ export class IntelligentMedicalChat {
 
 FILOSOFÍA: Como MAI-DxO de Microsoft, tu trabajo es INFERIR inteligentemente y AYUDAR inmediatamente, no pedir más datos.
 
-INPUT DEL USUARIO: "${request.user_input}"
+INPUT DEL USUARIO: "${userInput}"
 ${historyContext}
 
 CONTEXTO DETECTADO AUTOMÁTICAMENTE:
@@ -193,7 +213,9 @@ RESPONDE SOLO CON EL JSON, SIN TEXTO ADICIONAL.`
    * Crea respuesta de fallback que nunca falla
    */
   private createFallbackResponse(userInput: string, medicalContext?: any): IntelligentChatResponse {
-    const hasSymptoms = medicalContext?.has_symptoms || /dolor|molestia|síntoma/i.test(userInput)
+    // 🛡️ VALIDACIÓN ADICIONAL para fallback
+    const safeUserInput = userInput || ''
+    const hasSymptoms = medicalContext?.has_symptoms || /dolor|molestia|síntoma/i.test(safeUserInput)
     const baseMessage = hasSymptoms
       ? '🦁 Hola Doctor Edmund, veo que mencionas síntomas médicos. Aunque mi sistema tuvo un pequeño problema, puedo ayudarte basándome en patrones comunes.'
       : '🦁 Hola Doctor Edmund, entiendo que tienes una consulta médica. Déjame ayudarte con lo que puedo inferir.'

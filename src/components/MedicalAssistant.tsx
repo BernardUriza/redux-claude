@@ -13,6 +13,8 @@ interface MedicalAssistantProps {
   onSelectTemplate: (template: string) => void
   isVisible: boolean
   onClose: () => void
+  className?: string
+  showMetrics?: boolean
 }
 
 export const MedicalAssistant = ({
@@ -20,6 +22,8 @@ export const MedicalAssistant = ({
   onSelectTemplate,
   isVisible,
   onClose,
+  className = '',
+  showMetrics = false,
 }: MedicalAssistantProps) => {
   // 🧠 MULTINÚCLEO: Usando Assistant Core para el asistente
   const { messages, messageCount, currentSession } = useAssistantChat()
@@ -75,8 +79,8 @@ export const MedicalAssistant = ({
   if (!isVisible) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black/70 backdrop-blur-sm">
-      <div className="relative w-full max-w-7xl h-[95vh] bg-slate-900 rounded-xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/70 backdrop-blur-sm">
+      <div className="relative w-full max-w-[90vw] xl:max-w-7xl h-[90vh] xl:h-[95vh] bg-slate-900 rounded-xl shadow-2xl border border-slate-700/50 overflow-hidden flex flex-col">
         {/* Header Compacto y Profesional */}
         <div className="flex justify-between items-center px-6 py-3 bg-gradient-to-r from-blue-600 via-indigo-700 to-purple-700 text-white border-b border-indigo-500/30">
           <div className="flex items-center gap-3">
@@ -114,15 +118,23 @@ export const MedicalAssistant = ({
           </div>
         </div>
 
-        {/* Layout Principal: 3 Columnas Responsivas */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Columna Izquierda: Chat Principal (60%) */}
-          <div className="flex-1 lg:w-3/5 flex flex-col border-r border-gray-700">
-            <IntelligentMedicalChat className="h-full" showMetrics={false} />
+        {/* Layout Principal: Moderno y Funcional */}
+        <div className="flex-1 flex overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+          {/* Chat Principal con Lógica Conversacional */}
+          <div className="flex-1 flex flex-col border-r border-slate-700/50 min-w-0">
+            <IntelligentMedicalChat 
+              className="h-full" 
+              showMetrics={false}
+              partialInput={partialInput}
+              onInitialResponse={(response) => {
+                // Cuando el asistente responde automáticamente, podemos usarlo
+                console.log('🎯 Respuesta inicial generada:', response)
+              }}
+            />
           </div>
 
-          {/* Columna Derecha: Panel de Resumen Médico Completo */}
-          <div className="w-full lg:w-2/5 bg-gray-800/50">
+          {/* Panel Lateral Compacto */}
+          <div className="w-full xl:w-96 xl:flex-shrink-0 bg-slate-800/30 border-l border-slate-700/50">
             <MedicalSummaryPanel
               currentCase={{ soap: null, urgencyLevel: 'medium' }}
               className="h-full"
@@ -131,8 +143,8 @@ export const MedicalAssistant = ({
         </div>
 
         {/* Footer de Estado con Indicador del Anillo Único */}
-        <div className="hidden lg:block bg-gray-800/30 px-6 py-2 border-t border-gray-700">
-          <div className="flex items-center justify-between text-xs text-gray-400">
+        <div className="hidden xl:block bg-slate-800/40 px-4 py-2 border-t border-slate-700/50">
+          <div className="flex items-center justify-between text-xs text-slate-400">
             <div className="flex items-center gap-4">
               <span>💡 Inferencias actualizándose automáticamente</span>
               <div className="flex items-center gap-2">
@@ -144,10 +156,10 @@ export const MedicalAssistant = ({
                 data-autoclose-indicator
                 className="text-cyan-400 font-medium transition-all duration-300"
               >
-                🔮 Esperando edad y género para autocompletado...
+                🚀 Flujo conversacional activado - Recopilando datos del paciente...
               </div>
             </div>
-            <div className="text-gray-500">
+            <div className="text-slate-500">
               Creado por Bernard Orozco • Anillo Único Activado 💍
             </div>
           </div>
