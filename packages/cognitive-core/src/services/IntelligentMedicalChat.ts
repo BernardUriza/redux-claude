@@ -20,6 +20,13 @@ export interface IntelligentChatResponse {
   confidence_level: 'low' | 'medium' | 'high'
   requires_user_input: boolean
   conversation_stage: 'initial' | 'gathering' | 'analyzing' | 'concluding'
+  // 🧬 Metadata enriquecida desde extractor (arquitectura complementaria)
+  extraction_metadata?: {
+    completeness_percentage: number
+    nom_compliant: boolean
+    ready_for_soap: boolean
+    extracted_data: any
+  }
 }
 
 export interface ChatAnalysisRequest {
@@ -43,29 +50,43 @@ export class IntelligentMedicalChat {
         return this.createFallbackResponse('Sin input válido')
       }
 
-      // 🧠 SIEMPRE usar intelligent_medical_chat para conversaciones médicas
-      // El agente está entrenado para hacer preguntas de seguimiento automáticamente
-      const chatResponse = await this.callDecisionEngine('intelligent_medical_chat', userInput, request, {
-        context: request.conversation_history?.length > 0 ? 'follow_up_conversation' : 'initial_consultation'
-      })
+      // 🚀 ARQUITECTURA COMPLEMENTARIA: Ambos agentes trabajan EN PARALELO
+      console.log('🔄 Ejecutando agentes complementarios en paralelo...')
       
+      const [chatResponse, extractorResponse] = await Promise.all([
+        // 🦁 Doctor Edmund: Conversación inteligente
+        this.callDecisionEngine('intelligent_medical_chat', userInput, request, {
+          context: request.conversation_history?.length > 0 ? 'follow_up_conversation' : 'initial_consultation'
+        }),
+        // 🧬 Extractor: Datos estructurados en background
+        this.callDecisionEngine('medical_data_extractor', userInput, request, {
+          extractionMode: 'parallel_extraction',
+          existing_data: request.previous_inferences || []
+        })
+      ])
+
+      // ✅ Priorizar respuesta del chat si existe
       if (chatResponse) {
-        return chatResponse as IntelligentChatResponse
+        // 💎 ENRIQUECER respuesta del chat con datos estructurados del extractor
+        const enrichedResponse = this.enrichChatResponseWithExtractedData(
+          chatResponse as IntelligentChatResponse,
+          extractorResponse,
+          userInput
+        )
+        
+        console.log('✅ Respuesta complementaria generada: Chat + Datos estructurados')
+        return enrichedResponse
       }
 
-      // Fallback solo si el agente principal falla
-      console.warn('⚠️ intelligent_medical_chat failed, usando extractor como fallback')
-      const extractorResponse = await this.callDecisionEngine('medical_data_extractor', userInput, request, {
-        extractionMode: 'fallback_extraction'
-      })
-
-      if (!extractorResponse) {
-        return this.createFallbackResponse(userInput)
+      // 🔄 Fallback: Si chat falla, usar extractor + generar respuesta
+      if (extractorResponse) {
+        console.warn('⚠️ Chat failed, generando respuesta desde datos extraídos')
+        return this.generateIntelligentResponse(userInput, extractorResponse, request)
       }
 
-      // Extraer datos y generar respuesta inteligente basada en los datos extraídos
-      const extractedData = extractorResponse.data || {}
-      return this.generateIntelligentResponse(userInput, extractedData, request)
+      // 💥 Último recurso: respuesta de fallback
+      console.warn('💥 Ambos agentes fallaron, usando fallback básico')
+      return this.createFallbackResponse(userInput)
 
     } catch (error) {
       console.error('💥 Error en chat inteligente (cayendo a fallback):', error)
@@ -111,9 +132,92 @@ export class IntelligentMedicalChat {
   }
 
   /**
+   * 💎 FUNCIÓN CLAVE: Enriquece la respuesta conversacional con datos estructurados
+   */
+  private enrichChatResponseWithExtractedData(
+    chatResponse: IntelligentChatResponse,
+    extractorResponse: any,
+    userInput: string
+  ): IntelligentChatResponse {
+    // Si no hay datos del extractor, devolver respuesta original del chat
+    if (!extractorResponse) {
+      return chatResponse
+    }
+
+    // 🧬 Extraer datos estructurados
+    const extractedData = extractorResponse.data || extractorResponse
+    const completenessPercentage = extractedData.extraction_metadata?.overall_completeness_percentage || 0
+    const isNOMCompliant = extractedData.extraction_metadata?.nom_compliant || false
+    const isReadyForSOAP = extractedData.extraction_metadata?.ready_for_soap_generation || false
+
+    // 🔗 Agregar metadata de extracción a la respuesta del chat
+    const enrichedResponse: IntelligentChatResponse = {
+      ...chatResponse,
+      // 📊 Enriquecer con datos de completitud
+      extraction_metadata: {
+        completeness_percentage: completenessPercentage,
+        nom_compliant: isNOMCompliant,
+        ready_for_soap: isReadyForSOAP,
+        extracted_data: extractedData
+      },
+      // 🎯 Ajustar nivel de confianza basado en completitud
+      confidence_level: completenessPercentage >= 80 ? 'high' : 
+                       completenessPercentage >= 50 ? 'medium' : 'low',
+      // 🔄 Agregar inferencias adicionales del extractor si las hay
+      inferences: [
+        ...chatResponse.inferences,
+        ...this.createInferencesFromExtractedData(extractedData)
+      ].slice(0, 3) // Máximo 3 inferencias para evitar overload
+    }
+
+    console.log('💎 Respuesta enriquecida:', {
+      original_message: chatResponse.message,
+      completeness: completenessPercentage,
+      nom_compliant: isNOMCompliant,
+      additional_inferences: enrichedResponse.inferences.length - chatResponse.inferences.length
+    })
+
+    return enrichedResponse
+  }
+
+  /**
+   * 🧬 Crear inferencias adicionales desde datos extraídos
+   */
+  private createInferencesFromExtractedData(extractedData: any): MedicalInference[] {
+    const inferences: MedicalInference[] = []
+    const timestamp = Date.now()
+
+    // Solo agregar inferencias que no estén ya en la respuesta del chat
+    if (extractedData.demographics?.patient_age_years && extractedData.demographics.patient_age_years !== 'unknown') {
+      inferences.push({
+        id: `extracted_age_${timestamp}`,
+        category: 'demographic',
+        confidence: extractedData.demographics.confidence_demographic || 0.8,
+        inference: `Edad identificada: ${extractedData.demographics.patient_age_years} años`,
+        evidence: [`Extraído del input: ${extractedData.demographics.patient_age_years}`],
+        needs_confirmation: false
+      })
+    }
+
+    if (extractedData.clinical_presentation?.chief_complaint && extractedData.clinical_presentation.chief_complaint !== 'unknown') {
+      inferences.push({
+        id: `extracted_complaint_${timestamp}`,
+        category: 'symptom',
+        confidence: extractedData.clinical_presentation.confidence_symptoms || 0.8,
+        inference: `Síntoma principal extraído: ${extractedData.clinical_presentation.chief_complaint}`,
+        evidence: [`Identificado automáticamente: ${extractedData.clinical_presentation.chief_complaint}`],
+        needs_confirmation: false
+      })
+    }
+
+    return inferences
+  }
+
+  /**
    * Genera respuesta inteligente basada en datos médicos extraídos
    */
-  private generateIntelligentResponse(userInput: string, extractedData: any, request: ChatAnalysisRequest): IntelligentChatResponse {
+  private generateIntelligentResponse(userInput: string, extractorResponse: any, request: ChatAnalysisRequest): IntelligentChatResponse {
+    const extractedData = extractorResponse.data || extractorResponse
     const hasSymptoms = !!extractedData.clinical_presentation?.chief_complaint && extractedData.clinical_presentation.chief_complaint !== 'unknown'
     const hasDemographics = !!extractedData.demographics && (
       (extractedData.demographics.patient_age_years && extractedData.demographics.patient_age_years !== 'unknown') ||
