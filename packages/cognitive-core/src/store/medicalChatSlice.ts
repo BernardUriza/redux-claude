@@ -48,11 +48,10 @@ export interface PatientData {
 }
 
 export interface MedicalChatState {
-  // 🧠 NÚCLEOS DE CONVERSACIÓN SEPARADOS
+  // 🧠 NÚCLEOS DE CONVERSACIÓN DUALES (Gandalf decretó: DOS ES SUFICIENTE)
   cores: {
-    dashboard: ChatCore // Chat principal del dashboard
-    assistant: ChatCore // Chat del asistente médico
-    inference: ChatCore // Chat de inferencias (futuro)
+    dashboard: ChatCore // Chat principal del dashboard - NÚCLEO DASHBOARD
+    assistant: ChatCore // Chat del asistente médico - NÚCLEO ASSISTANT
   }
 
   // 🏥 ESTADO COMPARTIDO MÉDICO
@@ -74,21 +73,20 @@ export interface MedicalChatState {
   medicalExtraction: MedicalExtractionState
 }
 
-// 🧠 ESTADO INICIAL MULTINÚCLEO EVOLUCIONADO
-const createInitialChatCore = (type: 'dashboard' | 'assistant' | 'inference'): ChatCore => ({
+// 🧠 ESTADO INICIAL DUAL-NÚCLEO (Sin el inútil inference)
+const createInitialChatCore = (type: 'dashboard' | 'assistant'): ChatCore => ({
   messages:
     type === 'dashboard'
       ? [
           {
-            id: 'welcome_multinucleus',
-            content: `## 🧠 Sistema Médico Multinúcleo v3.0
+            id: 'welcome_dashboard',
+            content: `## 🏥 [NÚCLEO DASHBOARD] - Chat Principal
 
-**ARQUITECTURA EVOLUCIONADA 2025**
-- Dashboard Core: Chat principal
-- Assistant Core: Autocompletado  
-- Inference Core: Análisis contextual
+**SISTEMA DUAL-NÚCLEO v3.1** 
+✅ Dashboard Core: Chat médico principal activo
+✅ Assistant Core: Autocompletado inteligente activo
 
-🚀 Multinúcleo activado - Conversaciones separadas`,
+🎯 Soy el NÚCLEO DASHBOARD - Manejo conversaciones médicas principales`,
             type: 'assistant',
             timestamp: Date.now(),
             confidence: 0.95,
@@ -107,8 +105,20 @@ const createInitialChatCore = (type: 'dashboard' | 'assistant' | 'inference'): C
 const initialState: MedicalChatState = {
   cores: {
     dashboard: createInitialChatCore('dashboard'),
-    assistant: createInitialChatCore('assistant'),
-    inference: createInitialChatCore('inference'),
+    assistant: {
+      ...createInitialChatCore('assistant'),
+      messages: [{
+        id: 'welcome_assistant',
+        content: `## 🤖 [NÚCLEO ASSISTANT] - Autocompletado Inteligente\n\n**SISTEMA DUAL-NÚCLEO v3.1**\n✅ Assistant Core activo para sugerencias\n✅ Dashboard Core disponible para chat principal\n\n🎯 Soy el NÚCLEO ASSISTANT - Proporciono autocompletado y sugerencias`,
+        type: 'assistant' as const,
+        timestamp: Date.now(),
+        confidence: 0.95,
+        metadata: {
+          sessionId: 'assistant_session',
+          sectionType: 'education' as const,
+        },
+      }]
+    },
   },
   sharedState: {
     currentSession: {
@@ -172,18 +182,7 @@ const medicalChatSlice = createSlice({
       state.cores.assistant.lastActivity = Date.now()
     },
 
-    addInferenceMessage: (
-      state,
-      action: PayloadAction<Omit<MedicalMessage, 'id' | 'timestamp'>>
-    ) => {
-      const message: MedicalMessage = {
-        id: `inference_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: Date.now(),
-        ...action.payload,
-      }
-      state.cores.inference.messages.push(message)
-      state.cores.inference.lastActivity = Date.now()
-    },
+    // 🪦 RIP Inference Core - Gandalf lo mató por inútil
 
     // 🔄 ACCIONES DE CARGA POR NÚCLEO
     setDashboardLoading: (state, action: PayloadAction<boolean>) => {
@@ -214,7 +213,7 @@ const medicalChatSlice = createSlice({
 
       // Limpiar todos los núcleos excepto mensajes de bienvenida del dashboard
       state.cores.assistant.messages = []
-      state.cores.inference.messages = []
+      // 🪦 inference.messages eliminado - Gandalf lo mató
     },
 
     // 🚫 MANEJO DE ERRORES GLOBAL
@@ -551,7 +550,7 @@ const medicalChatSlice = createSlice({
 export const {
   addDashboardMessage,
   addAssistantMessage,
-  addInferenceMessage,
+  // 🪦 addInferenceMessage eliminado - ya no existe
   setDashboardLoading,
   setAssistantLoading,
   clearDashboardMessages,

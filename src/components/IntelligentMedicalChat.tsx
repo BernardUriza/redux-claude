@@ -1,7 +1,7 @@
 // 🏥 Asistente Médico Inteligente - Solo hooks del package
 // Creado por Bernard Orozco - Sin estado local, solo servicios
 
-import { useMedicalChat } from '@redux-claude/cognitive-core'
+import { useMedicalChat, useAssistantChat } from '@redux-claude/cognitive-core'
 import React, { useRef } from 'react'
 import { DynamicInferencePanel } from './DynamicInferencePanel'
 import { MedicalChatMessage } from './MedicalChatMessage'
@@ -11,6 +11,7 @@ export interface IntelligentMedicalChatProps {
   showMetrics?: boolean
   partialInput?: string
   onInitialResponse?: (response: string) => void
+  coreType?: 'dashboard' | 'assistant'  // 🧠 Selector de núcleo
 }
 
 /**
@@ -22,13 +23,24 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
   showMetrics = true,
   partialInput = '',
   onInitialResponse,
+  coreType = 'dashboard',  // Por defecto usa Dashboard
 }) => {
-  // 🧠 SOLO HOOK DEL PACKAGE - Sin estado local
-  const { messages, isLoading, sendMedicalQuery, error } = useMedicalChat({
+  // 🧠 HOOKS DUALES - Ambos se llaman siempre (reglas de React)
+  const dashboardChat = useMedicalChat({
     onValidationFailed: (input, result) => {
-      console.warn('Validación médica falló:', input, result)
+      console.warn('[DASHBOARD] Validación médica falló:', input, result)
     },
   })
+  
+  const assistantChat = useAssistantChat({
+    onValidationFailed: (input, result) => {
+      console.warn('[ASSISTANT] Validación médica falló:', input, result)
+    },
+  })
+  
+  // Selección del núcleo activo basado en prop
+  const { messages, isLoading, sendMedicalQuery, error, coreName } = 
+    coreType === 'assistant' ? assistantChat : dashboardChat
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
@@ -58,7 +70,7 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
             {messages.length === 0 && (
               <div className="text-center text-slate-400 py-8">
                 <span className="text-4xl mb-4 block">🩺</span>
-                <p>Inicie una conversación médica...</p>
+                <p>{coreName ? `[${coreName}] activo` : 'Inicie una conversación médica...'}</p>
               </div>
             )}
 

@@ -257,9 +257,10 @@ export const MedicalAssistant = ({
             className="h-full"
             showMetrics={true}
             partialInput={partialInput}
+            coreType="assistant"  // 🤖 USA EL NÚCLEO ASSISTANT, NO DASHBOARD
             onInitialResponse={response => {
               // Cuando el asistente responde automáticamente
-              console.log('🎯 Respuesta inicial generada:', response)
+              console.log('🎯 [ASSISTANT CORE] Respuesta inicial generada:', response)
             }}
           />
         </div>

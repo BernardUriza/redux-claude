@@ -89,9 +89,9 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
         // Agregar mensaje válido y procesar
         dispatch(addDashboardMessage({ content: message, type: 'user' }))
 
-        // 🚀 USAR CHAT INTELIGENTE EN NÚCLEO CORRECTO (ASSISTANT)
+        // 🚀 USAR CHAT INTELIGENTE EN NÚCLEO DASHBOARD
         const { IntelligentMedicalChat } = await import('../services/IntelligentMedicalChat')
-        const intelligentService = new IntelligentMedicalChat(dispatch)
+        const intelligentService = new IntelligentMedicalChat(dispatch, 'dashboard')
         
         // El chat inteligente maneja todo internamente y actualiza el store
         await intelligentService.processUserInput(message)
@@ -130,5 +130,10 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
     messagesCount: dashboardCore.messages.length,
     lastMessage: dashboardCore.messages[dashboardCore.messages.length - 1] || null,
     hasMessages: dashboardCore.messages.length > 0,
+    
+    // Compatibilidad con useAssistantChat
+    coreType: 'dashboard' as const,
+    coreName: '🏥 NÚCLEO DASHBOARD',
+    lastActivity: dashboardCore.lastActivity,
   }
 }

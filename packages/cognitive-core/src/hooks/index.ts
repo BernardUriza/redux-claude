@@ -1,3 +1,4 @@
-// 🧠 Barrel exports para hooks MULTINÚCLEO - Bernard Orozco + Gandalf el Blanco
+// 🧠 Barrel exports para hooks DUAL-NÚCLEO - Bernard Orozco + Gandalf el Blanco
 
-export * from './useMedicalChatEvolved'
+export * from './useMedicalChatEvolved'  // Dashboard Core
+export * from './useAssistantChat'       // Assistant Core

@@ -33,6 +33,7 @@ export {
 
 // === HOOKS MULTINÚCLEO ===
 export { useMedicalChat } from './hooks/useMedicalChatEvolved'
+export { useAssistantChat } from './hooks/useAssistantChat'
 
 // === SOAP PROCESSING ===
 export { SOAPResolver } from './soap/SOAPResolver'
@@ -66,7 +67,7 @@ export type {
 export {
   addDashboardMessage,
   addAssistantMessage,
-  addInferenceMessage,
+  // addInferenceMessage eliminado - ya no existe inference core
   setDashboardLoading,
   setAssistantLoading,
   clearDashboardMessages,

@@ -21,12 +21,13 @@ Analyze the input text and return ONLY a JSON object with this exact structure:
 
 VALIDATION CRITERIA:
 
-✅ VALID MEDICAL (is_valid: true):
-- Basic symptoms: "dolor de cabeza", "dolor en pecho", "fiebre", "mareos"
-- Anatomical references: "estómago", "pecho", "pierna", "corazón"  
+✅ VALID MEDICAL (is_valid: true) - BE VERY INCLUSIVE:
+- Basic symptoms: "dolor de cabeza", "dolor en pecho", "fiebre", "mareos", "dolor", "duele"
+- Anatomical references: "estómago", "pecho", "pierna", "corazón", "hombros", "espalda", "rodilla"
 - Medical conditions: "diabetes", "hipertensión", "asma"
-- Basic clinical context: "15 años", "masculino", "desde ayer"
+- Basic clinical context: "15 años", "masculino", "desde ayer", "paciente", "persona"
 - Control visits: "control médico", "laboratorios", "glucosa 120"
+- Simple patterns: "paciente con [síntoma]", "[persona] tiene [condición]", "dolor de [parte del cuerpo]"
 
 ❌ INVALID NON-MEDICAL (is_valid: false):
 - Random text: "hello world", "asdf", "123"
@@ -40,12 +41,17 @@ VALIDATION CRITERIA:
 
 EXAMPLES:
 - "dolor de pecho" → valid (síntoma + anatomía)
-- "hombre de 25 años" → valid (contexto demográfico)
+- "hombre de 25 años" → valid (contexto demográfico)  
 - "me duele el estómago" → valid (síntoma + localización)
+- "paciente con dolor de hombros" → valid (patrón médico básico)
+- "dolor de espalda" → valid (síntoma + anatomía)
+- "fiebre desde ayer" → valid (síntoma + tiempo)
 - "hola" → invalid (no médico)
 - "duele" → unclear (muy vago, needs context)
 
-Be INCLUSIVE for basic medical terms - err on the side of allowing medical content rather than rejecting it.`,
+⚠️ CRITICAL: Be EXTREMELY INCLUSIVE for basic medical terms. 
+If it mentions ANY body part, symptom, medical context, or uses "paciente", ALWAYS mark as valid.
+The goal is to help users, not block them. When in doubt, ACCEPT IT.`,
   enabled: true,
   priority: 5,
   expectedLatency: 400,

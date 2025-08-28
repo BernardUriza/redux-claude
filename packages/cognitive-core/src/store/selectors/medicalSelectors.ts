@@ -129,7 +129,7 @@ const getActiveAgentCount = (cores: any): number => {
   let activeCount = 0
   if ((now - cores.dashboard.lastActivity) < activeThreshold) activeCount++
   if ((now - cores.assistant.lastActivity) < activeThreshold) activeCount++
-  if ((now - cores.inference.lastActivity) < activeThreshold) activeCount++
+  // 🪦 inference core eliminado - solo dashboard y assistant ahora
   
   return activeCount
 }
@@ -241,13 +241,12 @@ export const selectSystemMetrics = createSelector(
   [(state: RootState) => state.medicalChat.cores,
    (state: RootState) => state.medicalChat.sharedState],
   (cores, sharedState): SystemMetrics => {
-    const { dashboard, assistant, inference } = cores
+    const { dashboard, assistant } = cores
     
     // Métricas de confianza real
     const allMessages = [
       ...dashboard.messages,
-      ...assistant.messages,
-      ...inference.messages
+      ...assistant.messages
     ]
     
     const confidence = calculateConfidenceFromMessages(dashboard.messages)
@@ -277,13 +276,13 @@ export const selectSystemMetrics = createSelector(
       processingTime,
       messagesCount: allMessages.length,
       sessionsToday: 1,
-      lastActivity: Math.max(dashboard.lastActivity, assistant.lastActivity, inference.lastActivity),
+      lastActivity: Math.max(dashboard.lastActivity, assistant.lastActivity),
       systemHealth,
       healthScore,
       coreMetrics: {
         dashboard: createCoreMetrics(dashboard),
-        assistant: createCoreMetrics(assistant),
-        inference: createCoreMetrics(inference)
+        assistant: createCoreMetrics(assistant)
+        // 🪦 inference eliminado por decreto de Gandalf
       },
       uptime: Date.now() - sharedState.currentSession.startedAt,
       avgSessionDuration: Date.now() - sharedState.currentSession.startedAt, // Simplified

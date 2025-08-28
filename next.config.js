@@ -7,8 +7,8 @@ const nextConfig = {
 
   experimental: {
     externalDir: true,
-    // ⚡ FASE 5: Optimización de bundling
-    optimizePackageImports: ['@redux-claude/cognitive-core'],
+    // ⚡ DESHABILITADO TEMPORALMENTE - barrel optimization cache issue
+    // optimizePackageImports: ['@redux-claude/cognitive-core'],
   },
 
   // 🚀 FASE 5: Configuración de Tree Shaking y Performance

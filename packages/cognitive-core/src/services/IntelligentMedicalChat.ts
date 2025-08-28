@@ -6,9 +6,11 @@ import type { MedicalMessage } from '../store/medicalChatSlice'
 import type { AppDispatch } from '../store/store'
 import { 
   addDashboardMessage, 
+  addAssistantMessage,
   completeExtraction, 
   setExtractionError,
-  setDashboardLoading 
+  setDashboardLoading,
+  setAssistantLoading
 } from '../store/medicalChatSlice'
 
 export interface MedicalInference {
@@ -44,9 +46,11 @@ export interface ChatAnalysisRequest {
 
 export class IntelligentMedicalChat {
   private dispatch: AppDispatch
+  private coreType: 'dashboard' | 'assistant'
 
-  constructor(dispatch: AppDispatch) {
+  constructor(dispatch: AppDispatch, coreType: 'dashboard' | 'assistant' = 'dashboard') {
     this.dispatch = dispatch
+    this.coreType = coreType
   }
 
   /**
@@ -97,10 +101,10 @@ export class IntelligentMedicalChat {
       // PASO 2: Guardar datos extraídos en store
       this.dispatch(completeExtraction(extractedData))
       
-      // PASO 3: 🦁 Doctor Edmund CON CONTINUIDAD - Usa DASHBOARD core (no assistant)
-      console.log('🔄 PASO 3: Doctor Edmund preguntando con contexto...')
+      // PASO 3: 🦁 Doctor Edmund CON CONTINUIDAD - Usa el núcleo especificado
+      console.log(`🔄 PASO 3: Doctor Edmund en núcleo ${this.coreType.toUpperCase()}...`)
       
-      const chatResponse = await callDecisionEngine('dashboard', 'intelligent_medical_chat', userInput, {
+      const chatResponse = await callDecisionEngine(this.coreType, 'intelligent_medical_chat', userInput, {
         persistContext: true,
         // Claude recibirá el contexto automáticamente del núcleo dashboard
       })
@@ -113,9 +117,10 @@ export class IntelligentMedicalChat {
                        decision?.response || 
                        await this.generateQuestionBasedOnMissingFields(missingCriticalFields, extractedData)
         
-        // Agregar respuesta del chat al store - NÚCLEO DASHBOARD (correcto)
+        // Agregar respuesta del chat al store - NÚCLEO SEGÚN CONFIGURACIÓN
         // NOTA: No duplicamos en store porque callDecisionEngine ya maneja contexto internamente
-        this.dispatch(addDashboardMessage({
+        const addMessage = this.coreType === 'assistant' ? addAssistantMessage : addDashboardMessage
+        this.dispatch(addMessage({
           content: message,
           type: 'assistant',
           metadata: {
@@ -123,12 +128,13 @@ export class IntelligentMedicalChat {
           }
         }))
         
-        console.log('✅ Respuesta contextual guardada en núcleo assistant')
+        console.log(`✅ Respuesta contextual guardada en núcleo ${this.coreType.toUpperCase()}`)
       } else {
         // Fallback: Generar pregunta contextual con Claude (SIN CONTEXTO - función pura)
         console.warn('⚠️ Chat falló, generando pregunta contextual desde extractor')
         const contextualQuestion = await this.generateQuestionBasedOnMissingFields(missingCriticalFields, extractedData)
-        this.dispatch(addAssistantMessage({
+        const addMessage = this.coreType === 'assistant' ? addAssistantMessage : addDashboardMessage
+        this.dispatch(addMessage({
           content: contextualQuestion,
           type: 'assistant'
         }))
@@ -137,12 +143,14 @@ export class IntelligentMedicalChat {
     } catch (error) {
       console.error('💥 Error en chat inteligente:', error)
       this.dispatch(setExtractionError(error instanceof Error ? error.message : 'Error desconocido'))
-      this.dispatch(addAssistantMessage({
+      const addMessage = this.coreType === 'assistant' ? addAssistantMessage : addDashboardMessage
+      this.dispatch(addMessage({
         content: '🦁 Error procesando consulta. ¿Podría intentar de nuevo?',
         type: 'assistant'
       }))
     } finally {
-      this.dispatch(setAssistantLoading(false))
+      const setLoading = this.coreType === 'assistant' ? setAssistantLoading : setDashboardLoading
+      this.dispatch(setLoading(false))
     }
   }
 

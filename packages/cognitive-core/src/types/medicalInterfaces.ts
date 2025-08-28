@@ -45,7 +45,7 @@ export interface SystemMetrics {
   coreMetrics: {
     dashboard: CoreMetrics
     assistant: CoreMetrics  
-    inference: CoreMetrics
+    // 🪦 inference eliminado - solo dos núcleos por decreto de Gandalf
   }
   
   // === MÉTRICAS TEMPORALES ===
@@ -229,8 +229,8 @@ export const createEmptySystemMetrics = (): SystemMetrics => ({
   healthScore: 0,
   coreMetrics: {
     dashboard: createEmptyCoreMetrics(),
-    assistant: createEmptyCoreMetrics(),
-    inference: createEmptyCoreMetrics()
+    assistant: createEmptyCoreMetrics()
+    // 🪦 inference.createEmptyCoreMetrics() eliminado
   },
   uptime: 0,
   avgSessionDuration: 0,
