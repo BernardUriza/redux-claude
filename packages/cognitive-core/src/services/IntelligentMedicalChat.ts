@@ -3,6 +3,13 @@
 
 import { callClaudeForDecision } from './decisionalMiddleware'
 import type { MedicalMessage } from '../store/medicalChatSlice'
+import type { AppDispatch } from '../store/store'
+import { 
+  addAssistantMessage, 
+  completeExtraction, 
+  setExtractionError,
+  setAssistantLoading 
+} from '../store/medicalChatSlice'
 
 export interface MedicalInference {
   id: string
@@ -36,72 +43,108 @@ export interface ChatAnalysisRequest {
 }
 
 export class IntelligentMedicalChat {
+  private dispatch: AppDispatch
+
+  constructor(dispatch: AppDispatch) {
+    this.dispatch = dispatch
+  }
+
   /**
-   * Procesa input del usuario con inferencia inteligente tipo MAI-DxO
-   * Nunca rechaza - siempre ayuda con lo que tiene
+   * Procesa input del usuario usando Redux store - sin returns innecesarios
+   * Toda la data va al store, no devuelve nada
    */
-  async processUserInput(request: ChatAnalysisRequest): Promise<IntelligentChatResponse> {
+  async processUserInput(userInput: string): Promise<void> {
     try {
-      // 🛡️ VALIDACIÓN DE REQUEST - Prevenir errores undefined
-      const userInput = request?.user_input || ''
+      this.dispatch(setAssistantLoading(true))
       
       if (!userInput || typeof userInput !== 'string') {
-        console.warn('⚠️ Input inválido en processUserInput:', request)
-        return this.createFallbackResponse('Sin input válido')
+        console.warn('⚠️ Input inválido en processUserInput:', userInput)
+        this.dispatch(addAssistantMessage({
+          content: '🦁 Hola Doctor Edmund, ¿podría proporcionarme datos del paciente?',
+          type: 'assistant'
+        }))
+        this.dispatch(setAssistantLoading(false))
+        return
       }
 
-      // 🚀 ARQUITECTURA COMPLEMENTARIA: Ambos agentes trabajan EN PARALELO
-      console.log('🔄 Ejecutando agentes complementarios en paralelo...')
+      // 🎯 ARQUITECTURA SECUENCIAL INTELIGENTE: Extractor → Chat solo lo faltante
+      console.log('🔄 PASO 1: Ejecutando extractor para analizar datos disponibles...')
       
-      const [chatResponse, extractorResponse] = await Promise.all([
-        // 🦁 Doctor Edmund: Conversación inteligente
-        this.callDecisionEngine('intelligent_medical_chat', userInput, request, {
-          context: request.conversation_history?.length > 0 ? 'follow_up_conversation' : 'initial_consultation'
-        }),
-        // 🧬 Extractor: Datos estructurados en background
-        this.callDecisionEngine('medical_data_extractor', userInput, request, {
-          extractionMode: 'parallel_extraction',
-          existing_data: request.previous_inferences || []
-        })
-      ])
+      // PASO 1: 🧬 Extractor analiza QUÉ datos tenemos y cuáles faltan
+      const extractorResponse = await this.callDecisionEngine('medical_data_extractor', userInput)
 
-      // ✅ Priorizar respuesta del chat si existe
+      if (!extractorResponse) {
+        console.warn('💥 Extractor falló, usando fallback básico')
+        this.dispatch(addAssistantMessage({
+          content: '🦁 Error temporal. ¿Podría repetir su consulta médica?',
+          type: 'assistant'
+        }))
+        this.dispatch(setAssistantLoading(false))
+        return
+      }
+
+      const extractedData = extractorResponse.data || extractorResponse
+      const completenessPercentage = extractedData.extraction_metadata?.overall_completeness_percentage || 0
+      const missingCriticalFields = extractedData.extraction_metadata?.missing_critical_fields || []
+      const isNOMCompliant = extractedData.extraction_metadata?.nom_compliant || false
+
+      console.log('📊 Análisis de completitud:', {
+        completeness: completenessPercentage,
+        missing_fields: missingCriticalFields,
+        nom_compliant: isNOMCompliant
+      })
+
+      // PASO 2: Guardar datos extraídos en store
+      this.dispatch(completeExtraction(extractedData))
+      
+      // PASO 3: 🦁 Doctor Edmund solo pregunta por lo que FALTA
+      console.log('🔄 PASO 3: Doctor Edmund preguntando solo lo faltante...')
+      
+      const chatResponse = await this.callDecisionEngine('intelligent_medical_chat', userInput, {
+        extracted_data: extractedData,
+        missing_critical_fields: missingCriticalFields,
+        completeness_percentage: completenessPercentage,
+        instruction: 'Solo preguntar por campos faltantes específicos'
+      })
+
       if (chatResponse) {
-        // 💎 ENRIQUECER respuesta del chat con datos estructurados del extractor
-        const enrichedResponse = this.enrichChatResponseWithExtractedData(
-          chatResponse as IntelligentChatResponse,
-          extractorResponse,
-          userInput
-        )
+        // Agregar respuesta del chat al store - NÚCLEO ASSISTANT
+        this.dispatch(addAssistantMessage({
+          content: chatResponse.message || this.generateQuestionBasedOnMissingFields(missingCriticalFields),
+          type: 'assistant',
+          metadata: {
+            sectionType: completenessPercentage >= 80 ? 'diagnosis' : 'education'
+          }
+        }))
         
-        console.log('✅ Respuesta complementaria generada: Chat + Datos estructurados')
-        return enrichedResponse
+        console.log('✅ Respuesta secuencial guardada en núcleo assistant')
+      } else {
+        // Fallback: Generar pregunta basada en campos faltantes
+        console.warn('⚠️ Chat falló, generando pregunta desde análisis de extractor')
+        this.dispatch(addAssistantMessage({
+          content: this.generateQuestionBasedOnMissingFields(missingCriticalFields),
+          type: 'assistant'
+        }))
       }
-
-      // 🔄 Fallback: Si chat falla, usar extractor + generar respuesta
-      if (extractorResponse) {
-        console.warn('⚠️ Chat failed, generando respuesta desde datos extraídos')
-        return this.generateIntelligentResponse(userInput, extractorResponse, request)
-      }
-
-      // 💥 Último recurso: respuesta de fallback
-      console.warn('💥 Ambos agentes fallaron, usando fallback básico')
-      return this.createFallbackResponse(userInput)
 
     } catch (error) {
-      console.error('💥 Error en chat inteligente (cayendo a fallback):', error)
-      const userInput = request?.user_input || ''
-      return this.createFallbackResponse(userInput)
+      console.error('💥 Error en chat inteligente:', error)
+      this.dispatch(setExtractionError(error?.message || 'Error desconocido'))
+      this.dispatch(addAssistantMessage({
+        content: '🦁 Error procesando consulta. ¿Podría intentar de nuevo?',
+        type: 'assistant'
+      }))
+    } finally {
+      this.dispatch(setAssistantLoading(false))
     }
   }
 
   /**
-   * DRY: Wrapper único para todas las llamadas a callClaudeForDecision
+   * DRY: Wrapper único para llamadas a Claude
    */
   private async callDecisionEngine(
     decisionType: 'intelligent_medical_chat' | 'medical_data_extractor',
     userInput: string,
-    request: ChatAnalysisRequest,
     additionalContext: Record<string, any> = {}
   ): Promise<any> {
     try {
@@ -111,11 +154,7 @@ export class IntelligentMedicalChat {
         'claude',
         undefined,
         undefined,
-        {
-          conversation_history: request.conversation_history,
-          previous_inferences: request.previous_inferences,
-          ...additionalContext
-        }
+        additionalContext
       )
 
       if (response.success) {
@@ -132,189 +171,26 @@ export class IntelligentMedicalChat {
   }
 
   /**
-   * 💎 FUNCIÓN CLAVE: Enriquece la respuesta conversacional con datos estructurados
+   * Genera pregunta inteligente basada en campos faltantes
    */
-  private enrichChatResponseWithExtractedData(
-    chatResponse: IntelligentChatResponse,
-    extractorResponse: any,
-    userInput: string
-  ): IntelligentChatResponse {
-    // Si no hay datos del extractor, devolver respuesta original del chat
-    if (!extractorResponse) {
-      return chatResponse
+  private generateQuestionBasedOnMissingFields(missingFields: string[]): string {
+    if (missingFields.includes('patient_age_years') && missingFields.includes('patient_gender')) {
+      return '🦁 Doctor Edmund, para continuar necesito la edad y género del paciente.'
     }
-
-    // 🧬 Extraer datos estructurados
-    const extractedData = extractorResponse.data || extractorResponse
-    const completenessPercentage = extractedData.extraction_metadata?.overall_completeness_percentage || 0
-    const isNOMCompliant = extractedData.extraction_metadata?.nom_compliant || false
-    const isReadyForSOAP = extractedData.extraction_metadata?.ready_for_soap_generation || false
-
-    // 🔗 Agregar metadata de extracción a la respuesta del chat
-    const enrichedResponse: IntelligentChatResponse = {
-      ...chatResponse,
-      // 📊 Enriquecer con datos de completitud
-      extraction_metadata: {
-        completeness_percentage: completenessPercentage,
-        nom_compliant: isNOMCompliant,
-        ready_for_soap: isReadyForSOAP,
-        extracted_data: extractedData
-      },
-      // 🎯 Ajustar nivel de confianza basado en completitud
-      confidence_level: completenessPercentage >= 80 ? 'high' : 
-                       completenessPercentage >= 50 ? 'medium' : 'low',
-      // 🔄 Agregar inferencias adicionales del extractor si las hay
-      inferences: [
-        ...chatResponse.inferences,
-        ...this.createInferencesFromExtractedData(extractedData)
-      ].slice(0, 3) // Máximo 3 inferencias para evitar overload
-    }
-
-    console.log('💎 Respuesta enriquecida:', {
-      original_message: chatResponse.message,
-      completeness: completenessPercentage,
-      nom_compliant: isNOMCompliant,
-      additional_inferences: enrichedResponse.inferences.length - chatResponse.inferences.length
-    })
-
-    return enrichedResponse
-  }
-
-  /**
-   * 🧬 Crear inferencias adicionales desde datos extraídos
-   */
-  private createInferencesFromExtractedData(extractedData: any): MedicalInference[] {
-    const inferences: MedicalInference[] = []
-    const timestamp = Date.now()
-
-    // Solo agregar inferencias que no estén ya en la respuesta del chat
-    if (extractedData.demographics?.patient_age_years && extractedData.demographics.patient_age_years !== 'unknown') {
-      inferences.push({
-        id: `extracted_age_${timestamp}`,
-        category: 'demographic',
-        confidence: extractedData.demographics.confidence_demographic || 0.8,
-        inference: `Edad identificada: ${extractedData.demographics.patient_age_years} años`,
-        evidence: [`Extraído del input: ${extractedData.demographics.patient_age_years}`],
-        needs_confirmation: false
-      })
-    }
-
-    if (extractedData.clinical_presentation?.chief_complaint && extractedData.clinical_presentation.chief_complaint !== 'unknown') {
-      inferences.push({
-        id: `extracted_complaint_${timestamp}`,
-        category: 'symptom',
-        confidence: extractedData.clinical_presentation.confidence_symptoms || 0.8,
-        inference: `Síntoma principal extraído: ${extractedData.clinical_presentation.chief_complaint}`,
-        evidence: [`Identificado automáticamente: ${extractedData.clinical_presentation.chief_complaint}`],
-        needs_confirmation: false
-      })
-    }
-
-    return inferences
-  }
-
-  /**
-   * Genera respuesta inteligente basada en datos médicos extraídos
-   */
-  private generateIntelligentResponse(userInput: string, extractorResponse: any, request: ChatAnalysisRequest): IntelligentChatResponse {
-    const extractedData = extractorResponse.data || extractorResponse
-    const hasSymptoms = !!extractedData.clinical_presentation?.chief_complaint && extractedData.clinical_presentation.chief_complaint !== 'unknown'
-    const hasDemographics = !!extractedData.demographics && (
-      (extractedData.demographics.patient_age_years && extractedData.demographics.patient_age_years !== 'unknown') ||
-      (extractedData.demographics.patient_gender && extractedData.demographics.patient_gender !== 'unknown')
-    )
-    const hasTimeline = !!extractedData.symptom_characteristics?.duration_description && extractedData.symptom_characteristics.duration_description !== 'unknown'
-
-    // Crear inferencias basadas en datos extraídos
-    const inferences: MedicalInference[] = []
     
-    if (hasDemographics) {
-      const age = extractedData.demographics.patient_age_years
-      const gender = extractedData.demographics.patient_gender
-      
-      if (age && age !== 'unknown') {
-        inferences.push({
-          id: `demographic_age_${Date.now()}`,
-          category: 'demographic',
-          confidence: extractedData.demographics.confidence_demographic || 0.8,
-          inference: `Paciente de ${age} años`,
-          evidence: [`Edad mencionada: ${age}`],
-          needs_confirmation: false
-        })
-      }
-      
-      if (gender && gender !== 'unknown') {
-        inferences.push({
-          id: `demographic_gender_${Date.now()}`,
-          category: 'demographic', 
-          confidence: extractedData.demographics.confidence_demographic || 0.8,
-          inference: `Paciente ${gender}`,
-          evidence: [`Género identificado: ${gender}`],
-          needs_confirmation: false
-        })
-      }
+    if (missingFields.includes('patient_age_years')) {
+      return '🦁 Doctor Edmund, ¿qué edad tiene el paciente?'
     }
-
-    if (hasSymptoms) {
-      const chiefComplaint = extractedData.clinical_presentation.chief_complaint
-      inferences.push({
-        id: `symptom_primary_${Date.now()}`,
-        category: 'symptom',
-        confidence: extractedData.clinical_presentation.confidence_symptoms || 0.7,
-        inference: `Síntoma principal: ${chiefComplaint}`,
-        evidence: [`Síntoma reportado: ${chiefComplaint}`],
-        needs_confirmation: false
-      })
-    }
-
-    // Determinar etapa de conversación y acciones sugeridas
-    const completenessPercentage = extractedData.extraction_metadata?.overall_completeness_percentage || 0
-    const isReadyForSOAP = extractedData.extraction_metadata?.ready_for_soap_generation || false
     
-    let conversationStage: 'initial' | 'gathering' | 'analyzing' | 'concluding'
-    let suggestedActions: string[]
-    let message: string
-
-    if (completenessPercentage >= 80 && isReadyForSOAP) {
-      conversationStage = 'concluding'
-      suggestedActions = ['Generar prompt SOAP', 'Revisar datos recopilados']
-      message = '🦁 Doctor Edmund, tengo información suficiente. Los datos están completos para generar un análisis SOAP.'
-    } else if (completenessPercentage >= 50) {
-      conversationStage = 'analyzing'
-      suggestedActions = ['Solicitar detalles faltantes', 'Profundizar en síntomas']
-      message = '🦁 Doctor Edmund, he registrado información importante. ¿Podría proporcionar más detalles específicos?'
-    } else {
-      conversationStage = 'gathering'
-      suggestedActions = ['Solicitar edad y género', 'Identificar síntoma principal']
-      message = '🦁 Doctor Edmund, entiendo su consulta médica. Para ayudarle mejor, ¿podría confirmarme la edad y género del paciente?'
+    if (missingFields.includes('patient_gender')) {
+      return '🦁 Doctor Edmund, ¿cuál es el género del paciente?'
     }
-
-    return {
-      message,
-      inferences,
-      suggested_actions: suggestedActions,
-      confidence_level: completenessPercentage >= 80 ? 'high' : completenessPercentage >= 50 ? 'medium' : 'low',
-      requires_user_input: !isReadyForSOAP,
-      conversation_stage: conversationStage
+    
+    if (missingFields.includes('chief_complaint')) {
+      return '🦁 Doctor Edmund, ¿cuál es el síntoma principal que presenta el paciente?'
     }
+    
+    return '🦁 Doctor Edmund, ¿podría proporcionarme más detalles del caso médico?'
   }
 
-
-
-
-  /**
-   * Crea respuesta de fallback que nunca falla
-   */
-  private createFallbackResponse(userInput: string): IntelligentChatResponse {
-    const safeUserInput = userInput || ''
-    
-    return {
-      message: '🦁 Hola Doctor Edmund, entiendo que tienes una consulta médica. Para ayudarle mejor, ¿podría confirmarme la edad y género del paciente?',
-      inferences: [],
-      suggested_actions: ['Proporcionar edad del paciente', 'Especificar género', 'Describir síntoma principal'],
-      confidence_level: 'low',
-      requires_user_input: true,
-      conversation_stage: 'initial',
-    }
-  }
 }
