@@ -1,8 +1,8 @@
 // 🏥 Asistente Médico Inteligente - Solo hooks del package
 // Creado por Bernard Orozco - Sin estado local, solo servicios
 
-import React, { useRef } from 'react'
 import { useMedicalChat } from '@redux-claude/cognitive-core'
+import React, { useRef } from 'react'
 import { DynamicInferencePanel } from './DynamicInferencePanel'
 import { MedicalChatMessage } from './MedicalChatMessage'
 
@@ -24,15 +24,10 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
   onInitialResponse,
 }) => {
   // 🧠 SOLO HOOK DEL PACKAGE - Sin estado local
-  const {
-    messages,
-    isLoading,
-    sendMedicalQuery,
-    error,
-  } = useMedicalChat({
+  const { messages, isLoading, sendMedicalQuery, error } = useMedicalChat({
     onValidationFailed: (input, result) => {
       console.warn('Validación médica falló:', input, result)
-    }
+    },
   })
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
@@ -42,7 +37,7 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
     const form = e.target as HTMLFormElement
     const formData = new FormData(form)
     const message = formData.get('message') as string
-    
+
     if (message?.trim() && !isLoading) {
       await sendMedicalQuery(message)
       form.reset()
@@ -51,26 +46,12 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
   }
 
   return (
-    <div className={`h-full flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-6 ${className}`}>
+    <div className={`h-full p-2 flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-6 ${className}`}>
       {/* Chat Principal */}
       <div className="flex-1 flex flex-col min-h-0">
         <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-slate-600/50 overflow-hidden flex flex-col h-full">
-          
-          {/* Header */}
-          <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-4 border-b border-slate-600/50">
-            <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-xl">
-                <span className="text-xl">🦁</span>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-cyan-300">Chat Médico IA</h3>
-                <p className="text-slate-300 text-sm">Asistente inteligente - Solo hooks del package</p>
-              </div>
-            </div>
-          </div>
-
           {/* Mensajes */}
-          <div 
+          <div
             ref={chatContainerRef}
             className="flex-1 p-4 space-y-4 overflow-y-auto scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600"
           >
@@ -80,7 +61,7 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
                 <p>Inicie una conversación médica...</p>
               </div>
             )}
-            
+
             {messages.map((message: any) => (
               <MedicalChatMessage key={message.id} message={message} />
             ))}

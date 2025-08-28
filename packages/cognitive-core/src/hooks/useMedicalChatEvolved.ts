@@ -7,7 +7,7 @@ import {
   ClaudeAdapter,
   convertReduxMessagesToClaudeFormat,
 } from '../decision-engine/providers/claude'
-import { MedicalQualityValidator } from '../utils/medicalValidator'
+import { validateMedicalCase, generateRejectionMessage } from '../utils/aiMedicalValidator'
 import { IterativeDiagnosticEngine } from '../engine/IterativeDiagnosticEngine'
 import type { RootState, AppDispatch } from '../store/store'
 import {
@@ -30,7 +30,7 @@ interface UseMedicalChatOptions {
 export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
   const dispatch = useDispatch<AppDispatch>()
   const [claudeAdapter] = useState(() => new ClaudeAdapter())
-  const [medicalValidator] = useState(() => new MedicalQualityValidator())
+  // AI validator replaced the regex-based MedicalQualityValidator
   const [diagnosticEngine] = useState(() => new IterativeDiagnosticEngine(new ClaudeAdapter()))
 
   // 🧠 MULTINÚCLEO: Acceder al Dashboard Core específicamente
@@ -52,8 +52,8 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
         dispatch(clearError())
         dispatch(setDashboardLoading(true))
 
-        // Validación médica
-        const validationResult = medicalValidator.validateMedicalCase(message)
+        // Validación médica con IA
+        const validationResult = await validateMedicalCase(message)
 
         if (!validationResult.isValid) {
           console.log('❌ Consulta rechazada:', validationResult.rejectionReason)
@@ -61,13 +61,13 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
           // Agregar mensaje del usuario al dashboard
           dispatch(addDashboardMessage({ content: message, type: 'user' }))
 
-          // Mensaje de rechazo
-          const rejectionMessage = `## ⚠️ Consulta No Válida
-
-**Razón:** ${validationResult.rejectionReason}
-**Confianza:** ${Math.round(validationResult.confidence * 100)}%
-
-💡 **Usa el asistente médico** para estructurar mejor tu consulta.`
+          // Mensaje de rechazo generado por IA
+          const rejectionMessage = generateRejectionMessage({
+            isValid: validationResult.isValid,
+            confidence: validationResult.confidence,
+            rejectionReason: validationResult.rejectionReason,
+            suggestedFormat: validationResult.suggestedImprovements?.[0]
+          })
 
           dispatch(
             addDashboardMessage({
@@ -111,7 +111,7 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
         dispatch(setDashboardLoading(false))
       }
     },
-    [dispatch, dashboardCore.isLoading, medicalValidator, options]
+    [dispatch, dashboardCore.isLoading, options]
   )
 
   const newSession = useCallback(

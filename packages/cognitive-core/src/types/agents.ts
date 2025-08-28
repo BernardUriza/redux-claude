@@ -18,6 +18,7 @@ export enum AgentType {
   SPECIALTY_DETECTION = 'specialty_detection',
   INTELLIGENT_MEDICAL_CHAT = 'intelligent_medical_chat',
   MEDICAL_DATA_EXTRACTOR = 'medical_data_extractor',
+  MEDICAL_INPUT_VALIDATOR = 'medical_input_validator',
 }
 
 export enum AgentStatus {
@@ -253,6 +254,15 @@ export type IntelligentMedicalChatDecision = {
   conversation_stage: 'initial' | 'gathering' | 'analyzing' | 'concluding'
 }
 
+export type MedicalInputValidatorDecision = {
+  is_valid: boolean
+  confidence: number
+  validation_category: 'valid_medical' | 'invalid_non_medical' | 'unclear_needs_context'
+  medical_indicators: string[]
+  rejection_reason?: string
+  suggested_format?: string
+}
+
 export type AgentDecision =
   | DiagnosticDecision
   | ValidationDecision
@@ -269,6 +279,7 @@ export type AgentDecision =
   | CriticalDataValidationDecision
   | SpecialtyDetectionDecision
   | IntelligentMedicalChatDecision
+  | MedicalInputValidatorDecision
 
 // Agent registry definition
 export type AgentDefinition = {

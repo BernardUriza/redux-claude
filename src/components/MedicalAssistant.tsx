@@ -8,7 +8,7 @@ import { selectSystemMetrics } from '../../packages/cognitive-core/src/store/sel
 import type { RootState } from '../../packages/cognitive-core/src/store/store'
 // import { useAssistantChat } from '../hooks/useMultinucleusChat' // Hook no disponible
 import { IntelligentMedicalChat } from './IntelligentMedicalChat'
-import { generateMedicalPrompt } from '@redux-claude/cognitive-core'
+import { generateMedicalPrompt, type MedicalExtractionOutput } from '@redux-claude/cognitive-core'
 
 interface MedicalAssistantProps {
   partialInput: string
@@ -45,7 +45,9 @@ export const MedicalAssistant = ({
       // Crear datos estructurados según MedicalExtractionOutput
       const extractedData = {
         demographics: {
-          patient_age_years: typeof patientData.age === 'number' ? patientData.age : "unknown",
+          patient_age_years: typeof patientData.age === 'number' ? patientData.age : 
+                         (typeof patientData.age === 'string' && !isNaN(Number(patientData.age))) ? 
+                         Number(patientData.age) : "unknown",
           patient_gender: patientData.gender || "unknown",
           confidence_demographic: patientData.age && patientData.gender ? 0.9 : 0.5
         },
@@ -89,7 +91,7 @@ export const MedicalAssistant = ({
         }
       }
       
-      const { prompt } = generateMedicalPrompt(extractedData)
+      const { prompt } = generateMedicalPrompt(extractedData as MedicalExtractionOutput)
       if (prompt) {
         onSelectTemplate(prompt)
         // Feedback visual

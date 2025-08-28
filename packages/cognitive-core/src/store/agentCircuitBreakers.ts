@@ -106,6 +106,10 @@ const initialState: AgentCircuitBreakersState = {
       maxFailures: 3,
       cooldownMs: 30000,
     }),
+    [AgentType.MEDICAL_INPUT_VALIDATOR]: createInitialCircuitBreaker({
+      maxFailures: 2,
+      cooldownMs: 15000, // Fast validation, low tolerance for failures
+    }),
   },
   metrics: {
     [AgentType.DIAGNOSTIC]: createInitialMetrics(),
@@ -125,6 +129,7 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.SPECIALTY_DETECTION]: createInitialMetrics(),
     [AgentType.MEDICAL_DATA_EXTRACTOR]: createInitialMetrics(),
     [AgentType.INTELLIGENT_MEDICAL_CHAT]: createInitialMetrics(),
+    [AgentType.MEDICAL_INPUT_VALIDATOR]: createInitialMetrics(),
   },
   agentStatuses: {
     [AgentType.DIAGNOSTIC]: AgentStatus.READY,
@@ -144,10 +149,11 @@ const initialState: AgentCircuitBreakersState = {
     [AgentType.SPECIALTY_DETECTION]: AgentStatus.READY,
     [AgentType.MEDICAL_DATA_EXTRACTOR]: AgentStatus.READY,
     [AgentType.INTELLIGENT_MEDICAL_CHAT]: AgentStatus.READY,
+    [AgentType.MEDICAL_INPUT_VALIDATOR]: AgentStatus.READY,
   },
   globalState: {
-    totalAgents: 17,
-    activeAgents: 17, // All 17 agents enabled
+    totalAgents: 18,
+    activeAgents: 18, // All 18 agents enabled
     failedAgents: 0,
     avgSystemLatency: 0,
     lastHealthCheck: Date.now(),

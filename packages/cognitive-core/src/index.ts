@@ -14,8 +14,8 @@ export { useAppDispatch, useAppSelector, useTypedSelector, useTypedDispatch } fr
 export { ClaudeAdapter } from './decision-engine/providers/claude'
 
 // === VALIDATORS ===
-export { MedicalContentValidator, MedicalQualityValidator } from './utils/medicalValidator'
-export type { BasicMedicalValidationResult } from './utils/medicalValidator'
+export { validateMedicalInput, validateMedicalCase, generateRejectionMessage } from './utils/aiMedicalValidator'
+export type { AIValidationResult, LegacyMedicalValidationResult } from './utils/aiMedicalValidator'
 export type { MedicalValidationResult } from './types/medical'
 
 // === MEDICINA DEFENSIVA (FASE 3) ===

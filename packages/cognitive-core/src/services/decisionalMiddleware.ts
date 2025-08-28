@@ -40,6 +40,7 @@ export type DecisionType =
   | 'specialty_detection'
   | 'intelligent_medical_chat'
   | 'medical_data_extractor' // 🧠 2025 Single-Purpose AI Middleware
+  | 'medical_input_validator' // 🛡️ AI-based medical input validation
 export type ProviderType = 'claude' | 'openai' | 'local'
 
 export interface DecisionRequest {
@@ -228,6 +229,7 @@ function getAgentSystemPrompt(type: DecisionType): string {
     specialty_detection: AgentType.SPECIALTY_DETECTION,
     intelligent_medical_chat: AgentType.INTELLIGENT_MEDICAL_CHAT,
     medical_data_extractor: AgentType.MEDICAL_DATA_EXTRACTOR,
+    medical_input_validator: AgentType.MEDICAL_INPUT_VALIDATOR,
   }
 
   const agentType = agentTypeMap[type]

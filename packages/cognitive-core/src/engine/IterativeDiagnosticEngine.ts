@@ -2,7 +2,7 @@
 // Motor de Diagnóstico Iterativo - Creado por Bernard Orozco
 import { ClaudeAdapter } from '../decision-engine/providers/claude'
 import { SOAPAnalysis, DiagnosticCycle, MedicalCase, AdditionalInfoRequest } from '../types/medical'
-import { MedicalQualityValidator } from '../utils/medicalValidator'
+import { validateMedicalCase } from '../utils/aiMedicalValidator'
 import { multiAgentOrchestrator } from '../services/multiAgentOrchestrator'
 import { AgentType } from '../types/agents'
 import { callClaudeForDecision } from '../services/decisionalMiddleware'
@@ -16,12 +16,12 @@ interface DiagnosticEngineConfig {
 export class IterativeDiagnosticEngine {
   private cycles: DiagnosticCycle[] = []
   private claudeAdapter: ClaudeAdapter
-  private validator: MedicalQualityValidator
+  // AI validator replaced the regex-based MedicalQualityValidator
   private config: DiagnosticEngineConfig
 
   constructor(claudeAdapter?: ClaudeAdapter, config?: Partial<DiagnosticEngineConfig>) {
     this.claudeAdapter = claudeAdapter || new ClaudeAdapter()
-    this.validator = new MedicalQualityValidator()
+    // AI validator will be used when needed
     this.config = {
       maxCycles: 3,
       confidenceThreshold: 0.85,
