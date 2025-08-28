@@ -43,21 +43,20 @@ export class IntelligentMedicalChat {
         return this.createFallbackResponse('Sin input válido')
       }
 
-      // 🧠 DECISIÓN DINÁMICA: Si hay suficiente contexto, usar chat directo, sino extractor
-      const hasContext = request.conversation_history && request.conversation_history.length > 0
-      const hasPreviousInferences = request.previous_inferences && request.previous_inferences.length > 0
+      // 🧠 SIEMPRE usar intelligent_medical_chat para conversaciones médicas
+      // El agente está entrenado para hacer preguntas de seguimiento automáticamente
+      const chatResponse = await this.callDecisionEngine('intelligent_medical_chat', userInput, request, {
+        context: request.conversation_history?.length > 0 ? 'follow_up_conversation' : 'initial_consultation'
+      })
       
-      // Usar intelligent_medical_chat si ya tenemos contexto médico previo
-      if (hasContext && hasPreviousInferences) {
-        const chatResponse = await this.callDecisionEngine('intelligent_medical_chat', userInput, request, {
-          context: 'follow_up_conversation'
-        })
-        if (chatResponse) return chatResponse as IntelligentChatResponse
+      if (chatResponse) {
+        return chatResponse as IntelligentChatResponse
       }
 
-      // Usar medical_data_extractor como fallback o primera extracción
+      // Fallback solo si el agente principal falla
+      console.warn('⚠️ intelligent_medical_chat failed, usando extractor como fallback')
       const extractorResponse = await this.callDecisionEngine('medical_data_extractor', userInput, request, {
-        extractionMode: 'intelligent_medical_chat_context'
+        extractionMode: 'fallback_extraction'
       })
 
       if (!extractorResponse) {
