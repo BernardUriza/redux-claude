@@ -95,6 +95,7 @@ export class MedicalStrategy implements DomainStrategy<MedicalDecision> {
     'medical_autocompletion',
     'critical_data_validation',
     'specialty_detection',
+    'intelligent_medical_chat',
   ]
 
   buildSystemPrompt(decisionType: string, request: BaseDecisionRequest): string {
@@ -109,6 +110,7 @@ export class MedicalStrategy implements DomainStrategy<MedicalDecision> {
       medical_autocompletion: AgentType.MEDICAL_AUTOCOMPLETION,
       critical_data_validation: AgentType.CRITICAL_DATA_VALIDATION,
       specialty_detection: AgentType.SPECIALTY_DETECTION,
+      intelligent_medical_chat: AgentType.INTELLIGENT_MEDICAL_CHAT,
     }
 
     const agentType = agentTypeMap[decisionType]
@@ -350,6 +352,9 @@ Generate structured medical documentation using SOAP format:
           break
         case 'specialty_detection':
           this.validateSpecialtyDetectionDecision(decision, errors, warnings)
+          break
+        case 'intelligent_medical_chat':
+          this.validateIntelligentMedicalChatDecision(decision, errors, warnings)
           break
       }
     } catch (error) {
@@ -683,6 +688,47 @@ Generate structured medical documentation using SOAP format:
     return 'unknown'
   }
 
+  private validateIntelligentMedicalChatDecision(
+    decision: any,
+    errors: string[],
+    warnings: string[]
+  ): void {
+    if (!decision.message || typeof decision.message !== 'string') {
+      errors.push('Missing or invalid message field')
+    }
+
+    if (!decision.inferences || !Array.isArray(decision.inferences)) {
+      warnings.push('Missing or invalid inferences array')
+    } else {
+      decision.inferences.forEach((inference: any, index: number) => {
+        if (!inference.id || !inference.category || !inference.inference) {
+          errors.push(`Inference ${index + 1} missing required fields (id, category, inference)`)
+        }
+        if (typeof inference.confidence !== 'number' || inference.confidence < 0 || inference.confidence > 1) {
+          errors.push(`Inference ${index + 1} has invalid confidence value`)
+        }
+      })
+    }
+
+    if (!decision.suggested_actions || !Array.isArray(decision.suggested_actions)) {
+      warnings.push('Missing suggested_actions array')
+    }
+
+    const validConfidenceLevels = ['low', 'medium', 'high']
+    if (!decision.confidence_level || !validConfidenceLevels.includes(decision.confidence_level)) {
+      errors.push('Invalid confidence_level')
+    }
+
+    const validStages = ['initial', 'gathering', 'analyzing', 'concluding']
+    if (!decision.conversation_stage || !validStages.includes(decision.conversation_stage)) {
+      errors.push('Invalid conversation_stage')
+    }
+
+    if (typeof decision.requires_user_input !== 'boolean') {
+      errors.push('Missing or invalid requires_user_input field')
+    }
+  }
+
   private hasRequiredFields(decision: any, decisionType: string): boolean {
     switch (decisionType) {
       case 'diagnosis':
@@ -710,6 +756,13 @@ Generate structured medical documentation using SOAP format:
       case 'specialty_detection':
         return (
           'detected_specialty' in decision && 'confidence' in decision && 'indicators' in decision
+        )
+      case 'intelligent_medical_chat':
+        return (
+          'message' in decision && 
+          'confidence_level' in decision &&
+          'conversation_stage' in decision &&
+          'requires_user_input' in decision
         )
       default:
         return false

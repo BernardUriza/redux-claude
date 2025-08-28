@@ -15,10 +15,12 @@ interface PatientInference {
   max?: number
 }
 
-interface DynamicInferencePanelProps {
+export interface DynamicInferencePanelProps {
   currentMessage?: string
   className?: string
   onInferenceUpdate?: (inferences: PatientInference[]) => void
+  systemMetrics?: any
+  currentSession?: any
 }
 
 /**
@@ -29,6 +31,8 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
   currentMessage = '',
   className = '',
   onInferenceUpdate,
+  systemMetrics,
+  currentSession,
 }) => {
   const [inferences, setInferences] = useState<PatientInference[]>([
     {
@@ -69,12 +73,14 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     },
   ])
 
-  // Actualizar inferencias basadas en el mensaje actual
+  // Actualizar inferencias basadas en el mensaje actual con debounce
   useEffect(() => {
     if (!currentMessage) return
 
-    const message = currentMessage.toLowerCase()
-    const updatedInferences = [...inferences]
+    // Debounce: esperar a que el usuario termine de escribir
+    const debounceTimer = setTimeout(() => {
+      const message = currentMessage.toLowerCase()
+      const updatedInferences = [...inferences]
 
     // Inferencia de edad
     const ageMatch = message.match(/(\d+)\s*(años?|year|old|age)/i)
@@ -171,8 +177,11 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       }
     }
 
-    setInferences(updatedInferences)
-    onInferenceUpdate?.(updatedInferences)
+      setInferences(updatedInferences)
+      onInferenceUpdate?.(updatedInferences)
+    }, 1500) // Esperar 1.5 segundos después de que el usuario deje de escribir
+
+    return () => clearTimeout(debounceTimer)
   }, [currentMessage])
 
   const handleInferenceChange = (id: string, newValue: string | number) => {
@@ -206,7 +215,7 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
   }
 
   return (
-    <div className={`bg-gray-900 border border-gray-700 rounded-lg shadow-xl ${className}`}>
+    <div className={`bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden flex flex-col ${className}`}>
       {/* Header con indicador de estado */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-4 rounded-t-lg">
         <div className="flex items-center justify-between">
@@ -229,11 +238,11 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       </div>
 
       {/* Contenido Principal */}
-      <div className="p-5 space-y-4">
+      <div className="p-5 space-y-4 overflow-y-auto flex-1">
         {inferences.map(inference => (
           <div
             key={inference.id}
-            className="bg-gray-800 rounded-lg p-4 border border-gray-600 hover:border-gray-500 transition-colors"
+            className="bg-gray-800 rounded-lg p-3 border border-gray-600 hover:border-gray-500 transition-colors"
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -260,14 +269,14 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
                     onChange={e =>
                       handleInferenceChange(inference.id, parseInt(e.target.value) || 0)
                     }
-                    className="flex-1 px-4 py-2 bg-gray-700 border border-gray-500 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-500 rounded-lg text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     placeholder="Edad del paciente"
                   />
                 ) : inference.isEditable && inference.options ? (
                   <select
                     value={inference.value as string}
                     onChange={e => handleInferenceChange(inference.id, e.target.value)}
-                    className="flex-1 px-4 py-2 bg-gray-700 border border-gray-500 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-500 rounded-lg text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   >
                     {inference.options.map(option => (
                       <option key={option} value={option}>
@@ -277,7 +286,7 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
                   </select>
                 ) : (
                   <div
-                    className={`flex-1 px-4 py-2 rounded-lg border font-medium ${
+                    className={`w-full px-3 py-2 rounded-lg border text-sm font-medium ${
                       inference.type === 'urgency'
                         ? getUrgencyColor(inference.value as string)
                         : 'bg-gray-700 border-gray-600 text-gray-200'

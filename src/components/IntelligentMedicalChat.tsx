@@ -2,14 +2,16 @@
 // Creado por Bernard Orozco - Sistema de Diagnóstico con IA
 
 import React, { useState, useRef, useEffect } from 'react'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { useAssistantChat } from '../hooks/useMultinucleusChat'
 import { useIntelligentInference } from '../hooks/useIntelligentInference'
 import { MedicalChatMessage } from './MedicalChatMessage'
 import { InferenceCard } from './InferenceCard'
 import { DynamicInferencePanel } from './DynamicInferencePanel'
 import { selectSystemMetrics } from '../../packages/cognitive-core/src/store/selectors/medicalSelectors'
+import { confirmPatientInference, confirmReadyForSOAP } from '../../packages/cognitive-core/src/store/medicalChatSlice'
 import type { RootState } from '../../packages/cognitive-core/src/store/store'
+import type { ChatAnalysisRequest } from '../../packages/cognitive-core/src/services/IntelligentMedicalChat'
 
 // Consolidada en MedicalAssistantProps - Creado por Bernard Orozco
 export interface IntelligentMedicalChatProps {
@@ -54,9 +56,12 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
     handleInferenceConfirmation,
   } = useIntelligentInference()
 
-  // 📊 ESTADO DINÁMICO DEL STORE (NO MÁS HARDCODED)
+  // 🏥 REDUX DISPATCH Y SELECTORES
+  const dispatch = useDispatch()
   const systemMetrics = useSelector(selectSystemMetrics)
   const assistantCore = useSelector((state: RootState) => state.medicalChat.cores.assistant)
+  const patientData = useSelector((state: RootState) => state.medicalChat.sharedState.patientData)
+  const readyForSOAP = useSelector((state: RootState) => state.medicalChat.sharedState.readyForSOAP)
 
   // Estado local del componente
   const [userInput, setUserInput] = useState(partialInput)
@@ -74,97 +79,36 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
     }
   }, []) // Solo ejecutar al montar, no en cada cambio de partialInput
   
-  // 🧠 SISTEMA INTELIGENTE DE RESPUESTA INICIAL (SIMPLIFICADO)
+  // 🧠 SISTEMA INTELIGENTE DE RESPUESTA INICIAL (USA CLAUDE)
   const handleInitialInput = async () => {
     if (!partialInput.trim()) return
     addUserMessage(partialInput)
     
     setLoading(true)
     
-    // Usar directamente el generador contextual para evitar fallos
-    setTimeout(() => {
-      const intelligentResponse = generateContextualResponse(partialInput, systemMetrics, 'initial')
+    try {
+      // Usar CLAUDE para la respuesta inicial también
+      const analysisRequest: ChatAnalysisRequest = {
+        user_input: partialInput,
+        conversation_history: [],
+        previous_inferences: [],
+      }
+
+      const response = await processUserInput(analysisRequest)
+      const intelligentResponse = response.message
       addAssistantMessage(intelligentResponse)
       onInitialResponse?.(intelligentResponse)
+    } catch (error) {
+      // Solo fallback básico en caso de error
+      const fallbackResponse = `🏥 Sistema Médico IA | He registrado: "${partialInput}". ¿Podrías proporcionar más detalles del paciente?`
+      addAssistantMessage(fallbackResponse)
+      onInitialResponse?.(fallbackResponse)
+    } finally {
       setLoading(false)
-    }, 800) // Simular procesamiento
+    }
   }
 
-  // 🎯 GENERADOR DE RESPUESTAS CONTEXTUALES (NO HARDCODED)
-  const generateContextualResponse = (
-    input: string, 
-    metrics: typeof systemMetrics, 
-    stage: 'initial' | 'followup' | 'analysis'
-  ): string => {
-    const confidence = metrics.confidence
-    const sessionTime = Date.now() - currentSession.startedAt
-    
-    // Análisis médico inteligente del input
-    const hasAge = /\b(?:\d{1,3}\s*(?:años?|a[nñ]os?))\b/i.test(input)
-    const hasGender = /\b(?:masculino|femenino|hombre|mujer)\b/i.test(input)
-    const hasChestPain = /dolor.*pecho|pecho.*dolor|chest.*pain|dolor.*torácico/i.test(input)
-    const hasSymptoms = /dolor|molestia|síntoma|fiebre|náusea|mareo/i.test(input)
-    const urgencyLevel = hasChestPain ? 'ALTO' : hasSymptoms ? 'MEDIO' : 'BAJO'
-    
-    if (stage === 'initial') {
-      if (hasChestPain) {
-        return `🚨 **DOLOR TORÁCICO DETECTADO** | Urgencia: ${urgencyLevel} | Confianza: ${confidence}%\n\n` +
-               `He registrado: "${input}"\n\n` +
-               `⚠️ **Síntoma de alta prioridad médica identificado**\n\n` +
-               `**Para evaluación completa, necesito:**\n` +
-               `${!hasAge ? '• Edad del paciente\n' : ''}` +
-               `${!hasGender ? '• Género del paciente\n' : ''}` +
-               `• Duración del dolor\n` +
-               `• Irradiación (¿se extiende a brazo, cuello, mandíbula?)\n` +
-               `• Factores desencadenantes\n\n` +
-               `*Sistema multinúcleo activo - ${metrics.agentsActive} núcleos procesando*`
-      } else if (!hasAge || !hasGender) {
-        const missing = []
-        if (!hasAge) missing.push('edad')
-        if (!hasGender) missing.push('género')
-        
-        return `🏥 **Sistema Médico IA** | Confianza: ${confidence}% | Urgencia: ${urgencyLevel}\n\n` +
-               `He registrado: "${input}"\n\n` +
-               `**Datos requeridos para análisis completo:**\n` +
-               `${missing.map(item => `• ${item.charAt(0).toUpperCase() + item.slice(1)} del paciente`).join('\n')}\n\n` +
-               `*Núcleo Assistant activo - ${messages.length} mensajes procesados*`
-      } else {
-        return `✅ **Información completa detectada** | Confianza: ${confidence}%\n\n` +
-               `Iniciando análisis médico multinúcleo...\n\n` +
-               `*Sistema optimizado - Tiempo de sesión: ${Math.round(sessionTime / 1000)}s*`
-      }
-    }
-    
-    if (stage === 'followup') {
-      if (hasChestPain) {
-        return `🚨 **DOLOR TORÁCICO - SEGUIMIENTO** | Urgencia: ${urgencyLevel} | Confianza: ${confidence}%\n\n` +
-               `Información adicional recibida: "${input}"\n\n` +
-               `**Análisis médico en progreso:**\n` +
-               `• Síntoma principal: Dolor torácico\n` +
-               `• Nivel de urgencia: ${urgencyLevel}\n` +
-               `• Datos faltantes: ${!hasAge && !hasGender ? 'Edad y género' : !hasAge ? 'Edad' : !hasGender ? 'Género' : 'Ninguno'}\n\n` +
-               `⚕️ **Recomendación:** Continuar con evaluación completa\n\n` +
-               `*Sistema multinúcleo: ${metrics.agentsActive} núcleos | Tiempo de respuesta: ${Math.round(metrics.processingTime)}ms*`
-      } else if (!hasAge || !hasGender) {
-        const missing = []
-        if (!hasAge) missing.push('edad del paciente')
-        if (!hasGender) missing.push('género (masculino/femenino)')
-        
-        return `🏥 **Sistema Médico IA** | Confianza: ${confidence}% | Urgencia: ${urgencyLevel}\n\n` +
-               `Para completar el diagnóstico, necesito:\n\n` +
-               `${missing.map(item => `• ${item.charAt(0).toUpperCase() + item.slice(1)}`).join('\n')}\n\n` +
-               `*Núcleos activos: ${metrics.agentsActive} | Tiempo de respuesta: ${Math.round(metrics.processingTime)}ms*`
-      } else {
-        return `✅ **Análisis completo en progreso** | Confianza: ${confidence}%\n\n` +
-               `Procesando información médica con todos los datos requeridos...\n\n` +
-               `*Sistema multinúcleo optimizado - ${metrics.agentsActive} núcleos activos*`
-      }
-    }
-    
-    return `🤖 **Análisis médico inteligente** | Confianza: ${confidence}%\n\n` +
-           `Sistema procesando información médica...\n\n` +
-           `*Métricas: ${metrics.agentsActive} núcleos | ${messages.length} mensajes | ${Math.round(sessionTime / 1000)}s de sesión*`
-  }
+  // 🎯 FUNCIÓN ELIMINADA - AHORA CLAUDE SE ENCARGA DE TODO EL ANÁLISIS CONTEXTUAL
 
   // Auto scroll al final cuando hay nuevos mensajes
   useEffect(() => {
@@ -173,7 +117,47 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
     }
   }, [messages, currentResponse])
 
-  // 🧠 LÓGICA CONVERSACIONAL INTELIGENTE - Integración Multinúcleo
+  // 🎯 EFECTO PARA TRANSICIÓN AUTOMÁTICA A SOAP
+  useEffect(() => {
+    if (readyForSOAP && patientData.isComplete) {
+      // Delay para que el usuario vea la confirmación antes de la transición
+      const transitionTimer = setTimeout(() => {
+        // Construir detalles contextuales si están disponibles
+        let contextualDetails = ''
+        if (patientData.isEnhanced) {
+          const details = []
+          if (patientData.duration) details.push(`⏱ Duración: ${patientData.duration}`)
+          if (patientData.intensity) details.push(`💊 Intensidad: ${patientData.intensity}/10`)
+          if (patientData.characteristics?.length) details.push(`📝 Características: ${patientData.characteristics.join(', ')}`)
+          if (patientData.triggers?.length) details.push(`⚠️ Desencadenantes: ${patientData.triggers.join(', ')}`)
+          if (patientData.relievingFactors?.length) details.push(`✅ Alivio: ${patientData.relievingFactors.join(', ')}`)
+          if (patientData.associatedSymptoms?.length) details.push(`🔗 Síntomas asociados: ${patientData.associatedSymptoms.join(', ')}`)
+          if (patientData.timePattern) details.push(`⏰ Patrón: ${patientData.timePattern}`)
+          
+          if (details.length > 0) {
+            contextualDetails = `\n**Detalles Contextuales:**\n${details.join('\n')}\n`
+          }
+        }
+
+        addAssistantMessage(
+          `🏥 **ANÁLISIS SOAP INICIADO**\n\n` +
+          `**Paciente:** ${patientData.gender} de ${patientData.age} años\n` +
+          `**Síntoma Principal:** ${patientData.primarySymptom}` +
+          contextualDetails +
+          `\nProcediendo con análisis médico estructurado SOAP...\n\n` +
+          `*Sistema multinúcleo optimizado - ${patientData.isEnhanced ? 'Datos completos + contexto médico' : 'Datos básicos'} - Transición automática activada*`
+        )
+
+        // Aquí se podría disparar la navegación a la página SOAP
+        // navigate('/soap-analysis') o similar
+        console.log('🚀 TRANSICIÓN A SOAP - Datos del paciente:', patientData)
+      }, 2000)
+
+      return () => clearTimeout(transitionTimer)
+    }
+  }, [readyForSOAP, patientData])
+
+  // 🧠 LÓGICA CONVERSACIONAL INTELIGENTE - Integración Multinúcleo CON CLAUDE
   const handleSendMessage = async () => {
     if (!userInput.trim() || isLoading || processingInferences) return
 
@@ -184,62 +168,212 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
     try {
       setLoading(true)
       
-      // 🎯 ANÁLISIS CONTEXTUAL USANDO EL STORE
-      const analysisRequest = {
-        message: trimmedInput,
-        context: {
-          sessionId: currentSession.id,
-          messageHistory: messages,
-          systemMetrics,
-          previousInferences: currentResponse?.inferences || [],
-        },
-        requestType: 'followup_analysis' as const,
+      // 🎯 ANÁLISIS CONTEXTUAL USANDO CLAUDE DIRECTAMENTE
+      const analysisRequest: ChatAnalysisRequest = {
+        user_input: trimmedInput,
+        conversation_history: messages,
+        previous_inferences: currentResponse?.inferences || [],
       }
 
+      // USAR SIEMPRE EL SERVICIO INTELIGENTE DE CLAUDE
       const response = await processUserInput(analysisRequest)
       
-      // Generar respuesta contextual inteligente
-      const intelligentResponse = generateContextualResponse(
-        trimmedInput, 
-        systemMetrics, 
-        'followup'
-      )
-      
-      // Combinar análisis inteligente con respuesta del sistema
-      const finalResponse = response.message || intelligentResponse
+      // Usar SOLO la respuesta inteligente de Claude, no hardcoded
+      const finalResponse = response.message
       addAssistantMessage(finalResponse)
       
     } catch (error) {
       console.error('Error en análisis:', error)
       
-      // Fallback inteligente que usa el estado del sistema
-      const fallbackResponse = generateContextualResponse(
-        trimmedInput, 
-        systemMetrics, 
-        'analysis'
-      )
+      // Solo en caso de error extremo, fallback simple
+      const fallbackResponse = '🦁 Doctor Edmund, tuve un problema técnico. ¿Podrías repetir la información del paciente?'
       addAssistantMessage(fallbackResponse)
     } finally {
       setLoading(false)
     }
   }
 
-  // 🎯 HANDLER INTELIGENTE DE INFERENCIAS (USA EL STORE)
+  // 🎯 HANDLER INTELIGENTE DE INFERENCIAS CON REDUX INTEGRATION
   const handleInferenceConfirm = (inference: any, confirmed: boolean) => {
     const result = handleInferenceConfirmation(inference, confirmed)
     
-    // Respuesta contextual basada en las métricas del sistema
-    const contextualResponse = `${result.responseText}\n\n` +
-      `*Sistema: Confianza ${systemMetrics.confidence}% | ` +
-      `Núcleos activos: ${systemMetrics.agentsActive} | ` +
-      `Mensajes procesados: ${messages.length}*`
-    
-    addAssistantMessage(contextualResponse)
-    
-    // Actualizar métricas si es necesario
-    if (result.shouldUpdateMetrics) {
-      console.log('🎯 Actualizando métricas del sistema basado en confirmación')
+    if (confirmed) {
+      // 🏥 DISPATCH ACCIÓN REDUX PARA GUARDAR DATOS CONFIRMADOS
+      
+      // EXTRACCIÓN INTELIGENTE DE DATOS DEMOGRÁFICOS
+      if (inference.category === 'demographic' && inference.inference.includes('años')) {
+        // Extraer edad y género de la inferencia
+        const ageMatch = inference.inference.match(/(\d+)\s*años/)
+        const age = ageMatch ? parseInt(ageMatch[1]) : undefined
+        
+        const genderMatch = inference.inference.match(/(femenina|masculino|femenino|masculina)/i)
+        const gender = genderMatch ? 
+          (genderMatch[1].toLowerCase().includes('femeni') ? 'femenino' : 'masculino') 
+          : undefined
+
+        if (age) {
+          dispatch(confirmPatientInference({
+            type: 'age',
+            value: age,
+            confidence: inference.confidence
+          }))
+        }
+
+        if (gender) {
+          dispatch(confirmPatientInference({
+            type: 'gender',
+            value: gender,
+            confidence: inference.confidence
+          }))
+        }
+
+        // También extraer síntoma si está en la inferencia
+        const symptomMatch = inference.inference.match(/dolor\s+(\w+)/i)
+        if (symptomMatch) {
+          dispatch(confirmPatientInference({
+            type: 'symptom',
+            value: `dolor ${symptomMatch[1]}`,
+            confidence: inference.confidence
+          }))
+        }
+      }
+
+      // EXTRACCIÓN INTELIGENTE DE DETALLES CONTEXTUALES
+      const inferenceText = inference.inference.toLowerCase()
+      
+      // Duración
+      const durationMatch = inferenceText.match(/(?:desde\s+hace\s+|desde\s+|hace\s+)([^,\.]+)/i) ||
+                           inferenceText.match(/(\d+\s+(?:días?|horas?|semanas?|meses?))/i) ||
+                           inferenceText.match(/(ayer|anteayer|esta\s+mañana|anoche)/i)
+      if (durationMatch) {
+        dispatch(confirmPatientInference({
+          type: 'duration',
+          value: durationMatch[1].trim(),
+          confidence: inference.confidence
+        }))
+      }
+
+      // Intensidad (escala 1-10)
+      const intensityMatch = inferenceText.match(/(?:intensidad\s+|dolor\s+)(\d+)(?:\/10|\s+de\s+10)/i) ||
+                            inferenceText.match(/(\d+)\/10/i)
+      if (intensityMatch) {
+        const intensity = parseInt(intensityMatch[1])
+        if (intensity >= 1 && intensity <= 10) {
+          dispatch(confirmPatientInference({
+            type: 'intensity',
+            value: intensity,
+            confidence: inference.confidence
+          }))
+        }
+      }
+
+      // Características del dolor
+      const characteristics = []
+      if (/punzante/i.test(inferenceText)) characteristics.push('punzante')
+      if (/sordo|opaco/i.test(inferenceText)) characteristics.push('sordo')
+      if (/pulsátil|pulsante/i.test(inferenceText)) characteristics.push('pulsátil')
+      if (/constante|continuo/i.test(inferenceText)) characteristics.push('constante')
+      if (/ardor|quemante/i.test(inferenceText)) characteristics.push('ardor')
+      if (/cólico/i.test(inferenceText)) characteristics.push('cólico')
+      
+      if (characteristics.length > 0) {
+        dispatch(confirmPatientInference({
+          type: 'characteristics',
+          value: characteristics,
+          confidence: inference.confidence
+        }))
+      }
+
+      // Factores desencadenantes
+      const triggers = []
+      if (/movimiento/i.test(inferenceText)) triggers.push('movimiento')
+      if (/luz|fotofobia/i.test(inferenceText)) triggers.push('luz')
+      if (/estrés|tensión/i.test(inferenceText)) triggers.push('estrés')
+      if (/comida|alimento/i.test(inferenceText)) triggers.push('comida')
+      if (/ejercicio/i.test(inferenceText)) triggers.push('ejercicio')
+      
+      if (triggers.length > 0) {
+        dispatch(confirmPatientInference({
+          type: 'triggers',
+          value: triggers,
+          confidence: inference.confidence
+        }))
+      }
+
+      // Factores que alivian
+      const relievers = []
+      if (/reposo|descanso/i.test(inferenceText)) relievers.push('reposo')
+      if (/medicamento|analgésico/i.test(inferenceText)) relievers.push('medicamento')
+      if (/calor/i.test(inferenceText)) relievers.push('calor')
+      if (/frío/i.test(inferenceText)) relievers.push('frío')
+      if (/masaje/i.test(inferenceText)) relievers.push('masaje')
+      
+      if (relievers.length > 0) {
+        dispatch(confirmPatientInference({
+          type: 'relievingFactors',
+          value: relievers,
+          confidence: inference.confidence
+        }))
+      }
+
+      // Síntomas asociados
+      const associated = []
+      if (/náusea|nausea/i.test(inferenceText)) associated.push('náusea')
+      if (/vómito/i.test(inferenceText)) associated.push('vómito')
+      if (/visión\s+borrosa|borrosidad/i.test(inferenceText)) associated.push('visión borrosa')
+      if (/mareo|vértigo/i.test(inferenceText)) associated.push('mareo')
+      if (/sensibilidad\s+a\s+la\s+luz|fotofobia/i.test(inferenceText)) associated.push('fotofobia')
+      if (/fiebre/i.test(inferenceText)) associated.push('fiebre')
+      
+      if (associated.length > 0) {
+        dispatch(confirmPatientInference({
+          type: 'associatedSymptoms',
+          value: associated,
+          confidence: inference.confidence
+        }))
+      }
+
+      // Patrón temporal
+      if (/matutino|mañana/i.test(inferenceText)) {
+        dispatch(confirmPatientInference({
+          type: 'timePattern',
+          value: 'matutino',
+          confidence: inference.confidence
+        }))
+      } else if (/nocturno|noche/i.test(inferenceText)) {
+        dispatch(confirmPatientInference({
+          type: 'timePattern',
+          value: 'nocturno',
+          confidence: inference.confidence
+        }))
+      } else if (/todo\s+el\s+día|constante/i.test(inferenceText)) {
+        dispatch(confirmPatientInference({
+          type: 'timePattern',
+          value: 'todo el día',
+          confidence: inference.confidence
+        }))
+      }
+
+      // Generar mensaje de confirmación
+      const contextualResponse = confirmed
+        ? `✅ Confirmado: ${inference.inference}. ${patientData.isComplete ? '¡Datos completos! Listo para análisis SOAP.' : 'Continuando recolección de datos.'}`
+        : `📝 Corrigiendo: ${inference.inference}. ¿Podrías proporcionar más detalles?`
+      
+      addAssistantMessage(contextualResponse)
+
+      // 🎯 VERIFICAR SI ESTÁ LISTO PARA SOAP
+      if (patientData.isComplete && !readyForSOAP) {
+        setTimeout(() => {
+          addAssistantMessage('🚀 **Datos del paciente completos**. Iniciando transición al análisis SOAP...')
+        }, 1000)
+      }
+    } else {
+      // Mensaje de corrección
+      addAssistantMessage(`📝 Entendido, corrigiendo inferencia. ¿Podrías proporcionar los datos correctos?`)
     }
+    
+    // Log para debugging
+    console.log('🎯 Inferencia confirmada:', {inference, confirmed, result, patientData})
   }
 
   // Handler para Enter en el input
@@ -278,6 +412,58 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
                 Sesión: {Math.round((Date.now() - currentSession.startedAt) / 1000)}s • 
                 {messages.length} mensajes
               </div>
+              {/* 🏥 INDICADOR DE ESTADO DEL PACIENTE */}
+              {(patientData.age || patientData.gender || patientData.primarySymptom) && (
+                <div className="text-xs mt-1 p-2 bg-white/10 rounded">
+                  <div className="flex items-center gap-1 mb-1">
+                    <span className={`w-1.5 h-1.5 rounded-full ${patientData.isComplete ? 'bg-green-400' : 'bg-yellow-400'}`}></span>
+                    <span className="font-semibold">Paciente</span>
+                    {patientData.isEnhanced && <span className="text-green-300 text-[10px]">ENHANCED</span>}
+                  </div>
+                  
+                  {/* Datos básicos */}
+                  <div className="space-y-0.5 mb-2">
+                    {patientData.age && <div>• Edad: {patientData.age} años</div>}
+                    {patientData.gender && <div>• Género: {patientData.gender}</div>}
+                    {patientData.primarySymptom && <div>• Síntoma: {patientData.primarySymptom}</div>}
+                  </div>
+
+                  {/* Detalles contextuales */}
+                  {(patientData.duration || patientData.intensity || patientData.characteristics || 
+                    patientData.triggers || patientData.relievingFactors || patientData.associatedSymptoms || 
+                    patientData.timePattern) && (
+                    <div className="border-t border-white/20 pt-1 mt-1 space-y-0.5">
+                      {patientData.duration && (
+                        <div className="text-blue-200">⏱ Duración: {patientData.duration}</div>
+                      )}
+                      {patientData.intensity && (
+                        <div className="text-orange-200">💊 Intensidad: {patientData.intensity}/10</div>
+                      )}
+                      {patientData.characteristics && patientData.characteristics.length > 0 && (
+                        <div className="text-purple-200">📝 Tipo: {patientData.characteristics.join(', ')}</div>
+                      )}
+                      {patientData.triggers && patientData.triggers.length > 0 && (
+                        <div className="text-red-200">⚠️ Desencadenantes: {patientData.triggers.join(', ')}</div>
+                      )}
+                      {patientData.relievingFactors && patientData.relievingFactors.length > 0 && (
+                        <div className="text-green-200">✅ Mejora con: {patientData.relievingFactors.join(', ')}</div>
+                      )}
+                      {patientData.associatedSymptoms && patientData.associatedSymptoms.length > 0 && (
+                        <div className="text-yellow-200">🔗 Asociados: {patientData.associatedSymptoms.join(', ')}</div>
+                      )}
+                      {patientData.timePattern && (
+                        <div className="text-cyan-200">⏰ Patrón: {patientData.timePattern}</div>
+                      )}
+                    </div>
+                  )}
+
+                  {readyForSOAP && (
+                    <div className="text-green-300 font-semibold mt-1 border-t border-white/20 pt-1">
+                      ✓ Listo para SOAP {patientData.isEnhanced && '(Datos completos + contexto)'}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -404,25 +590,16 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
         </div>
 
         {/* Columna Lateral: Panel Compacto Conectado al Store */}
-        <div className="w-full xl:w-96 xl:flex-shrink-0 flex flex-col min-w-0">
+        <div className="w-full xl:w-80 2xl:w-96 xl:flex-shrink-0 flex flex-col min-w-0">
           <DynamicInferencePanel
-            currentMessage={userInput || partialInput}
-            className="h-full flex-1 min-h-0"
+            currentMessage={messages.length > 0 ? messages[messages.length - 1]?.content || '' : partialInput}
+            className="h-full flex-1 min-h-0 max-w-full"
             onInferenceUpdate={inferences => {
-              // 🧠 CALLBACK INTELIGENTE - Arreglado para usar 'type' no 'category'
+              // 🧠 CALLBACK INTELIGENTE - Solo log para debugging, no generar mensajes automáticos
               console.log('🎯 Inferencias actualizadas desde core:', inferences)
               
-              // Solo mostrar si hay cambios significativos
-              const significantInferences = inferences.filter(inf => inf.confidence >= 0.6)
-              
-              if (significantInferences.length > 0) {
-                const contextualMessage = `📊 **Inferencias médicas actualizadas:**\n\n` +
-                  `${significantInferences.map(inf => `• ${inf.label}: ${inf.value} (${Math.round(inf.confidence * 100)}%)`).join('\n')}\n\n` +
-                  `*Sistema multinúcleo - Confianza: ${systemMetrics.confidence}%*`
-                
-                // Solo agregar mensaje si hay inferencias de alta confianza
-                addAssistantMessage(contextualMessage)
-              }
+              // No generar mensajes automáticos para evitar spam
+              // Las inferencias se muestran en el panel lateral, no necesitan mensajes de chat
             }}
             // Pasar métricas del sistema para mejor contextualización
             systemMetrics={systemMetrics}

@@ -215,10 +215,10 @@ export const RealTimeMetrics = () => {
 
   const streamingProgress = isLoading ? Math.min(realMetrics.confidence + 10, 95) : 0
 
-  // Debug real metrics (no fake data)
-  console.log('🔬 RealTimeMetrics DEBUG - Real Metrics:', realMetrics)
-  console.log('🔬 RealTimeMetrics DEBUG - System Health:', realMetrics.systemHealth)
-  console.log('🔬 RealTimeMetrics DEBUG - Cores Activity:', realMetrics.coreMetrics)
+  // Debug real metrics (no fake data) - COMENTADO PARA EVITAR SPAM
+  // console.log('🔬 RealTimeMetrics DEBUG - Real Metrics:', realMetrics)
+  // console.log('🔬 RealTimeMetrics DEBUG - System Health:', realMetrics.systemHealth)
+  // console.log('🔬 RealTimeMetrics DEBUG - Cores Activity:', realMetrics.coreMetrics)
 
   // Estados de error reales
   if (error) {

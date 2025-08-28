@@ -36,7 +36,7 @@ export class IntelligentMedicalChat {
   async processUserInput(request: ChatAnalysisRequest): Promise<IntelligentChatResponse> {
     try {
       // 🛡️ VALIDACIÓN DE REQUEST - Prevenir errores undefined
-      const userInput = request?.user_input || request?.message || ''
+      const userInput = request?.user_input || ''
       
       if (!userInput || typeof userInput !== 'string') {
         console.warn('⚠️ Input inválido en processUserInput:', request)
@@ -62,12 +62,14 @@ export class IntelligentMedicalChat {
 
       if (!response.success) {
         // Fallback: Nunca fallar completamente
+        console.warn('⚠️ Claude decision failed:', response.error || 'No error details')
         return this.createFallbackResponse(userInput, medicalContext)
       }
 
       return response.decision as IntelligentChatResponse
     } catch (error) {
-      console.error('Error en chat inteligente:', error)
+      console.error('💥 Error en chat inteligente (cayendo a fallback):', error)
+      const userInput = request?.user_input || ''
       return this.createFallbackResponse(userInput)
     }
   }
@@ -158,11 +160,11 @@ export class IntelligentMedicalChat {
           .join('\n')}`
       : ''
 
-    return `Eres un ANIMAL PARLANTE MÉDICO INTELIGENTE que NUNCA rechaza pacientes por datos incompletos.
+    return `Eres un ASISTENTE MÉDICO INTELIGENTE como MAI-DxO que ANALIZA CONTEXTO COMPLETO y GUÍA al Doctor Edmund hacia el diagnóstico SOAP.
 
-FILOSOFÍA: Como MAI-DxO de Microsoft, tu trabajo es INFERIR inteligentemente y AYUDAR inmediatamente, no pedir más datos.
+FILOSOFÍA CLAVE: Tu trabajo es COMBINAR toda la información de la conversación para hacer inferencias inteligentes y detectar cuándo tienes DATOS SUFICIENTES para proceder al SOAP.
 
-INPUT DEL USUARIO: "${userInput}"
+INPUT ACTUAL: "${userInput}"
 ${historyContext}
 
 CONTEXTO DETECTADO AUTOMÁTICAMENTE:
@@ -172,39 +174,57 @@ CONTEXTO DETECTADO AUTOMÁTICAMENTE:
 - Indicadores de urgencia: ${medicalContext.urgency_indicators.join(', ') || 'ninguno'}
 - Especialidad sugerida: ${medicalContext.specialty_indicators.join(', ') || 'medicina general'}
 
-TU MISIÓN:
-1. SALUDA al "Doctor Edmund" de forma cálida y profesional
-2. RECONOCE lo que mencionó sin juzgar la completitud
-3. INFIERE inteligentemente lo que más probablemente está ocurriendo
-4. PROPORCIONA valor inmediato con tus inferencias
-5. PREGUNTA confirmación simple (SÍ/NO) sobre tus inferencias
-6. OFRECE próximos pasos útiles
+TU MISIÓN ESPECÍFICA:
+1. ANALIZA TODA la conversación previa + input actual
+2. COMBINA información dispersa (ej: "dolor en ojos" + "mujer 16 años" = paciente femenina adolescente con dolor ocular)
+3. USA TERMINOLOGÍA MÉDICA apropiada (3 lustros = 15 años, ocular, torácico, etc.)
+4. DETECTA cuando tienes: EDAD + GÉNERO + SÍNTOMA PRINCIPAL = ¡BÁSICO COMPLETO!
+5. SOLICITA DETALLES CONTEXTUALES MÉDICOS IMPORTANTES:
+   • Duración: ¿desde cuándo? (horas, días, semanas)
+   • Intensidad: escala del 1-10
+   • Características: punzante, sordo, pulsátil, constante
+   • Factores: qué lo mejora/empeora, horarios
+   • Síntomas asociados: náusea, visión borrosa, etc.
+6. GUÍA al doctor hacia SOAP cuando tengas datos básicos + al menos 2 detalles contextuales
+
+EJEMPLOS DE RESPUESTAS INTELIGENTES:
+- Si tienes datos básicos completos: "🦁 Doctor Edmund, ¿le parece bien inferir que es una paciente femenina de 3 lustros (16 años) con dolor ocular? Para el análisis SOAP completo, sería útil conocer: ¿desde cuándo presenta el dolor? ¿intensidad del 1-10? ¿factores que lo agravan o alivian?"
+- Si falta información básica: "🦁 Doctor Edmund, veo dolor ocular reportado. Necesito confirmar: edad, género del paciente, y sería valioso saber la duración y características del dolor."
+- Si hay datos completos: "🦁 Doctor Edmund, tengo paciente femenina, 25 años, dolor ocular desde hace 2 días, intensidad 7/10. ¿Confirma estos datos para proceder al análisis SOAP?"
 
 FORMATO DE RESPUESTA OBLIGATORIO:
 {
-  "message": "🦁 Hola Doctor Edmund, [reconocimiento + inferencias + pregunta de confirmación]",
+  "message": "🦁 Doctor Edmund, [análisis inteligente del contexto completo + pregunta específica]",
   "inferences": [
     {
-      "id": "demographic_inference",
+      "id": "demographic_complete",
       "category": "demographic",
-      "confidence": 0.75,
-      "inference": "Paciente masculino adulto (35-55 años aproximadamente)",
-      "evidence": ["patrón de síntomas", "contexto de presentación"],
+      "confidence": 0.85,
+      "inference": "Paciente femenina de 16 años con dolor ocular",
+      "evidence": ["dolor en ojos mencionado previamente", "mujer 16 años confirmado"],
       "needs_confirmation": true
+    },
+    {
+      "id": "contextual_details",
+      "category": "context",
+      "confidence": 0.70,
+      "inference": "Se requieren detalles: duración, intensidad y características del dolor",
+      "evidence": ["información básica completa", "faltan detalles contextuales"],
+      "needs_confirmation": false
     }
   ],
-  "suggested_actions": ["Protocolo cardiovascular básico", "Evaluación de riesgo"],
-  "confidence_level": "medium",
+  "suggested_actions": ["Solicitar duración del síntoma", "Preguntar intensidad 1-10", "Investigar factores agravantes/aliviantes"],
+  "confidence_level": "high",
   "requires_user_input": true,
-  "conversation_stage": "gathering"
+  "conversation_stage": "ready_for_soap"
 }
 
 REGLAS INQUEBRANTABLES:
-- NUNCA digas "datos insuficientes" o "complete más información"
-- SIEMPRE haz inferencias inteligentes basadas en patrones médicos
-- SIEMPRE proporciona valor inmediato
-- SIEMPRE pide confirmación simple de tus inferencias
-- NUNCA hagas más de 3 inferencias por respuesta
+- SIEMPRE combina información de TODA la conversación
+- USA terminología médica profesional
+- DETECTA cuándo tienes datos completos para SOAP
+- NUNCA ignores información previa
+- MÁXIMO 2 inferencias por respuesta
 
 RESPONDE SOLO CON EL JSON, SIN TEXTO ADICIONAL.`
   }
@@ -221,20 +241,9 @@ RESPONDE SOLO CON EL JSON, SIN TEXTO ADICIONAL.`
       : '🦁 Hola Doctor Edmund, entiendo que tienes una consulta médica. Déjame ayudarte con lo que puedo inferir.'
 
     return {
-      message: `${baseMessage} ¿Podrías confirmar si mis inferencias básicas van por buen camino?`,
-      inferences: [
-        {
-          id: 'basic_medical_context',
-          category: 'context',
-          confidence: 0.6,
-          inference: hasSymptoms
-            ? 'Consulta médica con síntomas reportados'
-            : 'Consulta médica general',
-          evidence: ['patrón de entrada detectado'],
-          needs_confirmation: true,
-        },
-      ],
-      suggested_actions: ['Proporcionar más detalles específicos', 'Confirmar contexto inicial'],
+      message: `${baseMessage} ¿Podrías proporcionar más detalles específicos?`,
+      inferences: [], // No generar inferencias genéricas de bajo valor
+      suggested_actions: ['Proporcionar más detalles específicos', 'Incluir edad y género del paciente'],
       confidence_level: 'low',
       requires_user_input: true,
       conversation_stage: 'initial',

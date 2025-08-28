@@ -22,6 +22,29 @@ export interface ChatCore {
   sessionId: string
 }
 
+// 🏥 DATOS DEL PACIENTE CONFIRMADOS
+export interface PatientData {
+  // Datos básicos requeridos
+  age?: number
+  gender?: 'masculino' | 'femenino'
+  primarySymptom?: string
+  symptoms?: string[]
+  
+  // Detalles contextuales opcionales pero valiosos
+  duration?: string // "2 días", "1 semana", "desde ayer"
+  intensity?: number // Escala 1-10
+  characteristics?: string[] // ["punzante", "constante", "pulsátil"]
+  triggers?: string[] // ["movimiento", "luz", "estrés"]
+  relievingFactors?: string[] // ["reposo", "medicamento", "calor"]
+  associatedSymptoms?: string[] // ["náusea", "visión borrosa", "mareo"]
+  timePattern?: string // "matutino", "nocturno", "todo el día"
+  
+  // Estado de completitud
+  isComplete: boolean // Datos básicos completos
+  isEnhanced: boolean // Datos básicos + al menos 2 detalles contextuales
+  confirmedAt?: number
+}
+
 export interface MedicalChatState {
   // 🧠 NÚCLEOS DE CONVERSACIÓN SEPARADOS
   cores: {
@@ -39,6 +62,10 @@ export interface MedicalChatState {
     }
     isLoading: boolean
     error?: string
+    // 📝 DATOS DEL PACIENTE CONFIRMADOS POR EL DOCTOR
+    patientData: PatientData
+    // 🎯 ESTADO DE TRANSICIÓN A SOAP
+    readyForSOAP: boolean
   }
 }
 
@@ -84,6 +111,11 @@ const initialState: MedicalChatState = {
       startedAt: Date.now(),
     },
     isLoading: false,
+    patientData: {
+      isComplete: false,
+      isEnhanced: false,
+    },
+    readyForSOAP: false,
   },
 }
 
@@ -173,6 +205,117 @@ const medicalChatSlice = createSlice({
     clearError: state => {
       state.sharedState.error = undefined
     },
+
+    // 🏥 ACCIONES PARA DATOS DEL PACIENTE Y CONFIRMACIÓN DE INFERENCIAS
+    confirmPatientInference: (state, action: PayloadAction<{
+      type: 'age' | 'gender' | 'symptom' | 'duration' | 'intensity' | 'characteristics' | 'triggers' | 'relievingFactors' | 'associatedSymptoms' | 'timePattern'
+      value: string | number | string[]
+      confidence: number
+    }>) => {
+      const { type, value, confidence } = action.payload
+      
+      switch (type) {
+        case 'age':
+          state.sharedState.patientData.age = typeof value === 'number' ? value : parseInt(value as string)
+          break
+        case 'gender':
+          state.sharedState.patientData.gender = value as 'masculino' | 'femenino'
+          break
+        case 'symptom':
+          state.sharedState.patientData.primarySymptom = value as string
+          if (!state.sharedState.patientData.symptoms) {
+            state.sharedState.patientData.symptoms = []
+          }
+          if (!state.sharedState.patientData.symptoms.includes(value as string)) {
+            state.sharedState.patientData.symptoms.push(value as string)
+          }
+          break
+        case 'duration':
+          state.sharedState.patientData.duration = value as string
+          break
+        case 'intensity':
+          state.sharedState.patientData.intensity = typeof value === 'number' ? value : parseInt(value as string)
+          break
+        case 'characteristics':
+          const charArray = Array.isArray(value) ? value : [value as string]
+          state.sharedState.patientData.characteristics = charArray
+          break
+        case 'triggers':
+          const triggerArray = Array.isArray(value) ? value : [value as string]
+          state.sharedState.patientData.triggers = triggerArray
+          break
+        case 'relievingFactors':
+          const reliefArray = Array.isArray(value) ? value : [value as string]
+          state.sharedState.patientData.relievingFactors = reliefArray
+          break
+        case 'associatedSymptoms':
+          const assocArray = Array.isArray(value) ? value : [value as string]
+          state.sharedState.patientData.associatedSymptoms = assocArray
+          break
+        case 'timePattern':
+          state.sharedState.patientData.timePattern = value as string
+          break
+      }
+      
+      state.sharedState.patientData.confirmedAt = Date.now()
+      
+      // Verificar si los datos básicos están completos
+      const { age, gender, primarySymptom } = state.sharedState.patientData
+      state.sharedState.patientData.isComplete = !!(age && gender && primarySymptom)
+      
+      // Verificar si tiene detalles contextuales (enhanced)
+      const contextualDetails = [
+        state.sharedState.patientData.duration,
+        state.sharedState.patientData.intensity,
+        state.sharedState.patientData.characteristics?.length,
+        state.sharedState.patientData.triggers?.length,
+        state.sharedState.patientData.relievingFactors?.length,
+        state.sharedState.patientData.associatedSymptoms?.length,
+        state.sharedState.patientData.timePattern
+      ].filter(detail => detail).length
+      
+      state.sharedState.patientData.isEnhanced = contextualDetails >= 2
+      
+      // Marcar listo para SOAP si datos completos (básicos suficientes, enhanced es bonus)
+      if (state.sharedState.patientData.isComplete) {
+        state.sharedState.readyForSOAP = true
+      }
+    },
+
+    // 🎯 CONFIRMAR ANÁLISIS COMPLETO Y PROCEDER A SOAP
+    confirmReadyForSOAP: (state, action: PayloadAction<{
+      age: number
+      gender: 'masculino' | 'femenino'
+      primarySymptom: string
+    }>) => {
+      const { age, gender, primarySymptom } = action.payload
+      
+      state.sharedState.patientData = {
+        age,
+        gender,
+        primarySymptom,
+        symptoms: [primarySymptom],
+        isComplete: true,
+        isEnhanced: false,
+        confirmedAt: Date.now(),
+      }
+      
+      state.sharedState.readyForSOAP = true
+    },
+
+    // 🔄 RESET DATOS DEL PACIENTE (Nueva sesión)
+    resetPatientData: (state) => {
+      state.sharedState.patientData = {
+        isComplete: false,
+        isEnhanced: false,
+      }
+      state.sharedState.readyForSOAP = false
+    },
+
+    // 🎯 MARCAR NO LISTO PARA SOAP (Si doctor corrige datos)
+    setNotReadyForSOAP: (state) => {
+      state.sharedState.readyForSOAP = false
+    },
   },
 })
 
@@ -187,6 +330,10 @@ export const {
   startNewSession,
   setError,
   clearError,
+  confirmPatientInference,
+  confirmReadyForSOAP,
+  resetPatientData,
+  setNotReadyForSOAP,
 } = medicalChatSlice.actions
 
 export default medicalChatSlice.reducer

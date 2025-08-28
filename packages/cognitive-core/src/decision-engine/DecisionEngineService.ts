@@ -188,6 +188,7 @@ class DecisionEngineService {
       family_education: 'family_education',
       objective_validation: 'objective_validation',
       defensive_differential: 'defensive_differential',
+      intelligent_medical_chat: 'intelligent_medical_chat',
     }
 
     return typeMap[legacyType] || legacyType

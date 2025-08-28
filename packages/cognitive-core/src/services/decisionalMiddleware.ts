@@ -152,18 +152,11 @@ async function callClaudeForDecisionLegacy(
 }
 
 /**
- * Llamada directa a la API de Claude
+ * Llamada SEGURA a Claude a través de API Route del servidor
  */
 async function callClaudeAPI(
   request: DecisionRequest
 ): Promise<Omit<DecisionResponse, 'latency' | 'provider' | 'success'>> {
-  // Dynamic import para evitar bundle bloat
-  const Anthropic = (await import('@anthropic-ai/sdk')).default
-  const anthropic = new Anthropic({
-    apiKey: process.env.CLAUDE_API_KEY!,
-    dangerouslyAllowBrowser: true,
-  })
-
   if (request.signal?.aborted) {
     throw new Error('Request aborted')
   }
@@ -175,25 +168,36 @@ async function callClaudeAPI(
   const conversationHistory = Array.isArray(request.context?.conversationHistory)
     ? request.context.conversationHistory
     : []
-  const messages = [...conversationHistory, { role: 'user', content: request.input }]
 
-  const response = await anthropic.messages.create({
-    model: 'claude-3-haiku-20240307',
-    max_tokens: 1000,
-    system: systemPrompt,
-    messages,
-    temperature: 0.3,
+  // 🛡️ FETCH SEGURO A API ROUTE (no más SDK en cliente)
+  const response = await fetch('/api/claude', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      systemPrompt,
+      userPrompt: request.input,
+      conversationHistory,
+      stream: false,
+    }),
+    signal: request.signal,
   })
 
-  const content = response.content[0]
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response format from Claude')
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+    throw new Error(`Claude API error: ${errorData.error || 'Network error'}`)
+  }
+
+  const responseData = await response.json()
+  if (!responseData.success || !responseData.content) {
+    throw new Error('Invalid response from Claude API')
   }
 
   // Parsear respuesta JSON
   let decision: AgentDecision
   try {
-    decision = JSON.parse(content.text.trim())
+    decision = JSON.parse(responseData.content.trim())
     validateDecisionStructure(decision, request.type)
   } catch (parseError) {
     console.warn(`JSON parse error for ${request.type}:`, parseError)
