@@ -89,22 +89,48 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
         // Agregar mensaje válido y procesar
         dispatch(addDashboardMessage({ content: message, type: 'user' }))
 
-        // Simulación de respuesta (aquí iría la lógica del motor iterativo)
-        setTimeout(() => {
+        // 🚀 USAR LA NUEVA ARQUITECTURA COMPLEMENTARIA
+        const intelligentService = new (await import('../services/IntelligentMedicalChat')).IntelligentMedicalChat()
+        
+        const chatRequest = {
+          user_input: message,
+          conversation_history: dashboardCore.messages.map(msg => ({
+            id: Date.now().toString(),
+            content: msg.content,
+            type: msg.type,
+            timestamp: Date.now(),
+            confidence: msg.confidence || 0.8
+          })),
+          previous_inferences: [] // TODO: Extraer inferencias previas del estado
+        }
+
+        try {
+          const response = await intelligentService.processUserInput(chatRequest)
+          
           dispatch(
             addDashboardMessage({
-              content: `✅ Análisis médico procesado en núcleo Dashboard.
-          
-**Sistema Multinúcleo Activo:**
-- Dashboard Core: Chat principal ✅
-- Assistant Core: Autocompletado separado
-- Inference Core: Análisis contextual`,
+              content: response.message,
               type: 'assistant',
-              confidence: 0.85,
+              confidence: response.confidence_level === 'high' ? 0.9 : 
+                         response.confidence_level === 'medium' ? 0.7 : 0.5,
             })
           )
-          dispatch(setDashboardLoading(false))
-        }, 1500)
+          
+          console.log('🚀 Respuesta enriquecida:', response.extraction_metadata)
+          
+        } catch (error) {
+          console.error('💥 Error en arquitectura complementaria:', error)
+          // Fallback a respuesta básica
+          dispatch(
+            addDashboardMessage({
+              content: '🦁 Doctor Edmund, necesito más información del paciente para ayudarle mejor. ¿Podría confirmarme la edad y género del paciente?',
+              type: 'assistant',
+              confidence: 0.6,
+            })
+          )
+        }
+        
+        dispatch(setDashboardLoading(false))
       } catch (error) {
         console.error('Error en dashboard core:', error)
         dispatch(setError(error instanceof Error ? error.message : 'Error en análisis'))
