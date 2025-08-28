@@ -26,7 +26,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",
     "@reduxjs/toolkit": "^2.8.2",
-    "react-redux": "^9.2.0"
+    "react-redux": "^9.2.0",
+    "redux-persist": "^6.0.0"
   },
   "peerDependencies": {
     "react": "^19.1.1",

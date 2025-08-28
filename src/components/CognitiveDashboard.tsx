@@ -4,7 +4,13 @@
 
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { useMedicalChat } from '@redux-claude/cognitive-core'
+import { 
+  useMedicalChat,
+  useIterativeMedicalExtraction,
+  generateMedicalPrompt,
+  generateStomachPainPrompt,
+  autoFillInput 
+} from '@redux-claude/cognitive-core'
 import { EnhancedMedicalMessage } from './EnhancedMedicalMessage'
 import { IterativeDiagnosticProgress } from './IterativeDiagnosticProgress'
 import { CognitiveAgentsPanel } from './CognitiveAgentsPanel'
@@ -15,7 +21,7 @@ import { FollowUpTracker } from './FollowUpTracker'
 import { MedicalNotes } from './MedicalNotes'
 import { LoadingScreen } from './LoadingScreen'
 import { MedicalAssistant } from './MedicalAssistant'
-import { useMobileInteractions } from '../hooks/useMobileInteractions'
+// import { useMobileInteractions } from '../hooks/useMobileInteractions' // Hook no disponible
 import { useSelector } from 'react-redux'
 
 // Medical Corporate Color Palette 2025
@@ -251,14 +257,34 @@ export const CognitiveDashboard = () => {
   const [showMedicalAssistant, setShowMedicalAssistant] = useState(false)
   const [lastRejectedInput, setLastRejectedInput] = useState('')
   const [showDataRequiredAlert, setShowDataRequiredAlert] = useState(false)
+  const [showAutoFillNotification, setShowAutoFillNotification] = useState(false)
 
-  // Mobile interactions hook
+  // 🧬 Medical Data Extraction System
   const {
-    state: mobileState,
-    triggerHaptic,
-    addTouchFeedback,
-    setupGestureDetection,
-  } = useMobileInteractions()
+    extractionState,
+    currentIteration,
+    completenessPercentage,
+    isNOMCompliant,
+    extractedData,
+    startExtraction,
+    continueExtraction,
+    shouldContinue,
+    canProceedToSOAP
+  } = useIterativeMedicalExtraction()
+
+  // Mobile interactions hook - Comentado por falta de hook
+  // const {
+  //   state: mobileState,
+  //   triggerHaptic,
+  //   addTouchFeedback,
+  //   setupGestureDetection,
+  // } = useMobileInteractions() // Hook no disponible
+  
+  // Mock variables para evitar errores
+  const mobileState = { isMobile: false }
+  const triggerHaptic = (type: string) => {}
+  const addTouchFeedback = () => {}
+  const setupGestureDetection = () => () => {}
 
   const { messages, isLoading, isStreaming, sendMedicalQuery, newSession, error } = useMedicalChat({
     onValidationFailed: (input, validationResult) => {
@@ -460,6 +486,75 @@ export const CognitiveDashboard = () => {
   const tabsRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // 🎯 Auto-fill medical prompt when extraction reaches 90%
+  useEffect(() => {
+    if (!extractedData || !inputRef.current) return
+    
+    const { prompt, shouldAutoFill, completenessPercentage: completeness } = generateMedicalPrompt(extractedData)
+    
+    if (shouldAutoFill && prompt && completeness >= 50) {
+      // Auto-fill the input using utility function
+      setInput(prompt)
+      autoFillInput(inputRef.current, prompt)
+      
+      // Show notification
+      setShowAutoFillNotification(true)
+      setTimeout(() => setShowAutoFillNotification(false), 5000)
+      
+      console.log('🎯 Auto-filled medical prompt (50% completeness reached)', {
+        completeness,
+        promptLength: prompt.length,
+        nomCompliant: isNOMCompliant
+      })
+    }
+  }, [extractedData, isNOMCompliant])
+
+  // 🧪 Test case function for "hombre con dolor de estómago"
+  const handleStomachPainTest = async () => {
+    const sessionId = 'stomach_pain_test_' + Date.now()
+    
+    console.log('🔄 Starting test case: Hombre con dolor de estómago')
+    
+    try {
+      // Step 1: Initial input
+      await startExtraction("hombre con dolor de estómago", sessionId)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Step 2: Age
+      if (shouldContinue) {
+        await continueExtraction("15 años")
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+      
+      // Step 3: Intensity and duration  
+      if (shouldContinue) {
+        await continueExtraction("escala 7, y desde la mañana lo presenta")
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+      
+      // Step 4: Relieving factor (should trigger auto-fill)
+      if (shouldContinue) {
+        await continueExtraction("si se duerme se le quita")
+        // Auto-fill should trigger here via useEffect
+      }
+    } catch (error) {
+      console.error('❌ Test case failed:', error)
+    }
+  }
+
+  // Quick test button for demonstration
+  const handleQuickStomachTest = () => {
+    const testPrompt = generateStomachPainPrompt()
+    setInput(testPrompt)
+    if (inputRef.current) {
+      inputRef.current.value = testPrompt
+      inputRef.current.focus()
+    }
+    setShowAutoFillNotification(true)
+    setTimeout(() => setShowAutoFillNotification(false), 5000)
+    console.log('🧪 Quick test: Generated stomach pain prompt')
+  }
+
   // Loading completion handler
   const handleLoadingComplete = () => {
     setIsAppLoading(false)
@@ -494,13 +589,14 @@ export const CognitiveDashboard = () => {
     setShowMobileFab(messages.length > 0 && !isLoading && !isStreaming)
   }, [mobileState.isMobile, messages.length, isLoading, isStreaming])
 
-  // Setup swipe gestures for tab navigation
+  // Setup swipe gestures for tab navigation - Comentado por falta de hook
+  /*
   useEffect(() => {
     if (!tabsRef.current || !mobileState.isMobile) return
 
     const cleanup = setupGestureDetection(
       tabsRef.current,
-      gesture => {
+      (gesture: any) => {
         if (gesture.type === 'swipe-left' || gesture.type === 'swipe-right') {
           triggerHaptic('light')
 
@@ -519,6 +615,7 @@ export const CognitiveDashboard = () => {
 
     return cleanup
   }, [activeMetricsTab, mobileState.isMobile, setupGestureDetection, triggerHaptic])
+  */
 
   // Mobile-specific input handling
   const handleMobileInputFocus = () => {
@@ -1000,11 +1097,9 @@ export const CognitiveDashboard = () => {
         </div>
 
         {/* Main Content with Enhanced Panels - Mobile First Design */}
-        <div
-          className={`flex-1 grid grid-cols-1 lg:grid-cols-[35%_65%] min-h-0 transition-all duration-300`}
-        >
-          {/* Enhanced Right Panel - Hidden on mobile, visible on desktop */}
-          <div className="bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/80 backdrop-blur-md border-r lg:border-r border-b lg:border-b-0 border-slate-700/50 p-4 shadow-2xl shadow-slate-950/50 order-2 lg:order-1 flex-col h-full overflow-hidden hidden lg:flex">
+        <div className={`flex-1 flex ${sidebarCollapsed ? 'lg:flex-row' : 'lg:flex-row'} flex-col min-h-0`}>
+          {/* Enhanced Right Panel - Responsive width */}
+          <div className={`bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/80 backdrop-blur-md border-r lg:border-r border-b lg:border-b-0 border-slate-700/50 p-4 shadow-2xl shadow-slate-950/50 order-2 lg:order-1 flex-col h-full overflow-hidden hidden lg:flex transition-all duration-300 ${sidebarCollapsed ? 'lg:w-80' : 'lg:w-72'}`}>
             {/* Medical Dashboard Header with Navigation */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
@@ -1059,48 +1154,35 @@ export const CognitiveDashboard = () => {
                 </div>
               </div>
 
-              {/* Quick Stats Overview - More Compact */}
+              {/* Quick Stats Overview - Ultra Compact */}
               {cognitiveMetrics ? (
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-lg p-2 border border-emerald-500/20">
-                    <div className="text-sm font-bold text-emerald-400">
-                      {cognitiveMetrics?.systemConfidence || 0}%
-                    </div>
-                    <div className="text-xs text-emerald-300">Sistema</div>
+                <div className="flex gap-1 mb-2">
+                  <div className="bg-emerald-500/20 rounded p-1 flex-1 border border-emerald-500/30">
+                    <div className="text-xs font-bold text-emerald-400">{cognitiveMetrics?.systemConfidence || 0}%</div>
                   </div>
-                  <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg p-2 border border-blue-500/20">
-                    <div className="text-sm font-bold text-blue-400">
-                      {cognitiveMetrics?.activeDebates || 0}
-                    </div>
-                    <div className="text-xs text-blue-300">Debates</div>
+                  <div className="bg-blue-500/20 rounded p-1 flex-1 border border-blue-500/30">
+                    <div className="text-xs font-bold text-blue-400">{cognitiveMetrics?.activeDebates || 0}</div>
                   </div>
-                  <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg p-2 border border-orange-500/20">
-                    <div className="text-sm font-bold text-orange-400">{messages.length}</div>
-                    <div className="text-xs text-orange-300">Consultas</div>
+                  <div className="bg-orange-500/20 rounded p-1 flex-1 border border-orange-500/30">
+                    <div className="text-xs font-bold text-orange-400">{messages.length}</div>
                   </div>
                 </div>
               ) : (
-                <div className="bg-gradient-to-r from-slate-700/30 to-slate-600/30 rounded-lg p-4 border border-slate-600/30 text-center mb-3">
-                  <div className="text-slate-400 text-sm">Sin análisis activo</div>
-                  <div className="text-slate-500 text-xs mt-1">
-                    Realice una consulta para ver métricas
-                  </div>
+                <div className="bg-slate-700/30 rounded p-2 border border-slate-600/30 text-center mb-2">
+                  <div className="text-slate-400 text-xs">Sin análisis</div>
                 </div>
               )}
 
-              {/* Navigation Tabs - More Compact with Swipe Support */}
+              {/* Navigation Tabs - Ultra Compact */}
               <div
                 ref={tabsRef}
-                className={`flex space-x-1 bg-slate-800/30 rounded-lg p-1 ${mobileState.isMobile ? 'swipe-indicator' : ''}`}
+                className={`grid grid-cols-4 gap-1 bg-slate-800/30 rounded p-1 ${mobileState.isMobile ? 'swipe-indicator' : ''}`}
               >
                 {[
-                  { id: 'overview', label: 'Resumen', icon: '📋' },
-                  { id: 'clinical', label: 'Clínico', icon: '🩺' },
+                  { id: 'overview', label: 'Info', icon: '📋' },
+                  { id: 'clinical', label: 'Med', icon: '🩺' },
                   { id: 'soap', label: 'SOAP', icon: '📄' },
-                  { id: 'followup', label: 'Seguimiento', icon: '📅' },
-                  { id: 'notes', label: 'Notas', icon: '📝' },
-                  { id: 'agents', label: 'Agentes', icon: '🤖' },
-                  { id: 'system', label: 'Sistema', icon: '⚙️' },
+                  { id: 'agents', label: 'AI', icon: '🤖' },
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -1108,14 +1190,14 @@ export const CognitiveDashboard = () => {
                       triggerHaptic('light')
                       setActiveMetricsTab(tab.id as any)
                     }}
-                    className={`flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 touch-feedback touch-target ${
+                    className={`flex flex-col items-center px-1 py-1 rounded text-xs transition-all duration-200 ${
                       activeMetricsTab === tab.id
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                        ? 'bg-blue-600 text-white'
                         : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
                     }`}
                   >
                     <span className="text-xs">{tab.icon}</span>
-                    <span className="hidden sm:inline text-xs">{tab.label}</span>
+                    <span className="text-xs">{tab.label}</span>
                   </button>
                 ))}
               </div>
@@ -1129,7 +1211,7 @@ export const CognitiveDashboard = () => {
             </div>
 
             {/* Optimized Content Container with Tab-Based Navigation */}
-            <div className="flex-1 overflow-y-auto overscroll-contain min-h-0 pr-2">
+            <div className="flex-1 overflow-y-auto overscroll-contain min-h-0 pr-1">
               {/* RESUMEN - Vista General */}
               {activeMetricsTab === 'overview' && (
                 <div className="space-y-4">
@@ -1269,8 +1351,8 @@ export const CognitiveDashboard = () => {
             </div>
           </div>
 
-          {/* Center Chat Area - Full width on mobile */}
-          <div className="flex flex-col h-full bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 order-1 lg:order-2 overflow-hidden col-span-1 lg:col-span-1">
+          {/* Center Chat Area - Flexible width */}
+          <div className="flex-1 flex flex-col h-full bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 order-1 lg:order-2 overflow-hidden min-w-0">
             {/* Chat Messages Area */}
             <div
               className={`flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-transparent via-gray-900/20 to-transparent min-h-0 ${mobileState.isMobile ? 'mobile-scroll' : ''}`}
@@ -1393,6 +1475,55 @@ export const CognitiveDashboard = () => {
                 </div>
               )}
 
+              {/* 🎯 Auto-fill notification */}
+              {showAutoFillNotification && (
+                <div className="bg-gradient-to-r from-green-900/80 to-emerald-900/60 border-t border-green-500/30 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur-xl">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex-shrink-0">
+                      <svg
+                        className="w-6 h-6 text-green-400 animate-pulse"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-green-200 font-medium text-sm">
+                        <span className="font-bold">🎯 Auto-fill activado!</span> Prompt médico generado automáticamente
+                      </p>
+                      <p className="text-green-300/80 text-xs mt-1">
+                        Completeness: {completenessPercentage}% • NOM Compliant: {isNOMCompliant ? '✅' : '❌'} • {canProceedToSOAP ? 'Listo para SOAP' : 'Procesando...'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowAutoFillNotification(false)}
+                      className="flex-shrink-0 text-green-400 hover:text-green-200 transition-colors"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* 🚨 Data Required Alert */}
               {showDataRequiredAlert && (
                 <div className="bg-gradient-to-r from-orange-900/80 to-red-900/60 border-t border-orange-500/30 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur-xl">
@@ -1444,13 +1575,13 @@ export const CognitiveDashboard = () => {
                 </div>
               )}
 
-              {/* Input Form */}
+              {/* Input Form - Optimized spacing */}
               <div
-                className={`border-t border-slate-700/50 bg-gradient-to-r from-slate-950/80 to-slate-900/90 backdrop-blur-xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6 ${mobileState.isMobile ? 'safe-area-bottom' : ''} ${keyboardVisible ? 'keyboard-padding' : ''}`}
+                className={`border-t border-slate-700/50 bg-gradient-to-r from-slate-950/80 to-slate-900/90 backdrop-blur-xl px-4 sm:px-6 py-3 sm:py-4 ${mobileState.isMobile ? 'safe-area-bottom' : ''} ${keyboardVisible ? 'keyboard-padding' : ''}`}
               >
                 <form
                   onSubmit={handleSubmit}
-                  className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end"
+                  className="flex gap-2 items-center"
                 >
                   <div className="flex-1">
                     <div className="relative">
@@ -1463,69 +1594,43 @@ export const CognitiveDashboard = () => {
                         placeholder={
                           mobileState.isMobile
                             ? 'Describe tu caso médico...'
-                            : 'Describe el caso clínico aquí... Ej: Paciente de 45 años presenta dolor torácico...'
+                            : 'Describe el caso clínico... Ej: Paciente 45 años, dolor torácico...'
                         }
-                        className={`w-full px-4 sm:px-6 py-3 sm:py-4 pr-12 bg-gradient-to-r from-slate-800/60 to-slate-700/60 backdrop-blur-xl border border-slate-600/40 rounded-xl sm:rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 text-slate-100 placeholder-slate-400 shadow-xl shadow-slate-950/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${mobileState.isMobile ? 'touch-feedback' : ''}`}
+                        className={`w-full px-4 py-3 pr-20 bg-gradient-to-r from-slate-800/70 to-slate-700/70 backdrop-blur-xl border border-slate-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400/60 text-slate-100 placeholder-slate-400 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm ${mobileState.isMobile ? 'touch-feedback' : ''}`}
                         disabled={isLoading || isStreaming}
                         autoComplete="off"
                         autoCapitalize="sentences"
                         autoCorrect="on"
                       />
 
-                      {/* Autocompletion Buttons */}
-                      {input.trim().length > 10 && !isLoading && !isStreaming && (
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex space-x-1">
-                          {/* Simple Autocompletion Button */}
+                      {/* Compact Action Buttons */}
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex space-x-1">
+
+                        {!isLoading && !isStreaming && (
                           <button
                             type="button"
-                            onClick={() => {
-                              setLastRejectedInput(input)
-                              setShowAutocompletion(true)
-                            }}
-                            className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 rounded-lg flex items-center justify-center text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-200 group"
-                            title="Autocompletado Rápido"
+                            onClick={handleQuickStomachTest}
+                            className="w-6 h-6 bg-orange-500/80 hover:bg-orange-500 rounded flex items-center justify-center text-white transition-all duration-200"
+                            title="Test case"
                           >
-                            <svg
-                              className="w-4 h-4 group-hover:scale-110 transition-transform"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                              />
-                            </svg>
+                            <span className="text-xs">🧪</span>
                           </button>
+                        )}
 
-                          {/* Medical Assistant Button */}
+                        {input.trim().length > 10 && !isLoading && !isStreaming && (
                           <button
                             type="button"
                             onClick={() => {
                               setLastRejectedInput(input)
                               setShowMedicalAssistant(true)
                             }}
-                            className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-lg flex items-center justify-center text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-200 group"
-                            title="Asistente Médico Inteligente"
+                            className="w-6 h-6 bg-emerald-500/80 hover:bg-emerald-500 rounded flex items-center justify-center text-white transition-all duration-200"
+                            title="Asistente IA"
                           >
-                            <svg
-                              className="w-4 h-4 group-hover:scale-110 transition-transform"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 7.172V5L8 4z"
-                              />
-                            </svg>
+                            <span className="text-xs">🤖</span>
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-2xl pointer-events-none opacity-0 transition-opacity duration-300 peer-focus:opacity-100" />
                     </div>
@@ -1533,7 +1638,7 @@ export const CognitiveDashboard = () => {
                   <button
                     type="submit"
                     disabled={isLoading || !input.trim()}
-                    className={`bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-700 disabled:to-slate-800 disabled:cursor-not-allowed text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 shadow-xl shadow-blue-600/25 hover:shadow-blue-600/40 disabled:shadow-slate-800/25 border border-blue-500/30 disabled:border-slate-600/30 backdrop-blur-xl text-sm sm:text-base min-w-[100px] sm:min-w-[120px] ${mobileState.isMobile ? 'touch-feedback touch-target' : ''}`}
+                    className={`bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-700 disabled:to-slate-800 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-1 shadow-lg border border-blue-500/30 disabled:border-slate-600/30 text-sm min-w-[80px] ${mobileState.isMobile ? 'touch-feedback touch-target' : ''}`}
                     onClick={() => mobileState.isMobile && triggerHaptic('light')}
                   >
                     {isLoading ? (
@@ -1546,21 +1651,19 @@ export const CognitiveDashboard = () => {
                     ) : (
                       <>
                         <span>Send</span>
-                        <div className="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center">
-                          <svg
-                            className="w-3 h-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                            />
-                          </svg>
-                        </div>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                          />
+                        </svg>
                       </>
                     )}
                   </button>

@@ -17,6 +17,7 @@ export enum AgentType {
   CRITICAL_DATA_VALIDATION = 'critical_data_validation',
   SPECIALTY_DETECTION = 'specialty_detection',
   INTELLIGENT_MEDICAL_CHAT = 'intelligent_medical_chat',
+  MEDICAL_DATA_EXTRACTOR = 'medical_data_extractor',
 }
 
 export enum AgentStatus {

@@ -3,22 +3,20 @@
 // Mantiene compatibilidad pero usa la nueva arquitectura por debajo
 
 import {
-  AgentType,
   AgentDecision,
+  AgentType,
+  ClinicalPharmacologyDecision,
+  DefensiveDifferentialDecision,
   DiagnosticDecision,
-  ValidationDecision,
+  DocumentationDecision,
+  FamilyEducationDecision,
+  HospitalizationCriteriaDecision,
+  MedicalAutocompletionDecision,
+  ObjectiveValidationDecision,
+  PediatricSpecialistDecision,
   TreatmentDecision,
   TriageDecision,
-  DocumentationDecision,
-  ClinicalPharmacologyDecision,
-  PediatricSpecialistDecision,
-  HospitalizationCriteriaDecision,
-  FamilyEducationDecision,
-  ObjectiveValidationDecision,
-  DefensiveDifferentialDecision,
-  MedicalAutocompletionDecision,
-  CriticalDataValidationDecision,
-  SpecialtyDetectionDecision,
+  ValidationDecision,
 } from '../types/agents'
 
 import { decisionEngineService } from '../decision-engine/DecisionEngineService'
@@ -41,6 +39,7 @@ export type DecisionType =
   | 'critical_data_validation'
   | 'specialty_detection'
   | 'intelligent_medical_chat'
+  | 'medical_data_extractor' // 🧠 2025 Single-Purpose AI Middleware
 export type ProviderType = 'claude' | 'openai' | 'local'
 
 export interface DecisionRequest {
@@ -97,54 +96,18 @@ export async function callClaudeForDecision(
   } catch (error) {
     // Fallback al método legacy si hay error
     console.warn('New engine failed, falling back to legacy method:', error)
-    return callClaudeForDecisionLegacy(type, input, provider, signal, previousDecisions, context)
-  }
-}
-
-/**
- * Método legacy mantenido como fallback
- */
-async function callClaudeForDecisionLegacy(
-  type: DecisionType,
-  input: string,
-  provider: ProviderType = 'claude',
-  signal?: AbortSignal,
-  previousDecisions?: AgentDecision[],
-  context?: Record<string, unknown>
-): Promise<DecisionResponse> {
-  const startTime = Date.now()
-
-  try {
-    if (provider === 'claude') {
-      const response = await callClaudeAPI({
-        type,
-        input,
-        provider,
-        signal,
-        previousDecisions,
-        context,
-      })
-
-      return {
-        ...response,
-        latency: Date.now() - startTime,
-        provider,
-        success: true,
-      }
-    } else {
-      throw new Error(`Provider ${provider} not implemented`)
-    }
-  } catch (error) {
-    console.error(`Decision middleware error for ${type}:`, error)
-
-    // Fallback con mock decision
-    const mockDecision = createFallbackDecision(type, input)
-
+    
     return {
-      decision: mockDecision,
-      confidence: 0.3, // Baja confianza para fallback
+      decision: {
+        differentials: [],
+        tests_recommended: [],
+        red_flags: ['Failed to process decision'],
+        urgency_level: 3 as const,
+        next_steps: []
+      } as DiagnosticDecision,
+      confidence: 0,
       latency: Date.now() - startTime,
-      provider: 'local', // Indica que es fallback
+      provider: provider as ProviderType,
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     }
@@ -264,6 +227,7 @@ function getAgentSystemPrompt(type: DecisionType): string {
     critical_data_validation: AgentType.CRITICAL_DATA_VALIDATION,
     specialty_detection: AgentType.SPECIALTY_DETECTION,
     intelligent_medical_chat: AgentType.INTELLIGENT_MEDICAL_CHAT,
+    medical_data_extractor: AgentType.MEDICAL_DATA_EXTRACTOR,
   }
 
   const agentType = agentTypeMap[type]

@@ -1,6 +1,8 @@
 // 🧠 REDUX MULTINÚCLEO EVOLUCIONADO 2025 - Creado por Bernard Orozco + Gandalf el Blanco
 
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit'
+import { MedicalExtractionOutput, MedicalExtractionState, UpdateDemographicsPayload, UpdateSymptomsPayload, UpdateContextPayload } from '../types/medicalExtraction'
+import { extractMedicalDataThunk, continueExtractionThunk } from './extractionThunks'
 
 export interface MedicalMessage {
   id: string
@@ -62,11 +64,14 @@ export interface MedicalChatState {
     }
     isLoading: boolean
     error?: string
-    // 📝 DATOS DEL PACIENTE CONFIRMADOS POR EL DOCTOR
+    // 📝 DATOS DEL PACIENTE CONFIRMADOS POR EL DOCTOR (Legacy - deprecated)
     patientData: PatientData
     // 🎯 ESTADO DE TRANSICIÓN A SOAP
     readyForSOAP: boolean
   }
+
+  // 🧬 NUEVO ESTADO DE EXTRACCIÓN MÉDICA (2025 Architecture)
+  medicalExtraction: MedicalExtractionState
 }
 
 // 🧠 ESTADO INICIAL MULTINÚCLEO EVOLUCIONADO
@@ -116,6 +121,22 @@ const initialState: MedicalChatState = {
       isEnhanced: false,
     },
     readyForSOAP: false,
+  },
+  medicalExtraction: {
+    currentExtraction: null,
+    extractionHistory: {},
+    extractionProcess: {
+      isExtracting: false,
+      currentIteration: 0,
+      maxIterations: 5,
+      lastExtractedAt: null,
+      error: null,
+    },
+    wipData: {
+      demographics: {},
+      clinical_presentation: {},
+      symptom_characteristics: {},
+    },
   },
 }
 
@@ -316,7 +337,215 @@ const medicalChatSlice = createSlice({
     setNotReadyForSOAP: (state) => {
       state.sharedState.readyForSOAP = false
     },
+
+    // 🧬 NUEVAS ACCIONES DE EXTRACCIÓN MÉDICA (2025 Architecture)
+    
+    // 📊 Actualizar demografía usando Immer draft patterns
+    updateDemographics: (state, action: PayloadAction<UpdateDemographicsPayload>) => {
+      Object.assign(state.medicalExtraction.wipData.demographics, action.payload)
+    },
+
+    // 🩺 Actualizar síntomas primarios/secundarios con acumulación
+    updateSymptoms: (state, action: PayloadAction<UpdateSymptomsPayload>) => {
+      Object.assign(state.medicalExtraction.wipData.clinical_presentation, action.payload)
+    },
+
+    // 📝 Actualizar contexto (duración, intensidad, factores) progressive build
+    updateContext: (state, action: PayloadAction<UpdateContextPayload>) => {
+      Object.assign(state.medicalExtraction.wipData.symptom_characteristics, action.payload)
+    },
+
+    // 📈 Actualizar porcentaje de completitud
+    updateCompleteness: (state, action: PayloadAction<{ percentage: number; missingFields: string[] }>) => {
+      if (state.medicalExtraction.currentExtraction) {
+        state.medicalExtraction.currentExtraction.extraction_metadata.overall_completeness_percentage = action.payload.percentage
+        state.medicalExtraction.currentExtraction.extraction_metadata.missing_critical_fields = action.payload.missingFields
+      }
+    },
+
+    // 🚀 Iniciar proceso de extracción
+    startExtractionProcess: (state, action: PayloadAction<{ sessionId: string; maxIterations?: number }>) => {
+      state.medicalExtraction.extractionProcess.isExtracting = true
+      state.medicalExtraction.extractionProcess.currentIteration = 1
+      state.medicalExtraction.extractionProcess.maxIterations = action.payload.maxIterations || 5
+      state.medicalExtraction.extractionProcess.error = null
+      
+      // Initialize history for this session if it doesn't exist
+      if (!state.medicalExtraction.extractionHistory[action.payload.sessionId]) {
+        state.medicalExtraction.extractionHistory[action.payload.sessionId] = []
+      }
+    },
+
+    // 📥 Finalizar extracción con datos completos
+    completeExtraction: (state, action: PayloadAction<MedicalExtractionOutput>) => {
+      const sessionId = state.sharedState.currentSession.id
+      
+      state.medicalExtraction.currentExtraction = action.payload
+      state.medicalExtraction.extractionProcess.isExtracting = false
+      state.medicalExtraction.extractionProcess.lastExtractedAt = new Date().toISOString()
+      
+      // Add to history
+      state.medicalExtraction.extractionHistory[sessionId].push(action.payload)
+      
+      // Clear WIP data
+      state.medicalExtraction.wipData = {
+        demographics: {},
+        clinical_presentation: {},
+        symptom_characteristics: {},
+      }
+      
+      // Update shared state if extraction is complete enough
+      if (action.payload.extraction_metadata.ready_for_soap_generation) {
+        state.sharedState.readyForSOAP = true
+      }
+    },
+
+    // 🔄 Incrementar iteración
+    incrementIteration: (state) => {
+      state.medicalExtraction.extractionProcess.currentIteration += 1
+    },
+
+    // ❌ Error en extracción
+    setExtractionError: (state, action: PayloadAction<string>) => {
+      state.medicalExtraction.extractionProcess.error = action.payload
+      state.medicalExtraction.extractionProcess.isExtracting = false
+    },
+
+    // 🧹 Limpiar datos de extracción
+    clearExtractionData: (state) => {
+      state.medicalExtraction.currentExtraction = null
+      state.medicalExtraction.extractionProcess = {
+        isExtracting: false,
+        currentIteration: 0,
+        maxIterations: 5,
+        lastExtractedAt: null,
+        error: null,
+      }
+      state.medicalExtraction.wipData = {
+        demographics: {},
+        clinical_presentation: {},
+        symptom_characteristics: {},
+      }
+    },
+
+    // 🔄 Reset extracción para nueva sesión
+    resetExtractionForNewSession: (state, action: PayloadAction<string>) => {
+      const sessionId = action.payload
+      state.medicalExtraction.currentExtraction = null
+      state.medicalExtraction.extractionProcess = {
+        isExtracting: false,
+        currentIteration: 0,
+        maxIterations: 5,
+        lastExtractedAt: null,
+        error: null,
+      }
+      state.medicalExtraction.wipData = {
+        demographics: {},
+        clinical_presentation: {},
+        symptom_characteristics: {},
+      }
+      
+      // Initialize history for new session
+      if (!state.medicalExtraction.extractionHistory[sessionId]) {
+        state.medicalExtraction.extractionHistory[sessionId] = []
+      }
+    },
   },
+  
+  // 🔄 EXTRA REDUCERS - Builder Callback Pattern para Async Thunks
+  extraReducers: (builder) => {
+    // === Extract Medical Data Thunk ===
+    builder
+      .addCase(extractMedicalDataThunk.pending, (state, action) => {
+        state.medicalExtraction.extractionProcess.isExtracting = true
+        state.medicalExtraction.extractionProcess.error = null
+        // Set iteration to 1 if this is initial extraction
+        if (action.meta.arg.isInitial !== false) {
+          state.medicalExtraction.extractionProcess.currentIteration = 1
+        }
+      })
+      .addCase(extractMedicalDataThunk.fulfilled, (state, action) => {
+        const { extractedData, completeness, shouldContinue, iteration, isComplete } = action.payload
+        
+        // Update current extraction
+        state.medicalExtraction.currentExtraction = extractedData
+        
+        // Update process state
+        state.medicalExtraction.extractionProcess.isExtracting = false
+        state.medicalExtraction.extractionProcess.currentIteration = iteration
+        state.medicalExtraction.extractionProcess.lastExtractedAt = new Date().toISOString()
+        state.medicalExtraction.extractionProcess.error = null
+        
+        // Add to history
+        const sessionId = action.meta.arg.sessionId
+        if (!state.medicalExtraction.extractionHistory[sessionId]) {
+          state.medicalExtraction.extractionHistory[sessionId] = []
+        }
+        state.medicalExtraction.extractionHistory[sessionId].push(extractedData)
+        
+        // Clear WIP data since we have a complete extraction
+        state.medicalExtraction.wipData = {
+          demographics: {},
+          clinical_presentation: {},
+          symptom_characteristics: {},
+        }
+        
+        // Update shared state if ready for SOAP
+        if (isComplete && completeness.readyForSOAP) {
+          state.sharedState.readyForSOAP = true
+        }
+      })
+      .addCase(extractMedicalDataThunk.rejected, (state, action) => {
+        state.medicalExtraction.extractionProcess.isExtracting = false
+        state.medicalExtraction.extractionProcess.error = action.payload as string || 'Extraction failed'
+      })
+
+    // === Continue Extraction Thunk ===
+    builder
+      .addCase(continueExtractionThunk.pending, (state, action) => {
+        state.medicalExtraction.extractionProcess.isExtracting = true
+        state.medicalExtraction.extractionProcess.error = null
+        // Increment iteration
+        state.medicalExtraction.extractionProcess.currentIteration += 1
+      })
+      .addCase(continueExtractionThunk.fulfilled, (state, action) => {
+        const { extractedData, completeness, shouldContinue, iteration, isComplete } = action.payload
+        
+        // Update current extraction with merged data
+        state.medicalExtraction.currentExtraction = extractedData
+        
+        // Update process state
+        state.medicalExtraction.extractionProcess.isExtracting = false
+        state.medicalExtraction.extractionProcess.currentIteration = iteration
+        state.medicalExtraction.extractionProcess.lastExtractedAt = new Date().toISOString()
+        state.medicalExtraction.extractionProcess.error = null
+        
+        // Add to history
+        const sessionId = action.meta.arg.sessionId
+        if (!state.medicalExtraction.extractionHistory[sessionId]) {
+          state.medicalExtraction.extractionHistory[sessionId] = []
+        }
+        state.medicalExtraction.extractionHistory[sessionId].push(extractedData)
+        
+        // Clear WIP data since we have updated extraction
+        state.medicalExtraction.wipData = {
+          demographics: {},
+          clinical_presentation: {},
+          symptom_characteristics: {},
+        }
+        
+        // Update shared state if ready for SOAP
+        if (isComplete && completeness.readyForSOAP) {
+          state.sharedState.readyForSOAP = true
+        }
+      })
+      .addCase(continueExtractionThunk.rejected, (state, action) => {
+        state.medicalExtraction.extractionProcess.isExtracting = false
+        state.medicalExtraction.extractionProcess.error = action.payload as string || 'Continue extraction failed'
+        // Don't increment iteration on failure
+        state.medicalExtraction.extractionProcess.currentIteration = Math.max(1, state.medicalExtraction.extractionProcess.currentIteration - 1)
+      })
+  }
 })
 
 export const {
@@ -334,6 +563,171 @@ export const {
   confirmReadyForSOAP,
   resetPatientData,
   setNotReadyForSOAP,
+  // 🧬 Nuevas acciones de extracción médica
+  updateDemographics,
+  updateSymptoms,
+  updateContext,
+  updateCompleteness,
+  startExtractionProcess,
+  completeExtraction,
+  incrementIteration,
+  setExtractionError,
+  clearExtractionData,
+  resetExtractionForNewSession,
 } = medicalChatSlice.actions
 
 export default medicalChatSlice.reducer
+
+// 🔄 Export async thunks
+export { extractMedicalDataThunk, continueExtractionThunk }
+
+// 🎯 MEMOIZED SELECTORS USING CREATESELECTOR (2025 Best Practices)
+
+// Root state type helper
+type RootState = { medicalChat: MedicalChatState }
+
+// 📊 Basic data access selectors
+export const selectExtractedData = createSelector(
+  [(state: RootState) => state.medicalChat.medicalExtraction.currentExtraction],
+  (currentExtraction) => currentExtraction
+)
+
+export const selectExtractionProcess = createSelector(
+  [(state: RootState) => state.medicalChat.medicalExtraction.extractionProcess],
+  (extractionProcess) => extractionProcess
+)
+
+export const selectWipData = createSelector(
+  [(state: RootState) => state.medicalChat.medicalExtraction.wipData],
+  (wipData) => wipData
+)
+
+// 📈 Real-time completion tracking
+export const selectCompletenessPercentage = createSelector(
+  [selectExtractedData],
+  (extractedData) => {
+    if (!extractedData) return 0
+    return extractedData.extraction_metadata.overall_completeness_percentage
+  }
+)
+
+// ❌ NOM validation gaps
+export const selectMissingCriticalFields = createSelector(
+  [selectExtractedData],
+  (extractedData) => {
+    if (!extractedData) return []
+    return extractedData.extraction_metadata.missing_critical_fields
+  }
+)
+
+// 🏥 NOM compliance status
+export const selectNOMCompliance = createSelector(
+  [selectExtractedData],
+  (extractedData) => {
+    if (!extractedData) return false
+    return extractedData.extraction_metadata.nom_compliant
+  }
+)
+
+// 📋 SOAP transition readiness
+export const selectReadyForSOAP = createSelector(
+  [selectExtractedData],
+  (extractedData) => {
+    if (!extractedData) return false
+    return extractedData.extraction_metadata.ready_for_soap_generation
+  }
+)
+
+// 📊 Current extraction status summary
+export const selectExtractionSummary = createSelector(
+  [selectExtractedData, selectExtractionProcess, selectCompletenessPercentage, selectNOMCompliance],
+  (extractedData, process, completeness, nomCompliant) => ({
+    hasData: !!extractedData,
+    isExtracting: process.isExtracting,
+    currentIteration: process.currentIteration,
+    maxIterations: process.maxIterations,
+    completenessPercentage: completeness,
+    nomCompliant,
+    error: process.error,
+    lastExtractedAt: process.lastExtractedAt,
+  })
+)
+
+// 🔍 Extraction history by session
+export const selectExtractionHistory = createSelector(
+  [(state: RootState) => state.medicalChat.medicalExtraction.extractionHistory,
+   (state: RootState) => state.medicalChat.sharedState.currentSession.id],
+  (history, sessionId) => history[sessionId] || []
+)
+
+// 📋 Detailed field completeness breakdown
+export const selectFieldCompleteness = createSelector(
+  [selectExtractedData],
+  (extractedData) => {
+    if (!extractedData) return null
+    
+    return {
+      demographics: {
+        age: extractedData.demographics.patient_age_years !== "unknown",
+        gender: extractedData.demographics.patient_gender !== "unknown",
+        confidence: extractedData.demographics.confidence_demographic,
+      },
+      clinical: {
+        complaint: extractedData.clinical_presentation.chief_complaint !== "unknown",
+        symptoms: extractedData.clinical_presentation.primary_symptoms?.length ? extractedData.clinical_presentation.primary_symptoms.length > 0 : false,
+        location: extractedData.clinical_presentation.anatomical_location !== "unknown",
+        confidence: extractedData.clinical_presentation.confidence_symptoms,
+      },
+      context: {
+        duration: extractedData.symptom_characteristics.duration_description !== "unknown",
+        intensity: extractedData.symptom_characteristics.pain_intensity_scale !== null,
+        characteristics: extractedData.symptom_characteristics.pain_characteristics?.length ? extractedData.symptom_characteristics.pain_characteristics.length > 0 : false,
+        aggravating: extractedData.symptom_characteristics.aggravating_factors?.length ? extractedData.symptom_characteristics.aggravating_factors.length > 0 : false,
+        relieving: extractedData.symptom_characteristics.relieving_factors?.length ? extractedData.symptom_characteristics.relieving_factors.length > 0 : false,
+        associated: extractedData.symptom_characteristics.associated_symptoms?.length ? extractedData.symptom_characteristics.associated_symptoms.length > 0 : false,
+        temporal: extractedData.symptom_characteristics.temporal_pattern !== "unknown",
+        confidence: extractedData.symptom_characteristics.confidence_context,
+      }
+    }
+  }
+)
+
+// 🎯 Extraction progress indicator
+export const selectExtractionProgress = createSelector(
+  [selectExtractionProcess, selectCompletenessPercentage],
+  (process, completeness) => ({
+    isActive: process.isExtracting,
+    iteration: process.currentIteration,
+    maxIterations: process.maxIterations,
+    progressPercentage: Math.max(
+      (process.currentIteration / process.maxIterations) * 100,
+      completeness
+    ),
+    shouldContinue: process.currentIteration < process.maxIterations && completeness < 80,
+  })
+)
+
+// 🚨 Areas needing more information
+export const selectFocusAreas = createSelector(
+  [selectFieldCompleteness, selectMissingCriticalFields],
+  (fieldCompleteness, missingFields) => {
+    if (!fieldCompleteness) return []
+    
+    const focusAreas: string[] = []
+    
+    // Priority 1: Missing critical NOM fields
+    if (missingFields.includes('demographics.patient_age_years')) focusAreas.push('age')
+    if (missingFields.includes('demographics.patient_gender')) focusAreas.push('gender')
+    if (missingFields.includes('clinical_presentation.chief_complaint')) focusAreas.push('chief_complaint')
+    
+    // Priority 2: Missing clinical details
+    if (!fieldCompleteness.clinical.symptoms) focusAreas.push('symptoms')
+    if (!fieldCompleteness.clinical.location) focusAreas.push('location')
+    
+    // Priority 3: Missing contextual information
+    if (!fieldCompleteness.context.duration) focusAreas.push('duration')
+    if (!fieldCompleteness.context.intensity) focusAreas.push('intensity')
+    
+    return focusAreas
+  }
+)

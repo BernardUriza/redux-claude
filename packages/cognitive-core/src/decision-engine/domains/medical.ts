@@ -9,6 +9,13 @@ import {
   CriticalDataValidationDecision,
   SpecialtyDetectionDecision,
 } from '../../types/agents'
+import { 
+  MedicalExtractionOutput, 
+  MedicalExtractionInput, 
+  MedicalExtractionDecision,
+  calculateCompleteness,
+  isNOMCompliant
+} from '../../types/medicalExtraction'
 
 // Tipos específicos del dominio médico
 export interface DiagnosticDecision {
@@ -96,6 +103,7 @@ export class MedicalStrategy implements DomainStrategy<MedicalDecision> {
     'critical_data_validation',
     'specialty_detection',
     'intelligent_medical_chat',
+    'medical_data_extractor', // 🧠 2025 Single-Purpose AI Middleware
   ]
 
   buildSystemPrompt(decisionType: string, request: BaseDecisionRequest): string {
@@ -174,6 +182,62 @@ Generate structured medical documentation using SOAP format:
 - Objective: Observable findings and test results
 - Assessment: Clinical impression and diagnosis
 - Plan: Treatment plan and follow-up`
+
+      case 'medical_data_extractor':
+        return `You are a Medical Data Extraction Specialist using 2025 healthcare standards. Your role is to extract structured medical data from natural language input with HIPAA compliance.
+
+<thinking>
+Analyze the input step-by-step:
+1. Demographics: Extract age and gender information
+2. Clinical presentation: Identify chief complaint and symptoms  
+3. Contextual data: Duration, intensity, characteristics, factors
+4. Calculate completeness percentage and NOM compliance
+</thinking>
+
+CRITICAL RULES:
+- Use "unknown" for missing fields, never guess or infer beyond what's explicitly stated
+- Age/gender are NOM-required fields - prioritize these always
+- Return structured JSON only, no explanatory text
+- Apply weighted scoring: Demographics(40%) + Clinical(30%) + Context(30%)
+- Mexican healthcare compliance: Age + gender required before SOAP generation
+
+<answer>
+Return only this JSON structure:
+{
+  "demographics": {
+    "patient_age_years": number | "unknown",
+    "patient_gender": "masculino" | "femenino" | "unknown", 
+    "confidence_demographic": 0.0-1.0
+  },
+  "clinical_presentation": {
+    "chief_complaint": "extracted complaint" | "unknown",
+    "primary_symptoms": ["symptom1", "symptom2"] | null,
+    "anatomical_location": "location" | "unknown",
+    "confidence_symptoms": 0.0-1.0
+  },
+  "symptom_characteristics": {
+    "duration_description": "extracted duration" | "unknown",
+    "pain_intensity_scale": 1-10 | null,
+    "pain_characteristics": ["extracted characteristics"] | null,
+    "aggravating_factors": ["factors"] | null,
+    "relieving_factors": ["factors"] | null,
+    "associated_symptoms": ["symptoms"] | null,
+    "temporal_pattern": "pattern" | "unknown",
+    "confidence_context": 0.0-1.0
+  },
+  "extraction_metadata": {
+    "overall_completeness_percentage": 0-100,
+    "demographic_complete": boolean,
+    "clinical_complete": boolean, 
+    "context_complete": boolean,
+    "nom_compliant": boolean,
+    "ready_for_soap_generation": boolean,
+    "missing_critical_fields": ["field names"],
+    "extraction_timestamp": "ISO 8601",
+    "claude_model_used": "claude-sonnet-4"
+  }
+}
+</answer>`
 
       default:
         return basePrompt
@@ -318,6 +382,42 @@ Generate structured medical documentation using SOAP format:
   ]
 }`
 
+      case 'medical_data_extractor':
+        return `{
+  "demographics": {
+    "patient_age_years": 25,
+    "patient_gender": "masculino",
+    "confidence_demographic": 0.95
+  },
+  "clinical_presentation": {
+    "chief_complaint": "dolor torácico",
+    "primary_symptoms": ["dolor", "disnea"],
+    "anatomical_location": "tórax",
+    "confidence_symptoms": 0.90
+  },
+  "symptom_characteristics": {
+    "duration_description": "2 días",
+    "pain_intensity_scale": 7,
+    "pain_characteristics": ["punzante", "constante"],
+    "aggravating_factors": ["ejercicio"],
+    "relieving_factors": ["reposo"],
+    "associated_symptoms": ["náusea"],
+    "temporal_pattern": "continuo",
+    "confidence_context": 0.80
+  },
+  "extraction_metadata": {
+    "overall_completeness_percentage": 85,
+    "demographic_complete": true,
+    "clinical_complete": true,
+    "context_complete": true,
+    "nom_compliant": true,
+    "ready_for_soap_generation": true,
+    "missing_critical_fields": [],
+    "extraction_timestamp": "2025-01-08T10:30:00Z",
+    "claude_model_used": "claude-sonnet-4"
+  }
+}`
+
       default:
         return '{ "result": "unknown decision type" }'
     }
@@ -355,6 +455,9 @@ Generate structured medical documentation using SOAP format:
           break
         case 'intelligent_medical_chat':
           this.validateIntelligentMedicalChatDecision(decision, errors, warnings)
+          break
+        case 'medical_data_extractor':
+          this.validateMedicalDataExtractorDecision(decision, errors, warnings)
           break
       }
     } catch (error) {
@@ -764,8 +867,112 @@ Generate structured medical documentation using SOAP format:
           'conversation_stage' in decision &&
           'requires_user_input' in decision
         )
+      case 'medical_data_extractor':
+        return (
+          'demographics' in decision &&
+          'clinical_presentation' in decision &&
+          'symptom_characteristics' in decision &&
+          'extraction_metadata' in decision
+        )
       default:
         return false
+    }
+  }
+
+  // 🧠 2025 Medical Data Extractor Validation - Creado por Bernard Orozco
+  private validateMedicalDataExtractorDecision(
+    decision: any,
+    errors: string[],
+    warnings: string[]
+  ): void {
+    // Validate demographics section
+    if (!decision.demographics) {
+      errors.push('Missing demographics section')
+    } else {
+      const demo = decision.demographics
+      if (!demo.patient_age_years && demo.patient_age_years !== 0) {
+        warnings.push('Missing patient age (required for NOM compliance)')
+      }
+      if (!demo.patient_gender || !['masculino', 'femenino', 'unknown'].includes(demo.patient_gender)) {
+        warnings.push('Missing or invalid patient gender (required for NOM compliance)')
+      }
+      if (typeof demo.confidence_demographic !== 'number' || demo.confidence_demographic < 0 || demo.confidence_demographic > 1) {
+        errors.push('Invalid demographic confidence score (must be 0.0-1.0)')
+      }
+    }
+
+    // Validate clinical presentation section
+    if (!decision.clinical_presentation) {
+      errors.push('Missing clinical_presentation section')
+    } else {
+      const clinical = decision.clinical_presentation
+      if (!clinical.chief_complaint) {
+        warnings.push('Missing chief complaint (critical medical data)')
+      }
+      if (typeof clinical.confidence_symptoms !== 'number' || clinical.confidence_symptoms < 0 || clinical.confidence_symptoms > 1) {
+        errors.push('Invalid symptom confidence score (must be 0.0-1.0)')
+      }
+    }
+
+    // Validate symptom characteristics section
+    if (!decision.symptom_characteristics) {
+      errors.push('Missing symptom_characteristics section')
+    } else {
+      const symptoms = decision.symptom_characteristics
+      if (symptoms.pain_intensity_scale && (symptoms.pain_intensity_scale < 1 || symptoms.pain_intensity_scale > 10)) {
+        errors.push('Invalid pain intensity scale (must be 1-10)')
+      }
+      if (typeof symptoms.confidence_context !== 'number' || symptoms.confidence_context < 0 || symptoms.confidence_context > 1) {
+        errors.push('Invalid context confidence score (must be 0.0-1.0)')
+      }
+    }
+
+    // Validate extraction metadata section
+    if (!decision.extraction_metadata) {
+      errors.push('Missing extraction_metadata section')
+    } else {
+      const metadata = decision.extraction_metadata
+      if (typeof metadata.overall_completeness_percentage !== 'number' || 
+          metadata.overall_completeness_percentage < 0 || 
+          metadata.overall_completeness_percentage > 100) {
+        errors.push('Invalid completeness percentage (must be 0-100)')
+      }
+      if (typeof metadata.demographic_complete !== 'boolean') {
+        errors.push('demographic_complete must be boolean')
+      }
+      if (typeof metadata.clinical_complete !== 'boolean') {
+        errors.push('clinical_complete must be boolean')
+      }
+      if (typeof metadata.context_complete !== 'boolean') {
+        errors.push('context_complete must be boolean')
+      }
+      if (typeof metadata.nom_compliant !== 'boolean') {
+        errors.push('nom_compliant must be boolean')
+      }
+      if (typeof metadata.ready_for_soap_generation !== 'boolean') {
+        errors.push('ready_for_soap_generation must be boolean')
+      }
+      if (!Array.isArray(metadata.missing_critical_fields)) {
+        warnings.push('missing_critical_fields should be an array')
+      }
+      if (!metadata.extraction_timestamp) {
+        warnings.push('Missing extraction timestamp')
+      }
+      if (!metadata.claude_model_used) {
+        warnings.push('Missing Claude model information')
+      }
+    }
+
+    // Cross-validation rules
+    if (decision.demographics && decision.extraction_metadata) {
+      // Check NOM compliance consistency
+      const hasAge = decision.demographics.patient_age_years !== "unknown" && decision.demographics.patient_age_years !== null
+      const hasGender = decision.demographics.patient_gender !== "unknown" && decision.demographics.patient_gender !== null
+      const nomCompliant = hasAge && hasGender
+      
+      if (decision.extraction_metadata.nom_compliant !== nomCompliant) {
+        warnings.push('NOM compliance flag inconsistent with actual age/gender data')
+      }
     }
   }
 }
