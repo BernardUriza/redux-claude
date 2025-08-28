@@ -1,14 +1,14 @@
 // 🦁 Chat de Inferencia Médica Inteligente - Creado por Bernard Orozco
 // Inspirado en MAI-DxO y la sabiduría de Aslan para salvar al Doctor Edmund
 
-import { callClaudeForDecision } from './decisionalMiddleware'
+import { callDecisionEngine, callIndividualDecision } from './decisionalMiddleware'
 import type { MedicalMessage } from '../store/medicalChatSlice'
 import type { AppDispatch } from '../store/store'
 import { 
-  addAssistantMessage, 
+  addDashboardMessage, 
   completeExtraction, 
   setExtractionError,
-  setAssistantLoading 
+  setDashboardLoading 
 } from '../store/medicalChatSlice'
 
 export interface MedicalInference {
@@ -55,25 +55,25 @@ export class IntelligentMedicalChat {
    */
   async processUserInput(userInput: string): Promise<void> {
     try {
-      this.dispatch(setAssistantLoading(true))
+      this.dispatch(setDashboardLoading(true))
       
       if (!userInput || typeof userInput !== 'string') {
         console.warn('⚠️ Input inválido en processUserInput:', userInput)
-        this.dispatch(addAssistantMessage({
+        this.dispatch(addDashboardMessage({
           content: '🦁 Hola Doctor Edmund, ¿podría proporcionarme datos del paciente?',
           type: 'assistant'
         }))
-        this.dispatch(setAssistantLoading(false))
+        this.dispatch(setDashboardLoading(false))
         return
       }
 
       // 🎯 ARQUITECTURA SECUENCIAL INTELIGENTE: Extractor → Chat solo lo faltante
       console.log('🔄 PASO 1: Ejecutando extractor para analizar datos disponibles...')
       
-      // PASO 1: 🧬 Extractor analiza QUÉ datos tenemos y cuáles faltan
-      const extractorResponse = await this.callDecisionEngine('medical_data_extractor', userInput)
+      // PASO 1: 🧬 Extractor analiza QUÉ datos tenemos y cuáles faltan (SIN CONTEXTO - función pura)
+      const extractorResponse = await callIndividualDecision('medical_data_extractor', userInput)
 
-      if (!extractorResponse) {
+      if (!extractorResponse.success) {
         console.warn('💥 Extractor falló, usando fallback básico')
         this.dispatch(addAssistantMessage({
           content: '🦁 Error temporal. ¿Podría repetir su consulta médica?',
@@ -83,7 +83,7 @@ export class IntelligentMedicalChat {
         return
       }
 
-      const extractedData = extractorResponse.data || extractorResponse
+      const extractedData = extractorResponse.decision
       const completenessPercentage = extractedData.extraction_metadata?.overall_completeness_percentage || 0
       const missingCriticalFields = extractedData.extraction_metadata?.missing_critical_fields || []
       const isNOMCompliant = extractedData.extraction_metadata?.nom_compliant || false
@@ -97,39 +97,46 @@ export class IntelligentMedicalChat {
       // PASO 2: Guardar datos extraídos en store
       this.dispatch(completeExtraction(extractedData))
       
-      // PASO 3: 🦁 Doctor Edmund solo pregunta por lo que FALTA
-      console.log('🔄 PASO 3: Doctor Edmund preguntando solo lo faltante...')
+      // PASO 3: 🦁 Doctor Edmund CON CONTINUIDAD - Usa DASHBOARD core (no assistant)
+      console.log('🔄 PASO 3: Doctor Edmund preguntando con contexto...')
       
-      const chatResponse = await this.callDecisionEngine('intelligent_medical_chat', userInput, {
-        extracted_data: extractedData,
-        missing_critical_fields: missingCriticalFields,
-        completeness_percentage: completenessPercentage,
-        instruction: 'Solo preguntar por campos faltantes específicos'
+      const chatResponse = await callDecisionEngine('dashboard', 'intelligent_medical_chat', userInput, {
+        persistContext: true,
+        // Claude recibirá el contexto automáticamente del núcleo dashboard
       })
 
-      if (chatResponse) {
-        // Agregar respuesta del chat al store - NÚCLEO ASSISTANT
-        this.dispatch(addAssistantMessage({
-          content: chatResponse.message || this.generateQuestionBasedOnMissingFields(missingCriticalFields),
+      if (chatResponse.success) {
+        // Extraer mensaje de la respuesta de Claude
+        const decision = chatResponse.decision as any
+        const message = decision?.message || 
+                       decision?.question || 
+                       decision?.response || 
+                       await this.generateQuestionBasedOnMissingFields(missingCriticalFields, extractedData)
+        
+        // Agregar respuesta del chat al store - NÚCLEO DASHBOARD (correcto)
+        // NOTA: No duplicamos en store porque callDecisionEngine ya maneja contexto internamente
+        this.dispatch(addDashboardMessage({
+          content: message,
           type: 'assistant',
           metadata: {
             sectionType: completenessPercentage >= 80 ? 'diagnosis' : 'education'
           }
         }))
         
-        console.log('✅ Respuesta secuencial guardada en núcleo assistant')
+        console.log('✅ Respuesta contextual guardada en núcleo assistant')
       } else {
-        // Fallback: Generar pregunta basada en campos faltantes
-        console.warn('⚠️ Chat falló, generando pregunta desde análisis de extractor')
+        // Fallback: Generar pregunta contextual con Claude (SIN CONTEXTO - función pura)
+        console.warn('⚠️ Chat falló, generando pregunta contextual desde extractor')
+        const contextualQuestion = await this.generateQuestionBasedOnMissingFields(missingCriticalFields, extractedData)
         this.dispatch(addAssistantMessage({
-          content: this.generateQuestionBasedOnMissingFields(missingCriticalFields),
+          content: contextualQuestion,
           type: 'assistant'
         }))
       }
 
     } catch (error) {
       console.error('💥 Error en chat inteligente:', error)
-      this.dispatch(setExtractionError(error?.message || 'Error desconocido'))
+      this.dispatch(setExtractionError(error instanceof Error ? error.message : 'Error desconocido'))
       this.dispatch(addAssistantMessage({
         content: '🦁 Error procesando consulta. ¿Podría intentar de nuevo?',
         type: 'assistant'
@@ -139,41 +146,74 @@ export class IntelligentMedicalChat {
     }
   }
 
+
   /**
-   * DRY: Wrapper único para llamadas a Claude
+   * Genera pregunta inteligente usando Claude - combinable y contextual
    */
-  private async callDecisionEngine(
-    decisionType: 'intelligent_medical_chat' | 'medical_data_extractor',
-    userInput: string,
-    additionalContext: Record<string, any> = {}
-  ): Promise<any> {
+  private async generateQuestionBasedOnMissingFields(
+    missingFields: string[], 
+    extractedData?: any
+  ): Promise<string> {
     try {
-      const response = await callClaudeForDecision(
-        decisionType,
-        userInput,
-        'claude',
-        undefined,
-        undefined,
-        additionalContext
+      // 🧠 Contexto para Claude basado en datos ya extraídos
+      const context = this.buildContextForQuestion(extractedData, missingFields)
+      
+      // 🧠 Usar callIndividualDecision para generar preguntas (función pura - 2+2=4)
+      const claudeResponse = await callIndividualDecision(
+        'intelligent_medical_chat',
+        `Genera una pregunta médica contextual para: ${missingFields.join(', ')}`,
+        {
+          action: 'generate_contextual_question',
+          missing_fields: missingFields,
+          extracted_context: context,
+          persona: 'Doctor Edmund (León de Narnia) - profesional pero cálido',
+          instruction: 'Genera UNA pregunta específica y directa para obtener los datos médicos faltantes más críticos. Máximo 25 palabras.',
+          expected_response: 'Solo la pregunta, sin explicaciones adicionales'
+        }
       )
 
-      if (response.success) {
-        return response.decision
+      // Claude puede devolver la pregunta en varios formatos
+      if (claudeResponse?.success && claudeResponse?.decision) {
+        const decision = claudeResponse.decision as any
+        return decision.question || decision.message || decision.response || decision.text_response || JSON.stringify(decision)
       }
       
-      console.warn(`⚠️ ${decisionType} failed:`, response.error || 'No error details')
-      return null
-
+      // Fallback inteligente si Claude falla
+      return this.generateFallbackQuestion(missingFields)
+      
     } catch (error) {
-      console.error(`💥 Error en ${decisionType}:`, error)
-      return null
+      console.warn('⚠️ Error generando pregunta con Claude, usando fallback:', error)
+      return this.generateFallbackQuestion(missingFields)
     }
   }
 
   /**
-   * Genera pregunta inteligente basada en campos faltantes
+   * Construye contexto médico para la pregunta
    */
-  private generateQuestionBasedOnMissingFields(missingFields: string[]): string {
+  private buildContextForQuestion(extractedData: any, missingFields: string[]): string {
+    if (!extractedData) return 'Caso médico inicial'
+    
+    const context: string[] = []
+    
+    // Datos ya identificados
+    if (extractedData.demographics?.patient_age_years !== 'unknown') {
+      context.push(`Edad: ${extractedData.demographics.patient_age_years} años`)
+    }
+    if (extractedData.demographics?.patient_gender !== 'unknown') {
+      context.push(`Género: ${extractedData.demographics.patient_gender}`)
+    }
+    if (extractedData.clinical_presentation?.chief_complaint !== 'unknown') {
+      context.push(`Síntoma: ${extractedData.clinical_presentation.chief_complaint}`)
+    }
+    
+    const contextStr = context.length > 0 ? `Datos confirmados: ${context.join(', ')}` : 'Caso inicial'
+    return `${contextStr}. Faltan: ${missingFields.join(', ')}`
+  }
+
+  /**
+   * Pregunta fallback rápida - no depende de Claude
+   */
+  private generateFallbackQuestion(missingFields: string[]): string {
     if (missingFields.includes('patient_age_years') && missingFields.includes('patient_gender')) {
       return '🦁 Doctor Edmund, para continuar necesito la edad y género del paciente.'
     }

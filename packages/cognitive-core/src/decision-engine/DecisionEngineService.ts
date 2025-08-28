@@ -1,254 +1,175 @@
-// src/decision-engine/DecisionEngineService.ts
-// Servicio central del Decision Engine híbrido - Bernard Orozco
+// 🚀 DECISION ENGINE SERVICE MODERNO - Bernard Orozco 2025
+// Arquitectura limpia sin legacy, delegación inteligente
 
-import { DecisionEngine } from './core/DecisionEngine'
-import { MedicalStrategy } from './domains/medical'
 import { ClaudeAdapter } from './providers/claude'
-import { LocalAdapter } from './providers/local'
-import type { Domain, Provider, DecisionResponse } from './core/types'
+import { MedicalDecisionProcessor } from './processors/MedicalDecisionProcessor'
+import type { DecisionResponse } from './core/types'
+
+export interface ModernDecisionRequest {
+  type: string
+  input: string
+  context?: Record<string, unknown>
+  signal?: AbortSignal
+}
+
+export interface ContextualDecisionRequest extends ModernDecisionRequest {
+  coreId: string              // 'dashboard', 'assistant', 'inference' 
+  persistContext?: boolean    // Guardar contexto en store
+  sessionId?: string          // ID de sesión para agrupar contexto
+  provider?: string
+}
 
 class DecisionEngineService {
-  public engine: DecisionEngine
-  public initialized = false
+  private claudeAdapter: ClaudeAdapter
+  private medicalProcessor: MedicalDecisionProcessor
+  private initialized = false
+  
+  // 🧠 CONTEXTO POR NÚCLEO - Memoria conversacional
+  private coreContexts: Map<string, {
+    messages: Array<{role: 'user' | 'assistant', content: string}>,
+    sessionId?: string,
+    lastActivity: number,
+    metadata?: Record<string, any>
+  }> = new Map()
 
   constructor() {
-    this.engine = new DecisionEngine({
-      defaultProvider: 'claude', // Use Claude SDK with dangerouslyAllowBrowser
-      fallbackProviders: ['local'],
-      timeout: 30000,
-      maxRetries: 2,
-      enableValidation: true,
-    })
+    this.claudeAdapter = new ClaudeAdapter()
+    this.medicalProcessor = new MedicalDecisionProcessor(this.claudeAdapter)
   }
 
   public async initialize(): Promise<void> {
     if (this.initialized) return
-
-    try {
-      // Register medical domain strategy
-      const medicalStrategy = new MedicalStrategy()
-      this.engine.registerStrategy('medical', medicalStrategy as any)
-
-      // Register Claude adapter
-      const claudeAdapter = new ClaudeAdapter()
-      this.engine.registerProvider('claude', claudeAdapter)
-
-      // Register local/mock adapter
-      const localAdapter = new LocalAdapter()
-      this.engine.registerProvider('local', localAdapter)
-
-      this.initialized = true
-      console.log('✅ Decision Engine initialized successfully')
-
-      // Log available capabilities
-      const health = await this.engine.getSystemHealth()
-      console.log('📊 Available domains:', health.strategies)
-      console.log(
-        '🔌 Available providers:',
-        health.providers.map(p => `${p.name} (${p.available ? 'online' : 'offline'})`)
-      )
-    } catch (error) {
-      console.error('❌ Failed to initialize Decision Engine:', error)
-      throw error
-    }
+    
+    // ClaudeAdapter no necesita inicialización
+    await this.medicalProcessor.initialize()
+    
+    this.initialized = true
+    console.log('🚀 Modern Decision Engine initialized')
   }
 
-  // Main decision making method
-  async makeDecision<TDecision = any>(
-    domain: Domain,
-    decisionType: string,
-    input: string,
-    options: {
-      provider?: Provider
-      context?: Record<string, unknown>
-      previousDecisions?: any[]
-      signal?: AbortSignal
-    } = {}
-  ): Promise<DecisionResponse<TDecision>> {
+  /**
+   * ⚡ FUNCIÓN SIN CONTEXTO - Para funciones puras (2+2=4)
+   */
+  async processDecision(request: ModernDecisionRequest): Promise<DecisionResponse> {
     await this.initialize()
-
+    
     try {
-      return await this.engine.makeDecision<TDecision>(domain, decisionType, input, options)
+      // Todo va al procesador médico - lógica especializada
+      return await this.medicalProcessor.process(request)
     } catch (error) {
-      console.error(`Decision Engine error for ${domain}/${decisionType}:`, error)
-      throw error
-    }
-  }
-
-  // Medical domain convenience methods
-  async makeMedicalDiagnosis(
-    input: string,
-    options: { context?: Record<string, unknown>; signal?: AbortSignal } = {}
-  ) {
-    return this.makeDecision('medical', 'diagnosis', input, options)
-  }
-
-  async makeMedicalTriage(
-    input: string,
-    options: { context?: Record<string, unknown>; signal?: AbortSignal } = {}
-  ) {
-    return this.makeDecision('medical', 'triage', input, options)
-  }
-
-  async validateMedicalDecision(
-    input: string,
-    options: { context?: Record<string, unknown>; signal?: AbortSignal } = {}
-  ) {
-    return this.makeDecision('medical', 'validation', input, options)
-  }
-
-  async createTreatmentPlan(
-    input: string,
-    options: { context?: Record<string, unknown>; signal?: AbortSignal } = {}
-  ) {
-    return this.makeDecision('medical', 'treatment', input, options)
-  }
-
-  async generateDocumentation(
-    input: string,
-    options: { context?: Record<string, unknown>; signal?: AbortSignal } = {}
-  ) {
-    return this.makeDecision('medical', 'documentation', input, options)
-  }
-
-  // System health and capabilities
-  async getSystemHealth() {
-    await this.initialize()
-    return this.engine.getSystemHealth()
-  }
-
-  getAvailableDomains(): Domain[] {
-    if (!this.initialized) return []
-    return this.engine.getRegisteredDomains()
-  }
-
-  getSupportedDecisionTypes(domain: Domain): string[] {
-    if (!this.initialized) return []
-    return this.engine.getSupportedTypes(domain)
-  }
-
-  // Backward compatibility method for existing middleware
-  async processLegacyDecision(
-    decisionType: string,
-    input: string,
-    provider: string = 'claude',
-    signal?: AbortSignal,
-    previousDecisions: any[] = [],
-    context: Record<string, unknown> = {}
-  ): Promise<{
-    success: boolean
-    decision: any
-    confidence: number
-    error?: string
-  }> {
-    try {
-      // Map legacy decision types to new format
-      const mappedType = this.mapLegacyDecisionType(decisionType)
-
-      const response = await this.makeDecision(
-        'medical', // Assume medical domain for legacy calls
-        mappedType,
-        input,
-        {
-          provider: provider as Provider,
-          context,
-          previousDecisions,
-          signal,
-        }
-      )
-
-      return {
-        success: response.success,
-        decision: response.decision,
-        confidence: response.confidence,
-        error: response.error,
-      }
-    } catch (error) {
+      console.error(`🔥 Decision failed for ${request.type}:`, error)
       return {
         success: false,
-        decision: {},
+        decision: { error: 'Processing failed', requires_human_review: true },
         confidence: 0,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        latency: 0,
+        provider: 'claude',
+        error: error instanceof Error ? error.message : 'Unknown error'
       }
     }
   }
 
-  public mapLegacyDecisionType(legacyType: string): string {
-    // Map old decision types to new ones
-    const typeMap: Record<string, string> = {
-      diagnosis: 'diagnosis',
-      triage: 'triage',
-      validation: 'validation',
-      treatment: 'treatment',
-      documentation: 'documentation',
-      medical_autocompletion: 'medical_autocompletion',
-      clinical_pharmacology: 'clinical_pharmacology',
-      pediatric_specialist: 'pediatric_specialist',
-      hospitalization_criteria: 'hospitalization_criteria',
-      family_education: 'family_education',
-      objective_validation: 'objective_validation',
-      defensive_differential: 'defensive_differential',
-      intelligent_medical_chat: 'intelligent_medical_chat',
-    }
-
-    return typeMap[legacyType] || legacyType
-  }
-
-  // Future domain registration (for extensibility)
-  async registerNewDomain(domain: Domain, strategy: any): Promise<void> {
+  /**
+   * 🧠 FUNCIÓN CON CONTEXTO - Para continuidad conversacional (2+x=Y)
+   */
+  async processDecisionWithContext(request: ContextualDecisionRequest): Promise<DecisionResponse> {
     await this.initialize()
-    this.engine.registerStrategy(domain, strategy)
-    console.log(`✅ Registered new domain: ${domain}`)
-  }
-
-  async registerNewProvider(provider: Provider, adapter: any): Promise<void> {
-    await this.initialize()
-    this.engine.registerProvider(provider, adapter)
-    console.log(`✅ Registered new provider: ${provider}`)
-  }
-
-  // Development and testing utilities
-  async runHealthCheck(): Promise<{
-    overall: boolean
-    domains: Domain[]
-    providers: Array<{ name: Provider; available: boolean }>
-    errors: string[]
-  }> {
-    const errors: string[] = []
-
+    
     try {
-      await this.initialize()
-      const health = await this.engine.getSystemHealth()
-
-      return {
-        overall: health.overallHealth,
-        domains: health.strategies,
-        providers: health.providers,
-        errors,
+      // 1. Obtener o crear contexto del núcleo
+      const context = this.getOrCreateCoreContext(request.coreId, request.sessionId)
+      
+      // 2. Agregar mensaje del usuario al contexto
+      context.messages.push({
+        role: 'user',
+        content: request.input
+      })
+      
+      // 3. Crear request con contexto enriquecido
+      const enrichedRequest: ModernDecisionRequest = {
+        ...request,
+        context: {
+          ...request.context,
+          conversationHistory: context.messages,
+          coreId: request.coreId,
+          sessionId: context.sessionId
+        }
       }
+      
+      // 4. Procesar decisión
+      const response = await this.medicalProcessor.process(enrichedRequest)
+      
+      // 5. Si exitoso, agregar respuesta al contexto
+      if (response.success && response.decision) {
+        const assistantMessage = this.extractMessageFromDecision(response.decision)
+        if (assistantMessage) {
+          context.messages.push({
+            role: 'assistant',
+            content: assistantMessage
+          })
+        }
+      }
+      
+      // 6. Actualizar actividad del contexto
+      context.lastActivity = Date.now()
+      
+      return response
+      
     } catch (error) {
-      errors.push(error instanceof Error ? error.message : 'Unknown error')
-
+      console.error(`🔥 Contextual decision failed for ${request.coreId}/${request.type}:`, error)
       return {
-        overall: false,
-        domains: [],
-        providers: [],
-        errors,
+        success: false,
+        decision: { error: 'Contextual processing failed', requires_human_review: true },
+        confidence: 0,
+        latency: 0,
+        provider: 'claude',
+        error: error instanceof Error ? error.message : 'Unknown error'
       }
     }
   }
 
-  // Reset for testing
-  reset(): void {
-    this.initialized = false
-    this.engine = new DecisionEngine({
-      defaultProvider: 'claude', // Use Claude SDK with dangerouslyAllowBrowser
-      fallbackProviders: ['local'],
-      timeout: 30000,
-      maxRetries: 2,
-      enableValidation: true,
-    })
+  /**
+   * 🔧 GESTIÓN DE CONTEXTO POR NÚCLEO
+   */
+  private getOrCreateCoreContext(coreId: string, sessionId?: string) {
+    if (!this.coreContexts.has(coreId)) {
+      this.coreContexts.set(coreId, {
+        messages: [],
+        sessionId: sessionId || `${coreId}_${Date.now()}`,
+        lastActivity: Date.now(),
+        metadata: {}
+      })
+    }
+    return this.coreContexts.get(coreId)!
   }
+
+  /**
+   * 📤 EXTRAER MENSAJE DE RESPUESTA PARA CONTEXTO
+   */
+  private extractMessageFromDecision(decision: any): string | null {
+    if (typeof decision === 'string') return decision
+    if (decision.message) return decision.message
+    if (decision.question) return decision.question
+    if (decision.response) return decision.response
+    if (decision.text_response) return decision.text_response
+    return null
+  }
+
+  /**
+   * 🚀 MÉTODOS CONVENIENTES - Wrappers simples para casos comunes
+   */
+  async makeDiagnosis(input: string, context?: Record<string, unknown>) {
+    return this.processDecision({ type: 'diagnosis', input, context })
+  }
+
+  async makeTriage(input: string, context?: Record<string, unknown>) {
+    return this.processDecision({ type: 'triage', input, context })
+  }
+
+  async validateDecision(input: string, context?: Record<string, unknown>) {
+    return this.processDecision({ type: 'validation', input, context })
+  }
+
 }
 
 // Export singleton instance
