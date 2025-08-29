@@ -9,12 +9,12 @@ import {
   CriticalDataValidationDecision,
   SpecialtyDetectionDecision,
 } from '../../types/agents'
-import { 
-  MedicalExtractionOutput, 
-  MedicalExtractionInput, 
+import {
+  MedicalExtractionOutput,
+  MedicalExtractionInput,
   MedicalExtractionDecision,
   calculateCompleteness,
-  isNOMCompliant
+  isNOMCompliant,
 } from '../../types/medicalExtraction'
 
 // Tipos específicos del dominio médico
@@ -807,7 +807,11 @@ Return only this JSON structure:
         if (!inference.id || !inference.category || !inference.inference) {
           errors.push(`Inference ${index + 1} missing required fields (id, category, inference)`)
         }
-        if (typeof inference.confidence !== 'number' || inference.confidence < 0 || inference.confidence > 1) {
+        if (
+          typeof inference.confidence !== 'number' ||
+          inference.confidence < 0 ||
+          inference.confidence > 1
+        ) {
           errors.push(`Inference ${index + 1} has invalid confidence value`)
         }
       })
@@ -862,7 +866,7 @@ Return only this JSON structure:
         )
       case 'intelligent_medical_chat':
         return (
-          'message' in decision && 
+          'message' in decision &&
           'confidence_level' in decision &&
           'conversation_stage' in decision &&
           'requires_user_input' in decision
@@ -893,10 +897,17 @@ Return only this JSON structure:
       if (!demo.patient_age_years && demo.patient_age_years !== 0) {
         warnings.push('Missing patient age (required for NOM compliance)')
       }
-      if (!demo.patient_gender || !['masculino', 'femenino', 'unknown'].includes(demo.patient_gender)) {
+      if (
+        !demo.patient_gender ||
+        !['masculino', 'femenino', 'unknown'].includes(demo.patient_gender)
+      ) {
         warnings.push('Missing or invalid patient gender (required for NOM compliance)')
       }
-      if (typeof demo.confidence_demographic !== 'number' || demo.confidence_demographic < 0 || demo.confidence_demographic > 1) {
+      if (
+        typeof demo.confidence_demographic !== 'number' ||
+        demo.confidence_demographic < 0 ||
+        demo.confidence_demographic > 1
+      ) {
         errors.push('Invalid demographic confidence score (must be 0.0-1.0)')
       }
     }
@@ -909,7 +920,11 @@ Return only this JSON structure:
       if (!clinical.chief_complaint) {
         warnings.push('Missing chief complaint (critical medical data)')
       }
-      if (typeof clinical.confidence_symptoms !== 'number' || clinical.confidence_symptoms < 0 || clinical.confidence_symptoms > 1) {
+      if (
+        typeof clinical.confidence_symptoms !== 'number' ||
+        clinical.confidence_symptoms < 0 ||
+        clinical.confidence_symptoms > 1
+      ) {
         errors.push('Invalid symptom confidence score (must be 0.0-1.0)')
       }
     }
@@ -919,10 +934,17 @@ Return only this JSON structure:
       errors.push('Missing symptom_characteristics section')
     } else {
       const symptoms = decision.symptom_characteristics
-      if (symptoms.pain_intensity_scale && (symptoms.pain_intensity_scale < 1 || symptoms.pain_intensity_scale > 10)) {
+      if (
+        symptoms.pain_intensity_scale &&
+        (symptoms.pain_intensity_scale < 1 || symptoms.pain_intensity_scale > 10)
+      ) {
         errors.push('Invalid pain intensity scale (must be 1-10)')
       }
-      if (typeof symptoms.confidence_context !== 'number' || symptoms.confidence_context < 0 || symptoms.confidence_context > 1) {
+      if (
+        typeof symptoms.confidence_context !== 'number' ||
+        symptoms.confidence_context < 0 ||
+        symptoms.confidence_context > 1
+      ) {
         errors.push('Invalid context confidence score (must be 0.0-1.0)')
       }
     }
@@ -932,9 +954,11 @@ Return only this JSON structure:
       errors.push('Missing extraction_metadata section')
     } else {
       const metadata = decision.extraction_metadata
-      if (typeof metadata.overall_completeness_percentage !== 'number' || 
-          metadata.overall_completeness_percentage < 0 || 
-          metadata.overall_completeness_percentage > 100) {
+      if (
+        typeof metadata.overall_completeness_percentage !== 'number' ||
+        metadata.overall_completeness_percentage < 0 ||
+        metadata.overall_completeness_percentage > 100
+      ) {
         errors.push('Invalid completeness percentage (must be 0-100)')
       }
       if (typeof metadata.demographic_complete !== 'boolean') {
@@ -966,10 +990,14 @@ Return only this JSON structure:
     // Cross-validation rules
     if (decision.demographics && decision.extraction_metadata) {
       // Check NOM compliance consistency
-      const hasAge = decision.demographics.patient_age_years !== "unknown" && decision.demographics.patient_age_years !== null
-      const hasGender = decision.demographics.patient_gender !== "unknown" && decision.demographics.patient_gender !== null
+      const hasAge =
+        decision.demographics.patient_age_years !== 'unknown' &&
+        decision.demographics.patient_age_years !== null
+      const hasGender =
+        decision.demographics.patient_gender !== 'unknown' &&
+        decision.demographics.patient_gender !== null
       const nomCompliant = hasAge && hasGender
-      
+
       if (decision.extraction_metadata.nom_compliant !== nomCompliant) {
         warnings.push('NOM compliance flag inconsistent with actual age/gender data')
       }

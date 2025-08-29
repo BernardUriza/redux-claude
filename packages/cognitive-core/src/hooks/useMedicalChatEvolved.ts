@@ -56,7 +56,10 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
         const validationResult = await validateMedicalCase(message)
 
         if (!validationResult.isValid) {
-          console.log('❌ Consulta rechazada:', validationResult.rejectionReason || 'Sin razón especificada')
+          console.log(
+            '❌ Consulta rechazada:',
+            validationResult.rejectionReason || 'Sin razón especificada'
+          )
 
           // Agregar mensaje del usuario al dashboard
           dispatch(addDashboardMessage({ content: message, type: 'user' }))
@@ -66,7 +69,7 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
             isValid: validationResult.isValid,
             confidence: validationResult.confidence,
             rejectionReason: validationResult.rejectionReason,
-            suggestedFormat: validationResult.suggestedImprovements?.[0]
+            suggestedFormat: validationResult.suggestedImprovements?.[0],
           })
 
           dispatch(
@@ -92,10 +95,10 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
         // 🚀 USAR CHAT INTELIGENTE EN NÚCLEO DASHBOARD
         const { IntelligentMedicalChat } = await import('../services/IntelligentMedicalChat')
         const intelligentService = new IntelligentMedicalChat(dispatch, 'dashboard')
-        
+
         // El chat inteligente maneja todo internamente y actualiza el store
         await intelligentService.processUserInput(message)
-        
+
         dispatch(setDashboardLoading(false))
       } catch (error) {
         console.error('Error en dashboard core:', error)
@@ -130,7 +133,7 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
     messagesCount: dashboardCore.messages.length,
     lastMessage: dashboardCore.messages[dashboardCore.messages.length - 1] || null,
     hasMessages: dashboardCore.messages.length > 0,
-    
+
     // Compatibilidad con useAssistantChat
     coreType: 'dashboard' as const,
     coreName: '🏥 NÚCLEO DASHBOARD',

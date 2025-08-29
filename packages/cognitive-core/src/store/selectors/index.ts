@@ -3,11 +3,11 @@
 
 // === SELECTORES PRINCIPALES ===
 export {
-  selectCurrentSOAPAnalysis,     // 🏥 Destructor de mockCurrentCase
-  selectSystemMetrics,          // 📊 Aniquilador de confidence = 85
-  selectDiagnosticProgress,     // 🔄 Eliminador de mockIterativeState  
-  selectPatientReminders,       // 📋 Destructor de mockReminders: []
-  selectPhysicianNotes         // 📝 Aniquilador de mockNotes: []
+  selectCurrentSOAPAnalysis, // 🏥 Destructor de mockCurrentCase
+  selectSystemMetrics, // 📊 Aniquilador de confidence = 85
+  selectDiagnosticProgress, // 🔄 Eliminador de mockIterativeState
+  selectPatientReminders, // 📋 Destructor de mockReminders: []
+  selectPhysicianNotes, // 📝 Aniquilador de mockNotes: []
 } from './medicalSelectors'
 
 // === TIPOS MÉDICOS ===
@@ -25,7 +25,7 @@ export type {
   MedicalSpecialty,
   LegacyMockCase,
   LegacyMetrics,
-  LegacyIterativeState
+  LegacyIterativeState,
 } from '../../types/medicalInterfaces'
 
 // === FUNCIONES DE UTILIDAD ===
@@ -37,7 +37,7 @@ export {
   createEmptyNotes,
   transformToLegacyFormat,
   transformToLegacyMetrics,
-  transformToLegacyIterative
+  transformToLegacyIterative,
 } from '../../types/medicalInterfaces'
 
 // === SLICE SOAP ===
@@ -56,7 +56,7 @@ export {
   resetSOAPAnalysis,
   selectSOAPAnalysisState,
   selectSOAPExtractionStatus,
-  selectSOAPHistory
+  selectSOAPHistory,
 } from '../slices/soapAnalysisSlice'
 
 export type { SOAPAnalysisState } from '../slices/soapAnalysisSlice'

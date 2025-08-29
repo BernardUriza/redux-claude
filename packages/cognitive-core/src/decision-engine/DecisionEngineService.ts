@@ -13,9 +13,9 @@ export interface ModernDecisionRequest {
 }
 
 export interface ContextualDecisionRequest extends ModernDecisionRequest {
-  coreId: string              // 'dashboard', 'assistant', 'inference' 
-  persistContext?: boolean    // Guardar contexto en store
-  sessionId?: string          // ID de sesión para agrupar contexto
+  coreId: string // 'dashboard', 'assistant', 'inference'
+  persistContext?: boolean // Guardar contexto en store
+  sessionId?: string // ID de sesión para agrupar contexto
   provider?: string
 }
 
@@ -23,14 +23,17 @@ class DecisionEngineService {
   private claudeAdapter: ClaudeAdapter
   private medicalProcessor: MedicalDecisionProcessor
   private initialized = false
-  
+
   // 🧠 CONTEXTO POR NÚCLEO - Memoria conversacional
-  private coreContexts: Map<string, {
-    messages: Array<{role: 'user' | 'assistant', content: string}>,
-    sessionId?: string,
-    lastActivity: number,
-    metadata?: Record<string, any>
-  }> = new Map()
+  private coreContexts: Map<
+    string,
+    {
+      messages: Array<{ role: 'user' | 'assistant'; content: string }>
+      sessionId?: string
+      lastActivity: number
+      metadata?: Record<string, any>
+    }
+  > = new Map()
 
   constructor() {
     this.claudeAdapter = new ClaudeAdapter()
@@ -39,10 +42,10 @@ class DecisionEngineService {
 
   public async initialize(): Promise<void> {
     if (this.initialized) return
-    
+
     // ClaudeAdapter no necesita inicialización
     await this.medicalProcessor.initialize()
-    
+
     this.initialized = true
     console.log('🚀 Modern Decision Engine initialized')
   }
@@ -52,7 +55,7 @@ class DecisionEngineService {
    */
   async processDecision(request: ModernDecisionRequest): Promise<DecisionResponse> {
     await this.initialize()
-    
+
     try {
       // Todo va al procesador médico - lógica especializada
       return await this.medicalProcessor.process(request)
@@ -64,7 +67,7 @@ class DecisionEngineService {
         confidence: 0,
         latency: 0,
         provider: 'claude',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       }
     }
   }
@@ -74,17 +77,17 @@ class DecisionEngineService {
    */
   async processDecisionWithContext(request: ContextualDecisionRequest): Promise<DecisionResponse> {
     await this.initialize()
-    
+
     try {
       // 1. Obtener o crear contexto del núcleo
       const context = this.getOrCreateCoreContext(request.coreId, request.sessionId)
-      
+
       // 2. Agregar mensaje del usuario al contexto
       context.messages.push({
         role: 'user',
-        content: request.input
+        content: request.input,
       })
-      
+
       // 3. Crear request con contexto enriquecido
       const enrichedRequest: ModernDecisionRequest = {
         ...request,
@@ -92,29 +95,28 @@ class DecisionEngineService {
           ...request.context,
           conversationHistory: context.messages,
           coreId: request.coreId,
-          sessionId: context.sessionId
-        }
+          sessionId: context.sessionId,
+        },
       }
-      
+
       // 4. Procesar decisión
       const response = await this.medicalProcessor.process(enrichedRequest)
-      
+
       // 5. Si exitoso, agregar respuesta al contexto
       if (response.success && response.decision) {
         const assistantMessage = this.extractMessageFromDecision(response.decision)
         if (assistantMessage) {
           context.messages.push({
             role: 'assistant',
-            content: assistantMessage
+            content: assistantMessage,
           })
         }
       }
-      
+
       // 6. Actualizar actividad del contexto
       context.lastActivity = Date.now()
-      
+
       return response
-      
     } catch (error) {
       console.error(`🔥 Contextual decision failed for ${request.coreId}/${request.type}:`, error)
       return {
@@ -123,7 +125,7 @@ class DecisionEngineService {
         confidence: 0,
         latency: 0,
         provider: 'claude',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       }
     }
   }
@@ -137,7 +139,7 @@ class DecisionEngineService {
         messages: [],
         sessionId: sessionId || `${coreId}_${Date.now()}`,
         lastActivity: Date.now(),
-        metadata: {}
+        metadata: {},
       })
     }
     return this.coreContexts.get(coreId)!
@@ -169,7 +171,6 @@ class DecisionEngineService {
   async validateDecision(input: string, context?: Record<string, unknown>) {
     return this.processDecision({ type: 'validation', input, context })
   }
-
 }
 
 // Export singleton instance

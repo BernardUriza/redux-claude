@@ -180,7 +180,7 @@ Provide specific, actionable pharmaceutical guidance for optimal patient outcome
 
   [AgentType.PEDIATRIC_SPECIALIST]: {
     id: AgentType.PEDIATRIC_SPECIALIST,
-    name: 'Pediatric Medicine Specialist', 
+    name: 'Pediatric Medicine Specialist',
     description: 'Especialista en medicina pediátrica y consideraciones específicas por edad',
     systemPrompt: `You are a pediatric medicine specialist providing age-specific medical guidance.
 

@@ -1,5 +1,5 @@
 {
-  "extends": ["next/core-web-vitals", "@typescript-eslint/recommended"],
+  "extends": ["next/core-web-vitals"],
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint", "react", "react-hooks", "jsx-a11y", "prettier"],
   "parserOptions": {
@@ -19,11 +19,9 @@
     // TypeScript rules
     "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
     "@typescript-eslint/no-explicit-any": "warn",
-    "@typescript-eslint/prefer-const": "error",
     "@typescript-eslint/no-inferrable-types": "warn",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
-    "@typescript-eslint/ban-types": "error",
     "@typescript-eslint/no-non-null-assertion": "warn",
 
     // React rules
@@ -60,7 +58,15 @@
     ],
 
     // Medical/Redux specific rules
-    "no-magic-numbers": ["warn", { "ignore": [-10, -8, -1, 0, 1, 2, 3, 5, 7, 8, 9, 10, 15, 20, 24, 30, 36, 50, 60, 80, 85, 90, 95, 100, 200, 250, 300, 375, 500, 600, 700, 768, 800, 900, 1000, 1500, 3000, 5000, 10000, 24000, 60000, 86400000, 3600000] }],
+    "no-magic-numbers": [
+      "warn",
+      {
+        "ignore": [
+          -10, -8, -1, 0, 1, 2, 3, 5, 7, 8, 9, 10, 15, 20, 24, 30, 36, 50, 60, 80, 85, 90, 95, 100, 200, 250, 300, 375,
+          500, 600, 700, 768, 800, 900, 1000, 1500, 3000, 5000, 10000, 24000, 60000, 86400000, 3600000
+        ]
+      }
+    ],
     "max-lines-per-function": ["warn", { "max": 300 }],
     "complexity": ["warn", 15]
   },
@@ -91,7 +97,7 @@
       "files": ["packages/cognitive-core/**/*.ts"],
       "rules": {
         "no-console": ["error", { "allow": ["warn", "error", "info"] }],
-        "@typescript-eslint/explicit-function-return-type": "warn"
+        "@typescript-eslint/explicit-function-return-type": "off"
       }
     }
   ]

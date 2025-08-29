@@ -11,7 +11,7 @@ export interface IntelligentMedicalChatProps {
   showMetrics?: boolean
   partialInput?: string
   onInitialResponse?: (response: string) => void
-  coreType?: 'dashboard' | 'assistant'  // 🧠 Selector de núcleo
+  coreType?: 'dashboard' | 'assistant' // 🧠 Selector de núcleo
 }
 
 /**
@@ -23,7 +23,7 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
   showMetrics = true,
   partialInput = '',
   onInitialResponse,
-  coreType = 'dashboard',  // Por defecto usa Dashboard
+  coreType = 'dashboard', // Por defecto usa Dashboard
 }) => {
   // 🧠 HOOKS DUALES - Ambos se llaman siempre (reglas de React)
   const dashboardChat = useMedicalChat({
@@ -31,28 +31,36 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
       console.warn('[DASHBOARD] Validación médica falló:', input, result)
     },
   })
-  
+
   const assistantChat = useAssistantChat({
     onValidationFailed: (input, result) => {
       console.warn('[ASSISTANT] Validación médica falló:', input, result)
     },
   })
-  
+
   // Selección del núcleo activo basado en prop
-  const { messages, isLoading, sendMedicalQuery, error, coreName } = 
+  const { messages, isLoading, sendMedicalQuery, error, coreName } =
     coreType === 'assistant' ? assistantChat : dashboardChat
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const [autoSent, setAutoSent] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const sentMessagesRef = useRef(new Set<string>())
-  
+
   // 🚀 AUTO-ENVÍO: Enviar partialInput automáticamente cuando esté presente
   useEffect(() => {
     const messageKey = `${coreType}-${partialInput?.trim()}`
-    
-    if (partialInput && partialInput.trim() && !isLoading && !sentMessagesRef.current.has(messageKey)) {
-      console.log(`🚀 [AUTO-SEND] [${coreType.toUpperCase()}] Enviando mensaje automáticamente:`, partialInput)
+
+    if (
+      partialInput &&
+      partialInput.trim() &&
+      !isLoading &&
+      !sentMessagesRef.current.has(messageKey)
+    ) {
+      console.log(
+        `🚀 [AUTO-SEND] [${coreType.toUpperCase()}] Enviando mensaje automáticamente:`,
+        partialInput
+      )
       sendMedicalQuery(partialInput)
       onInitialResponse?.(partialInput)
       sentMessagesRef.current.add(messageKey)
@@ -116,7 +124,7 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
                 placeholder="Describa los síntomas del paciente..."
                 disabled={isLoading}
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={e => setInputValue(e.target.value)}
                 className="flex-1 px-4 py-2 bg-slate-700 border border-slate-500 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
               <button

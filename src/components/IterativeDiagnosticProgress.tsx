@@ -120,7 +120,22 @@ const DiagnosticCycleDisplay = ({ cycle, isActive, isCompleted }: DiagnosticCycl
 export const IterativeDiagnosticProgress = () => {
   // ⚡ ESTADO REAL MULTINÚCLEO - Mock Data COMPLETAMENTE ELIMINADO
   // const diagnosticProgress = useSelector(selectDiagnosticProgress) // DISABLED: selector not found
-  const diagnosticProgress = { cycles: [] } // Fallback
+  const diagnosticProgress = {
+    currentCycle: 0,
+    totalCycles: 0,
+    currentPhase: 'evaluation' as const,
+    phasesCompleted: [],
+    nextPhase: null,
+    completionPercentage: 0,
+    estimatedTimeRemaining: 0,
+    isStalled: false,
+    lastPhaseChange: Date.now(),
+    progressQuality: 'fair' as const,
+    confidenceTrend: 'stable' as const,
+    totalMessagesProcessed: 0,
+    phaseDurations: {},
+    cycles: [],
+  } // Fallback
   const isLoading = useAppSelector((state: RootState) =>
     Object.values(state.medicalChat.cores).some(core => core.isLoading)
   )

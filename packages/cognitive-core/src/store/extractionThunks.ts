@@ -3,11 +3,11 @@
 
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import { MedicalDataExtractor } from '../services/medicalDataExtractor'
-import { 
-  MedicalExtractionInput, 
-  MedicalExtractionOutput, 
-  calculateCompleteness, 
-  isNOMCompliant 
+import {
+  MedicalExtractionInput,
+  MedicalExtractionOutput,
+  calculateCompleteness,
+  isNOMCompliant,
 } from '../types/medicalExtraction'
 import { checkCompleteness, shouldContinueExtraction } from '../utils/completenessChecker'
 import type { RootState } from './store'
@@ -48,31 +48,32 @@ export const extractMedicalDataThunk = createAsyncThunk<
     try {
       const state = getState()
       const currentExtraction = state.medicalChat.medicalExtraction.currentExtraction
-      const currentIteration = state.medicalChat.medicalExtraction.extractionProcess.currentIteration
-      
+      const currentIteration =
+        state.medicalChat.medicalExtraction.extractionProcess.currentIteration
+
       const input: MedicalExtractionInput = {
         patient_input: patientInput,
-        existing_data: isInitial ? undefined : currentExtraction ?? undefined,
+        existing_data: isInitial ? undefined : (currentExtraction ?? undefined),
         iteration_number: isInitial ? 1 : currentIteration + 1,
         max_iterations: 5,
-        conversation_context: isInitial ? [] : [patientInput] // Simple context for now
+        conversation_context: isInitial ? [] : [patientInput], // Simple context for now
       }
-      
+
       const result = await extractor.extractMedicalData(input)
-      
+
       if (!result.extracted_data) {
         throw new Error('No extraction data received')
       }
-      
+
       // Merge with existing data if this is a continuation
       let finalData = result.extracted_data
       if (!isInitial && currentExtraction) {
         finalData = mergeExtractionData(currentExtraction, result.extracted_data)
       }
-      
+
       // Calculate completeness with weighted scoring
       const completeness = checkCompleteness(finalData)
-      
+
       // Update metadata based on completeness calculation
       finalData.extraction_metadata = {
         ...finalData.extraction_metadata,
@@ -84,24 +85,23 @@ export const extractMedicalDataThunk = createAsyncThunk<
         ready_for_soap_generation: completeness.readyForSOAP,
         missing_critical_fields: completeness.missingFields,
         extraction_timestamp: new Date().toISOString(),
-        claude_model_used: 'claude-sonnet-4'
+        claude_model_used: 'claude-sonnet-4',
       }
-      
+
       // Determine if should continue
       const continuationDecision = shouldContinueExtraction(
-        completeness, 
-        input.iteration_number || 1, 
+        completeness,
+        input.iteration_number || 1,
         5
       )
-      
+
       return {
         extractedData: finalData,
         completeness,
         shouldContinue: continuationDecision.shouldContinue,
         iteration: input.iteration_number || 1,
-        isComplete: completeness.readyForSOAP
+        isComplete: completeness.readyForSOAP,
       }
-      
     } catch (error) {
       console.error('Medical extraction failed:', error)
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown extraction error')
@@ -122,32 +122,33 @@ export const continueExtractionThunk = createAsyncThunk<
     try {
       const state = getState()
       const currentExtraction = state.medicalChat.medicalExtraction.currentExtraction
-      const currentIteration = state.medicalChat.medicalExtraction.extractionProcess.currentIteration
-      
+      const currentIteration =
+        state.medicalChat.medicalExtraction.extractionProcess.currentIteration
+
       if (!currentExtraction) {
         throw new Error('No current extraction to continue')
       }
-      
+
       const input: MedicalExtractionInput = {
         patient_input: additionalInput,
         existing_data: currentExtraction,
         iteration_number: currentIteration + 1,
         max_iterations: 5,
-        conversation_context: [additionalInput] // Add to context
+        conversation_context: [additionalInput], // Add to context
       }
-      
+
       const result = await extractor.extractMedicalData(input)
-      
+
       if (!result.extracted_data) {
         throw new Error('No extraction data received')
       }
-      
+
       // Merge with existing data (accumulation logic)
       const mergedData = mergeExtractionData(currentExtraction, result.extracted_data)
-      
+
       // Calculate completeness with weighted scoring
       const completeness = checkCompleteness(mergedData)
-      
+
       // Update metadata
       mergedData.extraction_metadata = {
         ...mergedData.extraction_metadata,
@@ -159,24 +160,19 @@ export const continueExtractionThunk = createAsyncThunk<
         ready_for_soap_generation: completeness.readyForSOAP,
         missing_critical_fields: completeness.missingFields,
         extraction_timestamp: new Date().toISOString(),
-        claude_model_used: 'claude-sonnet-4'
+        claude_model_used: 'claude-sonnet-4',
       }
-      
+
       // Determine if should continue
-      const continuationDecision = shouldContinueExtraction(
-        completeness, 
-        currentIteration + 1, 
-        5
-      )
-      
+      const continuationDecision = shouldContinueExtraction(completeness, currentIteration + 1, 5)
+
       return {
         extractedData: mergedData,
         completeness,
         shouldContinue: continuationDecision.shouldContinue,
         iteration: currentIteration + 1,
-        isComplete: completeness.readyForSOAP
+        isComplete: completeness.readyForSOAP,
       }
-      
     } catch (error) {
       console.error('Continue extraction failed:', error)
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown extraction error')
@@ -193,40 +189,47 @@ function mergeExtractionData(
 ): MedicalExtractionOutput {
   return {
     demographics: {
-      patient_age_years: newData.demographics.patient_age_years !== "unknown" 
-        ? newData.demographics.patient_age_years 
-        : existing.demographics.patient_age_years,
-      patient_gender: newData.demographics.patient_gender !== "unknown"
-        ? newData.demographics.patient_gender
-        : existing.demographics.patient_gender,
+      patient_age_years:
+        newData.demographics.patient_age_years !== 'unknown'
+          ? newData.demographics.patient_age_years
+          : existing.demographics.patient_age_years,
+      patient_gender:
+        newData.demographics.patient_gender !== 'unknown'
+          ? newData.demographics.patient_gender
+          : existing.demographics.patient_gender,
       confidence_demographic: Math.max(
         existing.demographics.confidence_demographic,
         newData.demographics.confidence_demographic
-      )
+      ),
     },
-    
+
     clinical_presentation: {
-      chief_complaint: newData.clinical_presentation.chief_complaint !== "unknown"
-        ? newData.clinical_presentation.chief_complaint
-        : existing.clinical_presentation.chief_complaint,
+      chief_complaint:
+        newData.clinical_presentation.chief_complaint !== 'unknown'
+          ? newData.clinical_presentation.chief_complaint
+          : existing.clinical_presentation.chief_complaint,
       primary_symptoms: mergeArrays(
         existing.clinical_presentation.primary_symptoms,
         newData.clinical_presentation.primary_symptoms
       ),
-      anatomical_location: newData.clinical_presentation.anatomical_location !== "unknown"
-        ? newData.clinical_presentation.anatomical_location
-        : existing.clinical_presentation.anatomical_location,
+      anatomical_location:
+        newData.clinical_presentation.anatomical_location !== 'unknown'
+          ? newData.clinical_presentation.anatomical_location
+          : existing.clinical_presentation.anatomical_location,
       confidence_symptoms: Math.max(
         existing.clinical_presentation.confidence_symptoms,
         newData.clinical_presentation.confidence_symptoms
-      )
+      ),
     },
-    
+
     symptom_characteristics: {
-      duration_description: newData.symptom_characteristics.duration_description !== "unknown"
-        ? newData.symptom_characteristics.duration_description
-        : existing.symptom_characteristics.duration_description,
-      pain_intensity_scale: newData.symptom_characteristics.pain_intensity_scale ?? existing.symptom_characteristics.pain_intensity_scale,
+      duration_description:
+        newData.symptom_characteristics.duration_description !== 'unknown'
+          ? newData.symptom_characteristics.duration_description
+          : existing.symptom_characteristics.duration_description,
+      pain_intensity_scale:
+        newData.symptom_characteristics.pain_intensity_scale ??
+        existing.symptom_characteristics.pain_intensity_scale,
       pain_characteristics: mergeArrays(
         existing.symptom_characteristics.pain_characteristics,
         newData.symptom_characteristics.pain_characteristics
@@ -243,39 +246,44 @@ function mergeExtractionData(
         existing.symptom_characteristics.associated_symptoms,
         newData.symptom_characteristics.associated_symptoms
       ),
-      temporal_pattern: newData.symptom_characteristics.temporal_pattern !== "unknown"
-        ? newData.symptom_characteristics.temporal_pattern
-        : existing.symptom_characteristics.temporal_pattern,
+      temporal_pattern:
+        newData.symptom_characteristics.temporal_pattern !== 'unknown'
+          ? newData.symptom_characteristics.temporal_pattern
+          : existing.symptom_characteristics.temporal_pattern,
       confidence_context: Math.max(
         existing.symptom_characteristics.confidence_context,
         newData.symptom_characteristics.confidence_context
-      )
+      ),
     },
-    
+
     medical_validation: {
-      anatomical_contradictions: mergeArrays(
-        existing.medical_validation?.anatomical_contradictions,
-        newData.medical_validation?.anatomical_contradictions
-      ) || [],
-      logical_inconsistencies: mergeArrays(
-        existing.medical_validation?.logical_inconsistencies,
-        newData.medical_validation?.logical_inconsistencies
-      ) || [],
-      requires_clarification: mergeArrays(
-        existing.medical_validation?.requires_clarification,
-        newData.medical_validation?.requires_clarification
-      ) || [],
-      medical_alerts: mergeArrays(
-        existing.medical_validation?.medical_alerts,
-        newData.medical_validation?.medical_alerts
-      ) || []
+      anatomical_contradictions:
+        mergeArrays(
+          existing.medical_validation?.anatomical_contradictions,
+          newData.medical_validation?.anatomical_contradictions
+        ) || [],
+      logical_inconsistencies:
+        mergeArrays(
+          existing.medical_validation?.logical_inconsistencies,
+          newData.medical_validation?.logical_inconsistencies
+        ) || [],
+      requires_clarification:
+        mergeArrays(
+          existing.medical_validation?.requires_clarification,
+          newData.medical_validation?.requires_clarification
+        ) || [],
+      medical_alerts:
+        mergeArrays(
+          existing.medical_validation?.medical_alerts,
+          newData.medical_validation?.medical_alerts
+        ) || [],
     },
-    
+
     extraction_metadata: {
       ...existing.extraction_metadata,
       ...newData.extraction_metadata,
       extraction_timestamp: new Date().toISOString(),
-    }
+    },
   }
 }
 
@@ -286,7 +294,7 @@ function mergeArrays(existing: string[] | null, newArray: string[] | null): stri
   if (!existing && !newArray) return null
   if (!existing) return newArray
   if (!newArray) return existing
-  
+
   // Combine, deduplicate, and sort for consistency
   const combined = [...existing, ...newArray]
   const unique = Array.from(new Set(combined))

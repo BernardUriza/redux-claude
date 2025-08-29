@@ -57,10 +57,10 @@ export class MedicalDecisionProcessor {
       }
 
       const agentDef = getAgentDefinition(agentType)
-      
+
       // 2. Construir prompt especializado
       const systemPrompt = this.buildSystemPrompt(agentDef.systemPrompt, request.context)
-      
+
       // 3. Llamar a Claude con prompt especializado
       const response = await this.claudeAdapter.makeRequest(
         systemPrompt,
@@ -77,23 +77,22 @@ export class MedicalDecisionProcessor {
         decision: processedDecision,
         confidence,
         latency: Date.now() - startTime,
-        provider: 'claude'
+        provider: 'claude',
       }
-
     } catch (error) {
       console.error(`🔥 Medical processor failed for ${request.type}:`, error)
-      
+
       return {
         success: false,
-        decision: { 
+        decision: {
           error: `Failed to process ${request.type}`,
           requires_human_review: true,
-          fallback_message: 'Consultar médico especialista'
+          fallback_message: 'Consultar médico especialista',
         },
         confidence: 0,
         latency: Date.now() - startTime,
         provider: 'claude',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       }
     }
   }
@@ -155,11 +154,11 @@ export class MedicalDecisionProcessor {
         break
       case 'intelligent_medical_chat':
         if (decision.message && decision.message.length > 10) baseConfidence += 0.15
-        if (decision.question && decision.question.length > 5) baseConfidence += 0.10
+        if (decision.question && decision.question.length > 5) baseConfidence += 0.1
         break
       default:
         // Confianza base para otros tipos
-        baseConfidence += 0.10
+        baseConfidence += 0.1
     }
 
     return Math.min(0.95, Math.max(0.4, baseConfidence))

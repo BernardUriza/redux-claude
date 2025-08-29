@@ -19,12 +19,8 @@ export interface AIValidationResult {
 export async function validateMedicalInput(input: string): Promise<AIValidationResult> {
   try {
     console.log('🛡️ AI Validator: Starting validation for:', input)
-    
-    const response = await callClaudeForDecision(
-      'medical_input_validator',
-      input,
-      'claude'
-    )
+
+    const response = await callClaudeForDecision('medical_input_validator', input, 'claude')
 
     console.log('🛡️ AI Validator response:', response)
 
@@ -35,15 +31,15 @@ export async function validateMedicalInput(input: string): Promise<AIValidationR
         isValid: true,
         confidence: 0.5,
         rejectionReason: 'AI validation failed, allowing input',
-        medicalIndicators: []
+        medicalIndicators: [],
       }
     }
 
     let decision: MedicalInputValidatorDecision
-    
+
     // 🧠 El agente devuelve {content: "JSON_STRING"} - extraer y parsear
     const decisionData = (response.decision as any)?.content || response.decision
-    
+
     if (typeof decisionData === 'string') {
       try {
         decision = JSON.parse(decisionData)
@@ -55,34 +51,33 @@ export async function validateMedicalInput(input: string): Promise<AIValidationR
           isValid: true,
           confidence: 0.5,
           rejectionReason: 'JSON parse error, allowing input',
-          medicalIndicators: []
+          medicalIndicators: [],
         }
       }
     } else {
       decision = decisionData as MedicalInputValidatorDecision
       console.log('🛡️ AI Validator decision object:', decision)
     }
-    
+
     const result = {
       isValid: decision.is_valid,
       confidence: decision.confidence,
       rejectionReason: decision.rejection_reason,
       suggestedFormat: decision.suggested_format,
-      medicalIndicators: decision.medical_indicators
+      medicalIndicators: decision.medical_indicators,
     }
-    
+
     console.log('🛡️ AI Validator final result:', result)
     return result
-
   } catch (error) {
     console.warn('AI medical validation failed:', error)
-    
+
     // Fallback: aceptar input si hay error
     return {
-      isValid: true, 
+      isValid: true,
       confidence: 0.5,
       rejectionReason: 'Validation service unavailable',
-      medicalIndicators: []
+      medicalIndicators: [],
     }
   }
 }
@@ -94,10 +89,16 @@ export function generateRejectionMessage(result: AIValidationResult): string {
   const baseMessage = '## ⚠️ Consulta No Válida\n\n'
 
   if (result.rejectionReason) {
-    return baseMessage + `**${result.rejectionReason}**\n\n${result.suggestedFormat || 'Por favor, reformula tu consulta como un caso médico específico.'}`
+    return (
+      baseMessage +
+      `**${result.rejectionReason}**\n\n${result.suggestedFormat || 'Por favor, reformula tu consulta como un caso médico específico.'}`
+    )
   }
 
-  return baseMessage + `**Consulta no reconocida como contenido médico**\n\n${result.suggestedFormat || 'Incluye información médica relevante: síntomas, paciente, contexto clínico.'}`
+  return (
+    baseMessage +
+    `**Consulta no reconocida como contenido médico**\n\n${result.suggestedFormat || 'Incluye información médica relevante: síntomas, paciente, contexto clínico.'}`
+  )
 }
 
 /**
@@ -120,7 +121,7 @@ export interface LegacyMedicalValidationResult {
  */
 export async function validateMedicalCase(input: string): Promise<LegacyMedicalValidationResult> {
   const aiResult = await validateMedicalInput(input)
-  
+
   return {
     isValid: aiResult.isValid,
     confidence: aiResult.confidence,
@@ -129,6 +130,6 @@ export async function validateMedicalCase(input: string): Promise<LegacyMedicalV
     structureScore: aiResult.confidence,
     clinicalCoherence: aiResult.confidence,
     rejectionReason: aiResult.rejectionReason,
-    suggestedImprovements: aiResult.suggestedFormat ? [aiResult.suggestedFormat] : []
+    suggestedImprovements: aiResult.suggestedFormat ? [aiResult.suggestedFormat] : [],
   }
 }

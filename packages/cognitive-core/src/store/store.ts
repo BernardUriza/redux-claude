@@ -1,14 +1,9 @@
-import { 
-  configureStore, 
-  ThunkAction, 
-  Action, 
-  createListenerMiddleware
-} from '@reduxjs/toolkit'
-import { 
-  persistStore, 
+import { configureStore, ThunkAction, Action, createListenerMiddleware } from '@reduxjs/toolkit'
+import {
+  persistStore,
   persistReducer,
   FLUSH,
-  REHYDRATE, 
+  REHYDRATE,
   PAUSE,
   PERSIST,
   PURGE,
@@ -20,10 +15,13 @@ import medicalChatReducer, { MedicalChatState } from './medicalChatSlice'
 const persistConfig = {
   key: 'medical-chat',
   storage,
-  whitelist: ['messages', 'diagnosticContext']
+  whitelist: ['messages', 'diagnosticContext'],
 }
 
-const persistedMedicalChatReducer = persistReducer<MedicalChatState>(persistConfig, medicalChatReducer)
+const persistedMedicalChatReducer = persistReducer<MedicalChatState>(
+  persistConfig,
+  medicalChatReducer
+)
 
 const listenerMiddleware = createListenerMiddleware()
 
@@ -41,20 +39,19 @@ export const store = configureStore({
           PERSIST,
           PURGE,
           REGISTER,
-          'medicalChat/startStreaming', 
-          'medicalChat/updateStreamingProgress'
+          'medicalChat/startStreaming',
+          'medicalChat/updateStreamingProgress',
         ],
       },
       immutableCheck: {
         warnAfter: 128,
       },
-    })
-    .concat(listenerMiddleware.middleware),
+    }).concat(listenerMiddleware.middleware),
   devTools: process.env.NODE_ENV !== 'production' && {
     trace: true,
     traceLimit: 25,
     maxAge: 50,
-    name: 'Redux Médico - Cognitive Core'
+    name: 'Redux Médico - Cognitive Core',
   },
 })
 
@@ -86,7 +83,7 @@ export const setupStore = (preloadedState?: Partial<RootState>) => {
             PURGE,
             REGISTER,
             'medicalChat/startStreaming',
-            'medicalChat/updateStreamingProgress'
+            'medicalChat/updateStreamingProgress',
           ],
         },
       }),

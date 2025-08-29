@@ -3,13 +3,12 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import ReactMarkdown from 'react-markdown'
-import { 
+import {
   useMedicalChat,
   useIterativeMedicalExtraction,
   generateMedicalPrompt,
   generateStomachPainPrompt,
-  autoFillInput 
+  autoFillInput,
 } from '@redux-claude/cognitive-core'
 import { EnhancedMedicalMessage } from './EnhancedMedicalMessage'
 import { IterativeDiagnosticProgress } from './IterativeDiagnosticProgress'
@@ -21,40 +20,9 @@ import { FollowUpTracker } from './FollowUpTracker'
 import { MedicalNotes } from './MedicalNotes'
 import { LoadingScreen } from './LoadingScreen'
 import { MedicalAssistant } from './MedicalAssistant'
-// import { useMobileInteractions } from '../hooks/useMobileInteractions' // Hook no disponible
+import { useMobileInteractions } from '../hooks/useMobileInteractions'
+import { useDashboardState } from '../hooks/useDashboardState'
 import { useSelector } from 'react-redux'
-
-// Medical Corporate Color Palette 2025
-const theme = {
-  // Primary Medical Colors
-  primary: {
-    blue: '#0A4B78', // Deep medical blue
-    cyan: '#1B9AAA', // Healthcare cyan
-    teal: '#06A77D', // Medical teal
-    white: '#FFFFFF', // Pure white
-  },
-  // Secondary Support Colors
-  secondary: {
-    slate: '#1E293B', // Dark professional
-    gray: '#374151', // Medium gray
-    lightGray: '#6B7280', // Light gray
-    accent: '#F1F5F9', // Light accent
-  },
-  // Status Colors
-  status: {
-    success: '#059669', // Medical green
-    warning: '#D97706', // Amber warning
-    error: '#DC2626', // Medical red
-    info: '#0369A1', // Information blue
-  },
-  // Background & Surface
-  surface: {
-    dark: '#0F172A', // Deep dark
-    card: '#1E293B', // Card background
-    elevated: '#334155', // Elevated surface
-    glass: 'rgba(30, 41, 59, 0.8)', // Glass effect
-  },
-}
 
 interface CognitiveMetrics {
   systemConfidence: number
@@ -70,7 +38,7 @@ interface CognitiveMetrics {
 }
 
 // Cognitive Health Metrics Component
-const CognitiveHealthMetrics = ({ metrics }: { metrics: CognitiveMetrics | null }) => {
+const _CognitiveHealthMetrics = ({ metrics }: { metrics: CognitiveMetrics | null }) => {
   if (!metrics) {
     return (
       <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/30 text-center">
@@ -134,7 +102,7 @@ const CognitiveHealthMetrics = ({ metrics }: { metrics: CognitiveMetrics | null 
   )
 
   // Cognitive Status Panel Component
-  const CognitiveStatusPanel = ({ metrics }: { metrics: CognitiveMetrics }) => (
+  const _CognitiveStatusPanel = ({ metrics }: { metrics: CognitiveMetrics }) => (
     <div className="grid grid-cols-2 gap-4 mb-6">
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-600/30">
         <div className="flex items-center space-x-2 mb-3">
@@ -190,7 +158,7 @@ const CognitiveHealthMetrics = ({ metrics }: { metrics: CognitiveMetrics | null 
 }
 
 // Agent Decision Component
-const AgentDecision = ({ decision }: { decision: any }) => {
+const _AgentDecision = ({ decision }: { decision: any }) => {
   const getAgentColor = (agentType: string) => {
     switch (agentType) {
       case 'diagnostic':
@@ -243,51 +211,65 @@ const AgentDecision = ({ decision }: { decision: any }) => {
 
 // Main Cognitive Dashboard Component
 export const CognitiveDashboard = () => {
-  const [input, setInput] = useState('')
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true) // Colapsado por defecto
-  const [activeMetricsTab, setActiveMetricsTab] = useState<
-    'overview' | 'clinical' | 'soap' | 'followup' | 'notes' | 'agents' | 'system'
-  >('overview')
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [showMobileFab, setShowMobileFab] = useState(false)
-  const [keyboardVisible, setKeyboardVisible] = useState(false)
-  const [isAppLoading, setIsAppLoading] = useState(true)
-  const [showMainApp, setShowMainApp] = useState(false)
-  const [showAutocompletion, setShowAutocompletion] = useState(false)
-  const [showMedicalAssistant, setShowMedicalAssistant] = useState(false)
-  const [lastRejectedInput, setLastRejectedInput] = useState('')
-  const [showDataRequiredAlert, setShowDataRequiredAlert] = useState(false)
-  const [showAutoFillNotification, setShowAutoFillNotification] = useState(false)
+  // Custom hooks for state management
+  const dashboardState = useDashboardState()
+  const {
+    input,
+    setInput,
+    sidebarCollapsed,
+    setSidebarCollapsed,
+    activeMetricsTab,
+    setActiveMetricsTab,
+    showMobileMenu,
+    setShowMobileMenu,
+    showMobileFab,
+    setShowMobileFab,
+    keyboardVisible,
+    setKeyboardVisible,
+    isAppLoading,
+    setIsAppLoading,
+    showMainApp,
+    setShowMainApp,
+    showAutocompletion,
+    setShowAutocompletion,
+    showMedicalAssistant,
+    setShowMedicalAssistant,
+    lastRejectedInput,
+    setLastRejectedInput,
+    showDataRequiredAlert,
+    setShowDataRequiredAlert,
+    showAutoFillNotification,
+    setShowAutoFillNotification,
+    toggleSidebar,
+    toggleMobileMenu,
+    closeMobileMenu,
+  } = dashboardState
 
   // 🧬 Medical Data Extraction System
   const {
-    extractionState,
-    currentIteration,
+    // extractionState,
+    // currentIteration,
     completenessPercentage,
     isNOMCompliant,
     extractedData,
     startExtraction,
     continueExtraction,
     shouldContinue,
-    canProceedToSOAP
+    canProceedToSOAP,
   } = useIterativeMedicalExtraction()
 
-  // Mobile interactions hook - Comentado por falta de hook
-  // const {
-  //   state: mobileState,
-  //   triggerHaptic,
-  //   addTouchFeedback,
-  //   setupGestureDetection,
-  // } = useMobileInteractions() // Hook no disponible
-  
-  // Mock variables para evitar errores
-  const mobileState = { isMobile: false }
-  const triggerHaptic = (type: string) => {}
-  const addTouchFeedback = () => {}
-  const setupGestureDetection = () => () => {}
+  // Mobile interactions hook
+  const {
+    state: mobileState,
+    triggerHaptic,
+    addTouchFeedback,
+    setupGestureDetection,
+    handleMobileInputFocus,
+    handleMobileInputBlur,
+  } = useMobileInteractions()
 
   const { messages, isLoading, isStreaming, sendMedicalQuery, newSession, error } = useMedicalChat({
-    onValidationFailed: (input, validationResult) => {
+    onValidationFailed: (input, _validationResult) => {
       // Auto-open autocompletion modal when validation fails
       setLastRejectedInput(input)
       setTimeout(() => {
@@ -489,52 +471,56 @@ export const CognitiveDashboard = () => {
   // 🎯 Auto-fill medical prompt when extraction reaches 90%
   useEffect(() => {
     if (!extractedData || !inputRef.current) return
-    
-    const { prompt, shouldAutoFill, completenessPercentage: completeness } = generateMedicalPrompt(extractedData)
-    
+
+    const {
+      prompt,
+      shouldAutoFill,
+      completenessPercentage: completeness,
+    } = generateMedicalPrompt(extractedData)
+
     if (shouldAutoFill && prompt && completeness >= 50) {
       // Auto-fill the input using utility function
       setInput(prompt)
       autoFillInput(inputRef.current, prompt)
-      
+
       // Show notification
       setShowAutoFillNotification(true)
       setTimeout(() => setShowAutoFillNotification(false), 5000)
-      
+
       console.log('🎯 Auto-filled medical prompt (50% completeness reached)', {
         completeness,
         promptLength: prompt.length,
-        nomCompliant: isNOMCompliant
+        nomCompliant: isNOMCompliant,
       })
     }
   }, [extractedData, isNOMCompliant])
 
   // 🧪 Test case function for "hombre con dolor de estómago"
-  const handleStomachPainTest = async () => {
+  const _handleStomachPainTest = async () => {
     const sessionId = 'stomach_pain_test_' + Date.now()
-    
+
     console.log('🔄 Starting test case: Hombre con dolor de estómago')
-    
+
     try {
       // Step 1: Initial input
-      await startExtraction("hombre con dolor de estómago", sessionId)
+      await startExtraction('hombre con dolor de estómago', sessionId)
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       // Step 2: Age
       if (shouldContinue) {
-        await continueExtraction("15 años")
+        await continueExtraction('15 años')
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
-      
-      // Step 3: Intensity and duration  
+
+      // Step 3: Intensity and duration
       if (shouldContinue) {
-        await continueExtraction("escala 7, y desde la mañana lo presenta")
+        await continueExtraction('escala 7, y desde la mañana lo presenta')
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
-      
+
       // Step 4: Relieving factor (should trigger auto-fill)
       if (shouldContinue) {
-        await continueExtraction("si se duerme se le quita")
+        await continueExtraction('si se duerme se le quita')
         // Auto-fill should trigger here via useEffect
       }
     } catch (error) {
@@ -617,16 +603,7 @@ export const CognitiveDashboard = () => {
   }, [activeMetricsTab, mobileState.isMobile, setupGestureDetection, triggerHaptic])
   */
 
-  // Mobile-specific input handling
-  const handleMobileInputFocus = () => {
-    if (mobileState.isMobile) {
-      triggerHaptic('light')
-      // Scroll input into view after keyboard appears
-      setTimeout(() => {
-        inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 300)
-    }
-  }
+  // Mobile-specific input handling is now provided by useMobileInteractions hook
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -992,30 +969,27 @@ export const CognitiveDashboard = () => {
         {/* Enhanced Navigation */}
         <div className="flex-1 p-4">
           <nav className="space-y-2">
-            <a
-              href="#"
-              className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white group`}
+            <button
+              className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white group w-full`}
               title={sidebarCollapsed ? 'Treatment Plans' : ''}
             >
               <span className="text-lg">💊</span>
               {!sidebarCollapsed && <span className="text-sm font-medium">Treatment Plans</span>}
-            </a>
-            <a
-              href="#"
-              className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white group`}
+            </button>
+            <button
+              className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white group w-full`}
               title={sidebarCollapsed ? 'Diagnostics' : ''}
             >
               <span className="text-lg">🔍</span>
               {!sidebarCollapsed && <span className="text-sm font-medium">Diagnostics</span>}
-            </a>
-            <a
-              href="#"
-              className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white group`}
+            </button>
+            <button
+              className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white group w-full`}
               title={sidebarCollapsed ? 'Analytics' : ''}
             >
               <span className="text-lg">📊</span>
               {!sidebarCollapsed && <span className="text-sm font-medium">Analytics</span>}
-            </a>
+            </button>
           </nav>
         </div>
 
@@ -1097,9 +1071,13 @@ export const CognitiveDashboard = () => {
         </div>
 
         {/* Main Content with Enhanced Panels - Mobile First Design */}
-        <div className={`flex-1 flex ${sidebarCollapsed ? 'lg:flex-row' : 'lg:flex-row'} flex-col min-h-0`}>
+        <div
+          className={`flex-1 flex ${sidebarCollapsed ? 'lg:flex-row' : 'lg:flex-row'} flex-col min-h-0`}
+        >
           {/* Enhanced Right Panel - Responsive width */}
-          <div className={`bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/80 backdrop-blur-md border-r lg:border-r border-b lg:border-b-0 border-slate-700/50 p-4 shadow-2xl shadow-slate-950/50 order-2 lg:order-1 flex-col h-full overflow-hidden hidden lg:flex transition-all duration-300 ${sidebarCollapsed ? 'lg:w-80' : 'lg:w-72'}`}>
+          <div
+            className={`bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/80 backdrop-blur-md border-r lg:border-r border-b lg:border-b-0 border-slate-700/50 p-4 shadow-2xl shadow-slate-950/50 order-2 lg:order-1 flex-col h-full overflow-hidden hidden lg:flex transition-all duration-300 ${sidebarCollapsed ? 'lg:w-80' : 'lg:w-72'}`}
+          >
             {/* Medical Dashboard Header with Navigation */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
@@ -1158,10 +1136,14 @@ export const CognitiveDashboard = () => {
               {cognitiveMetrics ? (
                 <div className="flex gap-1 mb-2">
                   <div className="bg-emerald-500/20 rounded p-1 flex-1 border border-emerald-500/30">
-                    <div className="text-xs font-bold text-emerald-400">{cognitiveMetrics?.systemConfidence || 0}%</div>
+                    <div className="text-xs font-bold text-emerald-400">
+                      {cognitiveMetrics?.systemConfidence || 0}%
+                    </div>
                   </div>
                   <div className="bg-blue-500/20 rounded p-1 flex-1 border border-blue-500/30">
-                    <div className="text-xs font-bold text-blue-400">{cognitiveMetrics?.activeDebates || 0}</div>
+                    <div className="text-xs font-bold text-blue-400">
+                      {cognitiveMetrics?.activeDebates || 0}
+                    </div>
                   </div>
                   <div className="bg-orange-500/20 rounded p-1 flex-1 border border-orange-500/30">
                     <div className="text-xs font-bold text-orange-400">{messages.length}</div>
@@ -1496,10 +1478,13 @@ export const CognitiveDashboard = () => {
                     </div>
                     <div className="flex-1">
                       <p className="text-green-200 font-medium text-sm">
-                        <span className="font-bold">🎯 Auto-fill activado!</span> Prompt médico generado automáticamente
+                        <span className="font-bold">🎯 Auto-fill activado!</span> Prompt médico
+                        generado automáticamente
                       </p>
                       <p className="text-green-300/80 text-xs mt-1">
-                        Completeness: {completenessPercentage}% • NOM Compliant: {isNOMCompliant ? '✅' : '❌'} • {canProceedToSOAP ? 'Listo para SOAP' : 'Procesando...'}
+                        Completeness: {completenessPercentage}% • NOM Compliant:{' '}
+                        {isNOMCompliant ? '✅' : '❌'} •{' '}
+                        {canProceedToSOAP ? 'Listo para SOAP' : 'Procesando...'}
                       </p>
                     </div>
                     <button
@@ -1579,10 +1564,7 @@ export const CognitiveDashboard = () => {
               <div
                 className={`border-t border-slate-700/50 bg-gradient-to-r from-slate-950/80 to-slate-900/90 backdrop-blur-xl px-4 sm:px-6 py-3 sm:py-4 ${mobileState.isMobile ? 'safe-area-bottom' : ''} ${keyboardVisible ? 'keyboard-padding' : ''}`}
               >
-                <form
-                  onSubmit={handleSubmit}
-                  className="flex gap-2 items-center"
-                >
+                <form onSubmit={handleSubmit} className="flex gap-2 items-center">
                   <div className="flex-1">
                     <div className="relative">
                       <input
@@ -1605,7 +1587,6 @@ export const CognitiveDashboard = () => {
 
                       {/* Compact Action Buttons */}
                       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex space-x-1">
-
                         {!isLoading && !isStreaming && (
                           <button
                             type="button"

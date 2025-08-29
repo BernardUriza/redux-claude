@@ -56,7 +56,10 @@ export const useAssistantChat = (options: UseAssistantChatOptions = {}) => {
         const validationResult = await validateMedicalCase(message)
 
         if (!validationResult.isValid) {
-          console.log('❌ [ASSISTANT] Consulta rechazada:', validationResult.rejectionReason || 'Sin razón especificada')
+          console.log(
+            '❌ [ASSISTANT] Consulta rechazada:',
+            validationResult.rejectionReason || 'Sin razón especificada'
+          )
 
           // Agregar mensaje del usuario al assistant
           dispatch(addAssistantMessage({ content: message, type: 'user' }))
@@ -66,7 +69,7 @@ export const useAssistantChat = (options: UseAssistantChatOptions = {}) => {
             isValid: validationResult.isValid,
             confidence: validationResult.confidence,
             rejectionReason: validationResult.rejectionReason,
-            suggestedFormat: validationResult.suggestedImprovements?.[0]
+            suggestedFormat: validationResult.suggestedImprovements?.[0],
           })
 
           dispatch(
@@ -92,10 +95,10 @@ export const useAssistantChat = (options: UseAssistantChatOptions = {}) => {
         // 🚀 USAR CHAT INTELIGENTE EN NÚCLEO ASSISTANT
         const { IntelligentMedicalChat } = await import('../services/IntelligentMedicalChat')
         const intelligentService = new IntelligentMedicalChat(dispatch, 'assistant')
-        
+
         // El chat inteligente maneja todo internamente y actualiza el store
         await intelligentService.processUserInput(message)
-        
+
         dispatch(setAssistantLoading(false))
       } catch (error) {
         console.error('💥 [ASSISTANT] Error en chat:', error)
@@ -125,12 +128,12 @@ export const useAssistantChat = (options: UseAssistantChatOptions = {}) => {
     isLoading: assistantCore.isLoading,
     error: sharedState.error,
     sessionId: assistantCore.sessionId,
-    
+
     // Acciones
     sendMedicalQuery: sendAssistantQuery, // Mantener nombre para compatibilidad
     clearMessages: clearAssistant,
     startNewSession: startNewAssistantSession,
-    
+
     // Metadata
     coreType: 'assistant' as const,
     coreName: '🤖 NÚCLEO ASSISTANT',

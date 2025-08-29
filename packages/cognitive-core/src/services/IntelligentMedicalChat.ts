@@ -4,13 +4,13 @@
 import { callDecisionEngine, callIndividualDecision } from './decisionalMiddleware'
 import type { MedicalMessage } from '../store/medicalChatSlice'
 import type { AppDispatch } from '../store/store'
-import { 
-  addDashboardMessage, 
+import {
+  addDashboardMessage,
   addAssistantMessage,
-  completeExtraction, 
+  completeExtraction,
   setExtractionError,
   setDashboardLoading,
-  setAssistantLoading
+  setAssistantLoading,
 } from '../store/medicalChatSlice'
 
 export interface MedicalInference {
@@ -60,76 +60,88 @@ export class IntelligentMedicalChat {
   async processUserInput(userInput: string): Promise<void> {
     try {
       this.dispatch(setDashboardLoading(true))
-      
+
       if (!userInput || typeof userInput !== 'string') {
         console.warn('⚠️ Input inválido en processUserInput:', userInput)
-        this.dispatch(addDashboardMessage({
-          content: '🦁 Hola Doctor Edmund, ¿podría proporcionarme datos del paciente?',
-          type: 'assistant'
-        }))
+        this.dispatch(
+          addDashboardMessage({
+            content: '🦁 Hola Doctor Edmund, ¿podría proporcionarme datos del paciente?',
+            type: 'assistant',
+          })
+        )
         this.dispatch(setDashboardLoading(false))
         return
       }
 
       // 🎯 ARQUITECTURA SECUENCIAL INTELIGENTE: Extractor → Chat solo lo faltante
       console.log('🔄 PASO 1: Ejecutando extractor para analizar datos disponibles...')
-      
+
       // PASO 1: 🧬 Extractor analiza QUÉ datos tenemos y cuáles faltan (SIN CONTEXTO - función pura)
       const extractorResponse = await callIndividualDecision('medical_data_extractor', userInput)
 
       if (!extractorResponse.success) {
         console.warn('💥 Extractor falló, usando fallback básico')
-        this.dispatch(addAssistantMessage({
-          content: '🦁 Error temporal. ¿Podría repetir su consulta médica?',
-          type: 'assistant'
-        }))
+        this.dispatch(
+          addAssistantMessage({
+            content: '🦁 Error temporal. ¿Podría repetir su consulta médica?',
+            type: 'assistant',
+          })
+        )
         this.dispatch(setAssistantLoading(false))
         return
       }
 
       const extractedData = extractorResponse.decision
-      const completenessPercentage = extractedData.extraction_metadata?.overall_completeness_percentage || 0
+      const completenessPercentage =
+        extractedData.extraction_metadata?.overall_completeness_percentage || 0
       const missingCriticalFields = extractedData.extraction_metadata?.missing_critical_fields || []
       const isNOMCompliant = extractedData.extraction_metadata?.nom_compliant || false
 
       console.log('📊 Análisis de completitud:', {
         completeness: completenessPercentage,
         missing_fields: missingCriticalFields,
-        nom_compliant: isNOMCompliant
+        nom_compliant: isNOMCompliant,
       })
 
       // PASO 2: Guardar datos extraídos en store
       this.dispatch(completeExtraction(extractedData))
-      
+
       // PASO 3: 🦁 Doctor Edmund CON CONTINUIDAD - Usa el núcleo especificado
       console.log(`🔄 PASO 3: Doctor Edmund en núcleo ${this.coreType.toUpperCase()}...`)
-      
+
       // 🧠 CONTEXTO ENRIQUECIDO: Pasar datos extraídos al chat
       const contextualInput = this.buildContextualPrompt(userInput, extractedData)
-      
-      const chatResponse = await callDecisionEngine(this.coreType, 'intelligent_medical_chat', contextualInput, {
-        persistContext: true,
-        // Claude recibirá el contexto automáticamente del núcleo especificado + datos extraídos
-      })
-      
-      console.log(`🧠 [CONTEXTO] Núcleo: ${this.coreType}, Input: "${userInput.substring(0, 50)}..."`)
+
+      const chatResponse = await callDecisionEngine(
+        this.coreType,
+        'intelligent_medical_chat',
+        contextualInput,
+        {
+          persistContext: true,
+          // Claude recibirá el contexto automáticamente del núcleo especificado + datos extraídos
+        }
+      )
+
+      console.log(
+        `🧠 [CONTEXTO] Núcleo: ${this.coreType}, Input: "${userInput.substring(0, 50)}..."`
+      )
 
       if (chatResponse.success) {
         // 🛡️ EXTRACCIÓN BRUTAL DEL JSON ANIDADO
         const decision = chatResponse.decision as any
         let message: string = ''
-        
+
         console.log('🔍 DEBUG decision type:', typeof decision)
         console.log('🔍 DEBUG decision sample:', JSON.stringify(decision).substring(0, 200) + '...')
-        
+
         try {
           // El decision puede ser:
           // 1. Object con campo content: {content: "JSON_STRING", success: true}
           // 2. String JSON directo: "{"message": "...", ...}"
           // 3. Object ya parseado: {message: "...", ...}
-          
+
           let jsonContent = ''
-          
+
           if (typeof decision === 'object' && decision.content) {
             // Caso 1: Object con campo content
             jsonContent = decision.content
@@ -141,9 +153,13 @@ export class IntelligentMedicalChat {
             message = decision.message
             console.log('🎯 [DIRECT] Extracted message:', message)
           }
-          
+
           // Si tenemos JSON string, parsearlo
-          if (jsonContent && typeof jsonContent === 'string' && jsonContent.includes('"message":')) {
+          if (
+            jsonContent &&
+            typeof jsonContent === 'string' &&
+            jsonContent.includes('"message":')
+          ) {
             const parsed = JSON.parse(jsonContent)
             message = parsed.message || jsonContent
             console.log('🎯 [PARSED] Extracted message:', message)
@@ -151,48 +167,60 @@ export class IntelligentMedicalChat {
             // Fallback: usar el contenido directo
             message = jsonContent
           }
-          
         } catch (error) {
           console.warn('⚠️ Error parseando JSON anidado:', error)
           message = typeof decision === 'string' ? decision : JSON.stringify(decision)
         }
-        
+
         // Fallback final
         if (!message || message.trim() === '') {
-          message = await this.generateQuestionBasedOnMissingFields(missingCriticalFields, extractedData)
+          message = await this.generateQuestionBasedOnMissingFields(
+            missingCriticalFields,
+            extractedData
+          )
         }
-        
+
         // Agregar respuesta del chat al store - NÚCLEO SEGÚN CONFIGURACIÓN
         // NOTA: No duplicamos en store porque callDecisionEngine ya maneja contexto internamente
         const addMessage = this.coreType === 'assistant' ? addAssistantMessage : addDashboardMessage
-        this.dispatch(addMessage({
-          content: message,
-          type: 'assistant',
-          metadata: {
-            sectionType: completenessPercentage >= 80 ? 'diagnosis' : 'education'
-          }
-        }))
-        
+        this.dispatch(
+          addMessage({
+            content: message,
+            type: 'assistant',
+            metadata: {
+              sectionType: completenessPercentage >= 80 ? 'diagnosis' : 'education',
+            },
+          })
+        )
+
         console.log(`✅ Respuesta contextual guardada en núcleo ${this.coreType.toUpperCase()}`)
       } else {
         // Fallback: Generar pregunta contextual con Claude (SIN CONTEXTO - función pura)
         console.warn('⚠️ Chat falló, generando pregunta contextual desde extractor')
-        const contextualQuestion = await this.generateQuestionBasedOnMissingFields(missingCriticalFields, extractedData)
+        const contextualQuestion = await this.generateQuestionBasedOnMissingFields(
+          missingCriticalFields,
+          extractedData
+        )
         const addMessage = this.coreType === 'assistant' ? addAssistantMessage : addDashboardMessage
-        this.dispatch(addMessage({
-          content: contextualQuestion,
-          type: 'assistant'
-        }))
+        this.dispatch(
+          addMessage({
+            content: contextualQuestion,
+            type: 'assistant',
+          })
+        )
       }
-
     } catch (error) {
       console.error('💥 Error en chat inteligente:', error)
-      this.dispatch(setExtractionError(error instanceof Error ? error.message : 'Error desconocido'))
+      this.dispatch(
+        setExtractionError(error instanceof Error ? error.message : 'Error desconocido')
+      )
       const addMessage = this.coreType === 'assistant' ? addAssistantMessage : addDashboardMessage
-      this.dispatch(addMessage({
-        content: '🦁 Error procesando consulta. ¿Podría intentar de nuevo?',
-        type: 'assistant'
-      }))
+      this.dispatch(
+        addMessage({
+          content: '🦁 Error procesando consulta. ¿Podría intentar de nuevo?',
+          type: 'assistant',
+        })
+      )
     } finally {
       const setLoading = this.coreType === 'assistant' ? setAssistantLoading : setDashboardLoading
       this.dispatch(setLoading(false))
@@ -204,29 +232,43 @@ export class IntelligentMedicalChat {
    */
   private buildContextualPrompt(userInput: string, extractedData: any): string {
     if (!extractedData) return userInput
-    
+
     const context: string[] = []
-    
+
     // Agregar datos demográficos conocidos
-    if (extractedData.demographics?.patient_age_years && extractedData.demographics.patient_age_years !== 'unknown') {
+    if (
+      extractedData.demographics?.patient_age_years &&
+      extractedData.demographics.patient_age_years !== 'unknown'
+    ) {
       context.push(`Edad: ${extractedData.demographics.patient_age_years} años`)
     }
-    if (extractedData.demographics?.patient_gender && extractedData.demographics.patient_gender !== 'unknown') {
+    if (
+      extractedData.demographics?.patient_gender &&
+      extractedData.demographics.patient_gender !== 'unknown'
+    ) {
       context.push(`Género: ${extractedData.demographics.patient_gender}`)
     }
-    
+
     // Agregar síntomas conocidos
-    if (extractedData.clinical_presentation?.chief_complaint && extractedData.clinical_presentation.chief_complaint !== 'unknown') {
+    if (
+      extractedData.clinical_presentation?.chief_complaint &&
+      extractedData.clinical_presentation.chief_complaint !== 'unknown'
+    ) {
       context.push(`Síntoma principal: ${extractedData.clinical_presentation.chief_complaint}`)
     }
-    
+
     // Agregar intensidad si está disponible
-    if (extractedData.symptom_characteristics?.pain_intensity_scale && extractedData.symptom_characteristics.pain_intensity_scale !== null) {
-      context.push(`Intensidad del dolor: ${extractedData.symptom_characteristics.pain_intensity_scale}/10`)
+    if (
+      extractedData.symptom_characteristics?.pain_intensity_scale &&
+      extractedData.symptom_characteristics.pain_intensity_scale !== null
+    ) {
+      context.push(
+        `Intensidad del dolor: ${extractedData.symptom_characteristics.pain_intensity_scale}/10`
+      )
     }
-    
+
     if (context.length === 0) return userInput
-    
+
     return `DATOS EXTRAÍDOS PREVIAMENTE: ${context.join(', ')}\n\nNUEVO INPUT DEL USUARIO: ${userInput}\n\n[Usa la información previa para hacer preguntas inteligentes sin repetir datos ya conocidos]`
   }
 
@@ -234,13 +276,13 @@ export class IntelligentMedicalChat {
    * Genera pregunta inteligente usando Claude - combinable y contextual
    */
   private async generateQuestionBasedOnMissingFields(
-    missingFields: string[], 
+    missingFields: string[],
     extractedData?: any
   ): Promise<string> {
     try {
       // 🧠 Contexto para Claude basado en datos ya extraídos
       const context = this.buildContextForQuestion(extractedData, missingFields)
-      
+
       // 🧠 Usar callIndividualDecision para generar preguntas (función pura - 2+2=4)
       const claudeResponse = await callIndividualDecision(
         'intelligent_medical_chat',
@@ -250,20 +292,26 @@ export class IntelligentMedicalChat {
           missing_fields: missingFields,
           extracted_context: context,
           persona: 'Doctor Edmund (León de Narnia) - profesional pero cálido',
-          instruction: 'Genera UNA pregunta específica y directa para obtener los datos médicos faltantes más críticos. Máximo 25 palabras.',
-          expected_response: 'Solo la pregunta, sin explicaciones adicionales'
+          instruction:
+            'Genera UNA pregunta específica y directa para obtener los datos médicos faltantes más críticos. Máximo 25 palabras.',
+          expected_response: 'Solo la pregunta, sin explicaciones adicionales',
         }
       )
 
       // Claude puede devolver la pregunta en varios formatos
       if (claudeResponse?.success && claudeResponse?.decision) {
         const decision = claudeResponse.decision as any
-        return decision.question || decision.message || decision.response || decision.text_response || JSON.stringify(decision)
+        return (
+          decision.question ||
+          decision.message ||
+          decision.response ||
+          decision.text_response ||
+          JSON.stringify(decision)
+        )
       }
-      
+
       // Fallback inteligente si Claude falla
       return this.generateFallbackQuestion(missingFields)
-      
     } catch (error) {
       console.warn('⚠️ Error generando pregunta con Claude, usando fallback:', error)
       return this.generateFallbackQuestion(missingFields)
@@ -275,21 +323,31 @@ export class IntelligentMedicalChat {
    */
   private buildContextForQuestion(extractedData: any, missingFields: string[]): string {
     if (!extractedData) return 'Caso médico inicial'
-    
+
     const context: string[] = []
-    
+
     // Datos ya identificados
-    if (extractedData.demographics?.patient_age_years && extractedData.demographics.patient_age_years !== 'unknown') {
+    if (
+      extractedData.demographics?.patient_age_years &&
+      extractedData.demographics.patient_age_years !== 'unknown'
+    ) {
       context.push(`Edad: ${extractedData.demographics.patient_age_years} años`)
     }
-    if (extractedData.demographics?.patient_gender && extractedData.demographics.patient_gender !== 'unknown') {
+    if (
+      extractedData.demographics?.patient_gender &&
+      extractedData.demographics.patient_gender !== 'unknown'
+    ) {
       context.push(`Género: ${extractedData.demographics.patient_gender}`)
     }
-    if (extractedData.clinical_presentation?.chief_complaint && extractedData.clinical_presentation.chief_complaint !== 'unknown') {
+    if (
+      extractedData.clinical_presentation?.chief_complaint &&
+      extractedData.clinical_presentation.chief_complaint !== 'unknown'
+    ) {
       context.push(`Síntoma: ${extractedData.clinical_presentation.chief_complaint}`)
     }
-    
-    const contextStr = context.length > 0 ? `Datos confirmados: ${context.join(', ')}` : 'Caso inicial'
+
+    const contextStr =
+      context.length > 0 ? `Datos confirmados: ${context.join(', ')}` : 'Caso inicial'
     return `${contextStr}. Faltan: ${missingFields.join(', ')}`
   }
 
@@ -300,20 +358,19 @@ export class IntelligentMedicalChat {
     if (missingFields.includes('patient_age_years') && missingFields.includes('patient_gender')) {
       return '🦁 Doctor Edmund, para continuar necesito la edad y género del paciente.'
     }
-    
+
     if (missingFields.includes('patient_age_years')) {
       return '🦁 Doctor Edmund, ¿qué edad tiene el paciente?'
     }
-    
+
     if (missingFields.includes('patient_gender')) {
       return '🦁 Doctor Edmund, ¿cuál es el género del paciente?'
     }
-    
+
     if (missingFields.includes('chief_complaint')) {
       return '🦁 Doctor Edmund, ¿cuál es el síntoma principal que presenta el paciente?'
     }
-    
+
     return '🦁 Doctor Edmund, ¿podría proporcionarme más detalles del caso médico?'
   }
-
 }

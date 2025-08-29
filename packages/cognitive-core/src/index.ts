@@ -14,7 +14,11 @@ export { useAppDispatch, useAppSelector, useTypedSelector, useTypedDispatch } fr
 export { ClaudeAdapter } from './decision-engine/providers/claude'
 
 // === VALIDATORS ===
-export { validateMedicalInput, validateMedicalCase, generateRejectionMessage } from './utils/aiMedicalValidator'
+export {
+  validateMedicalInput,
+  validateMedicalCase,
+  generateRejectionMessage,
+} from './utils/aiMedicalValidator'
 export type { AIValidationResult, LegacyMedicalValidationResult } from './utils/aiMedicalValidator'
 export type { MedicalValidationResult } from './types/medical'
 
@@ -46,12 +50,12 @@ export { AdditionalInfoService } from './services/AdditionalInfoService'
 
 // === MEDICAL TYPES ===
 export type { MedicalMessage, ChatCore, MedicalChatState } from './store/medicalChatSlice'
-export type { 
-  MedicalExtractionOutput, 
-  MedicalExtractionState, 
-  UpdateDemographicsPayload, 
-  UpdateSymptomsPayload, 
-  UpdateContextPayload 
+export type {
+  MedicalExtractionOutput,
+  MedicalExtractionState,
+  UpdateDemographicsPayload,
+  UpdateSymptomsPayload,
+  UpdateContextPayload,
 } from './types/medicalExtraction'
 
 export type {
@@ -105,10 +109,7 @@ export {
 } from './store/medicalChatSlice'
 
 // === ASYNC THUNKS ===
-export {
-  extractMedicalDataThunk,
-  continueExtractionThunk,
-} from './store/medicalChatSlice'
+export { extractMedicalDataThunk, continueExtractionThunk } from './store/medicalChatSlice'
 
 // === HOOKS ===
 export { useIterativeMedicalExtraction } from './hooks/useIterativeMedicalExtraction'

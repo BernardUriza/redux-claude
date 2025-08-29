@@ -21,101 +21,107 @@ interface MetricCardProps {
   trendValue?: string
 }
 
-const MetricCard = memo(
-  ({ title, value, subtitle, icon, color, trend, trendValue }: MetricCardProps) => {
-    const getTrendIcon = () => {
-      switch (trend) {
-        case 'up':
-          return (
-            <div className="flex items-center space-x-1 text-emerald-400">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="text-xs font-medium">{trendValue}</span>
-            </div>
-          )
-        case 'down':
-          return (
-            <div className="flex items-center space-x-1 text-red-400">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="text-xs font-medium">{trendValue}</span>
-            </div>
-          )
-        default:
-          return (
-            <div className="flex items-center space-x-1 text-slate-400">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="text-xs font-medium">{trendValue}</span>
-            </div>
-          )
-      }
-    }
-
-    return (
-      <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-xl rounded-xl p-4 border border-slate-600/40 hover:border-slate-500/60 transition-all duration-300 hover:shadow-lg hover:shadow-slate-950/20 group">
-        {/* Compact Header with Icon and Trend */}
-        <div className="flex items-center justify-between mb-3">
-          <div
-            className={`w-10 h-10 bg-gradient-to-br ${color} rounded-xl flex items-center justify-center text-lg shadow-md transition-transform duration-300 group-hover:scale-105`}
-          >
-            {icon}
+const MetricCard = memo(function MetricCard({
+  title,
+  value,
+  subtitle,
+  icon,
+  color,
+  trend,
+  trendValue,
+}: MetricCardProps) {
+  const getTrendIcon = () => {
+    switch (trend) {
+      case 'up':
+        return (
+          <div className="flex items-center space-x-1 text-emerald-400">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="text-xs font-medium">{trendValue}</span>
           </div>
-          {trend && trendValue && <div className="flex items-center">{getTrendIcon()}</div>}
-        </div>
+        )
+      case 'down':
+        return (
+          <div className="flex items-center space-x-1 text-red-400">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="text-xs font-medium">{trendValue}</span>
+          </div>
+        )
+      default:
+        return (
+          <div className="flex items-center space-x-1 text-slate-400">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="text-xs font-medium">{trendValue}</span>
+          </div>
+        )
+    }
+  }
 
-        {/* Compact Main Metric */}
-        <div className="mb-3">
-          <div className="text-2xl font-bold text-white mb-1 tracking-tight">{value}</div>
-          <h4 className="text-sm font-semibold text-slate-200 mb-1 line-clamp-1">{title}</h4>
-          <p className="text-xs text-slate-400 leading-tight line-clamp-2">{subtitle}</p>
+  return (
+    <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-xl rounded-xl p-4 border border-slate-600/40 hover:border-slate-500/60 transition-all duration-300 hover:shadow-lg hover:shadow-slate-950/20 group">
+      {/* Compact Header with Icon and Trend */}
+      <div className="flex items-center justify-between mb-3">
+        <div
+          className={`w-10 h-10 bg-gradient-to-br ${color} rounded-xl flex items-center justify-center text-lg shadow-md transition-transform duration-300 group-hover:scale-105`}
+        >
+          {icon}
         </div>
+        {trend && trendValue && <div className="flex items-center">{getTrendIcon()}</div>}
+      </div>
 
-        {/* Compact Progress Bar */}
-        <div className="mt-3">
-          <div className="w-full bg-slate-700/50 rounded-full h-1.5 overflow-hidden">
-            <div
-              className={`bg-gradient-to-r ${color} h-1.5 rounded-full transition-all duration-1000 shadow-sm relative overflow-hidden`}
-              style={{
-                width:
-                  typeof value === 'string' && value.includes('%')
-                    ? value
-                    : typeof value === 'number'
-                      ? `${Math.min(value, 100)}%`
-                      : '0%',
-              }}
-            >
-              {/* Animated shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse" />
-            </div>
+      {/* Compact Main Metric */}
+      <div className="mb-3">
+        <div className="text-2xl font-bold text-white mb-1 tracking-tight">{value}</div>
+        <h4 className="text-sm font-semibold text-slate-200 mb-1 line-clamp-1">{title}</h4>
+        <p className="text-xs text-slate-400 leading-tight line-clamp-2">{subtitle}</p>
+      </div>
+
+      {/* Compact Progress Bar */}
+      <div className="mt-3">
+        <div className="w-full bg-slate-700/50 rounded-full h-1.5 overflow-hidden">
+          <div
+            className={`bg-gradient-to-r ${color} h-1.5 rounded-full transition-all duration-1000 shadow-sm relative overflow-hidden`}
+            style={{
+              width:
+                typeof value === 'string' && value.includes('%')
+                  ? value
+                  : typeof value === 'number'
+                    ? `${Math.min(value, 100)}%`
+                    : '0%',
+            }}
+          >
+            {/* Animated shine effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse" />
           </div>
         </div>
       </div>
-    )
-  }
-)
+    </div>
+  )
+})
 
 interface SystemStatusProps {
   status: 'optimal' | 'good' | 'warning' | 'critical'
   message: string
 }
 
-const SystemStatus = memo(({ status, message }: SystemStatusProps) => {
+const SystemStatus = memo(function SystemStatus({ status, message }: SystemStatusProps) {
   const getStatusConfig = () => {
     switch (status) {
       case 'optimal':

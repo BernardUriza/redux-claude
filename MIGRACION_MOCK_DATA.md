@@ -11,8 +11,8 @@
 
 Los siguientes archivos usan datos falsos en lugar del estado Redux real:
 
-| Archivo                           | Mock Data            | Impacto                                   | Estado |
-| --------------------------------- | -------------------- | ----------------------------------------- | ------ |
+| Archivo                           | Mock Data            | Impacto                                   | Estado   |
+| --------------------------------- | -------------------- | ----------------------------------------- | -------- |
 | `SOAPDisplay.tsx`                 | `mockCurrentCase`    | 🔴 Alto - No muestra análisis SOAP reales | 🎯 READY |
 | `RealTimeMetrics.tsx`             | `confidence = 85`    | 🔴 Alto - Métricas falsas del sistema     | 🎯 READY |
 | `IterativeDiagnosticProgress.tsx` | `mockIterativeState` | 🔴 Alto - Progreso diagnóstico falso      | 🎯 READY |
@@ -31,7 +31,8 @@ Los siguientes archivos usan datos falsos en lugar del estado Redux real:
 
 - [x] **1.1 Mapear Estado Actual** (`estado-multinucleo-audit.md`) ✅
   - ✅ Auditar estructura `MedicalChatState.cores`
-  - ✅ Identificar datos disponibles en cada core (dashboard/assistant/inference)
+  - ✅ Identificar datos disponibles en cada core
+    (dashboard/assistant/inference)
   - ✅ Documentar gaps entre mock data y estado real
 
 - [x] **1.2 Diseñar Selectores** (`selectors-design.md`) ✅
@@ -75,30 +76,35 @@ Los siguientes archivos usan datos falsos en lugar del estado Redux real:
 **Infraestructura Disponible:** ✅ 5 Selectores + Interfaces + Middleware
 
 **🎯 HERRAMIENTAS LISTAS PARA USO:**
+
 - 📁 `medicalSelectors.ts` - Los 5 selectores magistrales
 - 🎭 `medicalInterfaces.ts` - Todos los tipos TypeScript
-- 📦 `selectors/index.ts` - Imports unificados  
+- 📦 `selectors/index.ts` - Imports unificados
 - ⚡ `medicalSyncMiddleware.ts` - Auto-sincronización
 - 🏥 `soapAnalysisSlice.ts` - Slice SOAP avanzado
 
 #### 📋 Tareas Fase 3:
 
 - [ ] **3.1 SOAPDisplay.tsx** 🎯 **PRIORITY HIGH**
+
   ```typescript
   // ELIMINAR: const mockCurrentCase = { soap: null, confidence: 0.8 }
   // USAR: const analysis = useSelector(selectCurrentSOAPAnalysis)
   ```
+
   - ✅ Selector disponible: `selectCurrentSOAPAnalysis`
-  - ✅ Interface: `SOAPAnalysis` 
+  - ✅ Interface: `SOAPAnalysis`
   - 📝 Conectar selector real + manejar estados loading/error
   - 📝 Mostrar secciones SOAP reales (S.O.A.P)
   - 📝 Indicador de confianza real
 
 - [ ] **3.2 RealTimeMetrics.tsx** 🎯 **PRIORITY HIGH**
+
   ```typescript
   // ELIMINAR: const confidence = 85
   // USAR: const metrics = useSelector(selectSystemMetrics)
   ```
+
   - ✅ Selector disponible: `selectSystemMetrics`
   - ✅ Interface: `SystemMetrics`
   - 📝 Dashboard con métricas reales del sistema
@@ -106,10 +112,12 @@ Los siguientes archivos usan datos falsos en lugar del estado Redux real:
   - 📝 Confianza calculada (no hardcodeada)
 
 - [ ] **3.3 IterativeDiagnosticProgress.tsx** 🎯 **PRIORITY HIGH**
+
   ```typescript
   // ELIMINAR: mockIterativeState = { currentCycle: 1 }
   // USAR: const progress = useSelector(selectDiagnosticProgress)
   ```
+
   - ✅ Selector disponible: `selectDiagnosticProgress`
   - ✅ Interface: `DiagnosticProgress`
   - 📝 Fases diagnósticas reales (intake/analysis/diagnosis/treatment/followup)
@@ -117,10 +125,12 @@ Los siguientes archivos usan datos falsos en lugar del estado Redux real:
   - 📝 Ciclos calculados de mensajes user/assistant
 
 - [ ] **3.4 FollowUpTracker.tsx** 🎯 **PRIORITY MEDIUM**
+
   ```typescript
   // ELIMINAR: const mockReminders: [] = []
   // USAR: const reminders = useSelector(selectPatientReminders)
   ```
+
   - ✅ Selector disponible: `selectPatientReminders`
   - ✅ Interface: `PatientReminder[]`
   - 📝 Sistema recordatorios extraídos de mensajes followup
@@ -132,12 +142,12 @@ Los siguientes archivos usan datos falsos en lugar del estado Redux real:
   // ELIMINAR: const mockNotes: [] = []
   // USAR: const notes = useSelector(selectPhysicianNotes)
   ```
+
   - ✅ Selector disponible: `selectPhysicianNotes`
   - ✅ Interface: `PhysicianNote[]`
   - 📝 Notas generadas de mensajes assistant
   - 📝 Categorización médica + tags automáticos
   - 📝 Notas importantes resaltadas
-
 
 ### FASE 4: TESTING Y VALIDACIÓN
 

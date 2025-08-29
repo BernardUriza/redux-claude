@@ -2,7 +2,12 @@
 // Creado por Bernard Orozco - Inferencias que cambian con cada mensaje
 
 import React, { useState, useEffect } from 'react'
-import { useAppSelector, selectExtractedData, selectCompletenessPercentage, selectNOMCompliance } from '@redux-claude/cognitive-core'
+import {
+  useAppSelector,
+  selectExtractedData,
+  selectCompletenessPercentage,
+  selectNOMCompliance,
+} from '@redux-claude/cognitive-core'
 
 interface PatientInference {
   id: string
@@ -37,9 +42,9 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
 }) => {
   // 🧠 CONECTAR AL REDUX STORE - Data real del extractor
   const extractedData = useAppSelector(selectExtractedData)
-  const completenessPercentage = useAppSelector(selectCompletenessPercentage) 
+  const completenessPercentage = useAppSelector(selectCompletenessPercentage)
   const isNOMCompliant = useAppSelector(selectNOMCompliance)
-  
+
   // 🔥 DEBUGGING: Logear cambios en selector
   console.log('🧠 [SELECTOR] extractedData changed:', extractedData)
   const [inferences, setInferences] = useState<PatientInference[]>([
@@ -96,17 +101,25 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     },
   ])
 
-  // 🚀 ACTUALIZAR DESDE STORE - Data real extraída por el motor médico  
+  // 🚀 ACTUALIZAR DESDE STORE - Data real extraída por el motor médico
   useEffect(() => {
     if (!extractedData) return
 
     console.log('🔄 [PANEL] Actualizando inferencias desde store:', extractedData)
     console.log('🔍 [DEBUG] Tipo de extractedData:', typeof extractedData)
-    console.log('🔍 [DEBUG] Tiene content?:', extractedData && typeof extractedData === 'object' && 'content' in extractedData)
-    
+    console.log(
+      '🔍 [DEBUG] Tiene content?:',
+      extractedData && typeof extractedData === 'object' && 'content' in extractedData
+    )
+
     // 🔥 FIX CRÍTICO: Los datos llegan como JSON string en campo 'content'
     let parsedData = extractedData
-    if (typeof extractedData === 'object' && extractedData && 'content' in extractedData && typeof (extractedData as any).content === 'string') {
+    if (
+      typeof extractedData === 'object' &&
+      extractedData &&
+      'content' in extractedData &&
+      typeof (extractedData as any).content === 'string'
+    ) {
       console.log('🔧 [ATTEMPT] Intentando parsear JSON desde content...')
       try {
         parsedData = JSON.parse((extractedData as any).content)
@@ -119,14 +132,23 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     } else {
       console.log('🔍 [NO PARSING] ExtractedData no tiene content string, usando directamente')
     }
-    
-    console.log('🔍 [DEBUG] pain_intensity_scale:', parsedData.symptom_characteristics?.pain_intensity_scale)
-    console.log('🔍 [DEBUG] Tipo de pain_intensity_scale:', typeof parsedData.symptom_characteristics?.pain_intensity_scale)
+
+    console.log(
+      '🔍 [DEBUG] pain_intensity_scale:',
+      parsedData.symptom_characteristics?.pain_intensity_scale
+    )
+    console.log(
+      '🔍 [DEBUG] Tipo de pain_intensity_scale:',
+      typeof parsedData.symptom_characteristics?.pain_intensity_scale
+    )
 
     const updatedInferences = [...inferences]
 
     // Actualizar edad desde store
-    if (parsedData.demographics?.patient_age_years !== "unknown" && parsedData.demographics?.patient_age_years) {
+    if (
+      parsedData.demographics?.patient_age_years !== 'unknown' &&
+      parsedData.demographics?.patient_age_years
+    ) {
       const ageIndex = updatedInferences.findIndex(i => i.id === 'age')
       if (ageIndex !== -1) {
         updatedInferences[ageIndex] = {
@@ -138,11 +160,18 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     }
 
     // Actualizar género desde store
-    if (parsedData.demographics?.patient_gender && parsedData.demographics.patient_gender !== "unknown") {
+    if (
+      parsedData.demographics?.patient_gender &&
+      parsedData.demographics.patient_gender !== 'unknown'
+    ) {
       const genderIndex = updatedInferences.findIndex(i => i.id === 'gender')
       if (genderIndex !== -1) {
-        const genderValue = parsedData.demographics.patient_gender === 'masculino' ? 'Masculino' : 
-                           parsedData.demographics.patient_gender === 'femenino' ? 'Femenino' : 'No especificado'
+        const genderValue =
+          parsedData.demographics.patient_gender === 'masculino'
+            ? 'Masculino'
+            : parsedData.demographics.patient_gender === 'femenino'
+              ? 'Femenino'
+              : 'No especificado'
         updatedInferences[genderIndex] = {
           ...updatedInferences[genderIndex],
           value: genderValue,
@@ -152,7 +181,10 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     }
 
     // Actualizar síntoma principal desde store
-    if (parsedData.clinical_presentation?.chief_complaint && parsedData.clinical_presentation.chief_complaint !== "unknown") {
+    if (
+      parsedData.clinical_presentation?.chief_complaint &&
+      parsedData.clinical_presentation.chief_complaint !== 'unknown'
+    ) {
       const symptomIndex = updatedInferences.findIndex(i => i.id === 'symptom')
       if (symptomIndex !== -1) {
         updatedInferences[symptomIndex] = {
@@ -166,13 +198,18 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     // Actualizar intensidad del dolor desde store
     const intensityValue = parsedData.symptom_characteristics?.pain_intensity_scale
     console.log('🔍 [DEBUG] Intensidad value raw:', intensityValue)
-    
-    if (intensityValue !== null && intensityValue !== undefined && typeof intensityValue === 'number' && intensityValue > 0) {
+
+    if (
+      intensityValue !== null &&
+      intensityValue !== undefined &&
+      typeof intensityValue === 'number' &&
+      intensityValue > 0
+    ) {
       const intensityIndex = updatedInferences.findIndex(i => i.id === 'intensity')
       if (intensityIndex !== -1) {
         const numericIntensity = intensityValue // Ya sabemos que es number
         console.log('🎯 [DEBUG] Aplicando intensidad:', numericIntensity)
-        
+
         updatedInferences[intensityIndex] = {
           ...updatedInferences[intensityIndex],
           value: `${numericIntensity}/10`,
@@ -182,7 +219,10 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     }
 
     // Actualizar duración desde store
-    if (parsedData.symptom_characteristics?.duration_description && parsedData.symptom_characteristics.duration_description !== "unknown") {
+    if (
+      parsedData.symptom_characteristics?.duration_description &&
+      parsedData.symptom_characteristics.duration_description !== 'unknown'
+    ) {
       const durationIndex = updatedInferences.findIndex(i => i.id === 'duration')
       if (durationIndex !== -1) {
         updatedInferences[durationIndex] = {
@@ -194,7 +234,10 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     }
 
     // Actualizar síntomas asociados desde store
-    if (parsedData.clinical_presentation?.primary_symptoms && parsedData.clinical_presentation.primary_symptoms.length > 0) {
+    if (
+      parsedData.clinical_presentation?.primary_symptoms &&
+      parsedData.clinical_presentation.primary_symptoms.length > 0
+    ) {
       const associatedIndex = updatedInferences.findIndex(i => i.id === 'associated')
       if (associatedIndex !== -1) {
         updatedInferences[associatedIndex] = {
@@ -321,7 +364,9 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
   }
 
   return (
-    <div className={`bg-gray-900 border border-gray-700 rounded-lg sm:rounded-xl shadow-xl overflow-hidden flex flex-col ${className}`}>
+    <div
+      className={`bg-gray-900 border border-gray-700 rounded-lg sm:rounded-xl shadow-xl overflow-hidden flex flex-col ${className}`}
+    >
       {/* Header con indicador de estado */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-3 sm:p-4 rounded-t-lg sm:rounded-t-xl">
         <div className="flex items-center justify-between gap-2">
@@ -330,7 +375,9 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
               <span className="text-base sm:text-lg">🧠</span>
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className="font-bold text-white text-sm sm:text-base truncate">Inferencias en Tiempo Real</h4>
+              <h4 className="font-bold text-white text-sm sm:text-base truncate">
+                Inferencias en Tiempo Real
+              </h4>
               <p className="text-indigo-200 text-xs hidden sm:block">
                 Datos del paciente se actualizan automáticamente
               </p>
@@ -344,13 +391,13 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       </div>
 
       {/* Contenido Principal */}
-      <div 
+      <div
         className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4 overflow-y-auto flex-1 scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500 scroll-smooth"
         style={{
           scrollBehavior: 'smooth',
           scrollbarWidth: 'thin',
           scrollbarColor: '#4b5563 #1f2937',
-          WebkitOverflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {inferences.map(inference => (
@@ -363,7 +410,9 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
                 <div
                   className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0 ${inference.confidence > 0.7 ? 'bg-green-400' : inference.confidence > 0.4 ? 'bg-yellow-400' : 'bg-gray-400'}`}
                 ></div>
-                <span className="font-medium text-gray-200 text-sm sm:text-base truncate">{inference.label}</span>
+                <span className="font-medium text-gray-200 text-sm sm:text-base truncate">
+                  {inference.label}
+                </span>
               </div>
               <span
                 className={`text-xs px-2 sm:px-3 py-1 rounded-full border font-semibold flex-shrink-0 ${getConfidenceColor(inference.confidence)}`}
@@ -413,7 +462,9 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
                   <span className="truncate">Confianza</span>
                   <span className="flex items-center gap-1 flex-shrink-0">
                     <span>{Math.round(inference.confidence * 100)}%</span>
-                    <span className="text-xs">{inference.confidence > 0.8 ? '✅' : inference.confidence > 0.6 ? '⚠️' : '🔄'}</span>
+                    <span className="text-xs">
+                      {inference.confidence > 0.8 ? '✅' : inference.confidence > 0.6 ? '⚠️' : '🔄'}
+                    </span>
                   </span>
                 </div>
                 <div className="w-full bg-gray-600 rounded-full h-1.5 sm:h-2">
@@ -438,7 +489,9 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       <div className="bg-gray-800/50 px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 rounded-b-lg sm:rounded-b-xl border-t border-gray-700">
         <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
           <span className="flex-shrink-0">💡</span>
-          <span className="text-center leading-tight">Se actualiza automáticamente con cada mensaje</span>
+          <span className="text-center leading-tight">
+            Se actualiza automáticamente con cada mensaje
+          </span>
         </div>
       </div>
     </div>

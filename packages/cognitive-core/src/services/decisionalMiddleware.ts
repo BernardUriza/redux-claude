@@ -7,16 +7,28 @@ import { getAgentDefinition } from './agentRegistry'
 
 // 🎯 TIPOS SIMPLIFICADOS
 export type DecisionType =
-  | 'diagnosis' | 'validation' | 'treatment' | 'triage' | 'documentation'
-  | 'clinical_pharmacology' | 'pediatric_specialist' | 'hospitalization_criteria'
-  | 'family_education' | 'objective_validation' | 'defensive_differential'
-  | 'medical_autocompletion' | 'critical_data_validation' | 'specialty_detection'
-  | 'intelligent_medical_chat' | 'medical_data_extractor' | 'medical_input_validator'
+  | 'diagnosis'
+  | 'validation'
+  | 'treatment'
+  | 'triage'
+  | 'documentation'
+  | 'clinical_pharmacology'
+  | 'pediatric_specialist'
+  | 'hospitalization_criteria'
+  | 'family_education'
+  | 'objective_validation'
+  | 'defensive_differential'
+  | 'medical_autocompletion'
+  | 'critical_data_validation'
+  | 'specialty_detection'
+  | 'intelligent_medical_chat'
+  | 'medical_data_extractor'
+  | 'medical_input_validator'
 
 export type ProviderType = 'claude'
 
 export interface DecisionResponse {
-  decision: any  // Flexible type para manejar diferentes tipos de decisiones
+  decision: any // Flexible type para manejar diferentes tipos de decisiones
   confidence: number
   latency: number
   success: boolean
@@ -49,13 +61,13 @@ const AGENT_TYPE_MAP: Record<DecisionType, AgentType> = {
  * Mantiene historial de conversación por núcleo
  */
 export async function callDecisionEngine(
-  coreId: string,           // 'dashboard', 'assistant', 'inference'
+  coreId: string, // 'dashboard', 'assistant', 'inference'
   type: DecisionType,
   input: string,
   options: {
-    provider?: ProviderType,
-    signal?: AbortSignal,
-    persistContext?: boolean,
+    provider?: ProviderType
+    signal?: AbortSignal
+    persistContext?: boolean
     sessionId?: string
   } = {}
 ): Promise<DecisionResponse> {
@@ -66,7 +78,7 @@ export async function callDecisionEngine(
       coreId,
       type,
       input,
-      ...options
+      ...options,
     })
 
     return {
@@ -78,7 +90,7 @@ export async function callDecisionEngine(
     }
   } catch (error) {
     console.error(`🔥 Decision engine with context failed for ${coreId}/${type}:`, error)
-    
+
     return {
       decision: createMinimalFallback(type),
       confidence: 0,
@@ -106,7 +118,7 @@ export async function callIndividualDecision(
       type,
       input,
       context,
-      signal
+      signal,
     })
 
     return {
@@ -118,7 +130,7 @@ export async function callIndividualDecision(
     }
   } catch (error) {
     console.error(`🔥 Individual decision failed for ${type}:`, error)
-    
+
     return {
       decision: createMinimalFallback(type),
       confidence: 0,
@@ -151,7 +163,7 @@ function createMinimalFallback(type: DecisionType): AgentDecision {
   return {
     error: `Failed to process ${type} decision`,
     requires_human_review: true,
-    fallback_message: 'Consultar médico especialista'
+    fallback_message: 'Consultar médico especialista',
   } as any
 }
 
@@ -160,10 +172,9 @@ function createMinimalFallback(type: DecisionType): AgentDecision {
  */
 export function mapAgentTypeToDecisionType(agentType: AgentType): DecisionType {
   const reverseMap = Object.entries(AGENT_TYPE_MAP).find(([_, value]) => value === agentType)
-  return reverseMap ? reverseMap[0] as DecisionType : 'diagnosis'
+  return reverseMap ? (reverseMap[0] as DecisionType) : 'diagnosis'
 }
 
 export function mapDecisionTypeToAgentType(decisionType: DecisionType): AgentType {
   return AGENT_TYPE_MAP[decisionType] || AgentType.DIAGNOSTIC
 }
-

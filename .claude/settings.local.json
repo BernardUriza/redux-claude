@@ -31,7 +31,10 @@
       "Bash(npm run typecheck:*)",
       "Bash(git log:*)",
       "Bash(lsof:*)",
-      "Bash(npm run clean:*)"
+      "Bash(npm run clean:*)",
+      "Bash(npx prettier:*)",
+      "Bash(npm run format:*)",
+      "Bash(timeout 60s npm run build)"
     ],
     "deny": [],
     "ask": []

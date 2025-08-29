@@ -53,15 +53,23 @@ export const MedicalSummaryPanel: React.FC<MedicalSummaryPanelProps> = ({
 
             {patientData.motivoConsulta && (
               <div className="bg-slate-700/50 rounded-lg p-2.5 sm:p-3">
-                <div className="text-xs font-medium text-slate-400 uppercase mb-1 truncate">Motivo consulta</div>
-                <div className="text-white font-medium text-sm sm:text-base break-words">{patientData.motivoConsulta}</div>
+                <div className="text-xs font-medium text-slate-400 uppercase mb-1 truncate">
+                  Motivo consulta
+                </div>
+                <div className="text-white font-medium text-sm sm:text-base break-words">
+                  {patientData.motivoConsulta}
+                </div>
               </div>
             )}
 
             {patientData.historiaActual && (
               <div className="bg-slate-700/50 rounded-lg p-2.5 sm:p-3">
-                <div className="text-xs font-medium text-slate-400 uppercase mb-1 truncate">Historia actual</div>
-                <div className="text-white font-medium text-sm sm:text-base break-words line-clamp-3 sm:line-clamp-none">{patientData.historiaActual}</div>
+                <div className="text-xs font-medium text-slate-400 uppercase mb-1 truncate">
+                  Historia actual
+                </div>
+                <div className="text-white font-medium text-sm sm:text-base break-words line-clamp-3 sm:line-clamp-none">
+                  {patientData.historiaActual}
+                </div>
               </div>
             )}
 
@@ -91,8 +99,12 @@ export const MedicalSummaryPanel: React.FC<MedicalSummaryPanelProps> = ({
                   <div className="bg-slate-700/50 rounded-lg p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 min-w-0">
                     <span className="text-orange-400 text-sm sm:text-lg flex-shrink-0">🌡️</span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium text-slate-400 uppercase truncate">Temperatura</div>
-                      <div className="text-white font-bold text-sm sm:text-base">{vitalSigns.temperatura}</div>
+                      <div className="text-xs font-medium text-slate-400 uppercase truncate">
+                        Temperatura
+                      </div>
+                      <div className="text-white font-bold text-sm sm:text-base">
+                        {vitalSigns.temperatura}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -101,8 +113,12 @@ export const MedicalSummaryPanel: React.FC<MedicalSummaryPanelProps> = ({
                   <div className="bg-slate-700/50 rounded-lg p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 min-w-0">
                     <span className="text-red-400 text-sm sm:text-lg flex-shrink-0">💗</span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium text-slate-400 uppercase truncate">Presión arterial</div>
-                      <div className="text-white font-bold text-sm sm:text-base">{vitalSigns.presionArterial}</div>
+                      <div className="text-xs font-medium text-slate-400 uppercase truncate">
+                        Presión arterial
+                      </div>
+                      <div className="text-white font-bold text-sm sm:text-base">
+                        {vitalSigns.presionArterial}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -111,8 +127,12 @@ export const MedicalSummaryPanel: React.FC<MedicalSummaryPanelProps> = ({
                   <div className="bg-slate-700/50 rounded-lg p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 min-w-0">
                     <span className="text-pink-400 text-sm sm:text-lg flex-shrink-0">💓</span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium text-slate-400 uppercase truncate">Frecuencia cardíaca</div>
-                      <div className="text-white font-bold text-sm sm:text-base">{vitalSigns.frecuenciaCardiaca}</div>
+                      <div className="text-xs font-medium text-slate-400 uppercase truncate">
+                        Frecuencia cardíaca
+                      </div>
+                      <div className="text-white font-bold text-sm sm:text-base">
+                        {vitalSigns.frecuenciaCardiaca}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -121,8 +141,12 @@ export const MedicalSummaryPanel: React.FC<MedicalSummaryPanelProps> = ({
                   <div className="bg-slate-700/50 rounded-lg p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 min-w-0">
                     <span className="text-blue-400 text-sm sm:text-lg flex-shrink-0">💨</span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium text-slate-400 uppercase truncate">Saturación O₂</div>
-                      <div className="text-white font-bold text-sm sm:text-base">{vitalSigns.saturacionOxigeno}</div>
+                      <div className="text-xs font-medium text-slate-400 uppercase truncate">
+                        Saturación O₂
+                      </div>
+                      <div className="text-white font-bold text-sm sm:text-base">
+                        {vitalSigns.saturacionOxigeno}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -145,9 +169,11 @@ export const MedicalSummaryPanel: React.FC<MedicalSummaryPanelProps> = ({
               {diagnosis.diagnosticoPrincipal.probabilidad && (
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className="flex-1 bg-slate-700 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-gradient-to-r from-cyan-400 to-blue-500 h-2 rounded-full transition-all duration-500"
-                      style={{width: `${Math.round(diagnosis.diagnosticoPrincipal.probabilidad * 100)}%`}}
+                      style={{
+                        width: `${Math.round(diagnosis.diagnosticoPrincipal.probabilidad * 100)}%`,
+                      }}
                     ></div>
                   </div>
                   <span className="text-xs sm:text-sm font-bold text-slate-300 flex-shrink-0">
@@ -168,11 +194,20 @@ export const MedicalSummaryPanel: React.FC<MedicalSummaryPanelProps> = ({
             </h5>
             <div className="space-y-2 sm:space-y-3">
               {medications.slice(0, 2).map((med, index) => (
-                <div key={index} className="bg-green-900/20 border border-green-700/50 rounded-xl p-2.5 sm:p-3">
-                  <div className="font-bold text-green-300 mb-1 text-sm sm:text-base break-words">{med.medicamento}</div>
+                <div
+                  key={index}
+                  className="bg-green-900/20 border border-green-700/50 rounded-xl p-2.5 sm:p-3"
+                >
+                  <div className="font-bold text-green-300 mb-1 text-sm sm:text-base break-words">
+                    {med.medicamento}
+                  </div>
                   <div className="text-xs sm:text-sm text-slate-300 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                    <span className="bg-slate-700/50 px-2 py-1 rounded text-xs break-words flex-shrink-0">{med.dosis}</span>
-                    <span className="bg-slate-700/50 px-2 py-1 rounded text-xs break-words flex-shrink-0">{med.frecuencia}</span>
+                    <span className="bg-slate-700/50 px-2 py-1 rounded text-xs break-words flex-shrink-0">
+                      {med.dosis}
+                    </span>
+                    <span className="bg-slate-700/50 px-2 py-1 rounded text-xs break-words flex-shrink-0">
+                      {med.frecuencia}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -207,7 +242,9 @@ export const MedicalSummaryPanel: React.FC<MedicalSummaryPanelProps> = ({
         <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-slate-600">
           <button className="w-full py-3 sm:py-4 px-3 sm:px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-2xl text-sm sm:text-base font-bold transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 shadow-2xl hover:shadow-cyan-500/25 hover:scale-105">
             <span className="text-lg sm:text-xl flex-shrink-0">🤖</span>
-            <span className="text-center leading-tight">Generar Consulta Médica Completa con IA</span>
+            <span className="text-center leading-tight">
+              Generar Consulta Médica Completa con IA
+            </span>
           </button>
         </div>
       </div>

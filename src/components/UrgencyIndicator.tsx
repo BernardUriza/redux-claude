@@ -247,7 +247,7 @@ export const UrgencyIndicator = ({ urgencyData, className = '' }: UrgencyIndicat
             <div className="mt-2 flex items-center space-x-2 text-xs">
               <span className="text-slate-400">Principio:</span>
               <span className="text-blue-300 font-medium">
-                "Mejor sobrediagnosticar que subdiagnosticar"
+                &quot;Mejor sobrediagnosticar que subdiagnosticar&quot;
               </span>
             </div>
           </div>

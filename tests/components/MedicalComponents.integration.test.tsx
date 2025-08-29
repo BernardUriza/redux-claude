@@ -27,7 +27,7 @@ const createTestStore = (initialState?: Partial<RootState>) => {
   return configureStore({
     reducer: {
       medicalChat: medicalChatReducer,
-      soapAnalysis: soapAnalysisReducer
+      soapAnalysis: soapAnalysisReducer,
     },
     preloadedState: {
       medicalChat: {
@@ -36,29 +36,29 @@ const createTestStore = (initialState?: Partial<RootState>) => {
             messages: [],
             isLoading: false,
             lastActivity: Date.now(),
-            sessionId: 'test-session'
+            sessionId: 'test-session',
           },
           assistant: {
             messages: [],
             isLoading: false,
             lastActivity: Date.now(),
-            sessionId: 'test-session'
+            sessionId: 'test-session',
           },
           inference: {
             messages: [],
             isLoading: false,
             lastActivity: Date.now(),
-            sessionId: 'test-session'
-          }
+            sessionId: 'test-session',
+          },
         },
         sharedState: {
           currentSession: {
             id: 'test-session-integration',
-            startedAt: Date.now() - 600000 // 10 minutes ago
+            startedAt: Date.now() - 600000, // 10 minutes ago
           },
           isLoading: false,
-          error: undefined
-        }
+          error: undefined,
+        },
       },
       soapAnalysis: {
         currentAnalysis: null,
@@ -69,10 +69,10 @@ const createTestStore = (initialState?: Partial<RootState>) => {
         extractionQuality: 0,
         validationErrors: [],
         autoUpdate: true,
-        confidenceThreshold: 0.7
+        confidenceThreshold: 0.7,
       },
-      ...initialState
-    }
+      ...initialState,
+    },
   })
 }
 
@@ -81,52 +81,53 @@ const createMedicalMessageSet = (): MedicalMessage[] => [
   {
     id: 'msg-user-1',
     type: 'user',
-    content: 'Patient is experiencing severe headaches and nausea for the past 3 days. Blood pressure measured at 180/110.',
+    content:
+      'Patient is experiencing severe headaches and nausea for the past 3 days. Blood pressure measured at 180/110.',
     timestamp: Date.now() - 300000,
-    metadata: { sectionType: 'diagnosis' }
+    metadata: { sectionType: 'diagnosis' },
   },
   {
     id: 'msg-assistant-1',
     type: 'assistant',
-    content: 'Based on the symptoms and elevated blood pressure reading, this appears to be a hypertensive crisis. Physical examination shows signs of increased intracranial pressure.',
+    content:
+      'Based on the symptoms and elevated blood pressure reading, this appears to be a hypertensive crisis. Physical examination shows signs of increased intracranial pressure.',
     timestamp: Date.now() - 240000,
     confidence: 0.92,
-    metadata: { sectionType: 'diagnosis' }
+    metadata: { sectionType: 'diagnosis' },
   },
   {
     id: 'msg-assistant-2',
     type: 'assistant',
-    content: 'Diagnosis: Hypertensive emergency with possible secondary complications. Immediate intervention required.',
+    content:
+      'Diagnosis: Hypertensive emergency with possible secondary complications. Immediate intervention required.',
     timestamp: Date.now() - 180000,
     confidence: 0.95,
-    metadata: { sectionType: 'diagnosis' }
+    metadata: { sectionType: 'diagnosis' },
   },
   {
     id: 'msg-assistant-3',
     type: 'assistant',
-    content: 'Treatment plan: 1) Administer IV antihypertensive medication 2) Continuous cardiac monitoring 3) Schedule follow-up in 48 hours 4) Patient education on lifestyle modifications',
+    content:
+      'Treatment plan: 1) Administer IV antihypertensive medication 2) Continuous cardiac monitoring 3) Schedule follow-up in 48 hours 4) Patient education on lifestyle modifications',
     timestamp: Date.now() - 120000,
     confidence: 0.88,
-    metadata: { sectionType: 'treatment' }
-  }
+    metadata: { sectionType: 'treatment' },
+  },
 ]
 
 // 🧪 TEST WRAPPER COMPONENT
 const TestWrapper: React.FC<{ store: any; children: React.ReactNode }> = ({ store, children }) => (
   <Provider store={store}>
-    <div className="min-h-screen bg-slate-900 text-white p-4">
-      {children}
-    </div>
+    <div className="min-h-screen bg-slate-900 text-white p-4">{children}</div>
   </Provider>
 )
 
 describe('Medical Components Integration Tests', () => {
-  
   // 🏥 SOAP DISPLAY INTEGRATION
   describe('SOAPDisplay Integration', () => {
     it('should render empty state when no medical data exists', async () => {
       const store = createTestStore()
-      
+
       render(
         <TestWrapper store={store}>
           <SOAPDisplay />
@@ -145,20 +146,30 @@ describe('Medical Components Integration Tests', () => {
               messages,
               isLoading: false,
               lastActivity: Date.now(),
-              sessionId: 'test-session-integration'
+              sessionId: 'test-session-integration',
             },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session-integration' },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session-integration' }
+            assistant: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session-integration',
+            },
+            inference: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session-integration',
+            },
           },
           sharedState: {
             currentSession: {
               id: 'test-session-integration',
-              startedAt: Date.now() - 600000
+              startedAt: Date.now() - 600000,
             },
             isLoading: false,
-            error: undefined
-          }
-        }
+            error: undefined,
+          },
+        },
       })
 
       render(
@@ -169,7 +180,7 @@ describe('Medical Components Integration Tests', () => {
 
       await waitFor(() => {
         expect(screen.getByText(/subjetivo/i)).toBeInTheDocument()
-        expect(screen.getByText(/objetivo/i)).toBeInTheDocument()  
+        expect(screen.getByText(/objetivo/i)).toBeInTheDocument()
         expect(screen.getByText(/evaluación/i)).toBeInTheDocument()
         expect(screen.getByText(/plan/i)).toBeInTheDocument()
       })
@@ -184,16 +195,31 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
+            dashboard: {
+              messages,
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            assistant: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            inference: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
           },
           sharedState: {
             currentSession: { id: 'test-session', startedAt: Date.now() },
             isLoading: false,
-            error: undefined
-          }
-        }
+            error: undefined,
+          },
+        },
       })
 
       render(
@@ -216,16 +242,31 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages: [], isLoading: true, lastActivity: Date.now(), sessionId: 'test-session' },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
+            dashboard: {
+              messages: [],
+              isLoading: true,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            assistant: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            inference: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
           },
           sharedState: {
             currentSession: { id: 'test-session', startedAt: Date.now() },
             isLoading: false,
-            error: undefined
-          }
-        }
+            error: undefined,
+          },
+        },
       })
 
       render(
@@ -242,16 +283,31 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
+            dashboard: {
+              messages,
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            assistant: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            inference: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
           },
           sharedState: {
             currentSession: { id: 'test-session', startedAt: Date.now() },
             isLoading: false,
-            error: undefined
-          }
-        }
+            error: undefined,
+          },
+        },
       })
 
       render(
@@ -271,16 +327,31 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
+            dashboard: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            assistant: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            inference: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
           },
           sharedState: {
             currentSession: { id: 'test-session', startedAt: Date.now() },
             isLoading: false,
-            error: 'Sistema médico no disponible'
-          }
-        }
+            error: 'Sistema médico no disponible',
+          },
+        },
       })
 
       render(
@@ -314,16 +385,31 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
+            dashboard: {
+              messages,
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            assistant: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            inference: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
           },
           sharedState: {
             currentSession: { id: 'test-session', startedAt: Date.now() },
             isLoading: false,
-            error: undefined
-          }
-        }
+            error: undefined,
+          },
+        },
       })
 
       render(
@@ -359,16 +445,31 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
+            dashboard: {
+              messages,
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            assistant: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            inference: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
           },
           sharedState: {
             currentSession: { id: 'test-session', startedAt: Date.now() },
             isLoading: false,
-            error: undefined
-          }
-        }
+            error: undefined,
+          },
+        },
       })
 
       render(
@@ -425,16 +526,31 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
+            dashboard: {
+              messages,
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            assistant: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            inference: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
           },
           sharedState: {
             currentSession: { id: 'test-session', startedAt: Date.now() },
             isLoading: false,
-            error: undefined
-          }
-        }
+            error: undefined,
+          },
+        },
       })
 
       render(
@@ -456,16 +572,31 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
+            dashboard: {
+              messages,
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            assistant: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            inference: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
           },
           sharedState: {
             currentSession: { id: 'test-session', startedAt: Date.now() },
             isLoading: false,
-            error: undefined
-          }
-        }
+            error: undefined,
+          },
+        },
       })
 
       render(
@@ -478,7 +609,7 @@ describe('Medical Components Integration Tests', () => {
         // Find and click clinical notes filter
         const clinicalTab = screen.getByText(/clínicas/i)
         fireEvent.click(clinicalTab)
-        
+
         // Should filter to show only clinical notes
         expect(screen.getAllByText(/clinical|clínicas/i).length).toBeGreaterThan(0)
       })
@@ -501,7 +632,7 @@ describe('Medical Components Integration Tests', () => {
 
       // Simulate alert creation through monitor
       const { medicalSystemMonitor } = require('../../src/monitoring/MedicalSystemMonitor')
-      
+
       // Create a test alert
       medicalSystemMonitor.emit('alert', {
         id: 'test-alert-1',
@@ -510,7 +641,7 @@ describe('Medical Components Integration Tests', () => {
         message: 'Sistema ejecutándose con alta latencia',
         timestamp: Date.now(),
         severity: 'medium',
-        resolved: false
+        resolved: false,
       })
 
       await waitFor(() => {
@@ -547,11 +678,14 @@ describe('Medical Components Integration Tests', () => {
         </TestWrapper>
       )
 
-      await waitFor(() => {
-        expect(screen.getByText(/sistema médico multinúcleo/i)).toBeInTheDocument()
-        expect(screen.getByText(/uso cpu/i)).toBeInTheDocument()
-        expect(screen.getByText(/memoria/i)).toBeInTheDocument()
-      }, { timeout: 10000 })
+      await waitFor(
+        () => {
+          expect(screen.getByText(/sistema médico multinúcleo/i)).toBeInTheDocument()
+          expect(screen.getByText(/uso cpu/i)).toBeInTheDocument()
+          expect(screen.getByText(/memoria/i)).toBeInTheDocument()
+        },
+        { timeout: 10000 }
+      )
 
       // Cleanup
       medicalSystemMonitor.stop()
@@ -569,7 +703,7 @@ describe('Medical Components Integration Tests', () => {
       await waitFor(() => {
         const expandButton = screen.getByText(/expandir/i)
         fireEvent.click(expandButton)
-        
+
         expect(screen.getByText(/contraer/i)).toBeInTheDocument()
       })
     })
@@ -582,16 +716,31 @@ describe('Medical Components Integration Tests', () => {
       const store = createTestStore({
         medicalChat: {
           cores: {
-            dashboard: { messages, isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            assistant: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' },
-            inference: { messages: [], isLoading: false, lastActivity: Date.now(), sessionId: 'test-session' }
+            dashboard: {
+              messages,
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            assistant: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
+            inference: {
+              messages: [],
+              isLoading: false,
+              lastActivity: Date.now(),
+              sessionId: 'test-session',
+            },
           },
           sharedState: {
             currentSession: { id: 'test-session-complete', startedAt: Date.now() },
             isLoading: false,
-            error: undefined
-          }
-        }
+            error: undefined,
+          },
+        },
       })
 
       render(
@@ -607,22 +756,25 @@ describe('Medical Components Integration Tests', () => {
       )
 
       // Verify all components render with medical data
-      await waitFor(() => {
-        // SOAP Display should show sections
-        expect(screen.getByText(/subjetivo/i)).toBeInTheDocument()
-        
-        // Real Time Metrics should show confidence
-        expect(screen.getByText(/confianza diagnóstica/i)).toBeInTheDocument()
-        
-        // Iterative Progress should show progress
-        expect(screen.getByText(/diagnóstico iterativo/i)).toBeInTheDocument()
-        
-        // Follow Up should show reminders interface
-        expect(screen.getByText(/seguimiento y recordatorios/i)).toBeInTheDocument()
-        
-        // Medical Notes should show generated notes
-        expect(screen.getByText(/notas médicas/i)).toBeInTheDocument()
-      }, { timeout: 10000 })
+      await waitFor(
+        () => {
+          // SOAP Display should show sections
+          expect(screen.getByText(/subjetivo/i)).toBeInTheDocument()
+
+          // Real Time Metrics should show confidence
+          expect(screen.getByText(/confianza diagnóstica/i)).toBeInTheDocument()
+
+          // Iterative Progress should show progress
+          expect(screen.getByText(/diagnóstico iterativo/i)).toBeInTheDocument()
+
+          // Follow Up should show reminders interface
+          expect(screen.getByText(/seguimiento y recordatorios/i)).toBeInTheDocument()
+
+          // Medical Notes should show generated notes
+          expect(screen.getByText(/notas médicas/i)).toBeInTheDocument()
+        },
+        { timeout: 10000 }
+      )
 
       // Test that components are using real data (not mocks)
       expect(screen.getByText(/headaches/i)).toBeInTheDocument()

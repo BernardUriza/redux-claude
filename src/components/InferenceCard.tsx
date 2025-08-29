@@ -20,7 +20,9 @@ export const InferenceCard: React.FC<InferenceCardProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-600/50 rounded-2xl p-5 mb-4 shadow-xl backdrop-blur-sm ${className}`}>
+    <div
+      className={`bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-600/50 rounded-2xl p-5 mb-4 shadow-xl backdrop-blur-sm ${className}`}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-3">
@@ -28,14 +30,18 @@ export const InferenceCard: React.FC<InferenceCardProps> = ({
               {inference.category}
             </span>
             <div className="flex items-center gap-2 bg-slate-700/50 px-3 py-1 rounded-full">
-              <div className={`w-2 h-2 rounded-full ${inference.confidence >= 0.8 ? 'bg-green-400' : inference.confidence >= 0.6 ? 'bg-yellow-400' : 'bg-orange-400'}`}></div>
+              <div
+                className={`w-2 h-2 rounded-full ${inference.confidence >= 0.8 ? 'bg-green-400' : inference.confidence >= 0.6 ? 'bg-yellow-400' : 'bg-orange-400'}`}
+              ></div>
               <span className="text-sm font-bold text-slate-200">
                 {Math.round(inference.confidence * 100)}%
               </span>
             </div>
           </div>
 
-          <p className="text-base text-slate-100 mb-3 font-medium leading-relaxed">{inference.inference}</p>
+          <p className="text-base text-slate-100 mb-3 font-medium leading-relaxed">
+            {inference.inference}
+          </p>
 
           {inference.evidence.length > 0 && (
             <div className="bg-slate-700/30 rounded-lg p-3 mt-3">

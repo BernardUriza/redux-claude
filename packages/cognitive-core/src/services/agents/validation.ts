@@ -1,4 +1,4 @@
-// ✅ Validation Agent Definition  
+// ✅ Validation Agent Definition
 // Especialista en validación de decisiones clínicas y detección de errores
 
 import { AgentType, AgentDefinition } from '../../types/agents'

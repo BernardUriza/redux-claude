@@ -23,7 +23,7 @@ const nextConfig = {
       // ⚡ Optimizaciones de Tree Shaking
       config.optimization.usedExports = true
       config.optimization.sideEffects = false
-      
+
       // Bundle splitting más inteligente
       config.optimization.splitChunks = {
         chunks: 'all',
