@@ -2,7 +2,7 @@
 // Creado por Bernard Orozco - Sin estado local, solo servicios
 
 import { useMedicalChat, useAssistantChat } from '@redux-claude/cognitive-core'
-import React, { useRef } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { DynamicInferencePanel } from './DynamicInferencePanel'
 import { MedicalChatMessage } from './MedicalChatMessage'
 
@@ -43,6 +43,21 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
     coreType === 'assistant' ? assistantChat : dashboardChat
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const [autoSent, setAutoSent] = useState(false)
+  const sentMessagesRef = useRef(new Set<string>())
+  
+  // 🚀 AUTO-ENVÍO: Enviar partialInput automáticamente cuando esté presente
+  useEffect(() => {
+    const messageKey = `${coreType}-${partialInput?.trim()}`
+    
+    if (partialInput && partialInput.trim() && !isLoading && !sentMessagesRef.current.has(messageKey)) {
+      console.log(`🚀 [AUTO-SEND] [${coreType.toUpperCase()}] Enviando mensaje automáticamente:`, partialInput)
+      sendMedicalQuery(partialInput)
+      onInitialResponse?.(partialInput)
+      sentMessagesRef.current.add(messageKey)
+      setAutoSent(true)
+    }
+  }, [partialInput, isLoading, sendMedicalQuery, onInitialResponse, coreType])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

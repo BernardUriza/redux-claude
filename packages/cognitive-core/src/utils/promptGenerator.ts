@@ -48,50 +48,50 @@ function buildStructuredMedicalPrompt(data: MedicalExtractionOutput): string {
   
   // 📋 DATOS DEMOGRÁFICOS (NOM Compliant)
   sections.push('📋 DATOS DEL PACIENTE:')
-  sections.push(`• Edad: ${data.demographics.patient_age_years} años`)
-  sections.push(`• Género: ${data.demographics.patient_gender}`)
+  sections.push(`• Edad: ${data.demographics?.patient_age_years || 'No especificada'} años`)
+  sections.push(`• Género: ${data.demographics?.patient_gender || 'No especificado'}`)
   
   // 🏥 PRESENTACIÓN CLÍNICA
   sections.push('\n🏥 PRESENTACIÓN CLÍNICA:')
-  sections.push(`• Motivo de consulta: ${data.clinical_presentation.chief_complaint}`)
+  sections.push(`• Motivo de consulta: ${data.clinical_presentation?.chief_complaint || 'No especificado'}`)
   
-  if (data.clinical_presentation.primary_symptoms && data.clinical_presentation.primary_symptoms.length > 0) {
-    sections.push(`• Síntomas principales: ${data.clinical_presentation.primary_symptoms.join(', ')}`)
+  if (data.clinical_presentation?.primary_symptoms && data.clinical_presentation.primary_symptoms.length > 0) {
+    sections.push(`• Síntomas principales: ${data.clinical_presentation?.primary_symptoms.join(', ')}`)
   }
   
-  if (data.clinical_presentation.anatomical_location !== "unknown") {
-    sections.push(`• Localización: ${data.clinical_presentation.anatomical_location}`)
+  if (data.clinical_presentation?.anatomical_location !== "unknown") {
+    sections.push(`• Localización: ${data.clinical_presentation?.anatomical_location}`)
   }
   
   // ⏰ CARACTERÍSTICAS DEL SÍNTOMA
   sections.push('\n⏰ CARACTERÍSTICAS:')
   
-  if (data.symptom_characteristics.duration_description !== "unknown") {
-    sections.push(`• Duración: ${data.symptom_characteristics.duration_description}`)
+  if (data.symptom_characteristics?.duration_description !== "unknown") {
+    sections.push(`• Duración: ${data.symptom_characteristics?.duration_description}`)
   }
   
-  if (data.symptom_characteristics.pain_intensity_scale !== null) {
-    sections.push(`• Intensidad: ${data.symptom_characteristics.pain_intensity_scale}/10`)
+  if (data.symptom_characteristics?.pain_intensity_scale !== null) {
+    sections.push(`• Intensidad: ${data.symptom_characteristics?.pain_intensity_scale}/10`)
   }
   
-  if (data.symptom_characteristics.pain_characteristics && data.symptom_characteristics.pain_characteristics.length > 0) {
-    sections.push(`• Características del dolor: ${data.symptom_characteristics.pain_characteristics.join(', ')}`)
+  if (data.symptom_characteristics?.pain_characteristics && data.symptom_characteristics?.pain_characteristics.length > 0) {
+    sections.push(`• Características del dolor: ${data.symptom_characteristics?.pain_characteristics.join(', ')}`)
   }
   
-  if (data.symptom_characteristics.aggravating_factors && data.symptom_characteristics.aggravating_factors.length > 0) {
-    sections.push(`• Factores agravantes: ${data.symptom_characteristics.aggravating_factors.join(', ')}`)
+  if (data.symptom_characteristics?.aggravating_factors && data.symptom_characteristics?.aggravating_factors.length > 0) {
+    sections.push(`• Factores agravantes: ${data.symptom_characteristics?.aggravating_factors.join(', ')}`)
   }
   
-  if (data.symptom_characteristics.relieving_factors && data.symptom_characteristics.relieving_factors.length > 0) {
-    sections.push(`• Factores que alivian: ${data.symptom_characteristics.relieving_factors.join(', ')}`)
+  if (data.symptom_characteristics?.relieving_factors && data.symptom_characteristics?.relieving_factors.length > 0) {
+    sections.push(`• Factores que alivian: ${data.symptom_characteristics?.relieving_factors.join(', ')}`)
   }
   
-  if (data.symptom_characteristics.associated_symptoms && data.symptom_characteristics.associated_symptoms.length > 0) {
-    sections.push(`• Síntomas asociados: ${data.symptom_characteristics.associated_symptoms.join(', ')}`)
+  if (data.symptom_characteristics?.associated_symptoms && data.symptom_characteristics?.associated_symptoms.length > 0) {
+    sections.push(`• Síntomas asociados: ${data.symptom_characteristics?.associated_symptoms.join(', ')}`)
   }
   
-  if (data.symptom_characteristics.temporal_pattern !== "unknown") {
-    sections.push(`• Patrón temporal: ${data.symptom_characteristics.temporal_pattern}`)
+  if (data.symptom_characteristics?.temporal_pattern !== "unknown") {
+    sections.push(`• Patrón temporal: ${data.symptom_characteristics?.temporal_pattern}`)
   }
   
   // 📊 INSTRUCTION PARA CLAUDE

@@ -204,13 +204,13 @@ export class IntelligentMedicalChat {
     const context: string[] = []
     
     // Datos ya identificados
-    if (extractedData.demographics?.patient_age_years !== 'unknown') {
+    if (extractedData.demographics?.patient_age_years && extractedData.demographics.patient_age_years !== 'unknown') {
       context.push(`Edad: ${extractedData.demographics.patient_age_years} años`)
     }
-    if (extractedData.demographics?.patient_gender !== 'unknown') {
+    if (extractedData.demographics?.patient_gender && extractedData.demographics.patient_gender !== 'unknown') {
       context.push(`Género: ${extractedData.demographics.patient_gender}`)
     }
-    if (extractedData.clinical_presentation?.chief_complaint !== 'unknown') {
+    if (extractedData.clinical_presentation?.chief_complaint && extractedData.clinical_presentation.chief_complaint !== 'unknown') {
       context.push(`Síntoma: ${extractedData.clinical_presentation.chief_complaint}`)
     }
     

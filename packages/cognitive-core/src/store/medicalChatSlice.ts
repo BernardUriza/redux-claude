@@ -383,7 +383,10 @@ const medicalChatSlice = createSlice({
       state.medicalExtraction.extractionProcess.isExtracting = false
       state.medicalExtraction.extractionProcess.lastExtractedAt = new Date().toISOString()
       
-      // Add to history
+      // Add to history (initialize if needed)
+      if (!state.medicalExtraction.extractionHistory[sessionId]) {
+        state.medicalExtraction.extractionHistory[sessionId] = []
+      }
       state.medicalExtraction.extractionHistory[sessionId].push(action.payload)
       
       // Clear WIP data
@@ -394,7 +397,7 @@ const medicalChatSlice = createSlice({
       }
       
       // Update shared state if extraction is complete enough
-      if (action.payload.extraction_metadata.ready_for_soap_generation) {
+      if (action.payload.extraction_metadata?.ready_for_soap_generation) {
         state.sharedState.readyForSOAP = true
       }
     },
@@ -586,15 +589,12 @@ export { extractMedicalDataThunk, continueExtractionThunk }
 type RootState = { medicalChat: MedicalChatState }
 
 // 📊 Basic data access selectors
-export const selectExtractedData = createSelector(
-  [(state: RootState) => state.medicalChat.medicalExtraction.currentExtraction],
-  (currentExtraction) => currentExtraction
-)
+// Direct selectors without createSelector to avoid identity warnings
+export const selectExtractedData = (state: RootState) => 
+  state.medicalChat.medicalExtraction.currentExtraction
 
-export const selectExtractionProcess = createSelector(
-  [(state: RootState) => state.medicalChat.medicalExtraction.extractionProcess],
-  (extractionProcess) => extractionProcess
-)
+export const selectExtractionProcess = (state: RootState) => 
+  state.medicalChat.medicalExtraction.extractionProcess
 
 export const selectWipData = createSelector(
   [(state: RootState) => state.medicalChat.medicalExtraction.wipData],
@@ -605,7 +605,7 @@ export const selectWipData = createSelector(
 export const selectCompletenessPercentage = createSelector(
   [selectExtractedData],
   (extractedData) => {
-    if (!extractedData) return 0
+    if (!extractedData?.extraction_metadata) return 0
     return extractedData.extraction_metadata.overall_completeness_percentage
   }
 )
@@ -614,7 +614,7 @@ export const selectCompletenessPercentage = createSelector(
 export const selectMissingCriticalFields = createSelector(
   [selectExtractedData],
   (extractedData) => {
-    if (!extractedData) return []
+    if (!extractedData?.extraction_metadata) return []
     return extractedData.extraction_metadata.missing_critical_fields
   }
 )
@@ -623,7 +623,7 @@ export const selectMissingCriticalFields = createSelector(
 export const selectNOMCompliance = createSelector(
   [selectExtractedData],
   (extractedData) => {
-    if (!extractedData) return false
+    if (!extractedData?.extraction_metadata) return false
     return extractedData.extraction_metadata.nom_compliant
   }
 )
@@ -632,7 +632,7 @@ export const selectNOMCompliance = createSelector(
 export const selectReadyForSOAP = createSelector(
   [selectExtractedData],
   (extractedData) => {
-    if (!extractedData) return false
+    if (!extractedData?.extraction_metadata) return false
     return extractedData.extraction_metadata.ready_for_soap_generation
   }
 )
@@ -667,25 +667,25 @@ export const selectFieldCompleteness = createSelector(
     
     return {
       demographics: {
-        age: extractedData.demographics.patient_age_years !== "unknown",
-        gender: extractedData.demographics.patient_gender !== "unknown",
-        confidence: extractedData.demographics.confidence_demographic,
+        age: extractedData.demographics?.patient_age_years !== "unknown",
+        gender: extractedData.demographics?.patient_gender !== "unknown",
+        confidence: extractedData.demographics?.confidence_demographic || 0,
       },
       clinical: {
-        complaint: extractedData.clinical_presentation.chief_complaint !== "unknown",
-        symptoms: extractedData.clinical_presentation.primary_symptoms?.length ? extractedData.clinical_presentation.primary_symptoms.length > 0 : false,
-        location: extractedData.clinical_presentation.anatomical_location !== "unknown",
-        confidence: extractedData.clinical_presentation.confidence_symptoms,
+        complaint: extractedData.clinical_presentation?.chief_complaint !== "unknown",
+        symptoms: extractedData.clinical_presentation?.primary_symptoms?.length ? extractedData.clinical_presentation?.primary_symptoms.length > 0 : false,
+        location: extractedData.clinical_presentation?.anatomical_location !== "unknown",
+        confidence: extractedData.clinical_presentation?.confidence_symptoms || 0,
       },
       context: {
-        duration: extractedData.symptom_characteristics.duration_description !== "unknown",
-        intensity: extractedData.symptom_characteristics.pain_intensity_scale !== null,
-        characteristics: extractedData.symptom_characteristics.pain_characteristics?.length ? extractedData.symptom_characteristics.pain_characteristics.length > 0 : false,
-        aggravating: extractedData.symptom_characteristics.aggravating_factors?.length ? extractedData.symptom_characteristics.aggravating_factors.length > 0 : false,
-        relieving: extractedData.symptom_characteristics.relieving_factors?.length ? extractedData.symptom_characteristics.relieving_factors.length > 0 : false,
-        associated: extractedData.symptom_characteristics.associated_symptoms?.length ? extractedData.symptom_characteristics.associated_symptoms.length > 0 : false,
-        temporal: extractedData.symptom_characteristics.temporal_pattern !== "unknown",
-        confidence: extractedData.symptom_characteristics.confidence_context,
+        duration: extractedData.symptom_characteristics?.duration_description !== "unknown",
+        intensity: extractedData.symptom_characteristics?.pain_intensity_scale !== null,
+        characteristics: extractedData.symptom_characteristics?.pain_characteristics?.length ? extractedData.symptom_characteristics?.pain_characteristics.length > 0 : false,
+        aggravating: extractedData.symptom_characteristics?.aggravating_factors?.length ? extractedData.symptom_characteristics?.aggravating_factors.length > 0 : false,
+        relieving: extractedData.symptom_characteristics?.relieving_factors?.length ? extractedData.symptom_characteristics?.relieving_factors.length > 0 : false,
+        associated: extractedData.symptom_characteristics?.associated_symptoms?.length ? extractedData.symptom_characteristics?.associated_symptoms.length > 0 : false,
+        temporal: extractedData.symptom_characteristics?.temporal_pattern !== "unknown",
+        confidence: extractedData.symptom_characteristics?.confidence_context || 0,
       }
     }
   }

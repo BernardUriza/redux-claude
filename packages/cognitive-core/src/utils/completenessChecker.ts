@@ -58,16 +58,16 @@ export function checkCompleteness(
   
   // Demographics scoring (40% por defecto)
   let demographicScore = 0
-  const agePresent = data.demographics.patient_age_years !== "unknown"
-  const genderPresent = data.demographics.patient_gender !== "unknown"
+  const agePresent = data.demographics?.patient_age_years !== "unknown"
+  const genderPresent = data.demographics?.patient_gender !== "unknown"
   
   if (agePresent) demographicScore += weights.demographics * 0.5 // 50% del peso demographic
   if (genderPresent) demographicScore += weights.demographics * 0.5 // 50% del peso demographic
   
   // Clinical scoring (30% por defecto)  
   let clinicalScore = 0
-  const complaintPresent = data.clinical_presentation.chief_complaint !== "unknown"
-  const symptomsPresent = data.clinical_presentation.primary_symptoms && data.clinical_presentation.primary_symptoms.length > 0
+  const complaintPresent = data.clinical_presentation?.chief_complaint !== "unknown"
+  const symptomsPresent = data.clinical_presentation?.primary_symptoms && data.clinical_presentation.primary_symptoms.length > 0
   
   if (complaintPresent) clinicalScore += weights.clinical * 0.5 // 50% del peso clinical
   if (symptomsPresent) clinicalScore += weights.clinical * 0.5 // 50% del peso clinical
@@ -75,12 +75,12 @@ export function checkCompleteness(
   // Context scoring (30% por defecto) - at least 2 fields needed for full score
   let contextScore = 0
   const contextFields = [
-    data.symptom_characteristics.duration_description !== "unknown",
-    data.symptom_characteristics.pain_intensity_scale !== null,
-    data.symptom_characteristics.pain_characteristics && data.symptom_characteristics.pain_characteristics.length > 0,
-    data.symptom_characteristics.aggravating_factors && data.symptom_characteristics.aggravating_factors.length > 0,
-    data.symptom_characteristics.relieving_factors && data.symptom_characteristics.relieving_factors.length > 0,
-    data.symptom_characteristics.temporal_pattern !== "unknown"
+    data.symptom_characteristics?.duration_description !== "unknown",
+    data.symptom_characteristics?.pain_intensity_scale !== null,
+    data.symptom_characteristics?.pain_characteristics && data.symptom_characteristics.pain_characteristics.length > 0,
+    data.symptom_characteristics?.aggravating_factors && data.symptom_characteristics.aggravating_factors.length > 0,
+    data.symptom_characteristics?.relieving_factors && data.symptom_characteristics.relieving_factors.length > 0,
+    data.symptom_characteristics?.temporal_pattern !== "unknown"
   ]
   
   const presentContextFields = contextFields.filter(Boolean).length
@@ -96,8 +96,8 @@ export function checkCompleteness(
   if (!genderPresent) missingFields.push('patient_gender')  
   if (!complaintPresent) missingFields.push('chief_complaint')
   if (!symptomsPresent) missingFields.push('primary_symptoms')
-  if (data.symptom_characteristics.duration_description === "unknown") missingFields.push('duration_description')
-  if (data.symptom_characteristics.pain_intensity_scale === null) missingFields.push('pain_intensity_scale')
+  if (data.symptom_characteristics?.duration_description === "unknown") missingFields.push('duration_description')
+  if (data.symptom_characteristics?.pain_intensity_scale === null) missingFields.push('pain_intensity_scale')
   
   // NOM compliance check (Mexican healthcare standards)
   const nomCompliant = agePresent && genderPresent && complaintPresent
@@ -142,58 +142,58 @@ export function getCompletenessDetails(
   return {
     demographics: {
       age: {
-        present: data.demographics.patient_age_years !== "unknown",
+        present: data.demographics?.patient_age_years !== "unknown",
         weight: demographicWeight,
-        score: data.demographics.patient_age_years !== "unknown" ? demographicWeight : 0
+        score: data.demographics?.patient_age_years !== "unknown" ? demographicWeight : 0
       },
       gender: {
-        present: data.demographics.patient_gender !== "unknown", 
+        present: data.demographics?.patient_gender !== "unknown", 
         weight: demographicWeight,
-        score: data.demographics.patient_gender !== "unknown" ? demographicWeight : 0
+        score: data.demographics?.patient_gender !== "unknown" ? demographicWeight : 0
       }
     },
     clinical: {
       complaint: {
-        present: data.clinical_presentation.chief_complaint !== "unknown",
+        present: data.clinical_presentation?.chief_complaint !== "unknown",
         weight: clinicalWeight,
-        score: data.clinical_presentation.chief_complaint !== "unknown" ? clinicalWeight : 0
+        score: data.clinical_presentation?.chief_complaint !== "unknown" ? clinicalWeight : 0
       },
       symptoms: {
-        present: Boolean(data.clinical_presentation.primary_symptoms && data.clinical_presentation.primary_symptoms.length > 0),
+        present: Boolean(data.clinical_presentation?.primary_symptoms && data.clinical_presentation?.primary_symptoms.length > 0),
         weight: clinicalWeight, 
-        score: data.clinical_presentation.primary_symptoms && data.clinical_presentation.primary_symptoms.length > 0 ? clinicalWeight : 0
+        score: data.clinical_presentation?.primary_symptoms && data.clinical_presentation?.primary_symptoms.length > 0 ? clinicalWeight : 0
       }
     },
     context: {
       duration: {
-        present: data.symptom_characteristics.duration_description !== "unknown",
+        present: data.symptom_characteristics?.duration_description !== "unknown",
         weight: contextWeight,
-        score: data.symptom_characteristics.duration_description !== "unknown" ? contextWeight : 0
+        score: data.symptom_characteristics?.duration_description !== "unknown" ? contextWeight : 0
       },
       intensity: {
-        present: data.symptom_characteristics.pain_intensity_scale !== null,
+        present: data.symptom_characteristics?.pain_intensity_scale !== null,
         weight: contextWeight,
-        score: data.symptom_characteristics.pain_intensity_scale !== null ? contextWeight : 0
+        score: data.symptom_characteristics?.pain_intensity_scale !== null ? contextWeight : 0
       },
       characteristics: {
-        present: Boolean(data.symptom_characteristics.pain_characteristics && data.symptom_characteristics.pain_characteristics.length > 0),
+        present: Boolean(data.symptom_characteristics?.pain_characteristics && data.symptom_characteristics?.pain_characteristics.length > 0),
         weight: contextWeight,
-        score: data.symptom_characteristics.pain_characteristics && data.symptom_characteristics.pain_characteristics.length > 0 ? contextWeight : 0
+        score: data.symptom_characteristics?.pain_characteristics && data.symptom_characteristics?.pain_characteristics.length > 0 ? contextWeight : 0
       },
       aggravating: {
-        present: Boolean(data.symptom_characteristics.aggravating_factors && data.symptom_characteristics.aggravating_factors.length > 0),
+        present: Boolean(data.symptom_characteristics?.aggravating_factors && data.symptom_characteristics?.aggravating_factors.length > 0),
         weight: contextWeight,
-        score: data.symptom_characteristics.aggravating_factors && data.symptom_characteristics.aggravating_factors.length > 0 ? contextWeight : 0
+        score: data.symptom_characteristics?.aggravating_factors && data.symptom_characteristics?.aggravating_factors.length > 0 ? contextWeight : 0
       },
       relieving: {
-        present: Boolean(data.symptom_characteristics.relieving_factors && data.symptom_characteristics.relieving_factors.length > 0),
+        present: Boolean(data.symptom_characteristics?.relieving_factors && data.symptom_characteristics?.relieving_factors.length > 0),
         weight: contextWeight,
-        score: data.symptom_characteristics.relieving_factors && data.symptom_characteristics.relieving_factors.length > 0 ? contextWeight : 0
+        score: data.symptom_characteristics?.relieving_factors && data.symptom_characteristics?.relieving_factors.length > 0 ? contextWeight : 0
       },
       temporal: {
-        present: data.symptom_characteristics.temporal_pattern !== "unknown",
+        present: data.symptom_characteristics?.temporal_pattern !== "unknown",
         weight: contextWeight,
-        score: data.symptom_characteristics.temporal_pattern !== "unknown" ? contextWeight : 0
+        score: data.symptom_characteristics?.temporal_pattern !== "unknown" ? contextWeight : 0
       }
     }
   }
