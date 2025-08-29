@@ -39,6 +39,9 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
   const extractedData = useAppSelector(selectExtractedData)
   const completenessPercentage = useAppSelector(selectCompletenessPercentage) 
   const isNOMCompliant = useAppSelector(selectNOMCompliance)
+  
+  // 🔥 DEBUGGING: Logear cambios en selector
+  console.log('🧠 [SELECTOR] extractedData changed:', extractedData)
   const [inferences, setInferences] = useState<PatientInference[]>([
     {
       id: 'age',
@@ -98,17 +101,23 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     if (!extractedData) return
 
     console.log('🔄 [PANEL] Actualizando inferencias desde store:', extractedData)
+    console.log('🔍 [DEBUG] Tipo de extractedData:', typeof extractedData)
+    console.log('🔍 [DEBUG] Tiene content?:', extractedData && typeof extractedData === 'object' && 'content' in extractedData)
     
     // 🔥 FIX CRÍTICO: Los datos llegan como JSON string en campo 'content'
     let parsedData = extractedData
-    if (typeof extractedData === 'object' && extractedData.content && typeof extractedData.content === 'string') {
+    if (typeof extractedData === 'object' && extractedData && 'content' in extractedData && typeof (extractedData as any).content === 'string') {
+      console.log('🔧 [ATTEMPT] Intentando parsear JSON desde content...')
       try {
-        parsedData = JSON.parse(extractedData.content)
-        console.log('🔧 [FIX] JSON parseado desde content:', parsedData)
+        parsedData = JSON.parse((extractedData as any).content)
+        console.log('🔧 [SUCCESS] JSON parseado desde content:', parsedData)
       } catch (error) {
         console.warn('⚠️ Error parseando JSON desde content:', error)
+        console.log('⚠️ Content raw:', (extractedData as any).content)
         return
       }
+    } else {
+      console.log('🔍 [NO PARSING] ExtractedData no tiene content string, usando directamente')
     }
     
     console.log('🔍 [DEBUG] pain_intensity_scale:', parsedData.symptom_characteristics?.pain_intensity_scale)
@@ -198,7 +207,7 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
 
     setInferences(updatedInferences)
     onInferenceUpdate?.(updatedInferences)
-  }, [extractedData]) // Re-ejecutar cuando cambie extractedData
+  }, [extractedData, completenessPercentage]) // Re-ejecutar cuando cambie extractedData o completeness
 
   // 🧠 Actualizar inferencias basadas en el mensaje actual con debounce (UI simple - FALLBACK)
   useEffect(() => {
