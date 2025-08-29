@@ -30,7 +30,8 @@
       "Bash(curl:*)",
       "Bash(npm run typecheck:*)",
       "Bash(git log:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(npm run clean:*)"
     ],
     "deny": [],
     "ask": []

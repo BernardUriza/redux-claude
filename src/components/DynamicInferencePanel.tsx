@@ -98,6 +98,8 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     if (!extractedData) return
 
     console.log('🔄 [PANEL] Actualizando inferencias desde store:', extractedData)
+    console.log('🔍 [DEBUG] pain_intensity_scale:', extractedData.symptom_characteristics?.pain_intensity_scale)
+    console.log('🔍 [DEBUG] Tipo de pain_intensity_scale:', typeof extractedData.symptom_characteristics?.pain_intensity_scale)
 
     const updatedInferences = [...inferences]
 
@@ -140,12 +142,18 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     }
 
     // Actualizar intensidad del dolor desde store
-    if (extractedData.symptom_characteristics?.pain_intensity_scale !== null && extractedData.symptom_characteristics?.pain_intensity_scale !== undefined) {
+    const intensityValue = extractedData.symptom_characteristics?.pain_intensity_scale
+    console.log('🔍 [DEBUG] Intensidad value raw:', intensityValue)
+    
+    if (intensityValue !== null && intensityValue !== undefined && intensityValue !== 'unknown' && intensityValue !== '') {
       const intensityIndex = updatedInferences.findIndex(i => i.id === 'intensity')
       if (intensityIndex !== -1) {
+        const numericIntensity = typeof intensityValue === 'number' ? intensityValue : parseInt(String(intensityValue))
+        console.log('🎯 [DEBUG] Aplicando intensidad:', numericIntensity)
+        
         updatedInferences[intensityIndex] = {
           ...updatedInferences[intensityIndex],
-          value: `${extractedData.symptom_characteristics.pain_intensity_scale}/10`,
+          value: `${numericIntensity}/10`,
           confidence: 0.95,
         }
       }
