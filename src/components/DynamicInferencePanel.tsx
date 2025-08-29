@@ -98,51 +98,64 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     if (!extractedData) return
 
     console.log('🔄 [PANEL] Actualizando inferencias desde store:', extractedData)
-    console.log('🔍 [DEBUG] pain_intensity_scale:', extractedData.symptom_characteristics?.pain_intensity_scale)
-    console.log('🔍 [DEBUG] Tipo de pain_intensity_scale:', typeof extractedData.symptom_characteristics?.pain_intensity_scale)
+    
+    // 🔥 FIX CRÍTICO: Los datos llegan como JSON string en campo 'content'
+    let parsedData = extractedData
+    if (typeof extractedData === 'object' && extractedData.content && typeof extractedData.content === 'string') {
+      try {
+        parsedData = JSON.parse(extractedData.content)
+        console.log('🔧 [FIX] JSON parseado desde content:', parsedData)
+      } catch (error) {
+        console.warn('⚠️ Error parseando JSON desde content:', error)
+        return
+      }
+    }
+    
+    console.log('🔍 [DEBUG] pain_intensity_scale:', parsedData.symptom_characteristics?.pain_intensity_scale)
+    console.log('🔍 [DEBUG] Tipo de pain_intensity_scale:', typeof parsedData.symptom_characteristics?.pain_intensity_scale)
 
     const updatedInferences = [...inferences]
 
     // Actualizar edad desde store
-    if (extractedData.demographics?.patient_age_years !== "unknown" && extractedData.demographics?.patient_age_years) {
+    if (parsedData.demographics?.patient_age_years !== "unknown" && parsedData.demographics?.patient_age_years) {
       const ageIndex = updatedInferences.findIndex(i => i.id === 'age')
       if (ageIndex !== -1) {
         updatedInferences[ageIndex] = {
           ...updatedInferences[ageIndex],
-          value: extractedData.demographics.patient_age_years,
-          confidence: extractedData.demographics.confidence_demographic || 0.9,
+          value: parsedData.demographics.patient_age_years,
+          confidence: parsedData.demographics.confidence_demographic || 0.9,
         }
       }
     }
 
     // Actualizar género desde store
-    if (extractedData.demographics?.patient_gender && extractedData.demographics.patient_gender !== "unknown") {
+    if (parsedData.demographics?.patient_gender && parsedData.demographics.patient_gender !== "unknown") {
       const genderIndex = updatedInferences.findIndex(i => i.id === 'gender')
       if (genderIndex !== -1) {
-        const genderValue = extractedData.demographics.patient_gender === 'masculino' ? 'Masculino' : 
-                           extractedData.demographics.patient_gender === 'femenino' ? 'Femenino' : 'No especificado'
+        const genderValue = parsedData.demographics.patient_gender === 'masculino' ? 'Masculino' : 
+                           parsedData.demographics.patient_gender === 'femenino' ? 'Femenino' : 'No especificado'
         updatedInferences[genderIndex] = {
           ...updatedInferences[genderIndex],
           value: genderValue,
-          confidence: extractedData.demographics.confidence_demographic || 0.9,
+          confidence: parsedData.demographics.confidence_demographic || 0.9,
         }
       }
     }
 
     // Actualizar síntoma principal desde store
-    if (extractedData.clinical_presentation?.chief_complaint && extractedData.clinical_presentation.chief_complaint !== "unknown") {
+    if (parsedData.clinical_presentation?.chief_complaint && parsedData.clinical_presentation.chief_complaint !== "unknown") {
       const symptomIndex = updatedInferences.findIndex(i => i.id === 'symptom')
       if (symptomIndex !== -1) {
         updatedInferences[symptomIndex] = {
           ...updatedInferences[symptomIndex],
-          value: extractedData.clinical_presentation.chief_complaint,
-          confidence: extractedData.clinical_presentation.confidence_symptoms || 0.9,
+          value: parsedData.clinical_presentation.chief_complaint,
+          confidence: parsedData.clinical_presentation.confidence_symptoms || 0.9,
         }
       }
     }
 
     // Actualizar intensidad del dolor desde store
-    const intensityValue = extractedData.symptom_characteristics?.pain_intensity_scale
+    const intensityValue = parsedData.symptom_characteristics?.pain_intensity_scale
     console.log('🔍 [DEBUG] Intensidad value raw:', intensityValue)
     
     if (intensityValue !== null && intensityValue !== undefined && intensityValue !== 'unknown' && intensityValue !== '') {
@@ -160,25 +173,25 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     }
 
     // Actualizar duración desde store
-    if (extractedData.symptom_characteristics?.duration_description && extractedData.symptom_characteristics.duration_description !== "unknown") {
+    if (parsedData.symptom_characteristics?.duration_description && parsedData.symptom_characteristics.duration_description !== "unknown") {
       const durationIndex = updatedInferences.findIndex(i => i.id === 'duration')
       if (durationIndex !== -1) {
         updatedInferences[durationIndex] = {
           ...updatedInferences[durationIndex],
-          value: extractedData.symptom_characteristics.duration_description,
+          value: parsedData.symptom_characteristics.duration_description,
           confidence: 0.9,
         }
       }
     }
 
     // Actualizar síntomas asociados desde store
-    if (extractedData.clinical_presentation?.primary_symptoms && extractedData.clinical_presentation.primary_symptoms.length > 0) {
+    if (parsedData.clinical_presentation?.primary_symptoms && parsedData.clinical_presentation.primary_symptoms.length > 0) {
       const associatedIndex = updatedInferences.findIndex(i => i.id === 'associated')
       if (associatedIndex !== -1) {
         updatedInferences[associatedIndex] = {
           ...updatedInferences[associatedIndex],
-          value: extractedData.clinical_presentation.primary_symptoms.join(', '),
-          confidence: extractedData.clinical_presentation.confidence_symptoms || 0.8,
+          value: parsedData.clinical_presentation.primary_symptoms.join(', '),
+          confidence: parsedData.clinical_presentation.confidence_symptoms || 0.8,
         }
       }
     }
