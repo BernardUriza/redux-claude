@@ -56,7 +56,7 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
         const validationResult = await validateMedicalCase(message)
 
         if (!validationResult.isValid) {
-          console.log('❌ Consulta rechazada:', validationResult.rejectionReason)
+          console.log('❌ Consulta rechazada:', validationResult.rejectionReason || 'Sin razón especificada')
 
           // Agregar mensaje del usuario al dashboard
           dispatch(addDashboardMessage({ content: message, type: 'user' }))

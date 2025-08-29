@@ -18,13 +18,18 @@ export interface AIValidationResult {
  */
 export async function validateMedicalInput(input: string): Promise<AIValidationResult> {
   try {
+    console.log('🛡️ AI Validator: Starting validation for:', input)
+    
     const response = await callClaudeForDecision(
       'medical_input_validator',
       input,
       'claude'
     )
 
+    console.log('🛡️ AI Validator response:', response)
+
     if (!response.success) {
+      console.warn('🛡️ AI Validator failed, using fallback')
       // Fallback: aceptar todo si la IA falla (mejor que rechazar incorrectamente)
       return {
         isValid: true,
@@ -34,15 +39,40 @@ export async function validateMedicalInput(input: string): Promise<AIValidationR
       }
     }
 
-    const decision = response.decision as MedicalInputValidatorDecision
+    let decision: MedicalInputValidatorDecision
     
-    return {
+    // 🧠 El agente devuelve {content: "JSON_STRING"} - extraer y parsear
+    const decisionData = (response.decision as any)?.content || response.decision
+    
+    if (typeof decisionData === 'string') {
+      try {
+        decision = JSON.parse(decisionData)
+        console.log('🛡️ AI Validator parsed JSON from content:', decision)
+      } catch (error) {
+        console.warn('🛡️ Failed to parse JSON response:', decisionData)
+        // Fallback: aceptar si no podemos parsear
+        return {
+          isValid: true,
+          confidence: 0.5,
+          rejectionReason: 'JSON parse error, allowing input',
+          medicalIndicators: []
+        }
+      }
+    } else {
+      decision = decisionData as MedicalInputValidatorDecision
+      console.log('🛡️ AI Validator decision object:', decision)
+    }
+    
+    const result = {
       isValid: decision.is_valid,
       confidence: decision.confidence,
       rejectionReason: decision.rejection_reason,
       suggestedFormat: decision.suggested_format,
       medicalIndicators: decision.medical_indicators
     }
+    
+    console.log('🛡️ AI Validator final result:', result)
+    return result
 
   } catch (error) {
     console.warn('AI medical validation failed:', error)

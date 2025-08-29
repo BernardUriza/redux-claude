@@ -56,7 +56,7 @@ export const useAssistantChat = (options: UseAssistantChatOptions = {}) => {
         const validationResult = await validateMedicalCase(message)
 
         if (!validationResult.isValid) {
-          console.log('❌ [ASSISTANT] Consulta rechazada:', validationResult.rejectionReason)
+          console.log('❌ [ASSISTANT] Consulta rechazada:', validationResult.rejectionReason || 'Sin razón especificada')
 
           // Agregar mensaje del usuario al assistant
           dispatch(addAssistantMessage({ content: message, type: 'user' }))

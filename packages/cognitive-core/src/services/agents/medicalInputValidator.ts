@@ -25,7 +25,7 @@ VALIDATION CRITERIA:
 - Basic symptoms: "dolor de cabeza", "dolor en pecho", "fiebre", "mareos", "dolor", "duele"
 - Anatomical references: "estómago", "pecho", "pierna", "corazón", "hombros", "espalda", "rodilla"
 - Medical conditions: "diabetes", "hipertensión", "asma"
-- Basic clinical context: "15 años", "masculino", "desde ayer", "paciente", "persona"
+- Basic clinical context: "15 años", "masculino", "femenino", "genero", "género", "desde ayer", "paciente", "persona"
 - Control visits: "control médico", "laboratorios", "glucosa 120"
 - Simple patterns: "paciente con [síntoma]", "[persona] tiene [condición]", "dolor de [parte del cuerpo]"
 
@@ -41,6 +41,7 @@ VALIDATION CRITERIA:
 
 EXAMPLES:
 - "dolor de pecho" → valid (síntoma + anatomía)
+- "paciente de genero femenino con dolor de pecho" → valid (demografía + síntoma + anatomía)
 - "hombre de 25 años" → valid (contexto demográfico)  
 - "me duele el estómago" → valid (síntoma + localización)
 - "paciente con dolor de hombros" → valid (patrón médico básico)

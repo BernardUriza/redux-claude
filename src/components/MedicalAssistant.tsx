@@ -7,8 +7,8 @@ import { useSelector } from 'react-redux'
 import { selectSystemMetrics } from '../../packages/cognitive-core/src/store/selectors/medicalSelectors'
 import type { RootState } from '../../packages/cognitive-core/src/store/store'
 // import { useAssistantChat } from '../hooks/useMultinucleusChat' // Hook no disponible
-import { IntelligentMedicalChat } from './IntelligentMedicalChat'
 import { generateMedicalPrompt, type MedicalExtractionOutput } from '@redux-claude/cognitive-core'
+import { IntelligentMedicalChat } from './IntelligentMedicalChat'
 
 interface MedicalAssistantProps {
   partialInput: string
@@ -29,49 +29,52 @@ export const MedicalAssistant = ({
 }: MedicalAssistantProps) => {
   // 🧠 MULTINÚCLEO: Usando Assistant Core para el asistente - Mock por falta de hook
   const messages: any[] = []
-  const messageCount = 0  
+  const messageCount = 0
   const currentSession = { id: 'mock-session', startedAt: Date.now() }
 
   // 🎯 SELECTORES REDUX para métricas y datos del paciente
   const systemMetrics = useSelector(selectSystemMetrics)
   const patientData = useSelector((state: RootState) => state.medicalChat.sharedState.patientData)
   const readyForSOAP = useSelector((state: RootState) => state.medicalChat.sharedState.readyForSOAP)
-  
+
   // 🎯 GENERAR PROMPT MÉDICO CUANDO HAYA DATOS SUFICIENTES
   const canGeneratePrompt = patientData.age && patientData.gender && patientData.primarySymptom
-  
+
   const handleGeneratePrompt = () => {
     if (canGeneratePrompt) {
       // Crear datos estructurados según MedicalExtractionOutput
       const extractedData = {
         demographics: {
-          patient_age_years: typeof patientData.age === 'number' ? patientData.age : 
-                         (typeof patientData.age === 'string' && !isNaN(Number(patientData.age))) ? 
-                         Number(patientData.age) : "unknown",
-          patient_gender: patientData.gender || "unknown",
-          confidence_demographic: patientData.age && patientData.gender ? 0.9 : 0.5
+          patient_age_years:
+            typeof patientData.age === 'number'
+              ? patientData.age
+              : typeof patientData.age === 'string' && !isNaN(Number(patientData.age))
+                ? Number(patientData.age)
+                : 'unknown',
+          patient_gender: patientData.gender || 'unknown',
+          confidence_demographic: patientData.age && patientData.gender ? 0.9 : 0.5,
         },
         clinical_presentation: {
-          chief_complaint: patientData.primarySymptom || "unknown",
+          chief_complaint: patientData.primarySymptom || 'unknown',
           primary_symptoms: patientData.primarySymptom ? [patientData.primarySymptom] : null,
-          anatomical_location: "unknown",
-          confidence_symptoms: patientData.primarySymptom ? 0.8 : 0.0
+          anatomical_location: 'unknown',
+          confidence_symptoms: patientData.primarySymptom ? 0.8 : 0.0,
         },
         symptom_characteristics: {
-          duration_description: patientData.duration || "unknown",
+          duration_description: patientData.duration || 'unknown',
           pain_intensity_scale: patientData.intensity || null,
           pain_characteristics: patientData.characteristics || null,
           aggravating_factors: patientData.triggers || null,
           relieving_factors: patientData.relievingFactors || null,
           associated_symptoms: patientData.associatedSymptoms || null,
-          temporal_pattern: patientData.timePattern || "unknown",
-          confidence_context: patientData.duration || patientData.intensity ? 0.7 : 0.3
+          temporal_pattern: patientData.timePattern || 'unknown',
+          confidence_context: patientData.duration || patientData.intensity ? 0.7 : 0.3,
         },
         medical_validation: {
           anatomical_contradictions: [],
           logical_inconsistencies: [],
           requires_clarification: [],
-          medical_alerts: []
+          medical_alerts: [],
         },
         extraction_metadata: {
           overall_completeness_percentage: patientData.isComplete ? 90 : 60,
@@ -79,18 +82,22 @@ export const MedicalAssistant = ({
           clinical_complete: !!patientData.primarySymptom,
           context_complete: !!(patientData.duration || patientData.intensity),
           nom_compliant: !!(patientData.age && patientData.gender && patientData.primarySymptom),
-          ready_for_soap_generation: !!(patientData.age && patientData.gender && patientData.primarySymptom),
+          ready_for_soap_generation: !!(
+            patientData.age &&
+            patientData.gender &&
+            patientData.primarySymptom
+          ),
           missing_critical_fields: [
-            !patientData.age && "patient_age_years",
-            !patientData.gender && "patient_gender",
-            !patientData.primarySymptom && "chief_complaint"
+            !patientData.age && 'patient_age_years',
+            !patientData.gender && 'patient_gender',
+            !patientData.primarySymptom && 'chief_complaint',
           ].filter(Boolean) as string[],
           data_points_extracted_this_iteration: 0,
           extraction_timestamp: new Date().toISOString(),
-          claude_model_used: "claude-sonnet-4"
-        }
+          claude_model_used: 'claude-sonnet-4',
+        },
       }
-      
+
       const { prompt } = generateMedicalPrompt(extractedData as MedicalExtractionOutput)
       if (prompt) {
         onSelectTemplate(prompt)
@@ -100,7 +107,7 @@ export const MedicalAssistant = ({
           autoCloseElement.textContent = '✅ Prompt SOAP generado exitosamente'
           autoCloseElement.classList.add('animate-pulse', 'text-green-400')
         }
-        
+
         // Auto-cerrar después de generar el prompt
         setTimeout(() => {
           onClose()
@@ -158,7 +165,7 @@ export const MedicalAssistant = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="relative w-full max-w-[95vw] h-[95vh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl border border-slate-600/50 overflow-hidden flex flex-col backdrop-blur-sm">
+      <div className="relative w-full max-w-[65vw] h-[95vh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl border border-slate-600/50 overflow-hidden flex flex-col backdrop-blur-sm">
         {/* Header Moderno y Elegante - Creado por Bernard Orozco */}
         <div className="flex justify-between items-center px-8 py-6 bg-gradient-to-r from-slate-800 to-slate-700 border-b border-slate-600/50">
           <div className="flex items-center gap-4">
@@ -257,7 +264,7 @@ export const MedicalAssistant = ({
             className="h-full"
             showMetrics={true}
             partialInput={partialInput}
-            coreType="assistant"  // 🤖 USA EL NÚCLEO ASSISTANT, NO DASHBOARD
+            coreType="assistant" // 🤖 USA EL NÚCLEO ASSISTANT, NO DASHBOARD
             onInitialResponse={response => {
               // Cuando el asistente responde automáticamente
               console.log('🎯 [ASSISTANT CORE] Respuesta inicial generada:', response)
@@ -286,13 +293,16 @@ export const MedicalAssistant = ({
                   </span>
                 ) : (
                   <span>
-                    🚀 Recopilando datos - Falta: {
-                      [
-                        !patientData.age && 'Edad',
-                        !patientData.gender && 'Género', 
-                        !patientData.primarySymptom && 'Síntoma principal'
-                      ].filter(Boolean).join(', ')
-                    } | Debug: age={patientData.age}, gender={patientData.gender}, symptom={patientData.primarySymptom}
+                    🚀 Recopilando datos - Falta:{' '}
+                    {[
+                      !patientData.age && 'Edad',
+                      !patientData.gender && 'Género',
+                      !patientData.primarySymptom && 'Síntoma principal',
+                    ]
+                      .filter(Boolean)
+                      .join(', ')}{' '}
+                    | Debug: age={patientData.age}, gender={patientData.gender}, symptom=
+                    {patientData.primarySymptom}
                   </span>
                 )}
               </div>

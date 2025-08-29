@@ -29,7 +29,8 @@
       "Bash(find:*)",
       "Bash(curl:*)",
       "Bash(npm run typecheck:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(lsof:*)"
     ],
     "deny": [],
     "ask": []
