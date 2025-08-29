@@ -31,7 +31,7 @@ FORMATO DE RESPUESTA OBLIGATORIO - Return ONLY JSON:
   },
   "symptom_characteristics": {
     "duration_description": "2 días" | "unknown",
-    "pain_intensity_scale": 7 | null,
+    "pain_intensity_scale": 6 | null,
     "pain_characteristics": ["pulsátil", "intenso"] | null,
     "aggravating_factors": ["luz", "ruido"] | null,
     "relieving_factors": ["descanso", "analgésicos"] | null,
@@ -66,6 +66,15 @@ REGLAS DE EXTRACCIÓN:
 4. **Conservador**: Mejor "unknown" que información incorrecta
 5. **Médicamente válido**: Valida que la información tenga sentido clínico
 
+🎯 **PATRONES DE INTENSIDAD CRÍTICOS**:
+- "dolor de 6" → pain_intensity_scale: 6
+- "intensidad 7" → pain_intensity_scale: 7
+- "dolor muy fuerte" → pain_intensity_scale: 8
+- "dolor leve" → pain_intensity_scale: 3
+- "10/10" → pain_intensity_scale: 10
+- "nivel 4" → pain_intensity_scale: 4
+- SIEMPRE busca números (1-10) asociados con dolor/intensidad
+
 CAMPOS CRÍTICOS NOM (Normas Mexicanas):
 - patient_age_years
 - patient_gender  
@@ -76,7 +85,17 @@ PUNTUACIÓN DE COMPLETITUD:
 - Clinical: 30% (queja principal=15%, síntomas=15%)
 - Context: 30% (duración=5%, intensidad=5%, características=20%)
 
-META: Alcanzar 80%+ completitud + NOM compliance para habilitar generación SOAP.`,
+META: Alcanzar 80%+ completitud + NOM compliance para habilitar generación SOAP.
+
+🔥 EJEMPLOS CRÍTICOS:
+Input: "mujer con 40 años tiene un dolor de 6"
+→ patient_age_years: 40, patient_gender: "femenino", pain_intensity_scale: 6
+
+Input: "dolor de cabeza intensidad 8"  
+→ chief_complaint: "dolor de cabeza", pain_intensity_scale: 8
+
+Input: "hombre de 35 años con dolor nivel 4"
+→ patient_age_years: 35, patient_gender: "masculino", pain_intensity_scale: 4`,
   enabled: true,
   priority: 2,
   expectedLatency: 1200,
