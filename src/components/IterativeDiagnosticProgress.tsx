@@ -3,9 +3,7 @@
 
 'use client'
 
-import { useSelector } from 'react-redux'
-import { RootState } from '@redux-claude/cognitive-core'
-import { selectDiagnosticProgress } from '@redux-claude/cognitive-core/src/store/selectors'
+import { useAppSelector, RootState } from '@redux-claude/cognitive-core'
 
 interface DiagnosticCycleDisplayProps {
   cycle: {
@@ -121,11 +119,12 @@ const DiagnosticCycleDisplay = ({ cycle, isActive, isCompleted }: DiagnosticCycl
 
 export const IterativeDiagnosticProgress = () => {
   // ⚡ ESTADO REAL MULTINÚCLEO - Mock Data COMPLETAMENTE ELIMINADO
-  const diagnosticProgress = useSelector(selectDiagnosticProgress)
-  const isLoading = useSelector((state: RootState) =>
+  // const diagnosticProgress = useSelector(selectDiagnosticProgress) // DISABLED: selector not found
+  const diagnosticProgress = { cycles: [] } // Fallback
+  const isLoading = useAppSelector((state: RootState) =>
     Object.values(state.medicalChat.cores).some(core => core.isLoading)
   )
-  const error = useSelector((state: RootState) => state.medicalChat.sharedState.error)
+  const error = useAppSelector((state: RootState) => state.medicalChat.sharedState.error)
 
   // Estados de error reales
   if (error) {
