@@ -2,7 +2,7 @@
 // Creado por Bernard Orozco - Inferencias que cambian con cada mensaje
 
 import React, { useState, useEffect } from 'react'
-import { useIterativeMedicalExtraction } from '@redux-claude/cognitive-core'
+import { useAppSelector, selectExtractedData, selectCompletenessPercentage, selectNOMCompliance } from '@redux-claude/cognitive-core'
 
 interface PatientInference {
   id: string
@@ -36,7 +36,9 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
   currentSession,
 }) => {
   // 🧠 CONECTAR AL REDUX STORE - Data real del extractor
-  const { extractedData, completenessPercentage, isNOMCompliant } = useIterativeMedicalExtraction()
+  const extractedData = useAppSelector(selectExtractedData)
+  const completenessPercentage = useAppSelector(selectCompletenessPercentage) 
+  const isNOMCompliant = useAppSelector(selectNOMCompliance)
   const [inferences, setInferences] = useState<PatientInference[]>([
     {
       id: 'age',
