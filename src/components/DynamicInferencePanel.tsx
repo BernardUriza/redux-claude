@@ -167,10 +167,10 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     const intensityValue = parsedData.symptom_characteristics?.pain_intensity_scale
     console.log('🔍 [DEBUG] Intensidad value raw:', intensityValue)
     
-    if (intensityValue !== null && intensityValue !== undefined && intensityValue !== 'unknown' && intensityValue !== '') {
+    if (intensityValue !== null && intensityValue !== undefined && typeof intensityValue === 'number' && intensityValue > 0) {
       const intensityIndex = updatedInferences.findIndex(i => i.id === 'intensity')
       if (intensityIndex !== -1) {
-        const numericIntensity = typeof intensityValue === 'number' ? intensityValue : parseInt(String(intensityValue))
+        const numericIntensity = intensityValue // Ya sabemos que es number
         console.log('🎯 [DEBUG] Aplicando intensidad:', numericIntensity)
         
         updatedInferences[intensityIndex] = {
