@@ -104,18 +104,63 @@ export class IntelligentMedicalChat {
       // PASO 3: 🦁 Doctor Edmund CON CONTINUIDAD - Usa el núcleo especificado
       console.log(`🔄 PASO 3: Doctor Edmund en núcleo ${this.coreType.toUpperCase()}...`)
       
-      const chatResponse = await callDecisionEngine(this.coreType, 'intelligent_medical_chat', userInput, {
+      // 🧠 CONTEXTO ENRIQUECIDO: Pasar datos extraídos al chat
+      const contextualInput = this.buildContextualPrompt(userInput, extractedData)
+      
+      const chatResponse = await callDecisionEngine(this.coreType, 'intelligent_medical_chat', contextualInput, {
         persistContext: true,
-        // Claude recibirá el contexto automáticamente del núcleo dashboard
+        // Claude recibirá el contexto automáticamente del núcleo especificado + datos extraídos
       })
+      
+      console.log(`🧠 [CONTEXTO] Núcleo: ${this.coreType}, Input: "${userInput.substring(0, 50)}..."`)
 
       if (chatResponse.success) {
-        // Extraer mensaje de la respuesta de Claude
+        // 🛡️ EXTRACCIÓN BRUTAL DEL JSON ANIDADO
         const decision = chatResponse.decision as any
-        const message = decision?.message || 
-                       decision?.question || 
-                       decision?.response || 
-                       await this.generateQuestionBasedOnMissingFields(missingCriticalFields, extractedData)
+        let message: string = ''
+        
+        console.log('🔍 DEBUG decision type:', typeof decision)
+        console.log('🔍 DEBUG decision sample:', JSON.stringify(decision).substring(0, 200) + '...')
+        
+        try {
+          // El decision puede ser:
+          // 1. Object con campo content: {content: "JSON_STRING", success: true}
+          // 2. String JSON directo: "{"message": "...", ...}"
+          // 3. Object ya parseado: {message: "...", ...}
+          
+          let jsonContent = ''
+          
+          if (typeof decision === 'object' && decision.content) {
+            // Caso 1: Object con campo content
+            jsonContent = decision.content
+          } else if (typeof decision === 'string') {
+            // Caso 2: String JSON directo
+            jsonContent = decision
+          } else if (typeof decision === 'object' && decision.message) {
+            // Caso 3: Ya es el objeto final
+            message = decision.message
+            console.log('🎯 [DIRECT] Extracted message:', message)
+          }
+          
+          // Si tenemos JSON string, parsearlo
+          if (jsonContent && typeof jsonContent === 'string' && jsonContent.includes('"message":')) {
+            const parsed = JSON.parse(jsonContent)
+            message = parsed.message || jsonContent
+            console.log('🎯 [PARSED] Extracted message:', message)
+          } else if (jsonContent && !message) {
+            // Fallback: usar el contenido directo
+            message = jsonContent
+          }
+          
+        } catch (error) {
+          console.warn('⚠️ Error parseando JSON anidado:', error)
+          message = typeof decision === 'string' ? decision : JSON.stringify(decision)
+        }
+        
+        // Fallback final
+        if (!message || message.trim() === '') {
+          message = await this.generateQuestionBasedOnMissingFields(missingCriticalFields, extractedData)
+        }
         
         // Agregar respuesta del chat al store - NÚCLEO SEGÚN CONFIGURACIÓN
         // NOTA: No duplicamos en store porque callDecisionEngine ya maneja contexto internamente
@@ -154,6 +199,36 @@ export class IntelligentMedicalChat {
     }
   }
 
+  /**
+   * 🧠 Construye prompt contextual con datos extraídos previamente
+   */
+  private buildContextualPrompt(userInput: string, extractedData: any): string {
+    if (!extractedData) return userInput
+    
+    const context: string[] = []
+    
+    // Agregar datos demográficos conocidos
+    if (extractedData.demographics?.patient_age_years && extractedData.demographics.patient_age_years !== 'unknown') {
+      context.push(`Edad: ${extractedData.demographics.patient_age_years} años`)
+    }
+    if (extractedData.demographics?.patient_gender && extractedData.demographics.patient_gender !== 'unknown') {
+      context.push(`Género: ${extractedData.demographics.patient_gender}`)
+    }
+    
+    // Agregar síntomas conocidos
+    if (extractedData.clinical_presentation?.chief_complaint && extractedData.clinical_presentation.chief_complaint !== 'unknown') {
+      context.push(`Síntoma principal: ${extractedData.clinical_presentation.chief_complaint}`)
+    }
+    
+    // Agregar intensidad si está disponible
+    if (extractedData.symptom_characteristics?.pain_intensity_scale && extractedData.symptom_characteristics.pain_intensity_scale !== null) {
+      context.push(`Intensidad del dolor: ${extractedData.symptom_characteristics.pain_intensity_scale}/10`)
+    }
+    
+    if (context.length === 0) return userInput
+    
+    return `DATOS EXTRAÍDOS PREVIAMENTE: ${context.join(', ')}\n\nNUEVO INPUT DEL USUARIO: ${userInput}\n\n[Usa la información previa para hacer preguntas inteligentes sin repetir datos ya conocidos]`
+  }
 
   /**
    * Genera pregunta inteligente usando Claude - combinable y contextual

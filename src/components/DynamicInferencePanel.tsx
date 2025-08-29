@@ -2,6 +2,7 @@
 // Creado por Bernard Orozco - Inferencias que cambian con cada mensaje
 
 import React, { useState, useEffect } from 'react'
+import { useMedicalExtraction } from '@redux-claude/cognitive-core'
 
 interface PatientInference {
   id: string
@@ -34,6 +35,8 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
   systemMetrics,
   currentSession,
 }) => {
+  // 🧠 CONECTAR AL REDUX STORE - Data real del extractor
+  const { extractedData, completenessPercentage, isNOMCompliant } = useMedicalExtraction()
   const [inferences, setInferences] = useState<PatientInference[]>([
     {
       id: 'age',
@@ -88,7 +91,93 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     },
   ])
 
-  // 🧠 Actualizar inferencias basadas en el mensaje actual con debounce (UI simple)
+  // 🚀 ACTUALIZAR DESDE STORE - Data real extraída por el motor médico  
+  useEffect(() => {
+    if (!extractedData) return
+
+    console.log('🔄 [PANEL] Actualizando inferencias desde store:', extractedData)
+
+    const updatedInferences = [...inferences]
+
+    // Actualizar edad desde store
+    if (extractedData.demographics?.patient_age_years !== "unknown" && extractedData.demographics?.patient_age_years) {
+      const ageIndex = updatedInferences.findIndex(i => i.id === 'age')
+      if (ageIndex !== -1) {
+        updatedInferences[ageIndex] = {
+          ...updatedInferences[ageIndex],
+          value: extractedData.demographics.patient_age_years,
+          confidence: extractedData.demographics.confidence_demographic || 0.9,
+        }
+      }
+    }
+
+    // Actualizar género desde store
+    if (extractedData.demographics?.patient_gender && extractedData.demographics.patient_gender !== "unknown") {
+      const genderIndex = updatedInferences.findIndex(i => i.id === 'gender')
+      if (genderIndex !== -1) {
+        const genderValue = extractedData.demographics.patient_gender === 'masculino' ? 'Masculino' : 
+                           extractedData.demographics.patient_gender === 'femenino' ? 'Femenino' : 'No especificado'
+        updatedInferences[genderIndex] = {
+          ...updatedInferences[genderIndex],
+          value: genderValue,
+          confidence: extractedData.demographics.confidence_demographic || 0.9,
+        }
+      }
+    }
+
+    // Actualizar síntoma principal desde store
+    if (extractedData.clinical_presentation?.chief_complaint && extractedData.clinical_presentation.chief_complaint !== "unknown") {
+      const symptomIndex = updatedInferences.findIndex(i => i.id === 'symptom')
+      if (symptomIndex !== -1) {
+        updatedInferences[symptomIndex] = {
+          ...updatedInferences[symptomIndex],
+          value: extractedData.clinical_presentation.chief_complaint,
+          confidence: extractedData.clinical_presentation.confidence_symptoms || 0.9,
+        }
+      }
+    }
+
+    // Actualizar intensidad del dolor desde store
+    if (extractedData.symptom_characteristics?.pain_intensity_scale !== null && extractedData.symptom_characteristics?.pain_intensity_scale !== undefined) {
+      const intensityIndex = updatedInferences.findIndex(i => i.id === 'intensity')
+      if (intensityIndex !== -1) {
+        updatedInferences[intensityIndex] = {
+          ...updatedInferences[intensityIndex],
+          value: `${extractedData.symptom_characteristics.pain_intensity_scale}/10`,
+          confidence: 0.95,
+        }
+      }
+    }
+
+    // Actualizar duración desde store
+    if (extractedData.symptom_characteristics?.duration_description && extractedData.symptom_characteristics.duration_description !== "unknown") {
+      const durationIndex = updatedInferences.findIndex(i => i.id === 'duration')
+      if (durationIndex !== -1) {
+        updatedInferences[durationIndex] = {
+          ...updatedInferences[durationIndex],
+          value: extractedData.symptom_characteristics.duration_description,
+          confidence: 0.9,
+        }
+      }
+    }
+
+    // Actualizar síntomas asociados desde store
+    if (extractedData.clinical_presentation?.primary_symptoms && extractedData.clinical_presentation.primary_symptoms.length > 0) {
+      const associatedIndex = updatedInferences.findIndex(i => i.id === 'associated')
+      if (associatedIndex !== -1) {
+        updatedInferences[associatedIndex] = {
+          ...updatedInferences[associatedIndex],
+          value: extractedData.clinical_presentation.primary_symptoms.join(', '),
+          confidence: extractedData.clinical_presentation.confidence_symptoms || 0.8,
+        }
+      }
+    }
+
+    setInferences(updatedInferences)
+    onInferenceUpdate?.(updatedInferences)
+  }, [extractedData]) // Re-ejecutar cuando cambie extractedData
+
+  // 🧠 Actualizar inferencias basadas en el mensaje actual con debounce (UI simple - FALLBACK)
   useEffect(() => {
     if (!currentMessage) return
 

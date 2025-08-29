@@ -44,6 +44,7 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const [autoSent, setAutoSent] = useState(false)
+  const [inputValue, setInputValue] = useState('')
   const sentMessagesRef = useRef(new Set<string>())
   
   // 🚀 AUTO-ENVÍO: Enviar partialInput automáticamente cuando esté presente
@@ -56,18 +57,17 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
       onInitialResponse?.(partialInput)
       sentMessagesRef.current.add(messageKey)
       setAutoSent(true)
+      // NO llenar el input con partialInput - mantenerlo limpio
     }
   }, [partialInput, isLoading, sendMedicalQuery, onInitialResponse, coreType])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const form = e.target as HTMLFormElement
-    const formData = new FormData(form)
-    const message = formData.get('message') as string
+    const message = inputValue.trim()
 
-    if (message?.trim() && !isLoading) {
+    if (message && !isLoading) {
       await sendMedicalQuery(message)
-      form.reset()
+      setInputValue('') // 🧹 LIMPIAR INPUT BRUTALMENTE
       onInitialResponse?.(message)
     }
   }
@@ -115,7 +115,8 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
                 name="message"
                 placeholder="Describa los síntomas del paciente..."
                 disabled={isLoading}
-                defaultValue={partialInput}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
                 className="flex-1 px-4 py-2 bg-slate-700 border border-slate-500 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
               <button
