@@ -40,6 +40,14 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
 
   // 🧠 Construir inferencias desde datos REALES
   const buildInferencesFromStore = (): PatientInference[] => {
+    console.log('🔍 [PANEL] Building inferences from store:', {
+      patientData,
+      extractedData,
+      patientData_age: patientData?.age,
+      patientData_gender: patientData?.gender,
+      patientData_primarySymptom: patientData?.primarySymptom
+    })
+    
     const inferences: PatientInference[] = []
 
     // Edad desde patientData

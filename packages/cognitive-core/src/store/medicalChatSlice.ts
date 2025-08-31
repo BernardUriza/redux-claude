@@ -460,7 +460,15 @@ const medicalChatSlice = createSlice({
       if (extractedData.demographics) {
         if (extractedData.demographics.patient_age_years !== 'unknown') {
           const ageValue = extractedData.demographics.patient_age_years
-          state.sharedState.patientData.age = typeof ageValue === 'number' ? ageValue : parseInt(ageValue as string)
+          // Handle both numeric ages and age ranges
+          if (typeof ageValue === 'number') {
+            state.sharedState.patientData.age = ageValue
+          } else if (typeof ageValue === 'string' && !isNaN(Number(ageValue))) {
+            state.sharedState.patientData.age = parseInt(ageValue)
+          } else {
+            // Age range - store as string for display
+            state.sharedState.patientData.age = ageValue as any
+          }
         }
         if (extractedData.demographics.patient_gender !== 'unknown') {
           state.sharedState.patientData.gender = extractedData.demographics.patient_gender
