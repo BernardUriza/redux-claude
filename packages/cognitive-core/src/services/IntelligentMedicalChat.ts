@@ -91,7 +91,20 @@ export class IntelligentMedicalChat {
         return
       }
 
-      const extractedData = extractorResponse.decision
+      // 🔥 CRITICAL: Parse the extracted data correctly
+      let extractedData = extractorResponse.decision
+      
+      // If the decision has a 'content' field with JSON string, parse it
+      if (extractedData && typeof extractedData === 'object' && extractedData.content) {
+        try {
+          extractedData = JSON.parse(extractedData.content)
+          console.log('🔧 [PARSED] Successfully parsed JSON from content field')
+        } catch (error) {
+          console.warn('⚠️ [PARSE ERROR] Could not parse JSON from content:', error)
+          // Keep original data as fallback
+        }
+      }
+      
       const completenessPercentage =
         extractedData.extraction_metadata?.overall_completeness_percentage || 0
       const missingCriticalFields = extractedData.extraction_metadata?.missing_critical_fields || []
@@ -104,6 +117,11 @@ export class IntelligentMedicalChat {
       })
 
       // PASO 2: Guardar datos extraídos en store
+      console.log('🔍 [INTELLIGENT CHAT] About to dispatch completeExtraction with:', {
+        demographics: extractedData.demographics,
+        chief_complaint: extractedData.clinical_presentation?.chief_complaint,
+        primary_symptoms: extractedData.clinical_presentation?.primary_symptoms
+      })
       this.dispatch(completeExtraction(extractedData))
 
       // PASO 3: 🦁 Doctor Edmund CON CONTINUIDAD - Usa el núcleo especificado

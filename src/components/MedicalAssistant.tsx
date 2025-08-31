@@ -39,6 +39,14 @@ export const MedicalAssistant = ({
 
   // 🎯 GENERAR PROMPT MÉDICO CUANDO HAYA DATOS SUFICIENTES
   const canGeneratePrompt = patientData.age && patientData.gender && patientData.primarySymptom
+  
+  // Debug para ver qué datos tiene patientData
+  console.log('🔍 [MEDICAL ASSISTANT DEBUG] patientData:', {
+    age: patientData.age,
+    gender: patientData.gender,
+    primarySymptom: patientData.primarySymptom,
+    canGeneratePrompt
+  })
 
   const handleGeneratePrompt = () => {
     if (canGeneratePrompt) {

@@ -184,22 +184,39 @@ Generate structured medical documentation using SOAP format:
 - Plan: Treatment plan and follow-up`
 
       case 'medical_data_extractor':
-        return `You are a Medical Data Extraction Specialist using 2025 healthcare standards. Your role is to extract structured medical data from natural language input with HIPAA compliance.
+        return `You are a Medical Data Extraction Specialist using 2025 healthcare standards. Your role is to extract and ACCUMULATE structured medical data from natural language input with HIPAA compliance, using precise medical terminology.
 
 <thinking>
 Analyze the input step-by-step:
 1. Demographics: Extract age and gender information
-2. Clinical presentation: Identify chief complaint and symptoms  
+2. Clinical presentation: Identify and TRANSLATE chief complaint and symptoms to medical terminology
 3. Contextual data: Duration, intensity, characteristics, factors
-4. Calculate completeness percentage and NOM compliance
+4. IMPORTANT: If data already exists, ADD to it, don't replace it
+5. Calculate completeness percentage and NOM compliance
 </thinking>
 
 CRITICAL RULES:
+- ACCUMULATE symptoms, never overwrite: If existing data has "dolor abdominal", and new input adds "distensión", combine them
+- TRANSLATE to medical terminology: 
+  * "dolor de estómago" → "dolor abdominal epigástrico"
+  * "hinchazón" → "distensión abdominal"
+  * "cansancio" → "fatiga/astenia"
+  * "dolor de cabeza" → "cefalea"
+  * "mareo" → "vértigo/mareo"
+  * "fiebre" → "febrícula/pirexia (specify temperature if given)"
 - Use "unknown" for missing fields, never guess or infer beyond what's explicitly stated
 - Age/gender are NOM-required fields - prioritize these always
 - Return structured JSON only, no explanatory text
 - Apply weighted scoring: Demographics(40%) + Clinical(30%) + Context(30%)
 - Mexican healthcare compliance: Age + gender required before SOAP generation
+- When combining symptoms, use medical terminology and maintain all previous symptoms
+
+MEDICAL TERMINOLOGY EXAMPLES:
+- Digestive: epigastralgia, dispepsia, distensión abdominal, meteorismo, pirosis
+- Pain: dolor sordo, dolor punzante, dolor opresivo, dolor cólico, dolor irradiado
+- General: astenia, adinamia, hiporexia, diaforesis, palidez mucocutánea
+- Respiratory: disnea, taquipnea, tos productiva/seca, hemoptisis
+- Neurological: cefalea holocraneana/hemicránea, parestesias, disestesias
 
 <answer>
 Return only this JSON structure:
@@ -210,18 +227,18 @@ Return only this JSON structure:
     "confidence_demographic": 0.0-1.0
   },
   "clinical_presentation": {
-    "chief_complaint": "extracted complaint" | "unknown",
-    "primary_symptoms": ["symptom1", "symptom2"] | null,
-    "anatomical_location": "location" | "unknown",
+    "chief_complaint": "medical terminology complaint" | "unknown",
+    "primary_symptoms": ["medical_term1", "medical_term2"] | null,
+    "anatomical_location": "anatomical region" | "unknown",
     "confidence_symptoms": 0.0-1.0
   },
   "symptom_characteristics": {
     "duration_description": "extracted duration" | "unknown",
     "pain_intensity_scale": 1-10 | null,
-    "pain_characteristics": ["extracted characteristics"] | null,
+    "pain_characteristics": ["medical descriptors"] | null,
     "aggravating_factors": ["factors"] | null,
     "relieving_factors": ["factors"] | null,
-    "associated_symptoms": ["symptoms"] | null,
+    "associated_symptoms": ["medical symptoms"] | null,
     "temporal_pattern": "pattern" | "unknown",
     "confidence_context": 0.0-1.0
   },

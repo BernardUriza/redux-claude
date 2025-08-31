@@ -180,19 +180,42 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       }
     }
 
-    // Actualizar síntoma principal desde store
+    // Actualizar síntoma principal desde store - ACUMULAR en lugar de reemplazar
+    console.log('🔍 [DEBUG] Clinical Presentation:', parsedData.clinical_presentation)
+    
     if (
       parsedData.clinical_presentation?.chief_complaint &&
       parsedData.clinical_presentation.chief_complaint !== 'unknown'
     ) {
       const symptomIndex = updatedInferences.findIndex(i => i.id === 'symptom')
       if (symptomIndex !== -1) {
+        // Combinar síntoma principal con síntomas primarios si existen
+        let combinedSymptoms = parsedData.clinical_presentation.chief_complaint
+        
+        console.log('🎯 [DEBUG] Chief Complaint:', parsedData.clinical_presentation.chief_complaint)
+        console.log('🎯 [DEBUG] Primary Symptoms:', parsedData.clinical_presentation.primary_symptoms)
+        
+        // Si hay síntomas primarios adicionales, agregarlos
+        if (parsedData.clinical_presentation.primary_symptoms && 
+            parsedData.clinical_presentation.primary_symptoms.length > 0) {
+          // Crear un Set para evitar duplicados
+          const allSymptoms = new Set([
+            parsedData.clinical_presentation.chief_complaint,
+            ...parsedData.clinical_presentation.primary_symptoms
+          ])
+          combinedSymptoms = Array.from(allSymptoms).join(' + ')
+        }
+        
+        console.log('🔥 [DEBUG] Combined Symptoms:', combinedSymptoms)
+        
         updatedInferences[symptomIndex] = {
           ...updatedInferences[symptomIndex],
-          value: parsedData.clinical_presentation.chief_complaint,
+          value: combinedSymptoms,
           confidence: parsedData.clinical_presentation.confidence_symptoms || 0.9,
         }
       }
+    } else {
+      console.log('⚠️ [DEBUG] No chief complaint or is unknown')
     }
 
     // Actualizar intensidad del dolor desde store

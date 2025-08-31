@@ -135,6 +135,17 @@ const initialState: MedicalChatState = {
     },
     isLoading: false,
     patientData: {
+      age: undefined,
+      gender: undefined,
+      primarySymptom: undefined,
+      symptoms: [],
+      duration: undefined,
+      intensity: undefined,
+      characteristics: [],
+      triggers: [],
+      relievingFactors: [],
+      associatedSymptoms: [],
+      timePattern: undefined,
       isComplete: false,
       isEnhanced: false,
     },
@@ -412,8 +423,17 @@ const medicalChatSlice = createSlice({
     // 📥 Finalizar extracción con datos completos
     completeExtraction: (state, action: PayloadAction<MedicalExtractionOutput>) => {
       const sessionId = state.sharedState.currentSession.id
+      const extractedData = action.payload
+      
+      console.log('🔍 [COMPLETE EXTRACTION] Called with data:', {
+        demographics: extractedData.demographics,
+        clinical: extractedData.clinical_presentation?.chief_complaint,
+        symptoms: extractedData.clinical_presentation?.primary_symptoms,
+        age_raw: extractedData.demographics?.patient_age_years,
+        gender_raw: extractedData.demographics?.patient_gender
+      })
 
-      state.medicalExtraction.currentExtraction = action.payload
+      state.medicalExtraction.currentExtraction = extractedData
       state.medicalExtraction.extractionProcess.isExtracting = false
       state.medicalExtraction.extractionProcess.lastExtractedAt = new Date().toISOString()
 
@@ -421,7 +441,7 @@ const medicalChatSlice = createSlice({
       if (!state.medicalExtraction.extractionHistory[sessionId]) {
         state.medicalExtraction.extractionHistory[sessionId] = []
       }
-      state.medicalExtraction.extractionHistory[sessionId].push(action.payload)
+      state.medicalExtraction.extractionHistory[sessionId].push(extractedData)
 
       // Clear WIP data
       state.medicalExtraction.wipData = {
@@ -431,9 +451,77 @@ const medicalChatSlice = createSlice({
       }
 
       // Update shared state if extraction is complete enough
-      if (action.payload.extraction_metadata?.ready_for_soap_generation) {
+      if (extractedData.extraction_metadata?.ready_for_soap_generation) {
         state.sharedState.readyForSOAP = true
       }
+      
+      // 🔥 CRITICAL: Update patientData with extracted information - ACCUMULATE symptoms
+      // Validate that extractedData has the required structure
+      if (extractedData.demographics) {
+        if (extractedData.demographics.patient_age_years !== 'unknown') {
+          const ageValue = extractedData.demographics.patient_age_years
+          state.sharedState.patientData.age = typeof ageValue === 'number' ? ageValue : parseInt(ageValue as string)
+        }
+        if (extractedData.demographics.patient_gender !== 'unknown') {
+          state.sharedState.patientData.gender = extractedData.demographics.patient_gender
+        }
+      }
+      
+      // 🔥 CRITICAL: ACCUMULATE symptoms from both existing state AND new extraction
+      if (extractedData.clinical_presentation?.chief_complaint && 
+          extractedData.clinical_presentation.chief_complaint !== 'unknown') {
+        
+        // Get existing symptoms from state
+        const existingSymptoms = state.sharedState.patientData.symptoms || []
+        const existingPrimary = state.sharedState.patientData.primarySymptom
+        
+        // Create Set to avoid duplicates - include EVERYTHING
+        const allSymptoms = new Set([
+          // Existing primary symptom (if any)
+          ...(existingPrimary ? [existingPrimary] : []),
+          // Existing symptoms array
+          ...existingSymptoms,
+          // New chief complaint
+          extractedData.clinical_presentation.chief_complaint,
+          // New primary symptoms
+          ...(extractedData.clinical_presentation.primary_symptoms || [])
+        ])
+        
+        // Filter out empty/unknown values
+        const validSymptoms = Array.from(allSymptoms).filter(s => s && s !== 'unknown' && s.trim() !== '')
+        
+        // Update both primarySymptom (for UI) and symptoms array (for history)
+        state.sharedState.patientData.primarySymptom = validSymptoms.join(' + ')
+        state.sharedState.patientData.symptoms = validSymptoms
+      }
+      
+      // Update other contextual data
+      if (extractedData.symptom_characteristics) {
+        if (extractedData.symptom_characteristics.duration_description !== 'unknown') {
+          state.sharedState.patientData.duration = extractedData.symptom_characteristics.duration_description
+        }
+        if (extractedData.symptom_characteristics.pain_intensity_scale !== null) {
+          state.sharedState.patientData.intensity = extractedData.symptom_characteristics.pain_intensity_scale
+        }
+        if (extractedData.symptom_characteristics.associated_symptoms) {
+          state.sharedState.patientData.associatedSymptoms = extractedData.symptom_characteristics.associated_symptoms
+        }
+      }
+      
+      console.log('🔍 [COMPLETE EXTRACTION] Updated patientData:', {
+        age: state.sharedState.patientData.age,
+        gender: state.sharedState.patientData.gender,
+        primarySymptom: state.sharedState.patientData.primarySymptom,
+        symptoms_array: state.sharedState.patientData.symptoms,
+        isComplete: state.sharedState.patientData.isComplete
+      })
+      
+      // Update completeness status
+      state.sharedState.patientData.isComplete = !!(
+        state.sharedState.patientData.age && 
+        state.sharedState.patientData.gender && 
+        state.sharedState.patientData.primarySymptom
+      )
     },
 
     // 🔄 Incrementar iteración
@@ -531,6 +619,43 @@ const medicalChatSlice = createSlice({
         if (isComplete && completeness.readyForSOAP) {
           state.sharedState.readyForSOAP = true
         }
+        
+        // Update patientData with extracted information - ACCUMULATE symptoms
+        if (extractedData.demographics.patient_age_years !== 'unknown') {
+          state.sharedState.patientData.age = extractedData.demographics.patient_age_years
+        }
+        if (extractedData.demographics.patient_gender !== 'unknown') {
+          state.sharedState.patientData.gender = extractedData.demographics.patient_gender
+        }
+        
+        // Update primary symptom with accumulated symptoms using medical terminology
+        if (extractedData.clinical_presentation.chief_complaint !== 'unknown') {
+          // Combine chief complaint with primary symptoms if they exist
+          let combinedSymptoms = extractedData.clinical_presentation.chief_complaint
+          
+          if (extractedData.clinical_presentation.primary_symptoms && 
+              extractedData.clinical_presentation.primary_symptoms.length > 0) {
+            // Create Set to avoid duplicates
+            const allSymptoms = new Set([
+              extractedData.clinical_presentation.chief_complaint,
+              ...extractedData.clinical_presentation.primary_symptoms
+            ])
+            combinedSymptoms = Array.from(allSymptoms).join(' + ')
+          }
+          
+          state.sharedState.patientData.primarySymptom = combinedSymptoms
+        }
+        
+        // Update other contextual data
+        if (extractedData.symptom_characteristics.duration_description !== 'unknown') {
+          state.sharedState.patientData.duration = extractedData.symptom_characteristics.duration_description
+        }
+        if (extractedData.symptom_characteristics.pain_intensity_scale !== null) {
+          state.sharedState.patientData.intensity = extractedData.symptom_characteristics.pain_intensity_scale
+        }
+        if (extractedData.symptom_characteristics.associated_symptoms) {
+          state.sharedState.patientData.associatedSymptoms = extractedData.symptom_characteristics.associated_symptoms
+        }
       })
       .addCase(extractMedicalDataThunk.rejected, (state, action) => {
         state.medicalExtraction.extractionProcess.isExtracting = false
@@ -576,6 +701,43 @@ const medicalChatSlice = createSlice({
         // Update shared state if ready for SOAP
         if (isComplete && completeness.readyForSOAP) {
           state.sharedState.readyForSOAP = true
+        }
+        
+        // Update patientData with extracted information - ACCUMULATE symptoms
+        if (extractedData.demographics.patient_age_years !== 'unknown') {
+          state.sharedState.patientData.age = extractedData.demographics.patient_age_years
+        }
+        if (extractedData.demographics.patient_gender !== 'unknown') {
+          state.sharedState.patientData.gender = extractedData.demographics.patient_gender
+        }
+        
+        // Update primary symptom with accumulated symptoms using medical terminology
+        if (extractedData.clinical_presentation.chief_complaint !== 'unknown') {
+          // Combine chief complaint with primary symptoms if they exist
+          let combinedSymptoms = extractedData.clinical_presentation.chief_complaint
+          
+          if (extractedData.clinical_presentation.primary_symptoms && 
+              extractedData.clinical_presentation.primary_symptoms.length > 0) {
+            // Create Set to avoid duplicates
+            const allSymptoms = new Set([
+              extractedData.clinical_presentation.chief_complaint,
+              ...extractedData.clinical_presentation.primary_symptoms
+            ])
+            combinedSymptoms = Array.from(allSymptoms).join(' + ')
+          }
+          
+          state.sharedState.patientData.primarySymptom = combinedSymptoms
+        }
+        
+        // Update other contextual data
+        if (extractedData.symptom_characteristics.duration_description !== 'unknown') {
+          state.sharedState.patientData.duration = extractedData.symptom_characteristics.duration_description
+        }
+        if (extractedData.symptom_characteristics.pain_intensity_scale !== null) {
+          state.sharedState.patientData.intensity = extractedData.symptom_characteristics.pain_intensity_scale
+        }
+        if (extractedData.symptom_characteristics.associated_symptoms) {
+          state.sharedState.patientData.associatedSymptoms = extractedData.symptom_characteristics.associated_symptoms
         }
       })
       .addCase(continueExtractionThunk.rejected, (state, action) => {
