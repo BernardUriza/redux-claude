@@ -1,53 +1,58 @@
-// 🏥 Asistente Médico Inteligente - Solo hooks del package
-// Creado por Bernard Orozco - Sin estado local, solo servicios
+'use client'
 
 import { useMedicalChat, useAssistantChat } from '@redux-claude/cognitive-core'
 import React, { useRef, useEffect, useState } from 'react'
 import { DynamicInferencePanel } from './DynamicInferencePanel'
 import { MedicalChatMessage } from './MedicalChatMessage'
+import '../styles/medical-components.css'
 
-export interface IntelligentMedicalChatProps {
+interface MedicalMessage {
+  id: string
+  content: string
+  type: 'user' | 'assistant'
+  role?: 'user' | 'assistant'
+  timestamp?: number
+  [key: string]: unknown
+}
+
+interface InferenceData {
+  [key: string]: unknown
+}
+
+interface IntelligentMedicalChatProps {
   className?: string
   showMetrics?: boolean
   partialInput?: string
   onInitialResponse?: (response: string) => void
-  coreType?: 'dashboard' | 'assistant' // 🧠 Selector de núcleo
+  coreType?: 'dashboard' | 'assistant'
 }
 
-/**
- * Componente del Chat Médico Inteligente
- * Solo usa hooks del package - sin estado local
- */
-export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
+const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
   className = '',
   showMetrics = true,
   partialInput = '',
   onInitialResponse,
-  coreType = 'dashboard', // Por defecto usa Dashboard
+  coreType = 'dashboard',
 }) => {
-  // 🧠 HOOKS DUALES - Ambos se llaman siempre (reglas de React)
   const dashboardChat = useMedicalChat({
-    onValidationFailed: (input, result) => {
+    onValidationFailed: (input: string, result: unknown) => {
       console.warn('[DASHBOARD] Validación médica falló:', input, result)
     },
   })
 
   const assistantChat = useAssistantChat({
-    onValidationFailed: (input, result) => {
+    onValidationFailed: (input: string, result: unknown) => {
       console.warn('[ASSISTANT] Validación médica falló:', input, result)
     },
   })
 
-  // Selección del núcleo activo basado en prop
   const { messages, isLoading, sendMedicalQuery, error, coreName } =
     coreType === 'assistant' ? assistantChat : dashboardChat
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
-  const [autoSent, setAutoSent] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const sentMessagesRef = useRef(new Set<string>())
 
-  // 🚀 AUTO-ENVÍO: Enviar partialInput automáticamente cuando esté presente
   useEffect(() => {
     const messageKey = `${coreType}-${partialInput?.trim()}`
 
@@ -57,25 +62,19 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
       !isLoading &&
       !sentMessagesRef.current.has(messageKey)
     ) {
-      console.log(
-        `🚀 [AUTO-SEND] [${coreType.toUpperCase()}] Enviando mensaje automáticamente:`,
-        partialInput
-      )
-      sendMedicalQuery(partialInput)
+      void sendMedicalQuery(partialInput)
       onInitialResponse?.(partialInput)
       sentMessagesRef.current.add(messageKey)
-      setAutoSent(true)
-      // NO llenar el input con partialInput - mantenerlo limpio
     }
   }, [partialInput, isLoading, sendMedicalQuery, onInitialResponse, coreType])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const message = inputValue.trim()
 
     if (message && !isLoading) {
-      await sendMedicalQuery(message)
-      setInputValue('') // 🧹 LIMPIAR INPUT BRUTALMENTE
+      void sendMedicalQuery(message)
+      setInputValue('')
       onInitialResponse?.(message)
     }
   }
@@ -84,11 +83,11 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
     <div className={`h-full p-2 flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-6 ${className}`}>
       {/* Chat Principal */}
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-slate-600/50 overflow-hidden flex flex-col h-full">
+        <div className="medical-card overflow-hidden flex flex-col h-full">
           {/* Mensajes */}
           <div
             ref={chatContainerRef}
-            className="flex-1 p-4 space-y-4 overflow-y-auto scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600"
+            className="flex-1 p-4 space-y-4 overflow-y-auto medical-scroll"
           >
             {messages.length === 0 && (
               <div className="text-center text-slate-400 py-8">
@@ -97,13 +96,13 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
               </div>
             )}
 
-            {messages.map((message: any) => (
-              <MedicalChatMessage key={message.id} message={message} />
+            {messages.map((message: MedicalMessage, index: number) => (
+              <MedicalChatMessage key={message.id} message={message as any} />
             ))}
 
             {isLoading && (
               <div className="flex items-center gap-3 text-cyan-400">
-                <div className="animate-spin w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full"></div>
+                <div className="loading-spinner"></div>
                 <span>Analizando...</span>
               </div>
             )}
@@ -115,25 +114,44 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
             )}
           </div>
 
-          {/* Input */}
+          {/* Textarea Inteligente */}
           <form onSubmit={handleSubmit} className="p-4 border-t border-slate-600/50">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                name="message"
-                placeholder="Describa los síntomas del paciente..."
-                disabled={isLoading}
-                value={inputValue}
-                onChange={e => setInputValue(e.target.value)}
-                className="flex-1 px-4 py-2 bg-slate-700 border border-slate-500 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              />
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <textarea
+                  name="message"
+                  placeholder="Describa los síntomas del paciente..."
+                  disabled={isLoading}
+                  value={inputValue}
+                  onChange={e => setInputValue(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSubmit(e)
+                    }
+                  }}
+                  rows={inputValue.split('\n').length || 1}
+                  className="medical-textarea min-h-[44px] max-h-32"
+                  style={{ 
+                    minHeight: '44px',
+                    height: Math.min(Math.max(44, (inputValue.split('\n').length) * 24 + 20), 128) + 'px'
+                  }}
+                />
+              </div>
               <button
                 type="submit"
-                disabled={isLoading}
-                className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 disabled:from-gray-500 disabled:to-gray-600 text-white rounded-lg font-medium transition-all duration-200"
+                disabled={isLoading || !inputValue.trim()}
+                className="px-6 py-3 btn-medical-secondary disabled:from-gray-500 disabled:to-gray-600 h-11 flex items-center justify-center"
               >
-                {isLoading ? '...' : 'Enviar'}
+                {isLoading ? (
+                  <div className="loading-spinner-sm"></div>
+                ) : (
+                  'Enviar'
+                )}
               </button>
+            </div>
+            <div className="mt-2 text-xs text-slate-400">
+              Enter para enviar • Shift+Enter para nueva línea
             </div>
           </form>
         </div>
@@ -145,7 +163,7 @@ export const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
           <DynamicInferencePanel
             currentMessage={messages[messages.length - 1]?.content || ''}
             className="h-full"
-            onInferenceUpdate={(inferences: any) => {
+            onInferenceUpdate={(inferences: unknown) => {
               console.log('🔄 Inferencias actualizadas:', inferences)
             }}
           />

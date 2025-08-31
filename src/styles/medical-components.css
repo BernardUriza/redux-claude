@@ -1,0 +1,85 @@
+/* Medical Components - Tailwind Utility Classes */
+/* Extracted from repeated patterns across medical components */
+
+/* Container gradients */
+.medical-card {
+  @apply bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-slate-600/50;
+}
+
+.medical-header {
+  @apply bg-gradient-to-r from-slate-800 to-slate-700 border-b border-slate-600/50;
+}
+
+.medical-footer {
+  @apply bg-slate-800/60 border-t border-slate-600/50 backdrop-blur-sm;
+}
+
+/* Buttons */
+.btn-medical-primary {
+  @apply px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-bold transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-blue-500/25;
+}
+
+.btn-medical-secondary {
+  @apply px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200;
+}
+
+.btn-medical-close {
+  @apply p-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-2xl transition-all duration-300 hover:scale-105 shadow-lg;
+}
+
+/* Icons and indicators */
+.medical-icon {
+  @apply bg-gradient-to-br from-cyan-500 to-blue-600 p-3 rounded-2xl shadow-lg;
+}
+
+.status-indicator {
+  @apply w-3 h-3 rounded-full animate-pulse shadow-lg;
+}
+
+.status-active {
+  @apply bg-green-400;
+}
+
+.status-warning {
+  @apply bg-yellow-400;
+}
+
+.status-error {
+  @apply bg-red-400;
+}
+
+/* Text styles */
+.medical-title {
+  @apply text-2xl font-bold bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent;
+}
+
+.medical-subtitle {
+  @apply text-slate-300 text-base font-medium;
+}
+
+.medical-text {
+  @apply text-slate-300 text-sm;
+}
+
+/* Form elements */
+.medical-input {
+  @apply w-full px-4 py-3 bg-slate-700 border border-slate-500 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500;
+}
+
+.medical-textarea {
+  @apply w-full px-4 py-3 bg-slate-700 border border-slate-500 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none scrollbar-thin scrollbar-track-slate-700 scrollbar-thumb-slate-500;
+}
+
+/* Loading states */
+.loading-spinner {
+  @apply animate-spin w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full;
+}
+
+.loading-spinner-sm {
+  @apply w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin;
+}
+
+/* Scrollbars */
+.medical-scroll {
+  @apply scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600;
+}

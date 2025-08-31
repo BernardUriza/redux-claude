@@ -19,7 +19,7 @@ import { SOAPDisplay } from './SOAPDisplay'
 import { FollowUpTracker } from './FollowUpTracker'
 import { MedicalNotes } from './MedicalNotes'
 import { LoadingScreen } from './LoadingScreen'
-import { MedicalAssistant } from './MedicalAssistant'
+import MedicalAssistant from './MedicalAssistant'
 import { useMobileInteractions } from '../hooks/useMobileInteractions'
 import { useDashboardState } from '../hooks/useDashboardState'
 import { useSelector } from 'react-redux'
@@ -1669,7 +1669,7 @@ export const CognitiveDashboard = () => {
         {/* Medical Autocompletion Modal (Simple) */}
         <MedicalAssistant
           partialInput={lastRejectedInput}
-          onSelectTemplate={template => {
+          onSelectTemplate={(template: string) => {
             setInput(template)
             setShowAutocompletion(false)
             setLastRejectedInput('')
@@ -1693,7 +1693,7 @@ export const CognitiveDashboard = () => {
             setShowMedicalAssistant(false)
             setLastRejectedInput('')
           }}
-          onSelectTemplate={template => {
+          onSelectTemplate={(template: string) => {
             setInput(template)
             setShowMedicalAssistant(false)
             setLastRejectedInput('')
