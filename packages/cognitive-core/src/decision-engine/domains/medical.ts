@@ -200,9 +200,10 @@ CRITICAL RULES:
 - ACCUMULATE symptoms, never overwrite existing data
 - TRANSLATE all colloquial/lay language to precise medical terminology using your medical knowledge
 - Apply anatomical precision (e.g., "dolor de estómago" should specify epigástrico vs hipogástrico based on context)
-- Use "unknown" for missing fields, never guess or infer beyond what's explicitly stated
+- Use "unknown" only when NO contextual clues exist, make reasonable medical inferences when possible
 - Age/gender are NOM-required fields - prioritize these always
-- Return structured JSON only, no explanatory text
+- Return ONLY valid JSON structure, NO additional text, explanations, or comments
+- JSON must be parseable by JSON.parse() - no trailing text allowed
 - Apply weighted scoring: Demographics(40%) + Clinical(30%) + Context(30%)
 - Mexican healthcare compliance: Age + gender required before SOAP generation
 - When combining symptoms, maintain chronological order and note any progression
@@ -221,11 +222,18 @@ DATA ACCUMULATION STRATEGY:
 - Track symptom evolution and changes
 - Note any conflicting information for clinical review
 
+CONTEXTUAL INTELLIGENCE:
+- Make reasonable inferences from available context clues
+- If age not explicit, infer from symptom patterns (e.g., joint pain → likely adult)
+- If gender not explicit but can be inferred contextually, note with lower confidence
+- Provide age ranges when exact age unknown (e.g., "adulto joven", "edad media")
+- Balance medical accuracy with practical usability
+
 <answer>
 Return only this JSON structure:
 {
   "demographics": {
-    "patient_age_years": number | "unknown",
+    "patient_age_years": number | "adulto joven" | "edad media" | "adulto mayor" | "unknown",
     "patient_gender": "masculino" | "femenino" | "unknown", 
     "confidence_demographic": 0.0-1.0
   },
@@ -266,7 +274,8 @@ Return only this JSON structure:
     "model_version": "claude-sonnet-3.5"
   }
 }
-</answer>`
+
+CRITICAL: Return ONLY the JSON object above. No explanations. No commentary. No additional text. No markdown formatting. Just pure JSON that can be parsed directly.</answer>`
 
       default:
         return basePrompt

@@ -94,13 +94,34 @@ export class IntelligentMedicalChat {
       // 🔥 CRITICAL: Parse the extracted data correctly
       let extractedData = extractorResponse.decision
       
+      console.log('🔍 [RAW EXTRACTOR] Raw decision type:', typeof extractedData)
+      console.log('🔍 [RAW EXTRACTOR] Raw decision keys:', Object.keys(extractedData || {}))
+      
       // If the decision has a 'content' field with JSON string, parse it
       if (extractedData && typeof extractedData === 'object' && extractedData.content) {
+        console.log('🔍 [CONTENT FIELD] Raw content length:', extractedData.content?.length)
+        console.log('🔍 [CONTENT FIELD] Content preview (first 200 chars):', extractedData.content?.substring(0, 200))
+        console.log('🔍 [CONTENT FIELD] Content preview (last 200 chars):', extractedData.content?.substring(-200))
+        
         try {
-          extractedData = JSON.parse(extractedData.content)
+          // BRUTAL JSON CLEANING: Remove any non-JSON content
+          let cleanContent = extractedData.content.trim()
+          
+          // Find JSON boundaries - look for first { and last }
+          const firstBrace = cleanContent.indexOf('{')
+          const lastBrace = cleanContent.lastIndexOf('}')
+          
+          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            cleanContent = cleanContent.substring(firstBrace, lastBrace + 1)
+            console.log('🔧 [CLEANING] Extracted pure JSON boundaries')
+            console.log('🔧 [CLEANING] Clean content preview:', cleanContent.substring(0, 100) + '...')
+          }
+          
+          extractedData = JSON.parse(cleanContent)
           console.log('🔧 [PARSED] Successfully parsed JSON from content field')
         } catch (error) {
-          console.warn('⚠️ [PARSE ERROR] Could not parse JSON from content:', error)
+          console.error('💥 [PARSE ERROR] Could not parse JSON from content:', error)
+          console.error('💥 [PARSE ERROR] Failed content:', extractedData.content?.substring(0, 500))
           // Keep original data as fallback
         }
       }
@@ -120,7 +141,11 @@ export class IntelligentMedicalChat {
       console.log('🔍 [INTELLIGENT CHAT] About to dispatch completeExtraction with:', {
         demographics: extractedData.demographics,
         chief_complaint: extractedData.clinical_presentation?.chief_complaint,
-        primary_symptoms: extractedData.clinical_presentation?.primary_symptoms
+        primary_symptoms: extractedData.clinical_presentation?.primary_symptoms,
+        age_raw: extractedData.demographics?.patient_age_years,
+        gender_raw: extractedData.demographics?.patient_gender,
+        full_object_keys: Object.keys(extractedData),
+        is_object: typeof extractedData === 'object'
       })
       this.dispatch(completeExtraction(extractedData))
 
