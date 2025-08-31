@@ -189,34 +189,37 @@ Generate structured medical documentation using SOAP format:
 <thinking>
 Analyze the input step-by-step:
 1. Demographics: Extract age and gender information
-2. Clinical presentation: Identify and TRANSLATE chief complaint and symptoms to medical terminology
+2. Clinical presentation: Identify symptoms and TRANSLATE colloquial language to proper medical terminology
 3. Contextual data: Duration, intensity, characteristics, factors
-4. IMPORTANT: If data already exists, ADD to it, don't replace it
+4. CRITICAL: If data already exists, MERGE and ACCUMULATE, never replace or overwrite
 5. Calculate completeness percentage and NOM compliance
+6. Identify data conflicts and flag for review
 </thinking>
 
 CRITICAL RULES:
-- ACCUMULATE symptoms, never overwrite: If existing data has "dolor abdominal", and new input adds "distensión", combine them
-- TRANSLATE to medical terminology: 
-  * "dolor de estómago" → "dolor abdominal epigástrico"
-  * "hinchazón" → "distensión abdominal"
-  * "cansancio" → "fatiga/astenia"
-  * "dolor de cabeza" → "cefalea"
-  * "mareo" → "vértigo/mareo"
-  * "fiebre" → "febrícula/pirexia (specify temperature if given)"
+- ACCUMULATE symptoms, never overwrite existing data
+- TRANSLATE all colloquial/lay language to precise medical terminology using your medical knowledge
+- Apply anatomical precision (e.g., "dolor de estómago" should specify epigástrico vs hipogástrico based on context)
 - Use "unknown" for missing fields, never guess or infer beyond what's explicitly stated
 - Age/gender are NOM-required fields - prioritize these always
 - Return structured JSON only, no explanatory text
 - Apply weighted scoring: Demographics(40%) + Clinical(30%) + Context(30%)
 - Mexican healthcare compliance: Age + gender required before SOAP generation
-- When combining symptoms, use medical terminology and maintain all previous symptoms
+- When combining symptoms, maintain chronological order and note any progression
+- Flag potential contradictions in accumulated data
 
-MEDICAL TERMINOLOGY EXAMPLES:
-- Digestive: epigastralgia, dispepsia, distensión abdominal, meteorismo, pirosis
-- Pain: dolor sordo, dolor punzante, dolor opresivo, dolor cólico, dolor irradiado
-- General: astenia, adinamia, hiporexia, diaforesis, palidez mucocutánea
-- Respiratory: disnea, taquipnea, tos productiva/seca, hemoptisis
-- Neurological: cefalea holocraneana/hemicránea, parestesias, disestesias
+MEDICAL TRANSLATION APPROACH:
+- Convert lay terms to standard medical nomenclature
+- Specify anatomical locations precisely
+- Use appropriate pain descriptors (sordo, punzante, opresivo, cólico, etc.)
+- Apply proper medical terminology for each body system
+- Maintain symptom relationships and clusters
+
+DATA ACCUMULATION STRATEGY:
+- Preserve all previously extracted symptoms
+- Add new symptoms with proper medical terminology
+- Track symptom evolution and changes
+- Note any conflicting information for clinical review
 
 <answer>
 Return only this JSON structure:
@@ -229,7 +232,9 @@ Return only this JSON structure:
   "clinical_presentation": {
     "chief_complaint": "medical terminology complaint" | "unknown",
     "primary_symptoms": ["medical_term1", "medical_term2"] | null,
-    "anatomical_location": "anatomical region" | "unknown",
+    "secondary_symptoms": ["associated_symptoms"] | null,
+    "anatomical_location": "specific anatomical region" | "unknown",
+    "body_systems_involved": ["system1", "system2"] | null,
     "confidence_symptoms": 0.0-1.0
   },
   "symptom_characteristics": {
@@ -240,7 +245,14 @@ Return only this JSON structure:
     "relieving_factors": ["factors"] | null,
     "associated_symptoms": ["medical symptoms"] | null,
     "temporal_pattern": "pattern" | "unknown",
+    "symptom_progression": "progression description" | "unknown",
     "confidence_context": 0.0-1.0
+  },
+  "data_integrity": {
+    "accumulated_symptoms": ["all_symptoms_chronologically"],
+    "data_conflicts": ["any_contradictions"] | null,
+    "source_consistency": 0.0-1.0,
+    "requires_clinical_review": boolean
   },
   "extraction_metadata": {
     "overall_completeness_percentage": 0-100,
@@ -251,7 +263,7 @@ Return only this JSON structure:
     "ready_for_soap_generation": boolean,
     "missing_critical_fields": ["field names"],
     "extraction_timestamp": "ISO 8601",
-    "claude_model_used": "claude-sonnet-4"
+    "model_version": "claude-sonnet-3.5"
   }
 }
 </answer>`
