@@ -216,6 +216,19 @@ MEDICAL TRANSLATION APPROACH:
 - Apply proper medical terminology for each body system
 - Maintain symptom relationships and clusters
 
+MANDATORY SCIENTIFIC TRANSLATIONS:
+- "dolor de ojos" → "dolor ocular" or "oftalmialgia"
+- "dolor de cabeza" → "cefalea"
+- "dolor de estómago" → "dolor abdominal epigástrico" or "dolor abdominal hipogástrico"
+- "hinchazón" → "edema" or "distensión abdominal"
+- "cansancio" → "fatiga" or "astenia"
+- "mareo" → "vértigo" or "inestabilidad"
+- "dolor de pecho" → "dolor torácico"
+- "dolor de espalda" → "dolor lumbar" or "dorsalgia"
+- "problemas para respirar" → "disnea"
+- "fiebre" → "hipertermia" or "síndrome febril"
+- NEVER use colloquial terms in final output
+
 DATA ACCUMULATION STRATEGY:
 - Preserve all previously extracted symptoms
 - Add new symptoms with proper medical terminology
