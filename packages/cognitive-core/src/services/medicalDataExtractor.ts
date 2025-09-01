@@ -88,29 +88,35 @@ export class MedicalDataExtractor {
       prompt += `- Edad: ${input.existing_data.demographics?.patient_age_years || 'unknown'}\n`
       prompt += `- Género: ${input.existing_data.demographics?.patient_gender || 'unknown'}\n`
       prompt += `- Queja principal: ${input.existing_data.clinical_presentation?.chief_complaint || 'unknown'}\n`
-      
+
       // Incluir TODOS los síntomas primarios existentes
-      if (input.existing_data.clinical_presentation?.primary_symptoms && 
-          input.existing_data.clinical_presentation.primary_symptoms.length > 0) {
+      if (
+        input.existing_data.clinical_presentation?.primary_symptoms &&
+        input.existing_data.clinical_presentation.primary_symptoms.length > 0
+      ) {
         prompt += `- Síntomas primarios acumulados: ${input.existing_data.clinical_presentation.primary_symptoms.join(', ')}\n`
       }
-      
+
       prompt += `- Localización anatómica: ${input.existing_data.clinical_presentation?.anatomical_location || 'unknown'}\n`
       prompt += `- Duración: ${input.existing_data.symptom_characteristics?.duration_description || 'unknown'}\n`
       prompt += `- Intensidad: ${input.existing_data.symptom_characteristics?.pain_intensity_scale || 'unknown'}\n`
-      
+
       // Incluir características del dolor existentes
-      if (input.existing_data.symptom_characteristics?.pain_characteristics && 
-          input.existing_data.symptom_characteristics.pain_characteristics.length > 0) {
+      if (
+        input.existing_data.symptom_characteristics?.pain_characteristics &&
+        input.existing_data.symptom_characteristics.pain_characteristics.length > 0
+      ) {
         prompt += `- Características del dolor: ${input.existing_data.symptom_characteristics.pain_characteristics.join(', ')}\n`
       }
-      
+
       // Incluir síntomas asociados existentes
-      if (input.existing_data.symptom_characteristics?.associated_symptoms && 
-          input.existing_data.symptom_characteristics.associated_symptoms.length > 0) {
+      if (
+        input.existing_data.symptom_characteristics?.associated_symptoms &&
+        input.existing_data.symptom_characteristics.associated_symptoms.length > 0
+      ) {
         prompt += `- Síntomas asociados: ${input.existing_data.symptom_characteristics.associated_symptoms.join(', ')}\n`
       }
-      
+
       prompt += `\n`
     }
 

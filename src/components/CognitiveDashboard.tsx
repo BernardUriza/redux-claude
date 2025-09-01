@@ -3,6 +3,7 @@
 'use client'
 
 import styles from '../styles/components/CognitiveDashboard.module.css'
+import { UI_DIMENSIONS } from '../constants/magicNumbers'
 
 import { useState, useEffect, useRef } from 'react'
 import {
@@ -25,191 +26,16 @@ import MedicalAssistant from './MedicalAssistant'
 import { useMobileInteractions } from '../hooks/useMobileInteractions'
 import { useDashboardState } from '../hooks/useDashboardState'
 import { useSelector } from 'react-redux'
+import type { RootState } from '@redux-claude/cognitive-core'
 
-interface CognitiveMetrics {
-  systemConfidence: number
-  overallHealth: number
-  consensusRate: number
-  memoryLoad: number
-  learningProgress: number
-  activeDebates: number
-  pipelineSuccess: number
-  avgLatency: number
-  activeGoals: number
-  knowledgeGaps: number
-}
+// Constants for cognitive metrics calculation
+const PERCENTAGE_MULTIPLIER = 100
+const DEFAULT_MEMORY_LOAD = 0.3
+const DEFAULT_AVG_LATENCY = 850
+const DEFAULT_ACTIVE_GOALS = 0
+const DEFAULT_KNOWLEDGE_GAPS = 0
+const DEFAULT_CONFIDENCE_FALLBACK = 0
 
-// Cognitive Health Metrics Component
-const _CognitiveHealthMetrics = ({ metrics }: { metrics: CognitiveMetrics | null }) => {
-  if (!metrics) {
-    return (
-      <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/30 text-center">
-        <div className="text-slate-400 mb-2">
-          <span className="text-4xl">🔬</span>
-        </div>
-        <p className="text-slate-300 font-medium">Sin análisis activo</p>
-        <p className="text-slate-500 text-sm mt-1">
-          Realice una consulta médica para ver las métricas
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="grid grid-cols-4 gap-4 mb-6">
-      <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 backdrop-blur-sm rounded-2xl p-4 border border-cyan-500/20">
-        <div className="text-3xl font-bold text-cyan-400 mb-1">{metrics.systemConfidence}%</div>
-        <div className="text-sm text-cyan-300/80">System Confidence</div>
-        <div className="w-full bg-slate-700 rounded-full h-1.5 mt-2">
-          <div
-            className="bg-gradient-to-r from-cyan-500 to-blue-500 h-1.5 rounded-full transition-all duration-500"
-            style={{ width: `${metrics.systemConfidence}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="bg-gradient-to-br from-teal-500/10 to-emerald-500/10 backdrop-blur-sm rounded-2xl p-4 border border-teal-500/20">
-        <div className="text-3xl font-bold text-teal-400 mb-1">{metrics.overallHealth}%</div>
-        <div className="text-sm text-teal-300/80">System Health</div>
-        <div className="w-full bg-slate-700 rounded-full h-1.5 mt-2">
-          <div
-            className="bg-gradient-to-r from-teal-500 to-emerald-500 h-1.5 rounded-full transition-all duration-500"
-            style={{ width: `${metrics.overallHealth}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 backdrop-blur-sm rounded-2xl p-4 border border-blue-500/20">
-        <div className="text-3xl font-bold text-blue-400 mb-1">{metrics.consensusRate}%</div>
-        <div className="text-sm text-blue-300/80">Consensus Rate</div>
-        <div className="w-full bg-slate-700 rounded-full h-1.5 mt-2">
-          <div
-            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-1.5 rounded-full transition-all duration-500"
-            style={{ width: `${metrics.consensusRate}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="bg-gradient-to-br from-slate-500/10 to-gray-500/10 backdrop-blur-sm rounded-2xl p-4 border border-slate-500/20">
-        <div className="text-3xl font-bold text-slate-300 mb-1">{metrics.avgLatency}ms</div>
-        <div className="text-sm text-slate-400/80">Response Time</div>
-        <div className="w-full bg-slate-700 rounded-full h-1.5 mt-2">
-          <div
-            className="bg-gradient-to-r from-slate-500 to-gray-500 h-1.5 rounded-full transition-all duration-500"
-            style={{ width: `${Math.max(10, 100 - metrics.avgLatency / 20)}%` }}
-          />
-        </div>
-      </div>
-    </div>
-  )
-
-  // Cognitive Status Panel Component
-  const _CognitiveStatusPanel = ({ metrics }: { metrics: CognitiveMetrics }) => (
-    <div className="grid grid-cols-2 gap-4 mb-6">
-      <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-600/30">
-        <div className="flex items-center space-x-2 mb-3">
-          <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
-          <span className="text-sm font-semibold text-cyan-300">Memory System</span>
-        </div>
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="flex justify-between">
-            <span className="text-slate-400">Load:</span>
-            <span className="text-slate-200">{Math.round(metrics.memoryLoad * 100)}%</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-400">Goals:</span>
-            <span className="text-slate-200">{metrics.activeGoals}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-400">Gaps:</span>
-            <span className="text-slate-200">{metrics.knowledgeGaps}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-400">Insights:</span>
-            <span className="text-slate-200">24</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-600/30">
-        <div className="flex items-center space-x-2 mb-3">
-          <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" />
-          <span className="text-sm font-semibold text-blue-300">Pipeline Status</span>
-        </div>
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="flex justify-between">
-            <span className="text-slate-400">Success:</span>
-            <span className="text-slate-200">{metrics.pipelineSuccess}%</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-400">Debates:</span>
-            <span className="text-slate-200">{metrics.activeDebates}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-400">Mode:</span>
-            <span className="text-slate-200">Adaptive</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-400">Learning:</span>
-            <span className="text-slate-200">{metrics.learningProgress}%</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Agent Decision Component
-const _AgentDecision = ({ decision }: { decision: any }) => {
-  const getAgentColor = (agentType: string) => {
-    switch (agentType) {
-      case 'diagnostic':
-        return 'blue'
-      case 'triage':
-        return 'red'
-      case 'validation':
-        return 'emerald'
-      case 'treatment':
-        return 'purple'
-      case 'documentation':
-        return 'amber'
-      default:
-        return 'slate'
-    }
-  }
-
-  const color = getAgentColor(decision.agentType)
-
-  return (
-    <div
-      className={`bg-gradient-to-r from-${color}-900/20 to-${color}-800/20 backdrop-blur-sm rounded-xl p-4 border border-${color}-500/20 mb-3`}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <div className={`w-2 h-2 bg-${color}-400 rounded-full`} />
-          <span className={`font-semibold text-${color}-300`}>{decision.agentName}</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-slate-400">{decision.confidence}%</span>
-          <span
-            className={`text-xs px-2 py-1 rounded-full font-medium ${
-              decision.success
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                : 'bg-red-500/20 text-red-300 border border-red-500/30'
-            }`}
-          >
-            {decision.success ? 'SUCCESS' : 'FAILED'}
-          </span>
-        </div>
-      </div>
-      <div className="bg-slate-900/80 rounded-lg p-3 border border-slate-700">
-        <pre className={`text-xs text-${color}-300 overflow-auto max-h-32`}>
-          {JSON.stringify(decision.decision, null, 2)}
-        </pre>
-      </div>
-    </div>
-  )
-}
 
 // Main Cognitive Dashboard Component
 export const CognitiveDashboard = () => {
@@ -240,9 +66,9 @@ export const CognitiveDashboard = () => {
     setShowDataRequiredAlert,
     showAutoFillNotification,
     setShowAutoFillNotification,
-    toggleSidebar,
-    toggleMobileMenu,
-    closeMobileMenu,
+    toggleSidebar: _toggleSidebar,
+    toggleMobileMenu: _toggleMobileMenu,
+    closeMobileMenu: _closeMobileMenu,
   } = dashboardState
 
   // 🧬 Medical Data Extraction System
@@ -262,13 +88,20 @@ export const CognitiveDashboard = () => {
   const {
     state: mobileState,
     triggerHaptic,
-    addTouchFeedback,
+    addTouchFeedback: _addTouchFeedback,
     setupGestureDetection,
     handleMobileInputFocus,
-    handleMobileInputBlur,
+    handleMobileInputBlur: _handleMobileInputBlur,
   } = useMobileInteractions()
 
-  const { messages, isLoading, isStreaming, sendMedicalQuery, newSession, error } = useMedicalChat({
+  const {
+    messages,
+    isLoading,
+    isStreaming,
+    sendMedicalQuery,
+    newSession,
+    error: _error,
+  } = useMedicalChat({
     onValidationFailed: (input, _validationResult) => {
       // Auto-open medical assistant modal when validation fails
       setLastRejectedInput(input)
@@ -285,22 +118,22 @@ export const CognitiveDashboard = () => {
   }, [messages])
 
   // Cognitive metrics from Redux store
-  const { currentCase } = useSelector((state: any) => state.medicalChat)
+  const { currentCase } = useSelector((state: RootState) => state.medicalChat)
   const hasActiveSOAP = currentCase?.soap !== null
 
   // Only populate metrics if we have an active SOAP
   const cognitiveMetrics = hasActiveSOAP
     ? {
-        systemConfidence: Math.round((currentCase?.confidence || 0) * 100),
-        overallHealth: Math.round((currentCase?.confidence || 0) * 100),
-        consensusRate: Math.round((currentCase?.confidence || 0) * 100),
-        memoryLoad: 0.3,
-        learningProgress: Math.round((currentCase?.confidence || 0) * 100),
-        activeDebates: currentCase?.cycles?.length || 0,
-        pipelineSuccess: Math.round((currentCase?.confidence || 0) * 100),
-        avgLatency: 850,
-        activeGoals: 0,
-        knowledgeGaps: 0,
+        systemConfidence: Math.round((currentCase?.confidence || DEFAULT_CONFIDENCE_FALLBACK) * PERCENTAGE_MULTIPLIER),
+        overallHealth: Math.round((currentCase?.confidence || DEFAULT_CONFIDENCE_FALLBACK) * PERCENTAGE_MULTIPLIER),
+        consensusRate: Math.round((currentCase?.confidence || DEFAULT_CONFIDENCE_FALLBACK) * PERCENTAGE_MULTIPLIER),
+        memoryLoad: DEFAULT_MEMORY_LOAD,
+        learningProgress: Math.round((currentCase?.confidence || DEFAULT_CONFIDENCE_FALLBACK) * PERCENTAGE_MULTIPLIER),
+        activeDebates: currentCase?.cycles?.length || DEFAULT_CONFIDENCE_FALLBACK,
+        pipelineSuccess: Math.round((currentCase?.confidence || DEFAULT_CONFIDENCE_FALLBACK) * PERCENTAGE_MULTIPLIER),
+        avgLatency: DEFAULT_AVG_LATENCY,
+        activeGoals: DEFAULT_ACTIVE_GOALS,
+        knowledgeGaps: DEFAULT_KNOWLEDGE_GAPS,
       }
     : null
 
@@ -768,10 +601,7 @@ export const CognitiveDashboard = () => {
     >
       {/* Mobile Menu Overlay */}
       {showMobileMenu && (
-        <div
-          className={styles.mobileMenuOverlay}
-          onClick={() => setShowMobileMenu(false)}
-        >
+        <div className={styles.mobileMenuOverlay} onClick={() => setShowMobileMenu(false)}>
           <div
             className={`${styles.mobileMenu} ${showMobileMenu ? styles.open : ''}`}
             onClick={e => e.stopPropagation()}
@@ -864,9 +694,7 @@ export const CognitiveDashboard = () => {
       )}
 
       {/* Enhanced Collapsible Sidebar - Hidden on mobile */}
-      <div
-        className={`${styles.sidebar} ${sidebarCollapsed ? styles.collapsed : styles.expanded}`}
-      >
+      <div className={`${styles.sidebar} ${sidebarCollapsed ? styles.collapsed : styles.expanded}`}>
         {/* Enhanced Sidebar Header */}
         <div className={styles.sidebarHeader}>
           <div className={styles.sidebarHeaderContent}>
@@ -1347,8 +1175,7 @@ export const CognitiveDashboard = () => {
                       Sistema de Medicina Defensiva Activado
                     </h3>
                     <p className={styles.emptyStateDescription}>
-                      Diagnósticos priorizados por{' '}
-                      <strong>gravedad</strong> sobre probabilidad
+                      Diagnósticos priorizados por <strong>gravedad</strong> sobre probabilidad
                     </p>
                     <div className="bg-gradient-to-r from-blue-950/30 to-purple-950/30 backdrop-blur-xl rounded-xl p-3 sm:p-4 border border-blue-700/20 shadow-xl shadow-blue-950/20 max-w-sm sm:max-w-lg mx-auto">
                       <p className="text-slate-300 text-xs leading-relaxed">
@@ -1574,7 +1401,9 @@ export const CognitiveDashboard = () => {
                           if (e.key === 'Enter' && e.ctrlKey) {
                             e.preventDefault()
                             // Trigger send action
-                            const sendButton = document.querySelector('[data-send-button]') as HTMLButtonElement
+                            const sendButton = document.querySelector(
+                              '[data-send-button]'
+                            ) as HTMLButtonElement
                             sendButton?.click()
                           }
                         }}
@@ -1590,7 +1419,14 @@ export const CognitiveDashboard = () => {
                         autoCorrect="on"
                         rows={Math.min(Math.max(1, input.split('\n').length), 5)}
                         style={{
-                          height: Math.min(Math.max(44, input.split('\n').length * 20 + 24), 128) + 'px'
+                          height:
+                            Math.min(
+                              Math.max(
+                                UI_DIMENSIONS.INPUT_MIN_HEIGHT,
+                                input.split('\n').length * 20 + 24
+                              ),
+                              UI_DIMENSIONS.INPUT_MAX_HEIGHT
+                            ) + 'px',
                         }}
                       />
 
@@ -1676,7 +1512,6 @@ export const CognitiveDashboard = () => {
           </button>
         )}
 
-
         {/* Medical Assistant Modal (Unificado) */}
         <MedicalAssistant
           partialInput={lastRejectedInput || input}
@@ -1696,7 +1531,6 @@ export const CognitiveDashboard = () => {
           }}
         />
       </div>
-
     </div>
   )
 }

@@ -5,7 +5,12 @@ import { selectSystemMetrics } from '../../packages/cognitive-core/src/store/sel
 import type { RootState } from '../../packages/cognitive-core/src/store/store'
 import { generateMedicalPrompt, type MedicalExtractionOutput } from '@redux-claude/cognitive-core'
 import IntelligentMedicalChat from './IntelligentMedicalChat'
-import styles from '../styles/components/MedicalAssistant.module.css'
+// import styles from '../styles/components/MedicalAssistant.module.css'
+import { CONFIDENCE_THRESHOLDS } from '../constants/magicNumbers'
+
+// Constants for medical assistant - NO MORE MAGIC NUMBERS
+const DEFAULT_CONTEXT_CONFIDENCE = 0.3
+const MIN_SYMPTOMS_CONFIDENCE = 0.0
 
 interface PatientData {
   age?: number
@@ -41,26 +46,34 @@ const MedicalAssistant = ({
   onSelectTemplate,
   isVisible,
   onClose,
-  className = '',
-  showMetrics = false,
+  className: _className = '',
+  showMetrics: _showMetrics = false,
 }: MedicalAssistantProps) => {
   const messageCount = 0
   const currentSession: SystemSession = { id: 'mock-session', startedAt: Date.now() }
 
   const systemMetrics = useSelector(selectSystemMetrics)
-  const patientData = useSelector((state: RootState) => state.medicalChat.sharedState.patientData) as PatientData
-  const readyForSOAP = useSelector((state: RootState) => state.medicalChat.sharedState.readyForSOAP) as boolean
-  const currentExtraction = useSelector((state: RootState) => state.medicalChat.medicalExtraction.currentExtraction) as MedicalExtractionOutput | null
+  const patientData = useSelector(
+    (state: RootState) => state.medicalChat.sharedState.patientData
+  ) as PatientData
+  const readyForSOAP = useSelector(
+    (state: RootState) => state.medicalChat.sharedState.readyForSOAP
+  ) as boolean
+  const currentExtraction = useSelector(
+    (state: RootState) => state.medicalChat.medicalExtraction.currentExtraction
+  ) as MedicalExtractionOutput | null
 
-  const canGeneratePrompt = Boolean(patientData.age && patientData.gender && patientData.primarySymptom)
-  
+  const canGeneratePrompt = Boolean(
+    patientData.age && patientData.gender && patientData.primarySymptom
+  )
+
   // Debug: Ver por qué el botón está deshabilitado
   console.log('🔍 [MEDICAL ASSISTANT DEBUG] canGeneratePrompt evaluation:', {
     age: patientData.age,
-    gender: patientData.gender, 
+    gender: patientData.gender,
     primarySymptom: patientData.primarySymptom,
     canGeneratePrompt,
-    patientDataFull: patientData
+    patientDataFull: patientData,
   })
 
   const handleGeneratePrompt = () => {
@@ -73,10 +86,10 @@ const MedicalAssistant = ({
     if (prompt) {
       // Preview inteligente: inyectar en input sin auto-envío
       onSelectTemplate(prompt)
-      
+
       // Clipboard para desktop
       navigator.clipboard?.writeText(prompt).catch(() => {})
-      
+
       // Feedback visual sin auto-close
       const indicator = document.querySelector('[data-autoclose-indicator]')
       if (indicator) {
@@ -89,14 +102,18 @@ const MedicalAssistant = ({
   const createMinimalExtraction = (data: PatientData): MedicalExtractionOutput => ({
     demographics: {
       patient_age_years: typeof data.age === 'number' ? data.age : 'unknown',
-      patient_gender: (data.gender === 'masculino' || data.gender === 'femenino' ? data.gender : 'unknown') as 'masculino' | 'femenino' | 'unknown',
-      confidence_demographic: !!(data.age && data.gender) ? 0.9 : 0.5,
+      patient_gender: (data.gender === 'masculino' || data.gender === 'femenino'
+        ? data.gender
+        : 'unknown') as 'masculino' | 'femenino' | 'unknown',
+      confidence_demographic: !!(data.age && data.gender)
+        ? CONFIDENCE_THRESHOLDS.HIGH
+        : CONFIDENCE_THRESHOLDS.MINIMUM,
     },
     clinical_presentation: {
       chief_complaint: data.primarySymptom || 'unknown',
       primary_symptoms: data.symptoms || null,
       anatomical_location: 'unknown',
-      confidence_symptoms: !!data.primarySymptom ? 0.8 : 0.0,
+      confidence_symptoms: !!data.primarySymptom ? CONFIDENCE_THRESHOLDS.GOOD : MIN_SYMPTOMS_CONFIDENCE,
     },
     symptom_characteristics: {
       duration_description: data.duration || 'unknown',
@@ -106,7 +123,7 @@ const MedicalAssistant = ({
       relieving_factors: data.relievingFactors || null,
       associated_symptoms: data.associatedSymptoms || null,
       temporal_pattern: data.timePattern || 'unknown',
-      confidence_context: !!(data.duration || data.intensity) ? 0.7 : 0.3,
+      confidence_context: !!(data.duration || data.intensity) ? CONFIDENCE_THRESHOLDS.MEDIUM : DEFAULT_CONTEXT_CONFIDENCE,
     },
     medical_validation: {
       anatomical_contradictions: [],
@@ -132,12 +149,18 @@ const MedicalAssistant = ({
     },
   })
 
-  const handleInferenceUpdate = (inferences: Array<{ id: string; confidence: number; value: string | number }>) => {
+  const _handleInferenceUpdate = (
+    inferences: Array<{ id: string; confidence: number; value: string | number }>
+  ) => {
     const ageInference = inferences.find(i => i.id === 'age')
     const genderInference = inferences.find(i => i.id === 'gender')
 
     // Verificar si ambos tienen confianza alta (>= 0.8)
-    const ageComplete = ageInference && ageInference.confidence >= 0.8 && typeof ageInference.value === 'number' && ageInference.value > 0
+    const ageComplete =
+      ageInference &&
+      ageInference.confidence >= 0.8 &&
+      typeof ageInference.value === 'number' &&
+      ageInference.value > 0
     const genderComplete =
       genderInference &&
       genderInference.confidence >= 0.8 &&
@@ -205,10 +228,7 @@ const MedicalAssistant = ({
           />
         </div>
 
-        <MedicalAssistantFooter
-          canGeneratePrompt={canGeneratePrompt}
-          patientData={patientData}
-        />
+        <MedicalAssistantFooter canGeneratePrompt={canGeneratePrompt} patientData={patientData} />
       </div>
     </div>
   )
@@ -242,12 +262,8 @@ const MedicalAssistantHeader = ({
         <span className="text-2xl">🏥</span>
       </div>
       <div>
-        <h3 className="medical-title">
-          Asistente de Diagnóstico IA
-        </h3>
-        <p className="medical-subtitle mt-1">
-          Sistema inteligente • Diagnóstico avanzado
-        </p>
+        <h3 className="medical-title">Asistente de Diagnóstico IA</h3>
+        <p className="medical-subtitle mt-1">Sistema inteligente • Diagnóstico avanzado</p>
       </div>
     </div>
 
@@ -259,10 +275,15 @@ const MedicalAssistantHeader = ({
 
       <div className="hidden lg:flex items-center gap-4 text-sm text-slate-300">
         <div className="flex items-center gap-3">
-          <div className={`status-indicator ${
-            systemMetrics.systemHealth === 'optimal' ? 'status-active' :
-            systemMetrics.systemHealth === 'good' ? 'status-warning' : 'status-error'
-          }`} />
+          <div
+            className={`status-indicator ${
+              systemMetrics.systemHealth === 'optimal'
+                ? 'status-active'
+                : systemMetrics.systemHealth === 'good'
+                  ? 'status-warning'
+                  : 'status-error'
+            }`}
+          />
           <span className="font-semibold">{systemMetrics.systemHealth.toUpperCase()}</span>
         </div>
         <span>💬 {messageCount} mensajes</span>
@@ -271,7 +292,9 @@ const MedicalAssistantHeader = ({
 
         {(patientData.age || patientData.gender || patientData.primarySymptom) && (
           <div className="flex items-center gap-2 bg-slate-700/50 px-3 py-1 rounded-full">
-            <span className={`w-2 h-2 rounded-full shadow-lg ${patientData.isComplete ? 'status-active' : 'bg-amber-400'}`} />
+            <span
+              className={`w-2 h-2 rounded-full shadow-lg ${patientData.isComplete ? 'status-active' : 'bg-amber-400'}`}
+            />
             <span className="font-medium">
               {patientData.age && `${patientData.age}a`}
               {patientData.age && patientData.gender && ' • '}
@@ -294,12 +317,19 @@ const MedicalAssistantHeader = ({
         </button>
       )}
 
-      <button
-        onClick={onClose}
-        className="btn-medical-close"
-      >
-        <svg className="w-6 h-6 text-slate-300 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      <button onClick={onClose} className="btn-medical-close">
+        <svg
+          className="w-6 h-6 text-slate-300 hover:text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>
@@ -312,7 +342,10 @@ interface MedicalAssistantFooterProps {
   patientData: PatientData
 }
 
-const MedicalAssistantFooter = ({ canGeneratePrompt, patientData }: MedicalAssistantFooterProps) => (
+const MedicalAssistantFooter = ({
+  canGeneratePrompt,
+  patientData,
+}: MedicalAssistantFooterProps) => (
   <div className="medical-footer px-8 py-4 overflow-hidden">
     <div className="flex items-center justify-between flex-wrap gap-4">
       <div className="flex items-center gap-3 text-sm medical-text">
@@ -323,7 +356,10 @@ const MedicalAssistantFooter = ({ canGeneratePrompt, patientData }: MedicalAssis
       </div>
 
       <div className="flex items-center gap-4 text-sm">
-        <div data-autoclose-indicator className="text-cyan-400 font-medium transition-all duration-300">
+        <div
+          data-autoclose-indicator
+          className="text-cyan-400 font-medium transition-all duration-300"
+        >
           {canGeneratePrompt ? (
             <span className="text-green-400">
               ✅ Datos suficientes recopilados - Listo para generar SOAP
@@ -335,7 +371,9 @@ const MedicalAssistantFooter = ({ canGeneratePrompt, patientData }: MedicalAssis
                 !patientData.age && 'Edad',
                 !patientData.gender && 'Género',
                 !patientData.primarySymptom && 'Síntoma principal',
-              ].filter(Boolean).join(', ')}
+              ]
+                .filter(Boolean)
+                .join(', ')}
             </span>
           )}
         </div>

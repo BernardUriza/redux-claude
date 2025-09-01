@@ -5,10 +5,10 @@
 
 import { useSelector } from 'react-redux'
 import { RootState } from '@redux-claude/cognitive-core'
-import { useState, useEffect, memo } from 'react'
+import { memo } from 'react' // { useState, useEffect } removed
 import {
   selectSystemMetrics,
-  type SystemMetrics,
+  // type SystemMetrics,
 } from '@redux-claude/cognitive-core/src/store/selectors'
 
 interface MetricCardProps {

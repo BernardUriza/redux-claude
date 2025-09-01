@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import type { MedicalMessage } from '@redux-claude/cognitive-core'
+import { CONFIDENCE_THRESHOLDS, PERFORMANCE } from '../constants/magicNumbers'
 
 interface MedicalMessageProps {
   message: MedicalMessage
@@ -42,16 +43,16 @@ const SOAPBadge = ({ section }: { section: string }) => {
 
 const ConfidenceIndicator = ({ confidence }: { confidence: number }) => {
   const getConfidenceColor = (conf: number) => {
-    if (conf >= 0.9) return 'from-emerald-500 to-green-500'
-    if (conf >= 0.8) return 'from-blue-500 to-cyan-500'
-    if (conf >= 0.7) return 'from-yellow-500 to-orange-500'
+    if (conf >= CONFIDENCE_THRESHOLDS.HIGH) return 'from-emerald-500 to-green-500'
+    if (conf >= CONFIDENCE_THRESHOLDS.GOOD) return 'from-blue-500 to-cyan-500'
+    if (conf >= CONFIDENCE_THRESHOLDS.MEDIUM) return 'from-yellow-500 to-orange-500'
     return 'from-red-500 to-pink-500'
   }
 
   const getConfidenceLabel = (conf: number) => {
-    if (conf >= 0.9) return 'MUY ALTA'
-    if (conf >= 0.8) return 'ALTA'
-    if (conf >= 0.7) return 'MEDIA'
+    if (conf >= CONFIDENCE_THRESHOLDS.HIGH) return 'MUY ALTA'
+    if (conf >= CONFIDENCE_THRESHOLDS.GOOD) return 'ALTA'
+    if (conf >= CONFIDENCE_THRESHOLDS.MEDIUM) return 'MEDIA'
     return 'BAJA'
   }
 
@@ -177,7 +178,7 @@ export const EnhancedMedicalMessage = ({ message, isStreaming = false }: Medical
     try {
       await navigator.clipboard.writeText(message.content)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setTimeout(() => setCopied(false), PERFORMANCE.ANIMATION_DELAY)
     } catch (err) {
       console.error('Error copiando al portapapeles:', err)
     }

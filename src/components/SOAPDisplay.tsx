@@ -13,12 +13,52 @@ import {
   type SOAPAnalysis,
 } from '@redux-claude/cognitive-core/src/store/selectors'
 
+// SOAP Section Data Interfaces - No more any types!
+interface SubjectiveData {
+  chiefComplaint: string
+  presentIllness: string
+  medicalHistory: string[]
+  familyHistory: string[]
+}
+
+interface ObjectiveData {
+  vitalSigns: Record<string, string | number>
+  physicalExam: Record<string, string>
+  labResults: string[]
+}
+
+interface AnalysisData {
+  differentialDx: string[]
+  primaryDx: string
+  confidence: number
+  reasoning: string
+}
+
+interface PlanData {
+  immediateActions: string[]
+  medications: string[]
+  followUp: string[]
+  patientEducation: string[]
+}
+
+type SOAPSectionData = SubjectiveData | ObjectiveData | AnalysisData | PlanData
+
+// Complete SOAP structure interface
+interface CompleteSOAP {
+  subjetivo?: SubjectiveData
+  objetivo?: ObjectiveData
+  analisis?: AnalysisData
+  plan?: PlanData
+}
+
+type SOAPEditSection = 'subjetivo' | 'objetivo' | 'analisis' | 'plan'
+
 interface SOAPSectionProps {
   section: 'S' | 'O' | 'A' | 'P'
   title: string
-  data: any
+  data: SOAPSectionData | null
   editable?: boolean
-  onEdit?: (data: any) => void
+  onEdit?: (data: SOAPSectionData) => void
 }
 
 const SOAPSection = ({ section, title, data, editable = false, onEdit }: SOAPSectionProps) => {
@@ -60,13 +100,13 @@ const SOAPSection = ({ section, title, data, editable = false, onEdit }: SOAPSec
 
     switch (section) {
       case 'S':
-        return <SubjectiveContent data={data as any} />
+        return <SubjectiveContent data={data as SubjectiveData} />
       case 'O':
-        return <ObjectiveContent data={data as any} />
+        return <ObjectiveContent data={data as ObjectiveData} />
       case 'A':
-        return <AnalysisContent data={data as any} />
+        return <AnalysisContent data={data as AnalysisData} />
       case 'P':
-        return <PlanContent data={data as any} />
+        return <PlanContent data={data as PlanData} />
       default:
         return <p className="text-slate-300">{String(data)}</p>
     }
@@ -136,7 +176,7 @@ const SOAPSection = ({ section, title, data, editable = false, onEdit }: SOAPSec
 }
 
 // Componentes específicos para cada sección SOAP
-const SubjectiveContent = ({ data }: { data: any }) => (
+const SubjectiveContent = ({ data }: { data: SubjectiveData }) => (
   <div className="space-y-4">
     <div>
       <h4 className="text-slate-200 font-semibold mb-2">Motivo de Consulta</h4>
@@ -172,7 +212,7 @@ const SubjectiveContent = ({ data }: { data: any }) => (
   </div>
 )
 
-const ObjectiveContent = ({ data }: { data: any }) => (
+const ObjectiveContent = ({ data }: { data: ObjectiveData }) => (
   <div className="space-y-4">
     {Object.keys(data.vitalSigns).length > 0 && (
       <div>
@@ -214,7 +254,7 @@ const ObjectiveContent = ({ data }: { data: any }) => (
   </div>
 )
 
-const AnalysisContent = ({ data }: { data: any }) => (
+const AnalysisContent = ({ data }: { data: AnalysisData }) => (
   <div className="space-y-4">
     <div>
       <h4 className="text-slate-200 font-semibold mb-2">Diagnóstico Principal</h4>
@@ -255,7 +295,7 @@ const AnalysisContent = ({ data }: { data: any }) => (
   </div>
 )
 
-const PlanContent = ({ data }: { data: any }) => (
+const PlanContent = ({ data }: { data: PlanData }) => (
   <div className="space-y-4">
     {data.immediate.length > 0 && (
       <div>
@@ -315,8 +355,8 @@ export const SOAPDisplay = () => {
   console.log('🔬 SOAPDisplay DEBUG - Error:', error)
 
   const handleSectionEdit = (
-    section: 'subjetivo' | 'objetivo' | 'analisis' | 'plan',
-    data: any
+    section: SOAPEditSection,
+    data: SOAPSectionData
   ) => {
     // Mapear nombres españoles a ingleses para el slice
     const sectionMap = {
@@ -337,7 +377,7 @@ export const SOAPDisplay = () => {
   }
 
   // Función para generar contenido markdown del SOAP
-  const generateMarkdownContent = (soap: any) => {
+  const generateMarkdownContent = (soap: CompleteSOAP) => {
     let markdown = `# Análisis SOAP Completo\n\n`
     markdown += `**Confianza:** ${Math.round((soapAnalysis?.confidence || 0) * 100)}%\n`
     markdown += `**Actualizado:** ${new Date(soapAnalysis?.lastUpdated || Date.now()).toLocaleString('es-ES')}\n\n`

@@ -89,14 +89,9 @@ export const LoadingScreen = ({ onLoadingComplete, duration = 3000 }: LoadingScr
             <span className={styles.logoIcon}>🧠</span>
           </div>
 
-          <h1 className={`${styles.title} ${styles.mobile}`}>
-            Redux Claude Medical
-          </h1>
+          <h1 className={`${styles.title} ${styles.mobile}`}>Redux Claude Medical</h1>
 
-          <p
-            className={styles.subtitle}
-            style={{ animationDelay: '0.2s' }}
-          >
+          <p className={styles.subtitle} style={{ animationDelay: '0.2s' }}>
             Sistema Cognitivo Médico 2025
           </p>
         </div>
@@ -106,16 +101,10 @@ export const LoadingScreen = ({ onLoadingComplete, duration = 3000 }: LoadingScr
           {/* Progress Bar Container */}
           <div className={styles.progressBarContainer}>
             {/* Progress Bar */}
-            <div
-              className={styles.progressBar}
-              style={{ width: `${progress}%` }}
-            />
+            <div className={styles.progressBar} style={{ width: `${progress}%` }} />
 
             {/* Progress Glow Effect */}
-            <div
-              className={styles.progressGlow}
-              style={{ width: `${progress}%` }}
-            />
+            <div className={styles.progressGlow} style={{ width: `${progress}%` }} />
           </div>
 
           {/* Progress Percentage */}
@@ -129,29 +118,16 @@ export const LoadingScreen = ({ onLoadingComplete, duration = 3000 }: LoadingScr
         <div className={styles.currentStep} style={{ animationDelay: '0.6s' }}>
           <div className={styles.stepContainer}>
             {/* Step Icon */}
-            <div className={styles.stepIcon}>
-              {loadingSteps[currentStep]?.icon}
-            </div>
+            <div className={styles.stepIcon}>{loadingSteps[currentStep]?.icon}</div>
 
             {/* Step Label */}
-            <p className={styles.stepLabel}>
-              {loadingSteps[currentStep]?.label}
-            </p>
+            <p className={styles.stepLabel}>{loadingSteps[currentStep]?.label}</p>
 
             {/* Loading Dots Animation */}
             <div className={styles.loadingDots}>
-              <div
-                className={styles.loadingDot}
-                style={{ animationDelay: '0ms' }}
-              />
-              <div
-                className={styles.loadingDot}
-                style={{ animationDelay: '0.2s' }}
-              />
-              <div
-                className={styles.loadingDot}
-                style={{ animationDelay: '0.4s' }}
-              />
+              <div className={styles.loadingDot} style={{ animationDelay: '0ms' }} />
+              <div className={styles.loadingDot} style={{ animationDelay: '0.2s' }} />
+              <div className={styles.loadingDot} style={{ animationDelay: '0.4s' }} />
             </div>
           </div>
         </div>
@@ -185,7 +161,6 @@ export const LoadingScreen = ({ onLoadingComplete, duration = 3000 }: LoadingScr
           <p>Powered by Claude AI</p>
         </div>
       </div>
-
     </div>
   )
 }

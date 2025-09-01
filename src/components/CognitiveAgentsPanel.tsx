@@ -17,92 +17,66 @@ interface SpecializedAgent {
   consultationTime?: number
 }
 
-const getAgentIcon = (specialty: string) => {
-  switch (specialty.toLowerCase()) {
-    case 'cardiologia':
-    case 'cardiology':
-      return '❤️'
-    case 'neurologia':
-    case 'neurology':
-      return '🧠'
-    case 'pediatria':
-    case 'pediatrics':
-      return '👶'
-    case 'endocrinologia':
-    case 'endocrinology':
-      return '🔬'
-    case 'infectologia':
-    case 'infectious_disease':
-      return '🦠'
-    case 'medicina_general':
-    case 'general_medicine':
-      return '🩺'
-    case 'psiquiatria':
-    case 'psychiatry':
-      return '🧘'
-    case 'medicina_emergencia':
-    case 'emergency_medicine':
-      return '🚑'
-    case 'dermatologia':
-    case 'dermatology':
-      return '🩻'
-    case 'alergologia':
-    case 'allergology':
-      return '🌿'
-    default:
-      return '👨‍⚕️'
-  }
+// Specialty mapping with both Spanish and English keys - BRUTAL OPTIMIZATION
+const SPECIALTY_CONFIG = {
+  // Cardiology
+  cardiologia: { icon: '❤️', color: 'from-red-500 to-pink-500' },
+  cardiology: { icon: '❤️', color: 'from-red-500 to-pink-500' },
+  // Neurology  
+  neurologia: { icon: '🧠', color: 'from-purple-500 to-indigo-500' },
+  neurology: { icon: '🧠', color: 'from-purple-500 to-indigo-500' },
+  // Pediatrics
+  pediatria: { icon: '👶', color: 'from-blue-500 to-cyan-500' },
+  pediatrics: { icon: '👶', color: 'from-blue-500 to-cyan-500' },
+  // Endocrinology
+  endocrinologia: { icon: '🔬', color: 'from-green-500 to-teal-500' },
+  endocrinology: { icon: '🔬', color: 'from-green-500 to-teal-500' },
+  // Infectious Disease
+  infectologia: { icon: '🦠', color: 'from-orange-500 to-yellow-500' },
+  infectious_disease: { icon: '🦠', color: 'from-orange-500 to-yellow-500' },
+  // General Medicine
+  medicina_general: { icon: '🩺', color: 'from-slate-500 to-gray-500' },
+  general_medicine: { icon: '🩺', color: 'from-slate-500 to-gray-500' },
+  // Psychiatry
+  psiquiatria: { icon: '🧘', color: 'from-violet-500 to-purple-500' },
+  psychiatry: { icon: '🧘', color: 'from-violet-500 to-purple-500' },
+  // Emergency Medicine
+  medicina_emergencia: { icon: '🚑', color: 'from-red-600 to-orange-600' },
+  emergency_medicine: { icon: '🚑', color: 'from-red-600 to-orange-600' },
+  // Dermatology
+  dermatologia: { icon: '🩻', color: 'from-amber-500 to-orange-500' },
+  dermatology: { icon: '🩻', color: 'from-amber-500 to-orange-500' },
+  // Allergology
+  alergologia: { icon: '🌿', color: 'from-green-400 to-lime-400' },
+  allergology: { icon: '🌿', color: 'from-green-400 to-lime-400' },
+} as const
+
+const DEFAULT_SPECIALTY = { icon: '👨‍⚕️', color: 'from-gray-500 to-slate-500' }
+
+const getAgentIcon = (specialty: string): string => {
+  const config = SPECIALTY_CONFIG[specialty.toLowerCase() as keyof typeof SPECIALTY_CONFIG]
+  return config?.icon ?? DEFAULT_SPECIALTY.icon
 }
 
-const getSpecialtyColor = (specialty: string) => {
-  switch (specialty.toLowerCase()) {
-    case 'cardiologia':
-    case 'cardiology':
-      return 'from-red-500 to-pink-500'
-    case 'neurologia':
-    case 'neurology':
-      return 'from-purple-500 to-indigo-500'
-    case 'pediatria':
-    case 'pediatrics':
-      return 'from-blue-500 to-cyan-500'
-    case 'endocrinologia':
-    case 'endocrinology':
-      return 'from-green-500 to-teal-500'
-    case 'infectologia':
-    case 'infectious_disease':
-      return 'from-orange-500 to-yellow-500'
-    case 'medicina_general':
-    case 'general_medicine':
-      return 'from-slate-500 to-gray-500'
-    case 'psiquiatria':
-    case 'psychiatry':
-      return 'from-violet-500 to-purple-500'
-    case 'medicina_emergencia':
-    case 'emergency_medicine':
-      return 'from-red-600 to-orange-600'
-    case 'dermatologia':
-    case 'dermatology':
-      return 'from-amber-500 to-orange-500'
-    case 'alergologia':
-    case 'allergology':
-      return 'from-emerald-500 to-green-500'
-    default:
-      return 'from-blue-500 to-cyan-500'
-  }
+const getSpecialtyColor = (specialty: string): string => {
+  const config = SPECIALTY_CONFIG[specialty.toLowerCase() as keyof typeof SPECIALTY_CONFIG]
+  return config?.color ?? DEFAULT_SPECIALTY.color
 }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'active':
-      return 'text-blue-400 bg-blue-500/20 border-blue-500/30'
-    case 'consulting':
-      return 'text-purple-400 bg-purple-500/20 border-purple-500/30'
-    case 'completed':
-      return 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30'
-    default:
-      return 'text-slate-400 bg-slate-500/20 border-slate-500/30'
-  }
+// Status color mapping - BRUTAL OPTIMIZATION
+const STATUS_COLORS = {
+  active: 'text-blue-400 bg-blue-500/20 border-blue-500/30',
+  consulting: 'text-purple-400 bg-purple-500/20 border-purple-500/30', 
+  completed: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30',
+  idle: 'text-slate-400 bg-slate-500/20 border-slate-500/30'
+} as const
+
+const getStatusColor = (status: string): string => {
+  return STATUS_COLORS[status as keyof typeof STATUS_COLORS] ?? STATUS_COLORS.idle
 }
+
+// Constants for calculations - NO MORE MAGIC NUMBERS
+const PERCENTAGE_MULTIPLIER = 100
 
 interface AgentCardProps {
   agent: SpecializedAgent
@@ -162,13 +136,13 @@ const AgentCard = ({ agent, isHighlighted }: AgentCardProps) => {
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-slate-400 font-medium">Nivel de Confianza</span>
           <span className="text-sm text-white font-bold">
-            {Math.round(agent.confidence * 100)}%
+            {Math.round(agent.confidence * PERCENTAGE_MULTIPLIER)}%
           </span>
         </div>
         <div className="w-full bg-slate-700/50 rounded-full h-2">
           <div
             className={`bg-gradient-to-r ${colorGradient} h-2 rounded-full transition-all duration-500 shadow-sm`}
-            style={{ width: `${Math.round(agent.confidence * 100)}%` }}
+            style={{ width: `${Math.round(agent.confidence * PERCENTAGE_MULTIPLIER)}%` }}
           />
         </div>
       </div>

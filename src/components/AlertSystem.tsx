@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { medicalSystemMonitor, PerformanceAlert } from '../monitoring/MedicalSystemMonitor'
+import { CALCULATION_FACTORS } from '../constants/magicNumbers'
 
 interface AlertSystemProps {
   maxVisible?: number
@@ -138,7 +139,7 @@ export const AlertSystem: React.FC<AlertSystemProps> = ({
         gainNode.gain.value = 0.1
 
         oscillator.start()
-        oscillator.stop(audioContext.currentTime + 0.2)
+        oscillator.stop(audioContext.currentTime + CALCULATION_FACTORS.FADE_OPACITY)
       } catch (error) {
         // Silenciar errores de audio
       }

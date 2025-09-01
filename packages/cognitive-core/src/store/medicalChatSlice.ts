@@ -3,7 +3,10 @@
 // 🔧 UTILITY FUNCTIONS - Single source of truth para mapping y factories
 
 // 🏭 Message creation factory - NO MORE DUPLICATION
-const createMessage = (prefix: string, payload: Omit<MedicalMessage, 'id' | 'timestamp'>): MedicalMessage => ({
+const createMessage = (
+  prefix: string,
+  payload: Omit<MedicalMessage, 'id' | 'timestamp'>
+): MedicalMessage => ({
   id: `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   timestamp: Date.now(),
   ...payload,
@@ -17,7 +20,10 @@ const createEmptyWipData = () => ({
 })
 
 // 🔄 Array/Value processor - NO MORE SWITCH CASE REPETITION
-const processPatientValue = (value: string | number | string[], type: 'array' | 'string' | 'number') => {
+const processPatientValue = (
+  value: string | number | string[],
+  type: 'array' | 'string' | 'number'
+) => {
   switch (type) {
     case 'array':
       return Array.isArray(value) ? value : [value as string]
@@ -33,7 +39,7 @@ const updatePatientDataFromExtraction = (
   extractedData: MedicalExtractionOutput
 ): PatientData => {
   const updated = { ...patientData }
-  
+
   // Demographics
   if (extractedData.demographics.patient_age_years !== 'unknown') {
     const ageValue = extractedData.demographics.patient_age_years
@@ -42,24 +48,27 @@ const updatePatientDataFromExtraction = (
   if (extractedData.demographics.patient_gender !== 'unknown') {
     updated.gender = extractedData.demographics.patient_gender
   }
-  
+
   // Symptoms - ACCUMULATE without duplicates
-  if (extractedData.clinical_presentation?.chief_complaint && 
-      extractedData.clinical_presentation.chief_complaint !== 'unknown') {
-    
+  if (
+    extractedData.clinical_presentation?.chief_complaint &&
+    extractedData.clinical_presentation.chief_complaint !== 'unknown'
+  ) {
     const existingSymptoms = updated.symptoms || []
     const allSymptoms = new Set([
       ...(updated.primarySymptom ? [updated.primarySymptom] : []),
       ...existingSymptoms,
       extractedData.clinical_presentation.chief_complaint,
-      ...(extractedData.clinical_presentation.primary_symptoms || [])
+      ...(extractedData.clinical_presentation.primary_symptoms || []),
     ])
-    
-    const validSymptoms = Array.from(allSymptoms).filter(s => s && s !== 'unknown' && s.trim() !== '')
+
+    const validSymptoms = Array.from(allSymptoms).filter(
+      s => s && s !== 'unknown' && s.trim() !== ''
+    )
     updated.primarySymptom = validSymptoms.join(' + ')
     updated.symptoms = validSymptoms
   }
-  
+
   // Context
   if (extractedData.symptom_characteristics) {
     const sc = extractedData.symptom_characteristics
@@ -67,10 +76,10 @@ const updatePatientDataFromExtraction = (
     if (sc.pain_intensity_scale !== null) updated.intensity = sc.pain_intensity_scale
     if (sc.associated_symptoms) updated.associatedSymptoms = sc.associated_symptoms
   }
-  
+
   // Completeness check
   updated.isComplete = !!(updated.age && updated.gender && updated.primarySymptom)
-  
+
   return updated
 }
 
@@ -357,16 +366,25 @@ const medicalChatSlice = createSlice({
             typeof value === 'number' ? value : parseInt(value as string)
           break
         case 'characteristics':
-          state.sharedState.patientData.characteristics = processPatientValue(value, 'array') as string[]
+          state.sharedState.patientData.characteristics = processPatientValue(
+            value,
+            'array'
+          ) as string[]
           break
         case 'triggers':
           state.sharedState.patientData.triggers = processPatientValue(value, 'array') as string[]
           break
         case 'relievingFactors':
-          state.sharedState.patientData.relievingFactors = processPatientValue(value, 'array') as string[]
+          state.sharedState.patientData.relievingFactors = processPatientValue(
+            value,
+            'array'
+          ) as string[]
           break
         case 'associatedSymptoms':
-          state.sharedState.patientData.associatedSymptoms = processPatientValue(value, 'array') as string[]
+          state.sharedState.patientData.associatedSymptoms = processPatientValue(
+            value,
+            'array'
+          ) as string[]
           break
         case 'timePattern':
           state.sharedState.patientData.timePattern = value as string
@@ -504,7 +522,7 @@ const medicalChatSlice = createSlice({
       if (extractedData.extraction_metadata?.ready_for_soap_generation) {
         state.sharedState.readyForSOAP = true
       }
-      
+
       // 🔥 USE PURE FUNCTION - No more duplicated logic
       state.sharedState.patientData = updatePatientDataFromExtraction(
         state.sharedState.patientData,
@@ -558,8 +576,14 @@ const medicalChatSlice = createSlice({
 
   // 🔥 EXTRA REDUCERS - FACTORY PATTERN ELIMINATES 90+ LINES OF BOILERPLATE
   extraReducers: builder => {
-    const extractHandlers = createExtractionThunkHandlers(extractMedicalDataThunk, 'Extraction failed')
-    const continueHandlers = createExtractionThunkHandlers(continueExtractionThunk, 'Continue extraction failed')
+    const extractHandlers = createExtractionThunkHandlers(
+      extractMedicalDataThunk,
+      'Extraction failed'
+    )
+    const continueHandlers = createExtractionThunkHandlers(
+      continueExtractionThunk,
+      'Continue extraction failed'
+    )
 
     builder
       .addCase(extractMedicalDataThunk.pending, extractHandlers.pending)
@@ -629,14 +653,16 @@ export const selectCompletenessPercentage = createSelector([selectExtractedData]
 })
 
 // 🔥 DIRECT ACCESS - No memoization for simple property access
-export const selectMissingCriticalFields = (state: RootState) => 
-  state.medicalChat.medicalExtraction.currentExtraction?.extraction_metadata?.missing_critical_fields || []
+export const selectMissingCriticalFields = (state: RootState) =>
+  state.medicalChat.medicalExtraction.currentExtraction?.extraction_metadata
+    ?.missing_critical_fields || []
 
-export const selectNOMCompliance = (state: RootState) => 
+export const selectNOMCompliance = (state: RootState) =>
   state.medicalChat.medicalExtraction.currentExtraction?.extraction_metadata?.nom_compliant || false
 
-export const selectReadyForSOAP = (state: RootState) => 
-  state.medicalChat.medicalExtraction.currentExtraction?.extraction_metadata?.ready_for_soap_generation || false
+export const selectReadyForSOAP = (state: RootState) =>
+  state.medicalChat.medicalExtraction.currentExtraction?.extraction_metadata
+    ?.ready_for_soap_generation || false
 
 // 🔥 COMPUTED SUMMARY - Only use createSelector for expensive operations
 export const selectExtractionSummary = createSelector(
@@ -646,7 +672,8 @@ export const selectExtractionSummary = createSelector(
     isExtracting: process.isExtracting,
     currentIteration: process.currentIteration,
     maxIterations: process.maxIterations,
-    completenessPercentage: extractedData?.extraction_metadata?.overall_completeness_percentage || 0,
+    completenessPercentage:
+      extractedData?.extraction_metadata?.overall_completeness_percentage || 0,
     nomCompliant: extractedData?.extraction_metadata?.nom_compliant || false,
     error: process.error,
     lastExtractedAt: process.lastExtractedAt,
@@ -661,12 +688,17 @@ export const selectExtractionHistory = (state: RootState) => {
 
 // 🔥 FIELD COMPLETENESS - Complex computation, keepSelector justified
 const hasArrayData = (arr?: unknown[] | null) => Array.isArray(arr) && arr.length > 0
-const isNotUnknown = (value?: string | number) => value !== 'unknown' && value !== undefined && value !== null
+const isNotUnknown = (value?: string | number) =>
+  value !== 'unknown' && value !== undefined && value !== null
 
 export const selectFieldCompleteness = createSelector([selectExtractedData], extractedData => {
   if (!extractedData) return null
-  const { demographics: demo, clinical_presentation: clinical, symptom_characteristics: symptoms } = extractedData
-  
+  const {
+    demographics: demo,
+    clinical_presentation: clinical,
+    symptom_characteristics: symptoms,
+  } = extractedData
+
   return {
     demographics: {
       age: isNotUnknown(demo?.patient_age_years),
@@ -692,43 +724,46 @@ export const selectFieldCompleteness = createSelector([selectExtractedData], ext
   }
 })
 
-// 🔥 EXTRACTION PROGRESS - Simplified direct computation
-export const selectExtractionProgress = (state: RootState) => {
-  const process = selectExtractionProcess(state)
-  const completeness = selectCompletenessPercentage(state)
-  return {
+// 🔥 EXTRACTION PROGRESS - MEMOIZED to prevent unnecessary rerenders
+export const selectExtractionProgress = createSelector(
+  [selectExtractionProcess, selectCompletenessPercentage],
+  (process, completeness) => ({
     isActive: process.isExtracting,
     iteration: process.currentIteration,
     maxIterations: process.maxIterations,
-    progressPercentage: Math.max((process.currentIteration / process.maxIterations) * 100, completeness),
+    progressPercentage: Math.max(
+      (process.currentIteration / process.maxIterations) * 100,
+      completeness
+    ),
     shouldContinue: process.currentIteration < process.maxIterations && completeness < 80,
+  })
+)
+
+// 🔥 FOCUS AREAS - MEMOIZED to prevent unnecessary rerenders
+export const selectFocusAreas = createSelector(
+  [selectFieldCompleteness, selectMissingCriticalFields],
+  (fieldCompleteness, missingFields) => {
+    if (!fieldCompleteness) return []
+
+    const focusAreas: string[] = []
+
+    // Priority 1: Missing critical NOM fields
+    if (missingFields.includes('demographics.patient_age_years')) focusAreas.push('age')
+    if (missingFields.includes('demographics.patient_gender')) focusAreas.push('gender')
+    if (missingFields.includes('clinical_presentation.chief_complaint'))
+      focusAreas.push('chief_complaint')
+
+    // Priority 2: Missing clinical details
+    if (!fieldCompleteness.clinical.symptoms) focusAreas.push('symptoms')
+    if (!fieldCompleteness.clinical.location) focusAreas.push('location')
+
+    // Priority 3: Missing contextual information
+    if (!fieldCompleteness.context.duration) focusAreas.push('duration')
+    if (!fieldCompleteness.context.intensity) focusAreas.push('intensity')
+
+    return focusAreas
   }
-}
-
-// 🔥 FOCUS AREAS - Direct computation without createSelector overhead
-export const selectFocusAreas = (state: RootState) => {
-  const fieldCompleteness = selectFieldCompleteness(state)
-  const missingFields = selectMissingCriticalFields(state)
-  
-  if (!fieldCompleteness) return []
-
-  const focusAreas: string[] = []
-
-  // Priority 1: Missing critical NOM fields
-  if (missingFields.includes('demographics.patient_age_years')) focusAreas.push('age')
-  if (missingFields.includes('demographics.patient_gender')) focusAreas.push('gender')
-  if (missingFields.includes('clinical_presentation.chief_complaint')) focusAreas.push('chief_complaint')
-
-  // Priority 2: Missing clinical details
-  if (!fieldCompleteness.clinical.symptoms) focusAreas.push('symptoms')
-  if (!fieldCompleteness.clinical.location) focusAreas.push('location')
-
-  // Priority 3: Missing contextual information
-  if (!fieldCompleteness.context.duration) focusAreas.push('duration')
-  if (!fieldCompleteness.context.intensity) focusAreas.push('intensity')
-
-  return focusAreas
-}
+)
 
 // 🏭 EXTRAREDUCER FACTORY - NO MORE 110 LINES OF BOILERPLATE
 const createExtractionThunkHandlers = (thunk: any, failureMessage: string) => ({
@@ -764,7 +799,7 @@ const createExtractionThunkHandlers = (thunk: any, failureMessage: string) => ({
     if (isComplete && completeness.readyForSOAP) {
       state.sharedState.readyForSOAP = true
     }
-    
+
     // 🔥 USE PURE FUNCTION - Consistent across all handlers
     state.sharedState.patientData = updatePatientDataFromExtraction(
       state.sharedState.patientData,
@@ -781,5 +816,5 @@ const createExtractionThunkHandlers = (thunk: any, failureMessage: string) => ({
         state.medicalExtraction.extractionProcess.currentIteration - 1
       )
     }
-  }
+  },
 })

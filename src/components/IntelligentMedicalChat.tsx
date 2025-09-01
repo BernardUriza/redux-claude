@@ -6,18 +6,18 @@ import { DynamicInferencePanel } from './DynamicInferencePanel'
 import { MedicalChatMessage } from './MedicalChatMessage'
 import styles from '../styles/components/IntelligentMedicalChat.module.css'
 
-interface MedicalMessage {
-  id: string
-  content: string
-  type: 'user' | 'assistant'
-  role?: 'user' | 'assistant'
-  timestamp?: number
-  [key: string]: unknown
-}
+// interface MedicalMessage {
+//   id: string
+//   content: string
+//   type: 'user' | 'assistant'
+//   role?: 'user' | 'assistant'
+//   timestamp?: number
+//   [key: string]: unknown
+// }
 
-interface InferenceData {
-  [key: string]: unknown
-}
+// interface InferenceData {
+//   [key: string]: unknown
+// }
 
 interface IntelligentMedicalChatProps {
   className?: string
@@ -85,16 +85,15 @@ const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
       <div className={styles.chatMain}>
         <div className={styles.chatCard}>
           {/* Mensajes */}
-          <div
-            ref={chatContainerRef}
-            className={styles.messagesArea}
-          >
+          <div ref={chatContainerRef} className={styles.messagesArea}>
             {messages.length === 0 && (
               <div className={styles.emptyState}>
                 <span className={styles.emptyStateIcon}>🩺</span>
                 <p className={styles.emptyStateText}>
                   {coreName ? (
-                    <><span className={styles.coreNameBadge}>{coreName}</span> activo</>
+                    <>
+                      <span className={styles.coreNameBadge}>{coreName}</span> activo
+                    </>
                   ) : (
                     'Inicie una conversación médica...'
                   )}
@@ -104,9 +103,9 @@ const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
 
             <div className={styles.messageWrapper}>
               {messages.map((message, index: number) => (
-                <div 
-                  key={message.id} 
-                  className={styles.messageItem} 
+                <div
+                  key={message.id}
+                  className={styles.messageItem}
                   style={{ '--message-index': index } as React.CSSProperties}
                 >
                   <MedicalChatMessage message={message} />
@@ -150,11 +149,7 @@ const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
                 disabled={isLoading || !inputValue.trim()}
                 className={styles.sendButton}
               >
-                {isLoading ? (
-                  <div className={styles.loadingSpinner}></div>
-                ) : (
-                  'Enviar'
-                )}
+                {isLoading ? <div className={styles.loadingSpinner}></div> : 'Enviar'}
               </button>
             </form>
           </div>

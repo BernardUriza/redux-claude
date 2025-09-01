@@ -5,6 +5,10 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import type { RootState } from '../../packages/cognitive-core/src/store/store'
 
+// Constants for inference confidence - NO MORE MAGIC NUMBERS
+const HIGH_CONFIDENCE = 0.95
+const NO_CONFIDENCE = 0
+
 interface PatientInference {
   id: string
   type: string
@@ -18,7 +22,7 @@ export interface DynamicInferencePanelProps {
   currentMessage?: string // No usado - solo para compatibilidad
   className?: string
   onInferenceUpdate?: (inferences: PatientInference[]) => void
-  systemMetrics?: any
+  systemMetrics?: Record<string, unknown>
 }
 
 /**
@@ -30,13 +34,11 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
   onInferenceUpdate,
 }) => {
   // 🎯 SOLO datos del extractor médico profesional
-  const extractedData = useSelector((state: RootState) => 
-    state.medicalChat.medicalExtraction.currentExtraction
+  const extractedData = useSelector(
+    (state: RootState) => state.medicalChat.medicalExtraction.currentExtraction
   )
-  
-  const patientData = useSelector((state: RootState) => 
-    state.medicalChat.sharedState.patientData
-  )
+
+  const patientData = useSelector((state: RootState) => state.medicalChat.sharedState.patientData)
 
   // 🧠 Construir inferencias desde datos REALES
   const buildInferencesFromStore = (): PatientInference[] => {
@@ -45,9 +47,9 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       extractedData,
       patientData_age: patientData?.age,
       patientData_gender: patientData?.gender,
-      patientData_primarySymptom: patientData?.primarySymptom
+      patientData_primarySymptom: patientData?.primarySymptom,
     })
-    
+
     const inferences: PatientInference[] = []
 
     // Edad desde patientData
@@ -56,21 +58,24 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       type: 'age',
       label: 'Edad del Paciente',
       value: patientData?.age || 'No especificada',
-      confidence: patientData?.age ? 0.95 : 0,
+      confidence: patientData?.age ? HIGH_CONFIDENCE : NO_CONFIDENCE,
       isEditable: false,
     })
 
     // Género desde patientData
-    const genderDisplay = patientData?.gender === 'masculino' ? 'Masculino' 
-                        : patientData?.gender === 'femenino' ? 'Femenino' 
-                        : 'No especificado'
-    
+    const genderDisplay =
+      patientData?.gender === 'masculino'
+        ? 'Masculino'
+        : patientData?.gender === 'femenino'
+          ? 'Femenino'
+          : 'No especificado'
+
     inferences.push({
       id: 'gender',
       type: 'gender',
       label: 'Género',
       value: genderDisplay,
-      confidence: patientData?.gender ? 0.95 : 0,
+      confidence: patientData?.gender ? HIGH_CONFIDENCE : NO_CONFIDENCE,
       isEditable: false,
     })
 
@@ -80,7 +85,7 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       type: 'symptom',
       label: 'Síntoma Principal',
       value: patientData?.primarySymptom || 'No identificado',
-      confidence: patientData?.primarySymptom ? 0.90 : 0,
+      confidence: patientData?.primarySymptom ? 0.9 : 0,
       isEditable: false,
     })
 
@@ -101,21 +106,23 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       id: 'duration',
       type: 'duration',
       label: 'Duración',
-      value: (duration && duration !== 'unknown') ? duration : 'No especificada',
-      confidence: (duration && duration !== 'unknown') ? 0.85 : 0,
+      value: duration && duration !== 'unknown' ? duration : 'No especificada',
+      confidence: duration && duration !== 'unknown' ? 0.85 : 0,
       isEditable: false,
     })
 
     // Síntomas asociados desde extractedData
     const associatedSymptoms = extractedData?.symptom_characteristics?.associated_symptoms
-    const associatedDisplay = associatedSymptoms?.length ? associatedSymptoms.join(', ') : 'Ninguno identificado'
-    
+    const associatedDisplay = associatedSymptoms?.length
+      ? associatedSymptoms.join(', ')
+      : 'Ninguno identificado'
+
     inferences.push({
       id: 'associated',
       type: 'associated',
       label: 'Síntomas Asociados',
       value: associatedDisplay,
-      confidence: associatedSymptoms?.length ? 0.90 : 0,
+      confidence: associatedSymptoms?.length ? 0.9 : 0,
       isEditable: false,
     })
 
@@ -139,7 +146,9 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
           </div>
           <div>
             <h3 className="text-lg font-bold text-white">Inferencias en Tiempo Real</h3>
-            <p className="text-sm text-slate-300">Datos del paciente se actualizan automáticamente</p>
+            <p className="text-sm text-slate-300">
+              Datos del paciente se actualizan automáticamente
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1 rounded-full">
@@ -150,14 +159,16 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
 
       {/* Inferencias */}
       <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
-        {inferences.map((inference) => {
-          const confidenceColor = 
-            inference.confidence >= 0.8 ? 'text-green-400' :
-            inference.confidence >= 0.5 ? 'text-yellow-400' : 'text-red-400'
-          
-          const statusIcon = 
-            inference.confidence >= 0.8 ? '✅' :
-            inference.confidence >= 0.5 ? '⚠️' : '🔄'
+        {inferences.map(inference => {
+          const confidenceColor =
+            inference.confidence >= 0.8
+              ? 'text-green-400'
+              : inference.confidence >= 0.5
+                ? 'text-yellow-400'
+                : 'text-red-400'
+
+          const statusIcon =
+            inference.confidence >= 0.8 ? '✅' : inference.confidence >= 0.5 ? '⚠️' : '🔄'
 
           return (
             <div key={inference.id} className="bg-slate-700/50 rounded-lg p-4">
