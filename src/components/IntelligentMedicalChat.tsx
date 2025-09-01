@@ -96,8 +96,8 @@ const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
               </div>
             )}
 
-            {messages.map((message: MedicalMessage, index: number) => (
-              <MedicalChatMessage key={message.id} message={message as any} />
+            {messages.map((message, index: number) => (
+              <MedicalChatMessage key={message.id} message={message} />
             ))}
 
             {isLoading && (
@@ -116,32 +116,20 @@ const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
 
           {/* Textarea Inteligente */}
           <form onSubmit={handleSubmit} className="p-4 border-t border-slate-600/50">
-            <div className="flex gap-2 items-end">
-              <div className="flex-1">
-                <textarea
-                  name="message"
-                  placeholder="Describa los síntomas del paciente..."
-                  disabled={isLoading}
-                  value={inputValue}
-                  onChange={e => setInputValue(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      handleSubmit(e)
-                    }
-                  }}
-                  rows={inputValue.split('\n').length || 1}
-                  className="medical-textarea min-h-[44px] max-h-32"
-                  style={{ 
-                    minHeight: '44px',
-                    height: Math.min(Math.max(44, (inputValue.split('\n').length) * 24 + 20), 128) + 'px'
-                  }}
-                />
-              </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                name="message"
+                placeholder="Describa los síntomas del paciente..."
+                disabled={isLoading}
+                value={inputValue}
+                onChange={e => setInputValue(e.target.value)}
+                className="medical-input flex-1"
+              />
               <button
                 type="submit"
                 disabled={isLoading || !inputValue.trim()}
-                className="px-6 py-3 btn-medical-secondary disabled:from-gray-500 disabled:to-gray-600 h-11 flex items-center justify-center"
+                className="btn-medical-secondary disabled:from-gray-500 disabled:to-gray-600 px-6 py-3"
               >
                 {isLoading ? (
                   <div className="loading-spinner-sm"></div>
@@ -149,9 +137,6 @@ const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
                   'Enviar'
                 )}
               </button>
-            </div>
-            <div className="mt-2 text-xs text-slate-400">
-              Enter para enviar • Shift+Enter para nueva línea
             </div>
           </form>
         </div>

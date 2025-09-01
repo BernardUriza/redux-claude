@@ -53,6 +53,15 @@ const MedicalAssistant = ({
   const currentExtraction = useSelector((state: RootState) => state.medicalChat.medicalExtraction.currentExtraction) as MedicalExtractionOutput | null
 
   const canGeneratePrompt = Boolean(patientData.age && patientData.gender && patientData.primarySymptom)
+  
+  // Debug: Ver por qué el botón está deshabilitado
+  console.log('🔍 [MEDICAL ASSISTANT DEBUG] canGeneratePrompt evaluation:', {
+    age: patientData.age,
+    gender: patientData.gender, 
+    primarySymptom: patientData.primarySymptom,
+    canGeneratePrompt,
+    patientDataFull: patientData
+  })
 
   const handleGeneratePrompt = () => {
     if (!canGeneratePrompt) return

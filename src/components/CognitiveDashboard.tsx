@@ -466,7 +466,7 @@ export const CognitiveDashboard = () => {
 
   // Refs for mobile interactions
   const tabsRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   // 🎯 Auto-fill medical prompt when extraction reaches 90%
   useEffect(() => {
@@ -1567,22 +1567,33 @@ export const CognitiveDashboard = () => {
                 <form onSubmit={handleSubmit} className="flex gap-2 items-center">
                   <div className="flex-1">
                     <div className="relative">
-                      <input
+                      <textarea
                         ref={inputRef}
-                        type="text"
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         onFocus={handleMobileInputFocus}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && e.ctrlKey) {
+                            e.preventDefault()
+                            // Trigger send action
+                            const sendButton = document.querySelector('[data-send-button]') as HTMLButtonElement
+                            sendButton?.click()
+                          }
+                        }}
                         placeholder={
                           mobileState.isMobile
                             ? 'Describe tu caso médico...'
                             : 'Describe el caso clínico... Ej: Paciente 45 años, dolor torácico...'
                         }
-                        className={`w-full px-4 py-3 pr-20 bg-gradient-to-r from-slate-800/70 to-slate-700/70 backdrop-blur-xl border border-slate-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400/60 text-slate-100 placeholder-slate-400 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm ${mobileState.isMobile ? 'touch-feedback' : ''}`}
+                        className={`w-full px-4 py-3 pr-20 bg-gradient-to-r from-slate-800/70 to-slate-700/70 backdrop-blur-xl border border-slate-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400/60 text-slate-100 placeholder-slate-400 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm resize-none min-h-[44px] max-h-32 ${mobileState.isMobile ? 'touch-feedback' : ''}`}
                         disabled={isLoading || isStreaming}
                         autoComplete="off"
                         autoCapitalize="sentences"
                         autoCorrect="on"
+                        rows={Math.min(Math.max(1, input.split('\n').length), 5)}
+                        style={{
+                          height: Math.min(Math.max(44, input.split('\n').length * 20 + 24), 128) + 'px'
+                        }}
                       />
 
                       {/* Compact Action Buttons */}
@@ -1618,6 +1629,7 @@ export const CognitiveDashboard = () => {
                   </div>
                   <button
                     type="submit"
+                    data-send-button
                     disabled={isLoading || !input.trim()}
                     className={`bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-700 disabled:to-slate-800 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-1 shadow-lg border border-blue-500/30 disabled:border-slate-600/30 text-sm min-w-[80px] ${mobileState.isMobile ? 'touch-feedback touch-target' : ''}`}
                     onClick={() => mobileState.isMobile && triggerHaptic('light')}
