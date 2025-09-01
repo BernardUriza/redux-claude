@@ -1,0 +1,423 @@
+/* IntelligentMedicalChat CSS Module - Professional Architecture */
+/* Consolida medical-components.css - Bernard Orozco 2025 */
+
+.intelligentChat {
+  height: 100%;
+  padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+@media (min-width: 1024px) {
+  .intelligentChat {
+    flex-direction: row;
+    gap: var(--space-lg);
+  }
+}
+
+@media (max-width: 640px) {
+  .intelligentChat {
+    gap: var(--space-sm);
+  }
+}
+
+/* Chat principal */
+.chatMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chatCard {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 50%, var(--bg-secondary) 100%);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 32px var(--shadow-primary);
+  border: 1px solid var(--border-secondary);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Área de mensajes */
+.messagesArea {
+  flex: 1;
+  padding: var(--space-md);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  scrollbar-width: thin;
+  scrollbar-color: rgb(100, 116, 139) rgb(30, 41, 59);
+}
+
+.messagesArea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messagesArea::-webkit-scrollbar-track {
+  background: rgb(30, 41, 59);
+  border-radius: 3px;
+}
+
+.messagesArea::-webkit-scrollbar-thumb {
+  background: rgb(100, 116, 139);
+  border-radius: 3px;
+}
+
+.messagesArea::-webkit-scrollbar-thumb:hover {
+  background: rgb(148, 163, 184);
+}
+
+/* Empty state */
+.emptyState {
+  text-align: center;
+  color: var(--text-muted);
+  padding: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.emptyStateIcon {
+  font-size: 4rem;
+  margin-bottom: var(--space-md);
+  opacity: 0.6;
+}
+
+.emptyStateText {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.coreNameBadge {
+  display: inline-block;
+  background: linear-gradient(90deg, var(--medical-primary) 0%, var(--medical-secondary) 100%);
+  color: white;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Área de entrada */
+.inputArea {
+  border-top: 1px solid var(--border-secondary);
+  padding: var(--space-md);
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.inputForm {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-end;
+}
+
+.inputWrapper {
+  flex: 1;
+  position: relative;
+}
+
+.chatInput {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  resize: none;
+  min-height: 44px;
+  max-height: 120px;
+  transition: all var(--transition-normal);
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.chatInput::placeholder {
+  color: var(--text-muted);
+}
+
+.chatInput:focus {
+  outline: none;
+  border-color: var(--medical-primary);
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
+
+.chatInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sendButton {
+  background: linear-gradient(90deg, var(--medical-primary) 0%, #0ea5e9 100%);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  color: white;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.875rem;
+  min-width: 5rem;
+  height: 44px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 0 2px 8px var(--shadow-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.sendButton:hover:not(:disabled) {
+  background: linear-gradient(90deg, #0284c7 0%, #0ea5e9 100%);
+  box-shadow: 0 4px 12px var(--shadow-accent);
+  transform: translateY(-1px);
+}
+
+.sendButton:disabled {
+  background: linear-gradient(90deg, rgb(51, 65, 85) 0%, rgb(30, 41, 59) 100%);
+  border-color: var(--border-primary);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* Loading state */
+.loadingSpinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Message container */
+.messageWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.messageItem {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: messageAppear 0.3s ease-out forwards;
+}
+
+.messageItem:nth-child(n) {
+  animation-delay: calc(var(--message-index, 0) * 0.1s);
+}
+
+/* Error states */
+.errorContainer {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin: var(--space-sm) 0;
+}
+
+.errorText {
+  color: var(--medical-error);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.errorIcon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* Side panel (cuando está presente) */
+.sidePanel {
+  width: 100%;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-secondary);
+  box-shadow: 0 4px 16px var(--shadow-primary);
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .sidePanel {
+    width: 24rem;
+    flex-shrink: 0;
+  }
+}
+
+.sidePanelHeader {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border-secondary);
+  background: linear-gradient(90deg, var(--bg-tertiary) 0%, rgba(51, 65, 85, 1) 100%);
+}
+
+.sidePanelTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.sidePanelContent {
+  padding: var(--space-md);
+  height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(100, 116, 139) rgb(30, 41, 59);
+}
+
+.sidePanelContent::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidePanelContent::-webkit-scrollbar-track {
+  background: rgb(30, 41, 59);
+  border-radius: 2px;
+}
+
+.sidePanelContent::-webkit-scrollbar-thumb {
+  background: rgb(100, 116, 139);
+  border-radius: 2px;
+}
+
+/* Status indicators */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusBadge.active {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--medical-success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.statusBadge.loading {
+  background: rgba(14, 165, 233, 0.2);
+  color: var(--medical-primary);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.statusBadge.error {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--medical-error);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.statusIndicator {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.statusIndicator.active {
+  background: var(--medical-success);
+}
+
+.statusIndicator.loading {
+  background: var(--medical-primary);
+}
+
+.statusIndicator.error {
+  background: var(--medical-error);
+}
+
+/* Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes messageAppear {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .intelligentChat {
+    padding: var(--space-xs);
+  }
+  
+  .messagesArea {
+    padding: var(--space-sm);
+    gap: var(--space-sm);
+  }
+  
+  .inputArea {
+    padding: var(--space-sm);
+  }
+  
+  .emptyState {
+    padding: var(--space-xl);
+  }
+  
+  .emptyStateIcon {
+    font-size: 3rem;
+  }
+  
+  .sendButton {
+    min-width: 4rem;
+    font-size: 0.8rem;
+  }
+  
+  .chatInput {
+    font-size: 0.8rem;
+  }
+  
+  .sidePanel {
+    order: -1;
+    margin-bottom: var(--space-sm);
+  }
+  
+  .sidePanelContent {
+    height: 200px;
+  }
+}
+
+/* Touch optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .sendButton {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  .chatInput {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}

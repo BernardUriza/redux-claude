@@ -1,0 +1,452 @@
+/* MedicalAssistant CSS Module - Professional Architecture */
+/* Consolida medical-components.css - Bernard Orozco 2025 */
+
+.medicalAssistant {
+  /* Container base - usa variables definidas */
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  color: var(--text-primary);
+  height: 100%;
+  padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+@media (max-width: 768px) {
+  .medicalAssistant {
+    gap: var(--space-sm);
+  }
+}
+
+/* Medical card component */
+.medicalCard {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 50%, var(--bg-secondary) 100%);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 32px var(--shadow-primary);
+  border: 1px solid var(--border-secondary);
+  overflow: hidden;
+}
+
+/* Medical header component */
+.medicalHeader {
+  background: linear-gradient(90deg, var(--bg-tertiary) 0%, rgba(51, 65, 85, 1) 100%);
+  border-bottom: 1px solid var(--border-secondary);
+  padding: var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.headerTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--medical-secondary) 0%, var(--medical-primary) 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+.headerSubtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Medical footer component */
+.medicalFooter {
+  background: rgba(30, 41, 59, 0.6);
+  border-top: 1px solid var(--border-secondary);
+  backdrop-filter: blur(4px);
+  padding: var(--space-md);
+}
+
+/* Button styles */
+.btnMedicalPrimary {
+  padding: var(--space-sm) var(--space-md);
+  background: linear-gradient(90deg, var(--medical-primary) 0%, #0ea5e9 100%);
+  color: white;
+  border-radius: var(--radius-xl);
+  font-weight: 700;
+  font-size: 0.875rem;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 12px var(--shadow-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.btnMedicalPrimary:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px var(--shadow-accent);
+  background: linear-gradient(90deg, #0284c7 0%, #0ea5e9 100%);
+}
+
+.btnMedicalPrimary:disabled {
+  background: linear-gradient(90deg, rgb(51, 65, 85) 0%, rgb(30, 41, 59) 100%);
+  border-color: var(--border-primary);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.btnMedicalSecondary {
+  padding: var(--space-sm) var(--space-md);
+  background: linear-gradient(90deg, var(--medical-secondary) 0%, #06b6d4 100%);
+  color: white;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.2);
+}
+
+.btnMedicalSecondary:hover:not(:disabled) {
+  background: linear-gradient(90deg, #0891b2 0%, #06b6d4 100%);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+}
+
+.btnMedicalClose {
+  padding: var(--space-sm);
+  background: rgba(51, 65, 85, 0.5);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-xl);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 0 2px 8px var(--shadow-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btnMedicalClose:hover {
+  background: rgba(71, 85, 105, 0.5);
+  color: var(--text-secondary);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px var(--shadow-primary);
+}
+
+/* Icon and indicator styles */
+.medicalIcon {
+  background: linear-gradient(135deg, var(--medical-secondary) 0%, var(--medical-primary) 100%);
+  padding: var(--space-sm);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 12px var(--shadow-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.statusIndicator {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.statusActive {
+  background: var(--medical-success);
+  color: var(--medical-success);
+}
+
+.statusWarning {
+  background: var(--medical-warning);
+  color: var(--medical-warning);
+}
+
+.statusError {
+  background: var(--medical-error);
+  color: var(--medical-error);
+}
+
+/* Form elements */
+.medicalInput {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  transition: all var(--transition-normal);
+}
+
+.medicalInput::placeholder {
+  color: var(--text-muted);
+}
+
+.medicalInput:focus {
+  outline: none;
+  border-color: var(--medical-secondary);
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+}
+
+.medicalTextarea {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  resize: vertical;
+  min-height: 120px;
+  transition: all var(--transition-normal);
+  font-family: inherit;
+}
+
+.medicalTextarea::placeholder {
+  color: var(--text-muted);
+}
+
+.medicalTextarea:focus {
+  outline: none;
+  border-color: var(--medical-secondary);
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+}
+
+/* Scrollbar styles */
+.medicalScroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(100, 116, 139) rgb(30, 41, 59);
+}
+
+.medicalScroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.medicalScroll::-webkit-scrollbar-track {
+  background: rgb(30, 41, 59);
+  border-radius: 3px;
+}
+
+.medicalScroll::-webkit-scrollbar-thumb {
+  background: rgb(100, 116, 139);
+  border-radius: 3px;
+}
+
+.medicalScroll::-webkit-scrollbar-thumb:hover {
+  background: rgb(148, 163, 184);
+}
+
+/* Loading states */
+.loadingSpinner {
+  animation: spin 1s linear infinite;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--medical-secondary);
+  border-top-color: transparent;
+  border-radius: 50%;
+}
+
+.loadingSpinnerSm {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Content areas */
+.contentArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.scrollArea {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.chatContainer {
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* Message styles */
+.messageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.userMessage {
+  align-self: flex-end;
+  background: linear-gradient(135deg, var(--medical-primary) 0%, #0ea5e9 100%);
+  color: white;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--space-xs) var(--radius-lg);
+  max-width: 80%;
+  box-shadow: 0 2px 8px var(--shadow-accent);
+}
+
+.assistantMessage {
+  align-self: flex-start;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--space-xs);
+  max-width: 85%;
+  border: 1px solid var(--border-primary);
+  box-shadow: 0 2px 8px var(--shadow-primary);
+}
+
+/* Input area */
+.inputArea {
+  border-top: 1px solid var(--border-secondary);
+  padding: var(--space-md);
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.inputForm {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-end;
+}
+
+.inputWrapper {
+  flex: 1;
+  position: relative;
+}
+
+.chatInput {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  resize: none;
+  min-height: 44px;
+  max-height: 120px;
+  transition: all var(--transition-normal);
+}
+
+.chatInput::placeholder {
+  color: var(--text-muted);
+}
+
+.chatInput:focus {
+  outline: none;
+  border-color: var(--medical-primary);
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
+
+.sendButton {
+  background: linear-gradient(90deg, var(--medical-primary) 0%, #0ea5e9 100%);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  color: white;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.875rem;
+  min-width: 4rem;
+  height: 44px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 0 2px 8px var(--shadow-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.sendButton:hover:not(:disabled) {
+  background: linear-gradient(90deg, #0284c7 0%, #0ea5e9 100%);
+  box-shadow: 0 4px 12px var(--shadow-accent);
+}
+
+.sendButton:disabled {
+  background: linear-gradient(90deg, rgb(51, 65, 85) 0%, rgb(30, 41, 59) 100%);
+  border-color: var(--border-primary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Empty states */
+.emptyState {
+  text-align: center;
+  padding: var(--space-2xl);
+  color: var(--text-muted);
+}
+
+.emptyStateIcon {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+  display: block;
+}
+
+.emptyStateText {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .medicalAssistant {
+    padding: var(--space-xs);
+  }
+  
+  .medicalHeader {
+    padding: var(--space-sm);
+  }
+  
+  .medicalFooter {
+    padding: var(--space-sm);
+  }
+  
+  .chatContainer {
+    padding: var(--space-sm);
+  }
+  
+  .inputArea {
+    padding: var(--space-sm);
+  }
+  
+  .userMessage,
+  .assistantMessage {
+    max-width: 90%;
+  }
+  
+  .headerTitle {
+    font-size: 1.25rem;
+  }
+  
+  .headerSubtitle {
+    font-size: 0.875rem;
+  }
+}

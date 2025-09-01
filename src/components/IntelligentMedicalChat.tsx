@@ -4,7 +4,7 @@ import { useMedicalChat, useAssistantChat } from '@redux-claude/cognitive-core'
 import React, { useRef, useEffect, useState } from 'react'
 import { DynamicInferencePanel } from './DynamicInferencePanel'
 import { MedicalChatMessage } from './MedicalChatMessage'
-import '../styles/medical-components.css'
+import styles from '../styles/components/IntelligentMedicalChat.module.css'
 
 interface MedicalMessage {
   id: string
@@ -80,78 +80,105 @@ const IntelligentMedicalChat: React.FC<IntelligentMedicalChatProps> = ({
   }
 
   return (
-    <div className={`h-full p-2 flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-6 ${className}`}>
+    <div className={`${styles.intelligentChat} ${className}`}>
       {/* Chat Principal */}
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="medical-card overflow-hidden flex flex-col h-full">
+      <div className={styles.chatMain}>
+        <div className={styles.chatCard}>
           {/* Mensajes */}
           <div
             ref={chatContainerRef}
-            className="flex-1 p-4 space-y-4 overflow-y-auto medical-scroll"
+            className={styles.messagesArea}
           >
             {messages.length === 0 && (
-              <div className="text-center text-slate-400 py-8">
-                <span className="text-4xl mb-4 block">🩺</span>
-                <p>{coreName ? `[${coreName}] activo` : 'Inicie una conversación médica...'}</p>
+              <div className={styles.emptyState}>
+                <span className={styles.emptyStateIcon}>🩺</span>
+                <p className={styles.emptyStateText}>
+                  {coreName ? (
+                    <><span className={styles.coreNameBadge}>{coreName}</span> activo</>
+                  ) : (
+                    'Inicie una conversación médica...'
+                  )}
+                </p>
               </div>
             )}
 
-            {messages.map((message, index: number) => (
-              <MedicalChatMessage key={message.id} message={message} />
-            ))}
+            <div className={styles.messageWrapper}>
+              {messages.map((message, index: number) => (
+                <div 
+                  key={message.id} 
+                  className={styles.messageItem} 
+                  style={{ '--message-index': index } as React.CSSProperties}
+                >
+                  <MedicalChatMessage message={message} />
+                </div>
+              ))}
+            </div>
 
             {isLoading && (
-              <div className="flex items-center gap-3 text-cyan-400">
-                <div className="loading-spinner"></div>
+              <div className={`${styles.statusBadge} ${styles.loading}`}>
+                <div className={`${styles.statusIndicator} ${styles.loading}`}></div>
                 <span>Analizando...</span>
               </div>
             )}
 
             {error && (
-              <div className="bg-red-900/40 border border-red-600/40 rounded-lg p-3 text-red-300">
-                <span className="text-sm">❌ {error}</span>
+              <div className={styles.errorContainer}>
+                <span className={styles.errorText}>
+                  <span className={styles.errorIcon}>❌</span>
+                  {error}
+                </span>
               </div>
             )}
           </div>
 
           {/* Textarea Inteligente */}
-          <form onSubmit={handleSubmit} className="p-4 border-t border-slate-600/50">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                name="message"
-                placeholder="Describa los síntomas del paciente..."
-                disabled={isLoading}
-                value={inputValue}
-                onChange={e => setInputValue(e.target.value)}
-                className="medical-input flex-1"
-              />
+          <div className={styles.inputArea}>
+            <form onSubmit={handleSubmit} className={styles.inputForm}>
+              <div className={styles.inputWrapper}>
+                <input
+                  type="text"
+                  name="message"
+                  placeholder="Describa los síntomas del paciente..."
+                  disabled={isLoading}
+                  value={inputValue}
+                  onChange={e => setInputValue(e.target.value)}
+                  className={styles.chatInput}
+                />
+              </div>
               <button
                 type="submit"
                 disabled={isLoading || !inputValue.trim()}
-                className="btn-medical-secondary disabled:from-gray-500 disabled:to-gray-600 px-6 py-3"
+                className={styles.sendButton}
               >
                 {isLoading ? (
-                  <div className="loading-spinner-sm"></div>
+                  <div className={styles.loadingSpinner}></div>
                 ) : (
                   'Enviar'
                 )}
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
 
       {/* Panel de Inferencias Dinámicas */}
       {showMetrics && (
-        <div className="w-full lg:w-80 xl:w-96">
-          <DynamicInferencePanel
-            currentMessage={messages[messages.length - 1]?.content || ''}
-            className="h-full"
-            onInferenceUpdate={(inferences: unknown) => {
-              console.log('🔄 Inferencias actualizadas:', inferences)
-            }}
-          />
+        <div className={styles.sidePanel}>
+          <div className={styles.sidePanelHeader}>
+            <h3 className={styles.sidePanelTitle}>
+              <span>📊</span>
+              Panel de Inferencias
+            </h3>
+          </div>
+          <div className={styles.sidePanelContent}>
+            <DynamicInferencePanel
+              currentMessage={messages[messages.length - 1]?.content || ''}
+              className="h-full"
+              onInferenceUpdate={(inferences: unknown) => {
+                console.log('🔄 Inferencias actualizadas:', inferences)
+              }}
+            />
+          </div>
         </div>
       )}
     </div>

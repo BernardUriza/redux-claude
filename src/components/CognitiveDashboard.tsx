@@ -2,6 +2,8 @@
 // Sistema Cognitivo Médico Corporativo 2025 - Bernard Orozco
 'use client'
 
+import styles from '../styles/components/CognitiveDashboard.module.css'
+
 import { useState, useEffect, useRef } from 'react'
 import {
   useMedicalChat,
@@ -230,8 +232,6 @@ export const CognitiveDashboard = () => {
     setIsAppLoading,
     showMainApp,
     setShowMainApp,
-    showAutocompletion,
-    setShowAutocompletion,
     showMedicalAssistant,
     setShowMedicalAssistant,
     lastRejectedInput,
@@ -270,10 +270,10 @@ export const CognitiveDashboard = () => {
 
   const { messages, isLoading, isStreaming, sendMedicalQuery, newSession, error } = useMedicalChat({
     onValidationFailed: (input, _validationResult) => {
-      // Auto-open autocompletion modal when validation fails
+      // Auto-open medical assistant modal when validation fails
       setLastRejectedInput(input)
       setTimeout(() => {
-        setShowAutocompletion(true)
+        setShowMedicalAssistant(true)
       }, 1500) // Delay to let user read the validation message first
     },
   })
@@ -764,16 +764,16 @@ export const CognitiveDashboard = () => {
 
   return (
     <div
-      className={`h-screen bg-gray-900 text-white flex overflow-hidden relative transition-opacity duration-500 ${showMainApp ? 'opacity-100' : 'opacity-0'} ${mobileState.isMobile ? 'safe-area-top safe-area-bottom' : ''} ${keyboardVisible ? 'keyboard-resize' : ''}`}
+      className={`${styles.dashboard} ${showMainApp ? styles.visible : styles.hidden} ${mobileState.isMobile ? styles.mobile : ''} ${keyboardVisible ? styles.keyboardVisible : ''}`}
     >
       {/* Mobile Menu Overlay */}
       {showMobileMenu && (
         <div
-          className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+          className={styles.mobileMenuOverlay}
           onClick={() => setShowMobileMenu(false)}
         >
           <div
-            className="absolute top-0 left-0 w-80 h-full bg-gradient-to-b from-gray-950 to-slate-950 border-r border-slate-700/50 flex flex-col backdrop-blur-xl transform transition-transform duration-300"
+            className={`${styles.mobileMenu} ${showMobileMenu ? styles.open : ''}`}
             onClick={e => e.stopPropagation()}
           >
             {/* Mobile Menu Header */}
@@ -865,11 +865,11 @@ export const CognitiveDashboard = () => {
 
       {/* Enhanced Collapsible Sidebar - Hidden on mobile */}
       <div
-        className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gradient-to-b from-gray-950 to-slate-950 border-r border-slate-700/50 flex flex-col transition-all duration-300 ease-in-out backdrop-blur-xl hidden lg:flex`}
+        className={`${styles.sidebar} ${sidebarCollapsed ? styles.collapsed : styles.expanded}`}
       >
         {/* Enhanced Sidebar Header */}
-        <div className="p-4 border-b border-slate-700/50">
-          <div className="flex items-center justify-between">
+        <div className={styles.sidebarHeader}>
+          <div className={styles.sidebarHeaderContent}>
             <div
               className={`flex items-center space-x-3 ${sidebarCollapsed ? 'justify-center' : ''}`}
             >
@@ -878,8 +878,8 @@ export const CognitiveDashboard = () => {
               </div>
               {!sidebarCollapsed && (
                 <div>
-                  <h1 className="text-lg font-semibold text-white">Medical AI</h1>
-                  <p className="text-xs text-slate-400">Cognitive Assistant</p>
+                  <h1 className={styles.sidebarTitle}>Medical AI</h1>
+                  <p className={styles.sidebarSubtitle}>Cognitive Assistant</p>
                 </div>
               )}
             </div>
@@ -1011,11 +1011,11 @@ export const CognitiveDashboard = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className={styles.mainContent}>
         {/* Enhanced Chat Header - Mobile Optimized */}
-        <div className="bg-gradient-to-r from-gray-900 to-slate-900 border-b border-gray-800 px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 sm:space-x-4">
+        <div className={styles.chatHeader}>
+          <div className={styles.chatHeaderContent}>
+            <div className={styles.chatHeaderLeft}>
               {/* Mobile Menu Button */}
               <button
                 onClick={() => {
@@ -1035,15 +1035,15 @@ export const CognitiveDashboard = () => {
                 </svg>
               </button>
 
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className={styles.headerIcon}>
                 <span className="text-white text-base sm:text-lg">🧠</span>
               </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-white">Medical AI</h2>
-                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">
+                <h2 className={styles.headerTitle}>Medical AI</h2>
+                <p className={`${styles.headerSubtitle} hidden sm:block`}>
                   Motor Iterativo + Orquestador Cognitivo v2.0
                 </p>
-                <p className="text-xs text-gray-400 sm:hidden">Sistema Cognitivo</p>
+                <p className={`${styles.headerSubtitle} sm:hidden`}>Sistema Cognitivo</p>
               </div>
             </div>
             <div className="flex items-center space-x-1 sm:space-x-3">
@@ -1071,12 +1071,10 @@ export const CognitiveDashboard = () => {
         </div>
 
         {/* Main Content with Enhanced Panels - Mobile First Design */}
-        <div
-          className={`flex-1 flex ${sidebarCollapsed ? 'lg:flex-row' : 'lg:flex-row'} flex-col min-h-0`}
-        >
+        <div className={styles.contentWrapper}>
           {/* Enhanced Right Panel - Responsive width */}
           <div
-            className={`bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/80 backdrop-blur-md border-r lg:border-r border-b lg:border-b-0 border-slate-700/50 p-4 shadow-2xl shadow-slate-950/50 order-2 lg:order-1 flex-col h-full overflow-hidden hidden lg:flex transition-all duration-300 ${sidebarCollapsed ? 'lg:w-80' : 'lg:w-72'}`}
+            className={`${styles.sidePanel} ${sidebarCollapsed ? styles.collapsed : styles.expanded}`}
           >
             {/* Medical Dashboard Header with Navigation */}
             <div className="mb-6">
@@ -1334,23 +1332,23 @@ export const CognitiveDashboard = () => {
           </div>
 
           {/* Center Chat Area - Flexible width */}
-          <div className="flex-1 flex flex-col h-full bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 order-1 lg:order-2 overflow-hidden min-w-0">
+          <div className={styles.chatArea}>
             {/* Chat Messages Area */}
             <div
-              className={`flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-transparent via-gray-900/20 to-transparent min-h-0 ${mobileState.isMobile ? 'mobile-scroll' : ''}`}
+              className={`${styles.messagesContainer} ${mobileState.isMobile ? styles.mobile : ''}`}
             >
               {messages.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center px-4 sm:px-8 py-8 sm:py-12">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-slate-700/80 to-slate-800/90 backdrop-blur-xl rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-2xl shadow-slate-950/50 border border-slate-600/30">
+                <div className={styles.emptyState}>
+                  <div className={styles.emptyStateContent}>
+                    <div className={styles.emptyStateIcon}>
                       <span className="text-2xl sm:text-3xl">🛡️</span>
                     </div>
-                    <h3 className="text-slate-200 text-base sm:text-lg font-semibold mb-2 sm:mb-3">
+                    <h3 className={styles.emptyStateTitle}>
                       Sistema de Medicina Defensiva Activado
                     </h3>
-                    <p className="text-slate-400 text-sm mb-3 sm:mb-4 max-w-md mx-auto leading-relaxed">
+                    <p className={styles.emptyStateDescription}>
                       Diagnósticos priorizados por{' '}
-                      <strong className="text-slate-300">gravedad</strong> sobre probabilidad
+                      <strong>gravedad</strong> sobre probabilidad
                     </p>
                     <div className="bg-gradient-to-r from-blue-950/30 to-purple-950/30 backdrop-blur-xl rounded-xl p-3 sm:p-4 border border-blue-700/20 shadow-xl shadow-blue-950/20 max-w-sm sm:max-w-lg mx-auto">
                       <p className="text-slate-300 text-xs leading-relaxed">
@@ -1429,7 +1427,7 @@ export const CognitiveDashboard = () => {
             </div>
 
             {/* Fixed Bottom Section */}
-            <div className="flex-shrink-0">
+            <div className={styles.inputSection}>
               {/* Nueva Sesión */}
               {messages.length > 1 && (
                 <div className="border-t border-slate-700/50 px-8 py-4 bg-gradient-to-r from-slate-800/30 to-slate-900/40 backdrop-blur-md">
@@ -1562,10 +1560,10 @@ export const CognitiveDashboard = () => {
 
               {/* Input Form - Optimized spacing */}
               <div
-                className={`border-t border-slate-700/50 bg-gradient-to-r from-slate-950/80 to-slate-900/90 backdrop-blur-xl px-4 sm:px-6 py-3 sm:py-4 ${mobileState.isMobile ? 'safe-area-bottom' : ''} ${keyboardVisible ? 'keyboard-padding' : ''}`}
+                className={`${styles.inputContainer} ${keyboardVisible ? styles.keyboardPadding : ''}`}
               >
-                <form onSubmit={handleSubmit} className="flex gap-2 items-center">
-                  <div className="flex-1">
+                <form onSubmit={handleSubmit} className={styles.inputForm}>
+                  <div className={styles.inputWrapper}>
                     <div className="relative">
                       <textarea
                         ref={inputRef}
@@ -1585,7 +1583,7 @@ export const CognitiveDashboard = () => {
                             ? 'Describe tu caso médico...'
                             : 'Describe el caso clínico... Ej: Paciente 45 años, dolor torácico...'
                         }
-                        className={`w-full px-4 py-3 pr-20 bg-gradient-to-r from-slate-800/70 to-slate-700/70 backdrop-blur-xl border border-slate-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400/60 text-slate-100 placeholder-slate-400 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm resize-none min-h-[44px] max-h-32 ${mobileState.isMobile ? 'touch-feedback' : ''}`}
+                        className={styles.inputField}
                         disabled={isLoading || isStreaming}
                         autoComplete="off"
                         autoCapitalize="sentences"
@@ -1597,12 +1595,12 @@ export const CognitiveDashboard = () => {
                       />
 
                       {/* Compact Action Buttons */}
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex space-x-1">
+                      <div className={styles.inputActions}>
                         {!isLoading && !isStreaming && (
                           <button
                             type="button"
                             onClick={handleQuickStomachTest}
-                            className="w-6 h-6 bg-orange-500/80 hover:bg-orange-500 rounded flex items-center justify-center text-white transition-all duration-200"
+                            className={`${styles.actionButton} ${styles.test}`}
                             title="Test case"
                           >
                             <span className="text-xs">🧪</span>
@@ -1616,7 +1614,7 @@ export const CognitiveDashboard = () => {
                               setLastRejectedInput(input)
                               setShowMedicalAssistant(true)
                             }}
-                            className="w-6 h-6 bg-emerald-500/80 hover:bg-emerald-500 rounded flex items-center justify-center text-white transition-all duration-200"
+                            className={`${styles.actionButton} ${styles.assistant}`}
                             title="Asistente IA"
                           >
                             <span className="text-xs">🤖</span>
@@ -1631,13 +1629,13 @@ export const CognitiveDashboard = () => {
                     type="submit"
                     data-send-button
                     disabled={isLoading || !input.trim()}
-                    className={`bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-700 disabled:to-slate-800 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-1 shadow-lg border border-blue-500/30 disabled:border-slate-600/30 text-sm min-w-[80px] ${mobileState.isMobile ? 'touch-feedback touch-target' : ''}`}
+                    className={`${styles.submitButton} ${mobileState.isMobile ? styles.mobile : ''}`}
                     onClick={() => mobileState.isMobile && triggerHaptic('light')}
                   >
                     {isLoading ? (
                       <>
                         <div
-                          className={`${mobileState.isMobile ? 'mobile-loading' : 'w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'}`}
+                          className={`${styles.loadingSpinner} ${mobileState.isMobile ? styles.mobile : ''}`}
                         />
                         <span>Analyzing</span>
                       </>
@@ -1670,7 +1668,7 @@ export const CognitiveDashboard = () => {
         {showMobileFab && mobileState.isMobile && (
           <button
             onClick={handleMobileFab}
-            className="mobile-fab touch-feedback lg:hidden"
+            className={`${styles.mobileFab} ${styles.touchFeedback}`}
             title="Quick Input"
             aria-label="Quick input for medical case"
           >
@@ -1678,24 +1676,6 @@ export const CognitiveDashboard = () => {
           </button>
         )}
 
-        {/* Medical Autocompletion Modal (Simple) */}
-        <MedicalAssistant
-          partialInput={lastRejectedInput}
-          onSelectTemplate={(template: string) => {
-            setInput(template)
-            setShowAutocompletion(false)
-            setLastRejectedInput('')
-            // Focus input after template is applied
-            setTimeout(() => {
-              inputRef.current?.focus()
-            }, 100)
-          }}
-          isVisible={showAutocompletion}
-          onClose={() => {
-            setShowAutocompletion(false)
-            setLastRejectedInput('')
-          }}
-        />
 
         {/* Medical Assistant Modal (Unificado) */}
         <MedicalAssistant
@@ -1717,47 +1697,6 @@ export const CognitiveDashboard = () => {
         />
       </div>
 
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgb(31 41 55);
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgb(75 85 99);
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgb(107 114 128);
-        }
-
-        /* Claude.ai-style message animations */
-        .message-appear {
-          animation: messageSlideIn 0.3s ease-out;
-        }
-
-        @keyframes messageSlideIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        /* Better prose styling */
-        .prose h1 {
-          border-bottom: 2px solid #f97316;
-        }
-
-        .prose code {
-          font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
-        }
-      `}</style>
     </div>
   )
 }

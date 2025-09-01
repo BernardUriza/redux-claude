@@ -1,6 +1,7 @@
 /* Medical Corporate 2025 - Dark Mode Theme */
 /* Sistema Cognitivo Médico - Bernard Orozco */
 @import "tailwindcss";
+@import "../styles/variables.css";
 
 /* Medical Corporate Color Variables */
 :root {

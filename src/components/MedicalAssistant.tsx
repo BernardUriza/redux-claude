@@ -5,7 +5,7 @@ import { selectSystemMetrics } from '../../packages/cognitive-core/src/store/sel
 import type { RootState } from '../../packages/cognitive-core/src/store/store'
 import { generateMedicalPrompt, type MedicalExtractionOutput } from '@redux-claude/cognitive-core'
 import IntelligentMedicalChat from './IntelligentMedicalChat'
-import '../styles/medical-components.css'
+import styles from '../styles/components/MedicalAssistant.module.css'
 
 interface PatientData {
   age?: number

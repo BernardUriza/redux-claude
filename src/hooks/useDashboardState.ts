@@ -19,7 +19,6 @@ export const useDashboardState = () => {
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [isAppLoading, setIsAppLoading] = useState(true)
   const [showMainApp, setShowMainApp] = useState(false)
-  const [showAutocompletion, setShowAutocompletion] = useState(false)
   const [showMedicalAssistant, setShowMedicalAssistant] = useState(false)
   const [lastRejectedInput, setLastRejectedInput] = useState('')
   const [showDataRequiredAlert, setShowDataRequiredAlert] = useState(false)
@@ -47,8 +46,6 @@ export const useDashboardState = () => {
     setIsAppLoading,
     showMainApp,
     setShowMainApp,
-    showAutocompletion,
-    setShowAutocompletion,
     showMedicalAssistant,
     setShowMedicalAssistant,
     lastRejectedInput,
