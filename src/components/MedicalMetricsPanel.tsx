@@ -1,0 +1,317 @@
+// src/components/MedicalMetricsPanel.tsx
+// Medical metrics display with tab navigation
+'use client'
+
+import { useRef } from 'react'
+import { UrgencyIndicator, CompactUrgencyIndicator, type UrgencyData } from './UrgencyIndicator'
+import { RealTimeMetrics } from './RealTimeMetrics'
+import { IterativeDiagnosticProgress } from './IterativeDiagnosticProgress'
+import { SOAPDisplay } from './SOAPDisplay'
+import { FollowUpTracker } from './FollowUpTracker'
+import { MedicalNotes } from './MedicalNotes'
+import { CognitiveAgentsPanel } from './CognitiveAgentsPanel'
+import type { MedicalMessage } from '@redux-claude/cognitive-core'
+
+type ActiveMetricsTab =
+  | 'overview'
+  | 'clinical'
+  | 'soap'
+  | 'followup'
+  | 'notes'
+  | 'agents'
+  | 'system'
+
+interface MedicalMetricsPanelProps {
+  // Sidebar state
+  sidebarCollapsed: boolean
+  // Active tab
+  activeMetricsTab: ActiveMetricsTab
+  setActiveMetricsTab: (tab: ActiveMetricsTab) => void
+  // Mobile state
+  isMobile: boolean
+  // Metrics data
+  cognitiveMetrics?: {
+    systemConfidence: number
+    activeDebates: number
+  } | null
+  urgencyData: UrgencyData
+  messagesCount: number
+  // For CognitiveAgentsPanel
+  lastMessage?: MedicalMessage
+  isStreaming: boolean
+  // Event handlers
+  triggerHaptic?: (intensity: 'light' | 'medium' | 'heavy') => void
+}
+
+const TABS_CONFIG = [
+  { id: 'overview' as const, label: 'Info', icon: '📋' },
+  { id: 'clinical' as const, label: 'Med', icon: '🩺' },
+  { id: 'soap' as const, label: 'SOAP', icon: '📄' },
+  { id: 'agents' as const, label: 'AI', icon: '🤖' },
+] as const
+
+export const MedicalMetricsPanel: React.FC<MedicalMetricsPanelProps> = ({
+  sidebarCollapsed,
+  activeMetricsTab,
+  setActiveMetricsTab,
+  isMobile,
+  cognitiveMetrics,
+  urgencyData,
+  messagesCount,
+  lastMessage,
+  isStreaming,
+  triggerHaptic,
+}) => {
+  const tabsRef = useRef<HTMLDivElement>(null)
+
+  return (
+    <div
+      className={`${sidebarCollapsed ? 'collapsed' : 'expanded'} flex-shrink-0 w-80 lg:w-96 bg-gradient-to-b from-slate-800/30 to-slate-900/50 backdrop-blur-xl border-l border-slate-700/50`}
+    >
+      {/* Medical Dashboard Header with Navigation */}
+      <div className="mb-6 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-3">
+            <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/25">
+              <span className="text-white text-xs">📊</span>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">Panel Médico</h2>
+              <p className="text-xs text-slate-400">Sistema Cognitivo v2.0</p>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex items-center space-x-1">
+            <button
+              className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors"
+              title="Actualizar métricas"
+            >
+              <svg
+                className="w-3.5 h-3.5 text-slate-400 hover:text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
+            <button
+              className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors"
+              title="Configurar panel"
+            >
+              <svg
+                className="w-3.5 h-3.5 text-slate-400 hover:text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Stats Overview - Ultra Compact */}
+        {cognitiveMetrics ? (
+          <div className="flex gap-1 mb-2">
+            <div className="bg-emerald-500/20 rounded p-1 flex-1 border border-emerald-500/30">
+              <div className="text-xs font-bold text-emerald-400">
+                {cognitiveMetrics?.systemConfidence || 0}%
+              </div>
+            </div>
+            <div className="bg-blue-500/20 rounded p-1 flex-1 border border-blue-500/30">
+              <div className="text-xs font-bold text-blue-400">
+                {cognitiveMetrics?.activeDebates || 0}
+              </div>
+            </div>
+            <div className="bg-orange-500/20 rounded p-1 flex-1 border border-orange-500/30">
+              <div className="text-xs font-bold text-orange-400">{messagesCount}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-slate-700/30 rounded p-2 border border-slate-600/30 text-center mb-2">
+            <div className="text-slate-400 text-xs">Sin análisis</div>
+          </div>
+        )}
+
+        {/* Navigation Tabs - Ultra Compact */}
+        <div
+          ref={tabsRef}
+          className={`grid grid-cols-4 gap-1 bg-slate-800/30 rounded p-1 ${isMobile ? 'swipe-indicator' : ''}`}
+        >
+          {TABS_CONFIG.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                triggerHaptic?.('light')
+                setActiveMetricsTab(tab.id)
+              }}
+              className={`flex flex-col items-center px-1 py-1 rounded text-xs transition-all duration-200 ${
+                activeMetricsTab === tab.id
+                  ? 'bg-blue-600 text-white'
+                  : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
+              }`}
+            >
+              <span className="text-xs">{tab.icon}</span>
+              <span className="text-xs">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Mobile Swipe Hint */}
+        {isMobile && (
+          <div className="text-center mt-2">
+            <span className="text-xs text-slate-500">← Swipe to navigate tabs →</span>
+          </div>
+        )}
+      </div>
+
+      {/* Optimized Content Container with Tab-Based Navigation */}
+      <div className="flex-1 overflow-y-auto overscroll-contain min-h-0 pr-1 px-4">
+        {/* RESUMEN - Vista General */}
+        {activeMetricsTab === 'overview' && (
+          <div className="space-y-4">
+            {/* Estado Crítico - Siempre visible en resumen */}
+            {urgencyData.level !== 'low' || messagesCount > 0 ? (
+              <section>
+                {urgencyData.level === 'critical' || urgencyData.level === 'high' ? (
+                  <UrgencyIndicator
+                    urgencyData={urgencyData}
+                    className="rounded-xl border border-red-500/20 shadow-lg shadow-red-500/10"
+                  />
+                ) : (
+                  <CompactUrgencyIndicator
+                    urgencyData={urgencyData}
+                    className="rounded-xl border border-slate-600/30 shadow-lg shadow-slate-950/20"
+                  />
+                )}
+              </section>
+            ) : null}
+
+            {/* Métricas Clave */}
+            <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/60 backdrop-blur-xl rounded-xl border border-slate-600/30 p-4 shadow-xl shadow-slate-950/30">
+              <RealTimeMetrics />
+            </div>
+          </div>
+        )}
+
+        {/* CLÍNICO - Información Médica */}
+        {activeMetricsTab === 'clinical' && (
+          <div className="space-y-4">
+            {urgencyData.level !== 'low' || messagesCount > 0 ? (
+              <section>
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
+                  <h3 className="text-xs font-semibold text-red-300 uppercase tracking-wider">
+                    Estado Médico Crítico
+                  </h3>
+                </div>
+                {urgencyData.level === 'critical' || urgencyData.level === 'high' ? (
+                  <UrgencyIndicator
+                    urgencyData={urgencyData}
+                    className="rounded-xl border border-red-500/20 shadow-lg shadow-red-500/10"
+                  />
+                ) : (
+                  <CompactUrgencyIndicator
+                    urgencyData={urgencyData}
+                    className="rounded-xl border border-slate-600/30 shadow-lg shadow-slate-950/20"
+                  />
+                )}
+              </section>
+            ) : (
+              <div className="bg-gradient-to-r from-emerald-950/40 to-teal-950/40 backdrop-blur-xl rounded-xl p-4 border border-emerald-500/30">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-lg">🩺</span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-emerald-300 mb-2">
+                    Sistema Médico Estable
+                  </h3>
+                  <p className="text-xs text-slate-400">No hay alertas médicas activas.</p>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-gradient-to-br from-blue-950/20 to-indigo-950/30 backdrop-blur-xl rounded-xl border border-blue-700/20 p-4 shadow-xl shadow-blue-950/20">
+              <IterativeDiagnosticProgress />
+            </div>
+          </div>
+        )}
+
+        {/* SOAP - Análisis Estructurado */}
+        {activeMetricsTab === 'soap' && (
+          <div className="space-y-4">
+            <div className="bg-gradient-to-br from-blue-950/20 to-indigo-950/30 backdrop-blur-xl rounded-xl border border-blue-700/20 p-4 shadow-xl shadow-blue-950/20">
+              <SOAPDisplay />
+            </div>
+          </div>
+        )}
+
+        {/* SEGUIMIENTO - Recordatorios y Notas */}
+        {activeMetricsTab === 'followup' && (
+          <div className="space-y-4">
+            <div className="bg-gradient-to-br from-green-950/20 to-emerald-950/30 backdrop-blur-xl rounded-xl border border-green-700/20 p-4 shadow-xl shadow-green-950/20">
+              <FollowUpTracker />
+            </div>
+          </div>
+        )}
+
+        {/* NOTAS - Notas Médicas con Trazabilidad */}
+        {activeMetricsTab === 'notes' && (
+          <div className="space-y-4">
+            <div className="bg-gradient-to-br from-amber-950/20 to-orange-950/30 backdrop-blur-xl rounded-xl border border-amber-700/20 p-4 shadow-xl shadow-amber-950/20">
+              <MedicalNotes />
+            </div>
+          </div>
+        )}
+
+        {/* AGENTES - Orquestador Cognitivo */}
+        {activeMetricsTab === 'agents' && (
+          <div className="space-y-4">
+            <div className="bg-gradient-to-br from-purple-950/20 to-violet-950/30 backdrop-blur-xl rounded-xl border border-purple-700/20 p-4 shadow-xl shadow-purple-950/20">
+              <CognitiveAgentsPanel lastMessage={lastMessage} isActive={isStreaming} />
+            </div>
+          </div>
+        )}
+
+        {/* SISTEMA - Métricas Técnicas */}
+        {activeMetricsTab === 'system' && (
+          <div className="space-y-4">
+            <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/60 backdrop-blur-xl rounded-xl border border-slate-600/30 p-4 shadow-xl shadow-slate-950/30">
+              <RealTimeMetrics />
+            </div>
+
+            {/* Información adicional del sistema */}
+            <div className="grid grid-cols-1 gap-3">
+              <div className="bg-gradient-to-r from-orange-950/40 to-red-950/40 backdrop-blur-xl rounded-lg p-3 border border-orange-500/30">
+                <h4 className="text-sm font-semibold text-orange-300 mb-2">Estado del Servidor</h4>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  <span className="text-xs text-slate-300">Conectado y operativo</span>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-blue-950/40 to-purple-950/40 backdrop-blur-xl rounded-lg p-3 border border-blue-500/30">
+                <h4 className="text-sm font-semibold text-blue-300 mb-2">Versión del Sistema</h4>
+                <span className="text-xs text-slate-300">
+                  Motor Iterativo + Orquestador Cognitivo v2.0
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

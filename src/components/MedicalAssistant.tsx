@@ -113,7 +113,9 @@ const MedicalAssistant = ({
       chief_complaint: data.primarySymptom || 'unknown',
       primary_symptoms: data.symptoms || null,
       anatomical_location: 'unknown',
-      confidence_symptoms: !!data.primarySymptom ? CONFIDENCE_THRESHOLDS.GOOD : MIN_SYMPTOMS_CONFIDENCE,
+      confidence_symptoms: !!data.primarySymptom
+        ? CONFIDENCE_THRESHOLDS.GOOD
+        : MIN_SYMPTOMS_CONFIDENCE,
     },
     symptom_characteristics: {
       duration_description: data.duration || 'unknown',
@@ -123,7 +125,9 @@ const MedicalAssistant = ({
       relieving_factors: data.relievingFactors || null,
       associated_symptoms: data.associatedSymptoms || null,
       temporal_pattern: data.timePattern || 'unknown',
-      confidence_context: !!(data.duration || data.intensity) ? CONFIDENCE_THRESHOLDS.MEDIUM : DEFAULT_CONTEXT_CONFIDENCE,
+      confidence_context: !!(data.duration || data.intensity)
+        ? CONFIDENCE_THRESHOLDS.MEDIUM
+        : DEFAULT_CONTEXT_CONFIDENCE,
     },
     medical_validation: {
       anatomical_contradictions: [],

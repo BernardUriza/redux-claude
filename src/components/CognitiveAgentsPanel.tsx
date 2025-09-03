@@ -22,7 +22,7 @@ const SPECIALTY_CONFIG = {
   // Cardiology
   cardiologia: { icon: '❤️', color: 'from-red-500 to-pink-500' },
   cardiology: { icon: '❤️', color: 'from-red-500 to-pink-500' },
-  // Neurology  
+  // Neurology
   neurologia: { icon: '🧠', color: 'from-purple-500 to-indigo-500' },
   neurology: { icon: '🧠', color: 'from-purple-500 to-indigo-500' },
   // Pediatrics
@@ -66,9 +66,9 @@ const getSpecialtyColor = (specialty: string): string => {
 // Status color mapping - BRUTAL OPTIMIZATION
 const STATUS_COLORS = {
   active: 'text-blue-400 bg-blue-500/20 border-blue-500/30',
-  consulting: 'text-purple-400 bg-purple-500/20 border-purple-500/30', 
+  consulting: 'text-purple-400 bg-purple-500/20 border-purple-500/30',
   completed: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30',
-  idle: 'text-slate-400 bg-slate-500/20 border-slate-500/30'
+  idle: 'text-slate-400 bg-slate-500/20 border-slate-500/30',
 } as const
 
 const getStatusColor = (status: string): string => {
