@@ -259,7 +259,8 @@ export class MedicalSystemMonitor extends EventEmitter {
     const EFFICIENCY_PROBABILITY = 0.9
     const EFFICIENCY_BONUS = 3
     const INEFFICIENCY_PENALTY = -10
-    const efficiency = Math.random() < EFFICIENCY_PROBABILITY ? EFFICIENCY_BONUS : INEFFICIENCY_PENALTY // 90% chance de ser eficiente
+    const efficiency =
+      Math.random() < EFFICIENCY_PROBABILITY ? EFFICIENCY_BONUS : INEFFICIENCY_PENALTY // 90% chance de ser eficiente
     return Math.min(Math.round(base + efficiency), 100)
   }
 
@@ -280,7 +281,9 @@ export class MedicalSystemMonitor extends EventEmitter {
 
   private calculateMedicalDataQuality(): number {
     // Calidad basada en completitud y confianza de datos
-    const completeness = 85 + Math.random() * 12 // 85-97%
+    const COMPLETENESS_BASE = 85
+    const COMPLETENESS_RANGE = 12
+    const completeness = COMPLETENESS_BASE + Math.random() * COMPLETENESS_RANGE // 85-97%
     const confidence = 80 + Math.random() * 15 // 80-95%
     return Math.round((completeness + confidence) / 2)
   }
@@ -348,22 +351,24 @@ export class MedicalSystemMonitor extends EventEmitter {
     const MEMORY_THRESHOLD = 80
     const SELECTOR_THRESHOLD = 50
     const CACHE_THRESHOLD = 80
-    const QUALITY_THRESHOLD = 70
+    const EXCELLENCE_THRESHOLD = 90
+    const GOOD_THRESHOLD = 70
+    const WARNING_THRESHOLD = 50
     const CPU_PENALTY = 20
     const MEMORY_PENALTY = 25
     const SELECTOR_PENALTY = 15
     const CACHE_PENALTY = 20
     const QUALITY_PENALTY = 20
-    
+
     if (cpu > CPU_THRESHOLD) score -= CPU_PENALTY
     if (memory > MEMORY_THRESHOLD) score -= MEMORY_PENALTY
     if (selectorPerformance > SELECTOR_THRESHOLD) score -= SELECTOR_PENALTY
     if (cacheHitRate < CACHE_THRESHOLD) score -= CACHE_PENALTY
     if (medicalDataQuality < QUALITY_THRESHOLD) score -= QUALITY_PENALTY
 
-    if (score >= 90) return 'excellent'
-    if (score >= 70) return 'good'
-    if (score >= 50) return 'warning'
+    if (score >= EXCELLENCE_THRESHOLD) return 'excellent'
+    if (score >= GOOD_THRESHOLD) return 'good'
+    if (score >= WARNING_THRESHOLD) return 'warning'
     return 'critical'
   }
 
