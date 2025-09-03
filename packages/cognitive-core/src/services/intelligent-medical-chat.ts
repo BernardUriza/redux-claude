@@ -1,7 +1,7 @@
 // 🦁 Chat de Inferencia Médica Inteligente - Creado por Bernard Orozco
 // Inspirado en MAI-DxO y la sabiduría de Aslan para salvar al Doctor Edmund
 
-import { callDecisionEngine, callIndividualDecision } from './decisionalMiddleware'
+import { callDecisionEngine, callIndividualDecision } from './decisional-middleware'
 import type { MedicalMessage } from '../store/medicalChatSlice'
 import type { AppDispatch } from '../store/store'
 import {

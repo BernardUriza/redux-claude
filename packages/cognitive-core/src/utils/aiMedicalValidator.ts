@@ -1,7 +1,7 @@
 // 🤖 AI Medical Validator - Reemplazo inteligente del regex validator
 // Creado por Bernard Orozco - Usa Claude Sonnet 4 para validación médica
 
-import { callClaudeForDecision } from '../services/decisionalMiddleware'
+import { callClaudeForDecision } from '../services/decisional-middleware'
 import type { MedicalInputValidatorDecision } from '../types/agents'
 
 export interface AIValidationResult {

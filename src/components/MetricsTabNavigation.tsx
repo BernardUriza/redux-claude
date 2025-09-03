@@ -3,15 +3,7 @@
 'use client'
 
 import { useRef } from 'react'
-
-type ActiveMetricsTab =
-  | 'overview'
-  | 'clinical'
-  | 'soap'
-  | 'followup'
-  | 'notes'
-  | 'agents'
-  | 'system'
+import type { ActiveMetricsTab } from '../types/dashboard'
 
 interface MetricsTabNavigationProps {
   activeTab: ActiveMetricsTab
@@ -70,5 +62,3 @@ export const MetricsTabNavigation: React.FC<MetricsTabNavigationProps> = ({
     </>
   )
 }
-
-export type { ActiveMetricsTab }

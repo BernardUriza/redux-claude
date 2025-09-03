@@ -26,7 +26,7 @@ export interface PerformanceAlert {
   timestamp: number
   severity: 'low' | 'medium' | 'high' | 'critical'
   resolved: boolean
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface MedicalDataMetrics {
@@ -47,7 +47,7 @@ export class MedicalSystemMonitor extends EventEmitter {
   private alerts: PerformanceAlert[] = []
   private intervalId: NodeJS.Timeout | null = null
   private startTime: number = Date.now()
-  private isRunning: boolean = false
+  private isRunning = false
 
   // 📊 CONFIGURACIÓN
   private readonly config = {
@@ -169,7 +169,8 @@ export class MedicalSystemMonitor extends EventEmitter {
     }
 
     // Alerta de calidad de datos médicos baja
-    if (this.metrics.medicalDataQuality < 70) {
+    const MEDICAL_DATA_QUALITY_THRESHOLD = 70
+    if (this.metrics.medicalDataQuality < MEDICAL_DATA_QUALITY_THRESHOLD) {
       this.createAlert(
         'warning',
         'medical',
@@ -186,7 +187,7 @@ export class MedicalSystemMonitor extends EventEmitter {
     category: PerformanceAlert['category'],
     message: string,
     severity: PerformanceAlert['severity'],
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): void {
     const alert: PerformanceAlert = {
       id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -230,14 +231,18 @@ export class MedicalSystemMonitor extends EventEmitter {
   // 📊 MÉTODOS DE CÁLCULO SIMULADO
   private simulateCPUUsage(): number {
     const base = 15 + Math.random() * 20 // 15-35% base
-    const spike = Math.random() < 0.1 ? Math.random() * 40 : 0 // 10% chance de spike
+    const SPIKE_PROBABILITY = 0.1
+    const SPIKE_MAXIMUM = 40
+    const spike = Math.random() < SPIKE_PROBABILITY ? Math.random() * SPIKE_MAXIMUM : 0 // 10% chance de spike
     return Math.min(Math.round(base + spike), 100)
   }
 
   private simulateMemoryUsage(): number {
     const componentsLoaded = this.getLoadedComponentsCount()
     const base = 30 + componentsLoaded * 5 // Base + componentes
-    const variance = Math.random() * 15 - 7.5 // ±7.5%
+    const VARIANCE_RANGE = 15
+    const VARIANCE_OFFSET = 7.5
+    const variance = Math.random() * VARIANCE_RANGE - VARIANCE_OFFSET // ±7.5%
     return Math.min(Math.max(Math.round(base + variance), 0), 100)
   }
 
@@ -251,13 +256,18 @@ export class MedicalSystemMonitor extends EventEmitter {
   private calculateCacheHitRate(): number {
     // Simular hit rate (debería ser alto, 80-98%)
     const base = 80 + Math.random() * 15
-    const efficiency = Math.random() < 0.9 ? 3 : -10 // 90% chance de ser eficiente
+    const EFFICIENCY_PROBABILITY = 0.9
+    const EFFICIENCY_BONUS = 3
+    const INEFFICIENCY_PENALTY = -10
+    const efficiency = Math.random() < EFFICIENCY_PROBABILITY ? EFFICIENCY_BONUS : INEFFICIENCY_PENALTY // 90% chance de ser eficiente
     return Math.min(Math.round(base + efficiency), 100)
   }
 
   private getLoadedComponentsCount(): number {
     // Simular componentes lazy-loaded
-    return Math.floor(Math.random() * 5) + 1 // 1-5 componentes
+    const MIN_COMPONENTS = 1
+    const MAX_COMPONENTS_RANGE = 5
+    return Math.floor(Math.random() * MAX_COMPONENTS_RANGE) + MIN_COMPONENTS // 1-5 componentes
   }
 
   private getErrorsInLastHour(): number {
@@ -334,11 +344,22 @@ export class MedicalSystemMonitor extends EventEmitter {
 
     // Scoring system
     let score = 100
-    if (cpu > 80) score -= 20
-    if (memory > 80) score -= 25
-    if (selectorPerformance > 50) score -= 15
-    if (cacheHitRate < 80) score -= 20
-    if (medicalDataQuality < 70) score -= 20
+    const CPU_THRESHOLD = 80
+    const MEMORY_THRESHOLD = 80
+    const SELECTOR_THRESHOLD = 50
+    const CACHE_THRESHOLD = 80
+    const QUALITY_THRESHOLD = 70
+    const CPU_PENALTY = 20
+    const MEMORY_PENALTY = 25
+    const SELECTOR_PENALTY = 15
+    const CACHE_PENALTY = 20
+    const QUALITY_PENALTY = 20
+    
+    if (cpu > CPU_THRESHOLD) score -= CPU_PENALTY
+    if (memory > MEMORY_THRESHOLD) score -= MEMORY_PENALTY
+    if (selectorPerformance > SELECTOR_THRESHOLD) score -= SELECTOR_PENALTY
+    if (cacheHitRate < CACHE_THRESHOLD) score -= CACHE_PENALTY
+    if (medicalDataQuality < QUALITY_THRESHOLD) score -= QUALITY_PENALTY
 
     if (score >= 90) return 'excellent'
     if (score >= 70) return 'good'
@@ -350,7 +371,7 @@ export class MedicalSystemMonitor extends EventEmitter {
   recordSelectorLatency(selectorName: string, latency: number): void {
     const key = `${selectorName}Latency` as keyof MedicalDataMetrics
     if (key in this.medicalMetrics) {
-      ;(this.medicalMetrics as any)[key] = latency
+      ;(this.medicalMetrics as unknown as Record<string, unknown>)[key] = latency
     }
   }
 
@@ -365,6 +386,6 @@ export const medicalSystemMonitor = new MedicalSystemMonitor()
 // 🎭 AUTO-START EN DESARROLLO
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   // Hacer disponible globalmente para debug
-  ;(window as any).medicalMonitor = medicalSystemMonitor
+  ;(window as unknown as Record<string, unknown>).medicalMonitor = medicalSystemMonitor
   console.log('🔍 Medical Monitor disponible como window.medicalMonitor')
 }

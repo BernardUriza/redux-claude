@@ -12,11 +12,11 @@ import {
 } from '../types/cognitive'
 import { AgentType, DecisionResult } from '../types/agents'
 import { nanoid } from '@reduxjs/toolkit'
-import { contextualMemory } from './contextualMemory'
-import { reinforcementLearning } from './reinforcementLearning'
-import { consensusSystem } from './consensusSystem'
-import { adaptivePipeline } from './adaptivePipeline'
-import { multiAgentOrchestrator } from './multiAgentOrchestrator'
+import { contextualMemory } from './contextual-memory'
+import { reinforcementLearning } from './reinforcement-learning'
+import { consensusSystem } from './consensus-system'
+import { adaptivePipeline } from './adaptive-pipeline'
+import { multiAgentOrchestrator } from './multi-agent-orchestrator'
 
 export class CognitiveOrchestrator {
   private cognitiveSystem: CognitiveSystem

@@ -45,7 +45,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   showMainApp,
   cognitiveMetrics,
   urgencyData,
-  messagesCount,
+  messagesCount: _messagesCount,
   onNewConsultation,
   onMobileMenuAction,
   triggerHaptic,

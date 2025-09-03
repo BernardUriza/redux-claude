@@ -15,8 +15,8 @@ import {
 } from '../types/cognitive'
 import { AgentType, DecisionResult } from '../types/agents'
 import { nanoid } from '@reduxjs/toolkit'
-import { reinforcementLearning } from './reinforcementLearning'
-import { contextualMemory } from './contextualMemory'
+import { reinforcementLearning } from './reinforcement-learning'
+import { contextualMemory } from './contextual-memory'
 
 export class AdaptivePipelineSystem implements ContextAnalyzer, PerformanceOptimizer {
   private pipeline: AdaptivePipeline

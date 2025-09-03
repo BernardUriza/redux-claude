@@ -93,7 +93,7 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
         dispatch(addDashboardMessage({ content: message, type: 'user' }))
 
         // 🚀 USAR CHAT INTELIGENTE EN NÚCLEO DASHBOARD
-        const { IntelligentMedicalChat } = await import('../services/IntelligentMedicalChat')
+        const { IntelligentMedicalChat } = await import('../services/intelligent-medical-chat')
         const intelligentService = new IntelligentMedicalChat(dispatch, 'dashboard')
 
         // El chat inteligente maneja todo internamente y actualiza el store

@@ -59,30 +59,44 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         </div>
 
         {/* Mobile Menu Content */}
-        <div className="flex-1 p-4">
-          <div className="space-y-3">
-            {['treatment', 'diagnostics', 'analytics'].map(action => (
-              <button
-                key={action}
-                className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white touch-feedback touch-target"
-                onClick={() => {
-                  triggerHaptic?.('light')
-                  setShowMobileMenu(false)
-                  onMobileMenuAction(action)
-                }}
-              >
-                <span className="text-lg">
-                  {action === 'treatment' ? '💊' : action === 'diagnostics' ? '🔍' : '📊'}
-                </span>
-                <span className="text-sm font-medium">
-                  {action === 'treatment'
-                    ? 'Treatment Plans'
-                    : action === 'diagnostics'
-                      ? 'Diagnostics'
-                      : 'Analytics'}
-                </span>
-              </button>
-            ))}
+        <nav className="flex-1 p-4" role="navigation" aria-label="Mobile menu">
+          <div className="space-y-3" role="menu">
+            {['treatment', 'diagnostics', 'analytics'].map(action => {
+              const handleAction = () => {
+                triggerHaptic?.('light')
+                setShowMobileMenu(false)
+                onMobileMenuAction(action)
+              }
+
+              const handleKeyDown = (e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  handleAction()
+                }
+              }
+
+              return (
+                <button
+                  key={action}
+                  className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200 hover:text-white touch-feedback touch-target"
+                  onClick={handleAction}
+                  onKeyDown={handleKeyDown}
+                  role="menuitem"
+                  tabIndex={0}
+                >
+                  <span className="text-lg">
+                    {action === 'treatment' ? '💊' : action === 'diagnostics' ? '🔍' : '📊'}
+                  </span>
+                  <span className="text-sm font-medium">
+                    {action === 'treatment'
+                      ? 'Treatment Plans'
+                      : action === 'diagnostics'
+                        ? 'Diagnostics'
+                        : 'Analytics'}
+                  </span>
+                </button>
+              )
+            })}
           </div>
 
           {/* System Status in Mobile */}
@@ -104,7 +118,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        </nav>
       </div>
     </div>
   )

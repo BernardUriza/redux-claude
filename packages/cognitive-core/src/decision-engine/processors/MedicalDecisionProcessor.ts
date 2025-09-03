@@ -1,7 +1,7 @@
 // 🏥 PROCESADOR DE DECISIONES MÉDICAS - Bernard Orozco 2025
 // Lógica especializada separada del engine principal
 
-import { getAgentDefinition } from '../../services/agentRegistry'
+import { getAgentDefinition } from '../../services/agent-registry'
 import { AgentType } from '../../types/agents'
 import type { ClaudeAdapter } from '../providers/claude'
 import type { DecisionResponse } from '../core/types'

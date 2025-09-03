@@ -1,7 +1,7 @@
 // 🎯 CLEAN ARCHITECTURE - Servicio de Selección de Especialistas
 // Usa decisionalMiddleware REAL en lugar de lógica hardcodeada
 
-import { callClaudeForDecision } from './decisionalMiddleware'
+import { callClaudeForDecision } from './decisional-middleware'
 
 export interface SpecialistRecommendation {
   agentType: string

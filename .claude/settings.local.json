@@ -34,7 +34,13 @@
       "Bash(npm run clean:*)",
       "Bash(npx prettier:*)",
       "Bash(npm run format:*)",
-      "Bash(timeout 60s npm run build)"
+      "Bash(timeout 60s npm run build)",
+      "Bash(git mv:*)",
+      "Bash(npx eslint:*)",
+      "Read(/mnt/c/Users/Bernard.Orozco/Documents/Github/cognitive-ai/**)",
+      "Bash(npm run lint)",
+      "Bash(timeout 60s npx tsc --noEmit)",
+      "Bash(timeout 30s npx tsc --noEmit --skipLibCheck)"
     ],
     "deny": [],
     "ask": []

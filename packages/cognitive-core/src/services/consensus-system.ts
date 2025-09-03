@@ -4,7 +4,7 @@
 import { ConsensusSystem, VotingRound, AgentVote, Debate, Argument } from '../types/cognitive'
 import { AgentType, DecisionResult } from '../types/agents'
 import { nanoid } from '@reduxjs/toolkit'
-import { reinforcementLearning } from './reinforcementLearning'
+import { reinforcementLearning } from './reinforcement-learning'
 
 export class MultiAgentConsensusSystem {
   private consensus: ConsensusSystem

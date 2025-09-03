@@ -1,7 +1,7 @@
 // 🧠 Medical Prompt Orchestrator - Middleware Pipeline
 // Creado por Bernard Orozco - Sistema de validación y detección en cadena
 
-import { callClaudeForDecision } from './decisionalMiddleware'
+import { callClaudeForDecision } from './decisional-middleware'
 import type {
   CriticalDataValidationDecision,
   SpecialtyDetectionDecision,

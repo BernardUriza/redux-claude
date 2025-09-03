@@ -91,8 +91,8 @@ export const ChatNotifications: React.FC<ChatNotificationsProps> = ({
             </div>
             <div className="flex-1">
               <p className="text-orange-200 font-medium text-sm">
-                <span className="font-bold">Consulta médica detectada:</span> Se requieren datos
-                del paciente para proceder con análisis seguro.
+                <span className="font-bold">Consulta médica detectada:</span> Se requieren datos del
+                paciente para proceder con análisis seguro.
               </p>
               <p className="text-orange-300/80 text-xs mt-1">
                 Complete edad, género y motivo de consulta en el asistente avanzado que se ha

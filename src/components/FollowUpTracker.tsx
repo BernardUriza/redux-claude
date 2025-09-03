@@ -13,13 +13,19 @@ import { useDispatch } from 'react-redux'
 // import type { Reminder, PhysicianNote } from '@redux-claude/cognitive-core'
 
 // Mocks temporales para mantener funcionalidad
-const addReminder = (reminder: any) => ({ type: 'ADD_REMINDER_MOCK', payload: reminder })
-const _updateReminder = (id: string, updates: any) => ({
+const addReminder = (reminder: Omit<Reminder, 'id' | 'completed'>) => ({
+  type: 'ADD_REMINDER_MOCK',
+  payload: reminder,
+})
+const _updateReminder = (id: string, updates: Partial<Reminder>) => ({
   type: 'UPDATE_REMINDER_MOCK',
   payload: { id, updates },
 })
 const completeReminder = (id: string) => ({ type: 'COMPLETE_REMINDER_MOCK', payload: id })
-const _addPhysicianNote = (note: any) => ({ type: 'ADD_NOTE_MOCK', payload: note })
+const _addPhysicianNote = (note: Omit<_PhysicianNote, 'id' | 'timestamp'>) => ({
+  type: 'ADD_NOTE_MOCK',
+  payload: note,
+})
 
 type Reminder = {
   id: string
@@ -91,7 +97,9 @@ const AddReminderModal = ({ isOpen, onClose, onAdd }: AddReminderModalProps) => 
             <label className="block text-sm font-medium text-slate-200 mb-2">Tipo</label>
             <select
               value={type}
-              onChange={e => setType(e.target.value as any)}
+              onChange={e =>
+                setType(e.target.value as 'followup' | 'medication' | 'study' | 'referral')
+              }
               className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="followup">Seguimiento</option>
@@ -130,7 +138,7 @@ const AddReminderModal = ({ isOpen, onClose, onAdd }: AddReminderModalProps) => 
             <label className="block text-sm font-medium text-slate-200 mb-2">Prioridad</label>
             <select
               value={priority}
-              onChange={e => setPriority(e.target.value as any)}
+              onChange={e => setPriority(e.target.value as 'low' | 'medium' | 'high' | 'critical')}
               className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="low">Baja</option>

@@ -2,7 +2,7 @@
 // Creado por Bernard Orozco - Actualizado Fase 1 con NOM-004-SSA3-2012
 
 import { BaseAgent } from '../agents/BaseAgent'
-import { callClaudeForDecision } from '../services/decisionalMiddleware'
+import { callClaudeForDecision } from '../services/decisional-middleware'
 import { SOAPProcessor } from './SOAPProcessor'
 import type { SOAPAnalysis } from '../types/medical'
 import { SOAPPrompts } from './SOAPPrompts'

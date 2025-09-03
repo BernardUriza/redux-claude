@@ -9,7 +9,10 @@ import type { RootState } from '@redux-claude/cognitive-core'
 import { selectPhysicianNotes } from '@redux-claude/cognitive-core/src/store/selectors'
 
 // Mock action - En FASE 4 se implementará acción real
-const addPhysicianNote = (note: any) => ({ type: 'ADD_PHYSICIAN_NOTE_MOCK', payload: note })
+const addPhysicianNote = (note: Omit<PhysicianNote, 'id' | 'timestamp'>) => ({
+  type: 'ADD_PHYSICIAN_NOTE_MOCK',
+  payload: note,
+})
 
 // Usar tipo del selector con compatibilidad legacy
 type PhysicianNote = {
@@ -82,7 +85,9 @@ const AddNoteModal = ({ isOpen, onClose, onAdd }: AddNoteModalProps) => {
               <label className="block text-sm font-medium text-slate-200 mb-2">Tipo de Nota</label>
               <select
                 value={type}
-                onChange={e => setType(e.target.value as any)}
+                onChange={e =>
+                  setType(e.target.value as 'clinical' | 'administrative' | 'legal' | 'observation')
+                }
                 className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="clinical">Clínica</option>
@@ -96,7 +101,9 @@ const AddNoteModal = ({ isOpen, onClose, onAdd }: AddNoteModalProps) => {
               <label className="block text-sm font-medium text-slate-200 mb-2">Prioridad</label>
               <select
                 value={priority}
-                onChange={e => setPriority(e.target.value as any)}
+                onChange={e =>
+                  setPriority(e.target.value as 'low' | 'medium' | 'high' | 'critical')
+                }
                 className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="low">Baja</option>
@@ -378,7 +385,7 @@ export const MedicalNotes = () => {
 
         <select
           value={sortBy}
-          onChange={e => setSortBy(e.target.value as any)}
+          onChange={e => setSortBy(e.target.value as 'newest' | 'oldest' | 'priority')}
           className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="newest">Más recientes</option>

@@ -14,13 +14,13 @@ import {
   getEnabledAgents,
   getAgentDefinition,
   isAgentEnabled,
-} from './agentRegistry'
-import { callClaudeForDecision, mapAgentTypeToDecisionType } from './decisionalMiddleware'
+} from './agent-registry'
+import { callClaudeForDecision, mapAgentTypeToDecisionType } from './decisional-middleware'
 import { nanoid } from '@reduxjs/toolkit'
 import { store } from '../store/store'
 // Simplified imports
-import { contextualMemory } from './contextualMemory'
-import { reinforcementLearning } from './reinforcementLearning'
+import { contextualMemory } from './contextual-memory'
+import { reinforcementLearning } from './reinforcement-learning'
 
 export class MultiAgentOrchestrator {
   private abortControllers: Map<string, AbortController> = new Map()

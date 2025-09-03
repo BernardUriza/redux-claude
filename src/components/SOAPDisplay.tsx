@@ -5,10 +5,9 @@
 'use client'
 
 import { useState } from 'react'
-import { SOAPSection } from './SOAPSectionRenderer'
+import { SOAPSection, type SOAPSectionData } from './SOAPSectionRenderer'
 import { SOAPMarkdownExporter } from './SOAPMarkdownExporter'
 import { useSOAPData, type SOAPEditSection } from '../hooks/useSOAPData'
-import type { SOAPSectionData } from './SOAPSectionRenderer'
 
 /**
  * SOAPDisplay Container - CLEAN ARCHITECTURE
@@ -92,7 +91,8 @@ export const SOAPDisplay = () => {
               </button>
             </div>
             <div className="text-sm text-slate-300">
-              Confianza: <span className="font-semibold text-green-400">
+              Confianza:{' '}
+              <span className="font-semibold text-green-400">
                 {Math.round((soapAnalysis.confidence || 0) * 100)}%
               </span>
             </div>

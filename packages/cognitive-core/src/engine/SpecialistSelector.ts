@@ -1,7 +1,7 @@
 // 🎯 SELECTOR DINÁMICO DE ESPECIALISTAS - SIMPLE - Creado por Bernard Orozco
 // Usa decisionalMiddleware para decidir qué agentes necesita el caso
 
-import { callClaudeForDecision } from '../services/decisionalMiddleware'
+import { callClaudeForDecision } from '../services/decisional-middleware'
 
 export interface PatientProfile {
   age?: number

@@ -10,7 +10,7 @@ import { FollowUpTracker } from './FollowUpTracker'
 import { MedicalNotes } from './MedicalNotes'
 import { CognitiveAgentsPanel } from './CognitiveAgentsPanel'
 import type { MedicalMessage } from '@redux-claude/cognitive-core'
-import type { ActiveMetricsTab } from './MetricsTabNavigation'
+import type { ActiveMetricsTab } from '../types/dashboard'
 
 interface MetricsContentProps {
   activeTab: ActiveMetricsTab

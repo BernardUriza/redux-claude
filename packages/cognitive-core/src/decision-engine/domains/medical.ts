@@ -2,7 +2,7 @@
 // Estrategia del dominio médico - Bernard Orozco
 
 import type { DomainStrategy, BaseDecisionRequest, ValidationResult } from '../core/types'
-import { getAgentDefinition } from '../../services/agentRegistry'
+import { getAgentDefinition } from '../../services/agent-registry'
 import {
   AgentType,
   MedicalAutocompletionDecision,

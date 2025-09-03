@@ -1,7 +1,7 @@
 // 🔍 CLEAN ARCHITECTURE - Servicio de Extracción Clínica
 // Usa decisionalMiddleware para extraer datos en lugar de regex hardcodeados
 
-import { callClaudeForDecision } from './decisionalMiddleware'
+import { callClaudeForDecision } from './decisional-middleware'
 
 export interface ClinicalData {
   patientAge?: number

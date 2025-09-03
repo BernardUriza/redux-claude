@@ -1,19 +1,11 @@
 // Custom hook to manage dashboard state
 import { useState } from 'react'
-
-export type MetricsTabType =
-  | 'overview'
-  | 'clinical'
-  | 'soap'
-  | 'followup'
-  | 'notes'
-  | 'agents'
-  | 'system'
+import type { ActiveMetricsTab } from '../types/dashboard'
 
 export const useDashboardState = () => {
   const [input, setInput] = useState('')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
-  const [activeMetricsTab, setActiveMetricsTab] = useState<MetricsTabType>('overview')
+  const [activeMetricsTab, setActiveMetricsTab] = useState<ActiveMetricsTab>('overview')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showMobileFab, setShowMobileFab] = useState(false)
   const [keyboardVisible, setKeyboardVisible] = useState(false)

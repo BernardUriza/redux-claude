@@ -7,6 +7,8 @@ import { useRef, useEffect } from 'react'
 import { EnhancedMedicalMessage } from './EnhancedMedicalMessage'
 import type { MedicalMessage } from '@redux-claude/cognitive-core'
 
+const ANIMATION_DELAY_STEP = 150
+
 interface ChatMessageListProps {
   messages: MedicalMessage[]
   isLoading: boolean
@@ -52,8 +54,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
     <div className="relative">
       {messages.map((message, idx) => {
         const isLastMessage = idx === messages.length - 1
-        const messageIsStreaming =
-          isLastMessage && isStreaming && message.type === 'assistant'
+        const messageIsStreaming = isLastMessage && isStreaming && message.type === 'assistant'
 
         return (
           <div
@@ -84,7 +85,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
                     Analyzing medical case...
                   </span>
                   <div className="flex space-x-1">
-                    {[0, 150, 300].map((delay, i) => (
+                    {[0, ANIMATION_DELAY_STEP, ANIMATION_DELAY_STEP * 2].map((delay, i) => (
                       <div
                         key={i}
                         className="w-1 h-1 bg-blue-400 rounded-full animate-pulse"

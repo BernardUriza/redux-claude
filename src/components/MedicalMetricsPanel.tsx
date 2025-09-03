@@ -4,8 +4,9 @@
 
 import type { UrgencyData } from './UrgencyIndicator'
 import type { MedicalMessage } from '@redux-claude/cognitive-core'
+import type { ActiveMetricsTab } from '../types/dashboard'
 import { MetricsHeader } from './MetricsHeader'
-import { MetricsTabNavigation, type ActiveMetricsTab } from './MetricsTabNavigation'
+import { MetricsTabNavigation } from './MetricsTabNavigation'
 import { MetricsContent } from './MetricsContent'
 
 interface MedicalMetricsPanelProps {
@@ -46,10 +47,7 @@ export const MedicalMetricsPanel: React.FC<MedicalMetricsPanelProps> = ({
     <div
       className={`${sidebarCollapsed ? 'collapsed' : 'expanded'} flex-shrink-0 w-80 lg:w-96 bg-gradient-to-b from-slate-800/30 to-slate-900/50 backdrop-blur-xl border-l border-slate-700/50`}
     >
-      <MetricsHeader
-        cognitiveMetrics={cognitiveMetrics}
-        messagesCount={messagesCount}
-      />
+      <MetricsHeader cognitiveMetrics={cognitiveMetrics} messagesCount={messagesCount} />
 
       <div className="px-4 mb-4">
         <MetricsTabNavigation

@@ -6,6 +6,19 @@
 import { useState, useEffect } from 'react'
 import type { MedicalMessage } from '@redux-claude/cognitive-core'
 
+// Constantes de configuración
+const DEFAULT_CONFIDENCE = 0.5
+const MIN_CONFIDENCE = 0.1
+const HIGH_CONFIDENCE = 0.95
+const LOW_CONFIDENCE = 0.05
+const MEDIUM_CONFIDENCE = 0.9
+const CONSULTATION_TIME_BASE = 400
+const CONFIDENCE_INCREMENT = 0.08
+const MAX_CONFIDENCE = 0.92
+const DERMATOLOGY_CONFIDENCE = 0.8
+const CARDIOLOGY_CONFIDENCE = 0.7
+const AGENT_CONFIDENCE_INCREMENT = 0.02
+
 interface SpecializedAgent {
   id: string
   name: string
@@ -195,6 +208,90 @@ interface CognitiveAgentsPanelProps {
   isActive?: boolean
 }
 
+// Componente para el estado vacío
+const EmptyAgentsState = () => (
+  <div className="space-y-6">
+    <div className="flex items-center space-x-4">
+      <div className="w-10 h-10 bg-gradient-to-r from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center shadow-lg">
+        <span className="text-white text-lg">🧠</span>
+      </div>
+      <div>
+        <h3 className="text-xl font-bold text-white">Orquestador Cognitivo</h3>
+        <p className="text-sm text-slate-400">Sistema de Consulta Multi-Especialista</p>
+      </div>
+    </div>
+    <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/60 backdrop-blur-xl rounded-2xl p-8 border border-slate-600/30 text-center">
+      <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+        <span className="text-2xl">👨‍⚕️</span>
+      </div>
+      <h3 className="text-slate-200 text-lg font-semibold mb-2">Sistema de Agentes en Espera</h3>
+      <p className="text-slate-400 text-sm mb-4 max-w-md mx-auto leading-relaxed">
+        Los especialistas médicos se activarán automáticamente cuando realices una consulta SOAP
+      </p>
+      <div className="bg-gradient-to-r from-blue-950/30 to-purple-950/30 backdrop-blur-sm rounded-xl p-3 border border-blue-700/20 max-w-sm mx-auto">
+        <p className="text-slate-300 text-xs">
+          💡 Describe un caso clínico para activar el orquestador cognitivo
+        </p>
+      </div>
+    </div>
+  </div>
+)
+
+// Helpers para detectar especialidades
+const hasDermatologyKeywords = (content: string) =>
+  content.includes('dermatitis') ||
+  content.includes('lesion') ||
+  content.includes('piel') ||
+  content.includes('eritema')
+
+const hasAllergyKeywords = (content: string) =>
+  content.includes('alergia') || content.includes('rinitis') || content.includes('atópica')
+
+const hasCardiologyKeywords = (content: string) =>
+  content.includes('cardio') || content.includes('presión') || content.includes('corazón')
+
+const createGeneralAgent = (confidence: number): SpecializedAgent => ({
+  id: 'general',
+  name: 'Dr. Medicina General',
+  specialty: 'medicina_general',
+  confidence,
+  status: 'completed',
+  insights: ['Análisis SOAP completo realizado', 'Evaluación clínica estructurada según NOM-004'],
+  recommendation: 'Seguimiento según plan establecido',
+  consultationTime: Math.round(Math.random() * 1000 + 800),
+})
+
+const createDermatologyAgent = (confidence: number): SpecializedAgent => ({
+  id: 'dermato',
+  name: 'Dr. Dermatólogo',
+  specialty: 'dermatologia',
+  confidence: Math.min(confidence + MIN_CONFIDENCE, HIGH_CONFIDENCE),
+  status: 'completed',
+  insights: ['Patrón dermatológico identificado', 'Tratamiento tópico recomendado'],
+  recommendation: 'Manejo dermatológico especializado',
+  consultationTime: Math.round(Math.random() * 800 + 600),
+})
+
+const createAllergyAgent = (confidence: number): SpecializedAgent => ({
+  id: 'alergologia',
+  name: 'Dr. Alergólogo',
+  specialty: 'alergologia',
+  confidence: Math.min(confidence + LOW_CONFIDENCE, MEDIUM_CONFIDENCE),
+  status: 'consulting',
+  insights: ['Componente alérgico presente', 'Pruebas alérgicas recomendadas'],
+  consultationTime: Math.round(Math.random() * 600 + CONSULTATION_TIME_BASE),
+})
+
+const createCardiologyAgent = (confidence: number): SpecializedAgent => ({
+  id: 'cardio',
+  name: 'Dr. Cardiólogo',
+  specialty: 'cardiologia',
+  confidence: Math.min(confidence + CONFIDENCE_INCREMENT, MAX_CONFIDENCE),
+  status: 'active',
+  insights: ['Evaluación cardiovascular indicada', 'Factores de riesgo presentes'],
+  consultationTime: Math.round(Math.random() * 900 + 700),
+})
+
 // Función para generar agentes basados en el análisis SOAP real
 const generateAgentsFromSOAP = (message?: MedicalMessage): SpecializedAgent[] => {
   if (
@@ -207,62 +304,23 @@ const generateAgentsFromSOAP = (message?: MedicalMessage): SpecializedAgent[] =>
   }
 
   const content = message.content.toLowerCase()
-  const confidence = message.confidence || 0.5
+  const confidence = message.confidence || DEFAULT_CONFIDENCE
   const agents: SpecializedAgent[] = []
 
-  // Agente de Medicina General (solo cuando hay análisis SOAP real)
-  agents.push({
-    id: 'general',
-    name: 'Dr. Medicina General',
-    specialty: 'medicina_general',
-    confidence: confidence,
-    status: 'completed',
-    insights: ['Análisis SOAP completo realizado', 'Evaluación clínica estructurada según NOM-004'],
-    recommendation: 'Seguimiento según plan establecido',
-    consultationTime: Math.round(Math.random() * 1000 + 800),
-  })
+  // Agente general siempre presente
+  agents.push(createGeneralAgent(confidence))
 
-  // Detectar especialidades necesarias basadas en el contenido
-  if (
-    content.includes('dermatitis') ||
-    content.includes('lesion') ||
-    content.includes('piel') ||
-    content.includes('eritema')
-  ) {
-    agents.push({
-      id: 'dermato',
-      name: 'Dr. Dermatólogo',
-      specialty: 'dermatologia',
-      confidence: Math.min(confidence + 0.1, 0.95),
-      status: 'completed',
-      insights: ['Patrón dermatológico identificado', 'Tratamiento tópico recomendado'],
-      recommendation: 'Manejo dermatológico especializado',
-      consultationTime: Math.round(Math.random() * 800 + 600),
-    })
+  // Agregar especialistas según contenido
+  if (hasDermatologyKeywords(content)) {
+    agents.push(createDermatologyAgent(confidence))
   }
 
-  if (content.includes('alergia') || content.includes('rinitis') || content.includes('atópica')) {
-    agents.push({
-      id: 'alergologia',
-      name: 'Dr. Alergólogo',
-      specialty: 'alergologia',
-      confidence: Math.min(confidence + 0.05, 0.9),
-      status: 'consulting',
-      insights: ['Componente alérgico presente', 'Pruebas alérgicas recomendadas'],
-      consultationTime: Math.round(Math.random() * 600 + 400),
-    })
+  if (hasAllergyKeywords(content)) {
+    agents.push(createAllergyAgent(confidence))
   }
 
-  if (content.includes('cardio') || content.includes('presión') || content.includes('corazón')) {
-    agents.push({
-      id: 'cardio',
-      name: 'Dr. Cardiólogo',
-      specialty: 'cardiologia',
-      confidence: Math.min(confidence + 0.08, 0.92),
-      status: 'active',
-      insights: ['Evaluación cardiovascular indicada', 'Factores de riesgo presentes'],
-      consultationTime: Math.round(Math.random() * 900 + 700),
-    })
+  if (hasCardiologyKeywords(content)) {
+    agents.push(createCardiologyAgent(confidence))
   }
 
   return agents
@@ -283,10 +341,12 @@ const generateConsensusFromAgents = (agents: SpecializedAgent[]) => {
   const completedAgents = agents.filter(a => a.status === 'completed')
 
   return {
-    achieved: avgConfidence > 0.8 && completedAgents.length >= 2,
+    achieved: avgConfidence > DERMATOLOGY_CONFIDENCE && completedAgents.length >= 2,
     percentage: Math.round(avgConfidence * 100),
     conflictingPoints:
-      avgConfidence < 0.7 ? ['Requiere más evaluación', 'Diagnóstico por confirmar'] : [],
+      avgConfidence < CARDIOLOGY_CONFIDENCE
+        ? ['Requiere más evaluación', 'Diagnóstico por confirmar']
+        : [],
     agreements:
       completedAgents.length > 0
         ? ['Análisis clínico completo', 'Plan de tratamiento establecido']
@@ -296,7 +356,7 @@ const generateConsensusFromAgents = (agents: SpecializedAgent[]) => {
 
 export const CognitiveAgentsPanel = ({
   lastMessage,
-  isActive = false,
+  isActive: _isActive = false,
 }: CognitiveAgentsPanelProps) => {
   const [agents, setAgents] = useState<SpecializedAgent[]>([])
   const [consensusData, setConsensusData] = useState({
@@ -323,7 +383,7 @@ export const CognitiveAgentsPanel = ({
           if (agent.status === 'consulting') {
             return {
               ...agent,
-              confidence: Math.min(agent.confidence + 0.02, 0.95),
+              confidence: Math.min(agent.confidence + AGENT_CONFIDENCE_INCREMENT, HIGH_CONFIDENCE),
               consultationTime: (agent.consultationTime || 0) + 100,
             }
           }
@@ -343,40 +403,8 @@ export const CognitiveAgentsPanel = ({
   const activeAgents = agents.filter(agent => agent.status !== 'idle')
   const completedAgents = agents.filter(agent => agent.status === 'completed')
 
-  // Mostrar estado vacío si no hay agentes
   if (agents.length === 0) {
-    return (
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center space-x-4">
-          <div className="w-10 h-10 bg-gradient-to-r from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center shadow-lg">
-            <span className="text-white text-lg">🧠</span>
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-white">Orquestador Cognitivo</h3>
-            <p className="text-sm text-slate-400">Sistema de Consulta Multi-Especialista</p>
-          </div>
-        </div>
-
-        {/* Estado vacío */}
-        <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/60 backdrop-blur-xl rounded-2xl p-8 border border-slate-600/30 text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-2xl">👨‍⚕️</span>
-          </div>
-          <h3 className="text-slate-200 text-lg font-semibold mb-2">
-            Sistema de Agentes en Espera
-          </h3>
-          <p className="text-slate-400 text-sm mb-4 max-w-md mx-auto leading-relaxed">
-            Los especialistas médicos se activarán automáticamente cuando realices una consulta SOAP
-          </p>
-          <div className="bg-gradient-to-r from-blue-950/30 to-purple-950/30 backdrop-blur-sm rounded-xl p-3 border border-blue-700/20 max-w-sm mx-auto">
-            <p className="text-slate-300 text-xs">
-              💡 Describe un caso clínico para activar el orquestador cognitivo
-            </p>
-          </div>
-        </div>
-      </div>
-    )
+    return <EmptyAgentsState />
   }
 
   return (
@@ -464,7 +492,7 @@ export const CognitiveAgentsPanel = ({
 
       {/* Enhanced Agents Layout - Single Column for Better Readability */}
       <div className="space-y-4">
-        {agents.map((agent, index) => (
+        {agents.map((agent, _index) => (
           <AgentCard key={agent.id} agent={agent} isHighlighted={agent.status === 'consulting'} />
         ))}
       </div>

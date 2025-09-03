@@ -1,7 +1,7 @@
 // 🧠 Medical Data Extractor - Single-Purpose AI Middleware 2025
 // Creado por Bernard Orozco - Especializado en extracción médica estructurada
 
-import { callClaudeForDecision } from './decisionalMiddleware'
+import { callClaudeForDecision } from './decisional-middleware'
 import {
   MedicalExtractionOutput,
   MedicalExtractionInput,

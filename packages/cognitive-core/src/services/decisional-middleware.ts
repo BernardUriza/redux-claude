@@ -3,7 +3,7 @@
 
 import { AgentDecision, AgentType } from '../types/agents'
 import { decisionEngineService } from '../decision-engine/DecisionEngineService'
-import { getAgentDefinition } from './agentRegistry'
+import { getAgentDefinition } from '../services/agent-registry'
 
 // 🎯 TIPOS SIMPLIFICADOS
 export type DecisionType =

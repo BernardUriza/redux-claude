@@ -2,7 +2,7 @@
 // Creado por Bernard Orozco - Phase 3: Iterative Logic (Progressive Data Accumulation)
 
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import { MedicalDataExtractor } from '../services/medicalDataExtractor'
+import { MedicalDataExtractor } from '../services/medical-data-extractor'
 import {
   MedicalExtractionInput,
   MedicalExtractionOutput,

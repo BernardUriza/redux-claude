@@ -2,7 +2,7 @@
 // Creado por Bernard Orozco - Solo maneja renderizado de inferencias
 
 import React from 'react'
-import { MedicalInference } from '../../packages/cognitive-core/src/services/IntelligentMedicalChat'
+import { MedicalInference } from '../../packages/cognitive-core/src/services/intelligent-medical-chat'
 
 interface InferenceCardProps {
   inference: MedicalInference

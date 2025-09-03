@@ -45,9 +45,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   }
 
   return (
-    <div
-      className={`${styles.inputContainer} ${keyboardVisible ? styles.keyboardPadding : ''}`}
-    >
+    <div className={`${styles.inputContainer} ${keyboardVisible ? styles.keyboardPadding : ''}`}>
       <form onSubmit={handleSubmit} className={styles.inputForm}>
         <div className={styles.inputWrapper}>
           <div className="relative">
@@ -76,10 +74,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               style={{
                 height:
                   Math.min(
-                    Math.max(
-                      UI_DIMENSIONS.INPUT_MIN_HEIGHT,
-                      input.split('\n').length * 20 + 24
-                    ),
+                    Math.max(UI_DIMENSIONS.INPUT_MIN_HEIGHT, input.split('\n').length * 20 + 24),
                     UI_DIMENSIONS.INPUT_MAX_HEIGHT
                   ) + 'px',
               }}

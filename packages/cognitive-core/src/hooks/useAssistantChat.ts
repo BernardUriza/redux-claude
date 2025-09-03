@@ -93,7 +93,7 @@ export const useAssistantChat = (options: UseAssistantChatOptions = {}) => {
         dispatch(addAssistantMessage({ content: message, type: 'user' }))
 
         // 🚀 USAR CHAT INTELIGENTE EN NÚCLEO ASSISTANT
-        const { IntelligentMedicalChat } = await import('../services/IntelligentMedicalChat')
+        const { IntelligentMedicalChat } = await import('../services/intelligent-medical-chat')
         const intelligentService = new IntelligentMedicalChat(dispatch, 'assistant')
 
         // El chat inteligente maneja todo internamente y actualiza el store

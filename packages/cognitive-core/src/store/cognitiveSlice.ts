@@ -78,7 +78,7 @@ const initialState: CognitiveState = {
 // Async thunk para procesamiento cognitivo
 export const processCognitively = createAsyncThunk('cognitive/process', async (input: string) => {
   // Dynamic import to avoid circular dependency
-  const { cognitiveOrchestrator } = await import('../services/cognitiveOrchestrator')
+  const { cognitiveOrchestrator } = await import('../services/cognitive-orchestrator')
 
   const result = await cognitiveOrchestrator.processWithCognition(input)
   const cognitiveState = cognitiveOrchestrator.getCognitiveState()

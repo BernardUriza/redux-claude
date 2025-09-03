@@ -20,7 +20,7 @@ import {
   selectFocusAreas,
   selectExtractionProgress,
 } from '../store/medicalChatSlice'
-import { MedicalDataExtractor } from '../services/medicalDataExtractor'
+import { MedicalDataExtractor } from '../services/medical-data-extractor'
 import {
   MedicalExtractionInput,
   MedicalExtractionOutput,

@@ -1,7 +1,7 @@
 // 🤖 Servicio de Autocompletado Médico Inteligente - SOLID Architecture
 // Creado por Bernard Orozco - Refactorizado con decisionalMiddleware
 
-import { callClaudeForDecision } from './decisionalMiddleware'
+import { callClaudeForDecision } from './decisional-middleware'
 import type { MedicalAutocompletionDecision } from '../types/agents'
 
 export interface AutocompletionSuggestion {

@@ -2,29 +2,23 @@
 // Sistema Cognitivo Médico Corporativo 2025 - Bernard Orozco (REFACTORED)
 'use client'
 
-import { useEffect } from 'react'
-import { useMedicalChat, type RootState } from '@redux-claude/cognitive-core'
-import { useSelector } from 'react-redux'
+import { useMedicalChat } from '@redux-claude/cognitive-core'
 
-// Refactored Components
-import { DashboardLayout } from './DashboardLayout'
-import { MedicalChat } from './MedicalChat'
-import { MedicalMetricsPanel } from './MedicalMetricsPanel'
-import { MobileInteractionLayer } from './MobileInteractionLayer'
+// Extracted Components
 import { LoadingScreen } from './LoadingScreen'
-import MedicalAssistant from './MedicalAssistant'
+import { DashboardContainer } from './DashboardContainer'
 
-// Refactored Hooks
+// Extracted Hooks
 import { useMobileInteractions } from '../hooks/useMobileInteractions'
 import { useDashboardState } from '../hooks/useDashboardState'
 import { useMedicalDataOrchestrator } from '../hooks/useMedicalDataOrchestrator'
 import { useUrgencyData } from '../hooks/useUrgencyData'
+import { useDashboardHandlers } from '../hooks/useDashboardHandlers'
+import { useDashboardEffects } from '../hooks/useDashboardEffects'
+import { useCognitiveMetrics } from '../hooks/useCognitiveMetrics'
 
-// Constants for cognitive metrics calculation
-const PERCENTAGE_MULTIPLIER = 100
-const DEFAULT_CONFIDENCE_FALLBACK = 0
+// Main Cognitive Dashboard Component - BRUTAL ORCHESTRATOR
 
-// Main Cognitive Dashboard Component - REFACTORED ORCHESTRATOR
 export const CognitiveDashboard = () => {
   // Dashboard state management
   const dashboardState = useDashboardState()
@@ -86,91 +80,43 @@ export const CognitiveDashboard = () => {
   // Urgency data hook
   const { urgencyData } = useUrgencyData(messages)
 
-  // Cognitive metrics from Redux store
-  const medicalState = useSelector((state: RootState) => state.medicalChat)
-  const currentExtraction = medicalState.medicalExtraction?.currentExtraction
-  const hasActiveSOAP = false // TODO: Replace with actual SOAP check when available
+  // Cognitive metrics hook
+  const { cognitiveMetrics, lastMessage } = useCognitiveMetrics(messages)
 
-  // Only populate metrics if we have an active SOAP
-  const cognitiveMetrics = hasActiveSOAP
-    ? {
-        systemConfidence: Math.round(
-          (currentExtraction?.extraction_metadata?.overall_completeness_percentage ||
-            DEFAULT_CONFIDENCE_FALLBACK) * PERCENTAGE_MULTIPLIER
-        ),
-        activeDebates: DEFAULT_CONFIDENCE_FALLBACK,
-      }
-    : null
+  // Dashboard effects hook
+  useDashboardEffects({
+    isMobile: mobileState.isMobile,
+    messages,
+    isLoading,
+    isStreaming,
+    setKeyboardVisible,
+    setShowMobileFab,
+  })
 
-  // Get last message for components
-  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : undefined
+  // Dashboard handlers hook
+  const {
+    handleChatSubmit,
+    handleMobileFab,
+    handleNewSession,
+    handleMobileMenuAction,
+    handleAssistantClose,
+    handleAssistantTemplate,
+    handleOpenAssistant,
+  } = useDashboardHandlers({
+    isMedicalConsultation,
+    hasMinimumPatientData,
+    setLastRejectedInput,
+    setShowMedicalAssistant,
+    triggerHaptic,
+    sendMedicalQuery,
+    newSession,
+    setInput,
+  })
 
   // Loading completion handler
   const handleLoadingComplete = () => {
     setIsAppLoading(false)
     setTimeout(() => setShowMainApp(true), 100)
-  }
-
-  // Mobile keyboard detection
-  useEffect(() => {
-    if (!mobileState.isMobile) return
-
-    const handleResize = () => {
-      const windowHeight = window.innerHeight
-      const screenHeight = window.screen.height
-      const keyboardHeight = screenHeight - windowHeight
-      setKeyboardVisible(keyboardHeight > 100)
-    }
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [mobileState.isMobile, setKeyboardVisible])
-
-  // Show/hide mobile FAB based on scroll and messages
-  useEffect(() => {
-    if (!mobileState.isMobile) {
-      setShowMobileFab(false)
-      return
-    }
-    setShowMobileFab(messages.length > 0 && !isLoading && !isStreaming)
-  }, [mobileState.isMobile, messages.length, isLoading, isStreaming, setShowMobileFab])
-
-  // Event handlers
-  const handleChatSubmit = async (message: string) => {
-    // Medical consultation interceptor
-    const isMedical = isMedicalConsultation(message)
-    const hasPatientData = hasMinimumPatientData()
-
-    console.log('🛡️ INTERCEPTOR DEBUG:', {
-      input: message.substring(0, 50) + '...',
-      isMedical,
-      hasPatientData,
-      shouldBlock: isMedical && !hasPatientData,
-    })
-
-    if (isMedical) {
-      console.log('🦁 ACTIVANDO CHAT MÉDICO INTELIGENTE')
-      setLastRejectedInput(message)
-      setShowMedicalAssistant(true)
-      triggerHaptic?.('light')
-      return
-    }
-
-    await sendMedicalQuery(message)
-  }
-
-  const handleMobileFab = () => {
-    // Focus will be handled by MedicalChat component
-  }
-
-  const handleNewSession = () => {
-    triggerHaptic?.('light')
-    newSession()
-  }
-
-  const handleMobileMenuAction = (action: string) => {
-    // Handle mobile menu actions
-    console.log('Mobile menu action:', action)
   }
 
   // Show loading screen if app is loading
@@ -179,86 +125,51 @@ export const CognitiveDashboard = () => {
   }
 
   return (
-    <>
-      <DashboardLayout
-        sidebarCollapsed={sidebarCollapsed}
-        setSidebarCollapsed={setSidebarCollapsed}
-        showMobileMenu={showMobileMenu}
-        setShowMobileMenu={setShowMobileMenu}
-        isMobile={mobileState.isMobile}
-        keyboardVisible={keyboardVisible}
-        showMainApp={showMainApp}
-        cognitiveMetrics={cognitiveMetrics}
-        urgencyData={urgencyData}
-        messagesCount={messages.length}
-        onNewConsultation={() => setInput('')}
-        onMobileMenuAction={handleMobileMenuAction}
-        triggerHaptic={triggerHaptic}
-      >
-        {/* Medical Metrics Panel */}
-        <MedicalMetricsPanel
-          sidebarCollapsed={sidebarCollapsed}
-          activeMetricsTab={activeMetricsTab}
-          setActiveMetricsTab={setActiveMetricsTab}
-          isMobile={mobileState.isMobile}
-          cognitiveMetrics={cognitiveMetrics}
-          urgencyData={urgencyData}
-          messagesCount={messages.length}
-          lastMessage={lastMessage}
-          isStreaming={isStreaming}
-          triggerHaptic={triggerHaptic}
-        />
-
-        {/* Medical Chat */}
-        <MedicalChat
-          messages={messages}
-          isLoading={isLoading}
-          isStreaming={isStreaming}
-          input={input}
-          setInput={setInput}
-          isMobile={mobileState.isMobile}
-          keyboardVisible={keyboardVisible}
-          showAutoFillNotification={showAutoFillNotification}
-          setShowAutoFillNotification={setShowAutoFillNotification}
-          showDataRequiredAlert={showDataRequiredAlert}
-          setShowDataRequiredAlert={setShowDataRequiredAlert}
-          completenessPercentage={completenessPercentage}
-          isNOMCompliant={isNOMCompliant}
-          canProceedToSOAP={canProceedToSOAP}
-          onSubmit={handleChatSubmit}
-          onNewSession={handleNewSession}
-          onMobileInputFocus={handleMobileInputFocus}
-          onQuickTest={handleAutoFillTest}
-          onOpenAssistant={input => {
-            setLastRejectedInput(input)
-            setShowMedicalAssistant(true)
-          }}
-          triggerHaptic={triggerHaptic}
-        />
-      </DashboardLayout>
-
-      {/* Mobile Interaction Layer */}
-      <MobileInteractionLayer
-        isMobile={mobileState.isMobile}
-        showMobileFab={showMobileFab}
-        onFabClick={handleMobileFab}
-        triggerHaptic={triggerHaptic}
-      />
-
-      {/* Medical Assistant Modal */}
-      <MedicalAssistant
-        partialInput={lastRejectedInput || input}
-        isVisible={showMedicalAssistant}
-        onClose={() => {
-          setShowMedicalAssistant(false)
-          setLastRejectedInput('')
-        }}
-        onSelectTemplate={(template: string) => {
-          setInput(template)
-          setShowMedicalAssistant(false)
-          setLastRejectedInput('')
-        }}
-      />
-    </>
+    <DashboardContainer
+      // Layout props
+      sidebarCollapsed={sidebarCollapsed}
+      setSidebarCollapsed={setSidebarCollapsed}
+      showMobileMenu={showMobileMenu}
+      setShowMobileMenu={setShowMobileMenu}
+      isMobile={mobileState.isMobile}
+      keyboardVisible={keyboardVisible}
+      showMainApp={showMainApp}
+      // Data props
+      cognitiveMetrics={cognitiveMetrics}
+      urgencyData={urgencyData}
+      messages={messages}
+      lastMessage={lastMessage}
+      isStreaming={isStreaming}
+      isLoading={isLoading}
+      // Input props
+      input={input}
+      setInput={setInput}
+      // Metrics panel props
+      activeMetricsTab={activeMetricsTab}
+      setActiveMetricsTab={setActiveMetricsTab}
+      // Medical chat props
+      showAutoFillNotification={showAutoFillNotification}
+      setShowAutoFillNotification={setShowAutoFillNotification}
+      showDataRequiredAlert={showDataRequiredAlert}
+      setShowDataRequiredAlert={setShowDataRequiredAlert}
+      completenessPercentage={completenessPercentage}
+      isNOMCompliant={isNOMCompliant}
+      canProceedToSOAP={canProceedToSOAP}
+      // Mobile props
+      showMobileFab={showMobileFab}
+      showMedicalAssistant={showMedicalAssistant}
+      lastRejectedInput={lastRejectedInput}
+      // Handlers
+      onMobileMenuAction={handleMobileMenuAction}
+      onChatSubmit={handleChatSubmit}
+      onNewSession={handleNewSession}
+      onMobileInputFocus={handleMobileInputFocus}
+      onQuickTest={handleAutoFillTest}
+      onOpenAssistant={handleOpenAssistant}
+      onMobileFab={handleMobileFab}
+      onAssistantClose={handleAssistantClose}
+      onAssistantTemplate={handleAssistantTemplate}
+      triggerHaptic={triggerHaptic}
+    />
   )
 }
