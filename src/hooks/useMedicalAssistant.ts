@@ -32,7 +32,7 @@ const processDemographics = (data: PatientData) => {
   const hasCompleteDemo = Boolean(data.age && data.gender)
 
   return {
-    patient_age_years: typeof data.age === 'number' ? data.age : 'unknown',
+    patient_age_years: typeof data.age === 'number' ? data.age : ('unknown' as const),
     patient_gender: (hasValidGender ? data.gender : 'unknown') as
       | 'masculino'
       | 'femenino'
