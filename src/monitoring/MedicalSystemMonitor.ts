@@ -364,7 +364,7 @@ export class MedicalSystemMonitor extends EventEmitter {
     if (memory > MEMORY_THRESHOLD) score -= MEMORY_PENALTY
     if (selectorPerformance > SELECTOR_THRESHOLD) score -= SELECTOR_PENALTY
     if (cacheHitRate < CACHE_THRESHOLD) score -= CACHE_PENALTY
-    if (medicalDataQuality < QUALITY_THRESHOLD) score -= QUALITY_PENALTY
+    if (medicalDataQuality < GOOD_THRESHOLD) score -= QUALITY_PENALTY
 
     if (score >= EXCELLENCE_THRESHOLD) return 'excellent'
     if (score >= GOOD_THRESHOLD) return 'good'
