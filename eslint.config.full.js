@@ -1,18 +1,18 @@
 // ESLint v9 Configuration - Migrated from .eslintrc.json
 // Created by Bernard Orozco
 
-const js = require('@eslint/js');
-const typescript = require('@typescript-eslint/eslint-plugin');
-const typescriptParser = require('@typescript-eslint/parser');
-const react = require('eslint-plugin-react');
-const reactHooks = require('eslint-plugin-react-hooks');
-const jsxA11y = require('eslint-plugin-jsx-a11y');
+const js = require('@eslint/js')
+const typescript = require('@typescript-eslint/eslint-plugin')
+const typescriptParser = require('@typescript-eslint/parser')
+const react = require('eslint-plugin-react')
+const reactHooks = require('eslint-plugin-react-hooks')
+const jsxA11y = require('eslint-plugin-jsx-a11y')
 // const prettier = require('eslint-plugin-prettier');
 
 module.exports = [
   // Base recommended configurations
   js.configs.recommended,
-  
+
   // Global ignores (replaces .eslintignore)
   {
     ignores: [
@@ -46,8 +46,8 @@ module.exports = [
       'PLAN_MIGRACION_SOAP.md',
       '*.md',
       '!README.md',
-      '!MIGRACION_MOCK_DATA.md'
-    ]
+      '!MIGRACION_MOCK_DATA.md',
+    ],
   },
 
   // TypeScript and React files
@@ -59,9 +59,9 @@ module.exports = [
         ecmaVersion: 2023,
         sourceType: 'module',
         ecmaFeatures: {
-          jsx: true
+          jsx: true,
         },
-        project: './tsconfig.json'
+        project: './tsconfig.json',
       },
       globals: {
         window: 'readonly',
@@ -74,27 +74,30 @@ module.exports = [
         __filename: 'readonly',
         module: 'readonly',
         require: 'readonly',
-        exports: 'readonly'
-      }
+        exports: 'readonly',
+      },
     },
     plugins: {
       '@typescript-eslint': typescript,
-      'react': react,
+      react: react,
       'react-hooks': reactHooks,
-      'jsx-a11y': jsxA11y
+      'jsx-a11y': jsxA11y,
       // 'prettier': prettier
     },
     settings: {
       react: {
-        version: 'detect'
-      }
+        version: 'detect',
+      },
     },
     rules: {
       // TypeScript rules
-      '@typescript-eslint/no-unused-vars': ['warn', { 
-        argsIgnorePattern: '^_', 
-        varsIgnorePattern: '^_' 
-      }],
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-inferrable-types': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',
@@ -139,14 +142,15 @@ module.exports = [
         'warn',
         {
           ignore: [
-            -10, -8, -1, 0, 1, 2, 3, 5, 7, 8, 9, 10, 15, 20, 24, 30, 36, 50, 60, 80, 85, 90, 95, 100, 200, 250, 300, 375,
-            500, 600, 700, 768, 800, 900, 1000, 1500, 3000, 5000, 10000, 24000, 60000, 86400000, 3600000
-          ]
-        }
+            -10, -8, -1, 0, 1, 2, 3, 5, 7, 8, 9, 10, 15, 20, 24, 30, 36, 50, 60, 80, 85, 90, 95,
+            100, 200, 250, 300, 375, 500, 600, 700, 768, 800, 900, 1000, 1500, 3000, 5000, 10000,
+            24000, 60000, 86400000, 3600000,
+          ],
+        },
       ],
       'max-lines-per-function': ['warn', { max: 300 }],
-      'complexity': ['warn', 15]
-    }
+      complexity: ['warn', 15],
+    },
   },
 
   // Test files overrides
@@ -161,13 +165,13 @@ module.exports = [
         beforeEach: 'readonly',
         afterEach: 'readonly',
         beforeAll: 'readonly',
-        afterAll: 'readonly'
-      }
+        afterAll: 'readonly',
+      },
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
-      'no-magic-numbers': 'off'
-    }
+      'no-magic-numbers': 'off',
+    },
   },
 
   // Component files overrides
@@ -175,8 +179,8 @@ module.exports = [
     files: ['src/components/**/*.tsx'],
     rules: {
       'max-lines-per-function': ['warn', { max: 200 }],
-      'react/display-name': 'error'
-    }
+      'react/display-name': 'error',
+    },
   },
 
   // Cognitive core overrides
@@ -184,7 +188,7 @@ module.exports = [
     files: ['packages/cognitive-core/**/*.ts'],
     rules: {
       'no-console': ['error', { allow: ['warn', 'error', 'info'] }],
-      '@typescript-eslint/explicit-function-return-type': 'off'
-    }
-  }
-];
+      '@typescript-eslint/explicit-function-return-type': 'off',
+    },
+  },
+]

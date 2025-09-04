@@ -8,13 +8,11 @@ import { RootState } from '@redux-claude/cognitive-core'
 import { memo } from 'react' // { useState, useEffect } removed
 import {
   selectSystemMetrics,
-  // type SystemMetrics,
 } from '@redux-claude/cognitive-core/src/store/selectors'
 import { CALCULATION_FACTORS } from '../constants/magicNumbers'
-import type { SystemMetrics } from '@redux-claude/cognitive-core/src/types/medicalTypes'
 
 // 🧮 SYSTEM METRICS CALCULATOR - Extraído para reducir complejidad
-const calculateSystemMetrics = (realMetrics: any, isLoading: boolean) => {
+const calculateSystemMetrics = (realMetrics: unknown, isLoading: boolean) => {
   const systemMetrics = {
     confidence: realMetrics.confidence,
     cycles: realMetrics.cycles,
@@ -32,7 +30,7 @@ const calculateSystemMetrics = (realMetrics: any, isLoading: boolean) => {
 }
 
 // 🔍 SYSTEM STATUS CALCULATOR - Extraído para reducir complejidad
-const calculateSystemStatus = (realMetrics: any): SystemStatusProps => {
+const calculateSystemStatus = (realMetrics: unknown): SystemStatusProps => {
   const healthStatus = realMetrics.systemHealth
   const hasActivity = realMetrics.messagesCount > 1
 
@@ -68,10 +66,10 @@ const calculateSystemStatus = (realMetrics: any): SystemStatusProps => {
 }
 
 // 🔄 STREAMING PROGRESS COMPONENT - Extraído para reducir líneas del componente principal
-const StreamingProgressCard = memo(function StreamingProgressCard({ 
-  streamingProgress 
-}: { 
-  streamingProgress: number 
+const StreamingProgressCard = memo(function StreamingProgressCard({
+  streamingProgress,
+}: {
+  streamingProgress: number
 }) {
   const getProgressMessage = (progress: number) => {
     if (progress < 30) return '🔍 Validando información clínica del paciente...'
@@ -107,18 +105,20 @@ const StreamingProgressCard = memo(function StreamingProgressCard({
         </div>
       </div>
 
-      <p className="text-sm text-slate-300 leading-relaxed">{getProgressMessage(streamingProgress)}</p>
+      <p className="text-sm text-slate-300 leading-relaxed">
+        {getProgressMessage(streamingProgress)}
+      </p>
     </div>
   )
 })
 
 // 📊 METRICS GRID COMPONENT - Extraído para reducir complejidad del main
-const MetricsGrid = memo(function MetricsGrid({ 
-  systemMetrics, 
-  realMetrics 
-}: { 
-  systemMetrics: any
-  realMetrics: any 
+const MetricsGrid = memo(function MetricsGrid({
+  systemMetrics,
+  realMetrics,
+}: {
+  systemMetrics: unknown
+  realMetrics: unknown
 }) {
   return (
     <>

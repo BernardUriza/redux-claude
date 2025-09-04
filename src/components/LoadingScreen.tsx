@@ -5,7 +5,7 @@
 
 import styles from '../styles/components/LoadingScreen.module.css'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 
 interface LoadingScreenProps {
   onLoadingComplete?: () => void
@@ -17,13 +17,16 @@ export const LoadingScreen = ({ onLoadingComplete, duration = 3000 }: LoadingScr
   const [currentStep, setCurrentStep] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
 
-  const loadingSteps = [
-    { label: 'Inicializando Sistema Médico...', icon: '🏥', progress: 20 },
-    { label: 'Activando Motor Cognitivo...', icon: '🧠', progress: 40 },
-    { label: 'Cargando Validadores SOAP...', icon: '📋', progress: 60 },
-    { label: 'Configurando Medicina Defensiva...', icon: '🛡️', progress: 80 },
-    { label: 'Sistema Listo', icon: '✅', progress: 100 },
-  ]
+  const loadingSteps = useMemo(
+    () => [
+      { label: 'Inicializando Sistema Médico...', icon: '🏥', progress: 20 },
+      { label: 'Activando Motor Cognitivo...', icon: '🧠', progress: 40 },
+      { label: 'Cargando Validadores SOAP...', icon: '📋', progress: 60 },
+      { label: 'Configurando Medicina Defensiva...', icon: '🛡️', progress: 80 },
+      { label: 'Sistema Listo', icon: '✅', progress: 100 },
+    ],
+    []
+  )
 
   useEffect(() => {
     const totalSteps = loadingSteps.length

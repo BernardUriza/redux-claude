@@ -10,7 +10,7 @@ import { selectPhysicianNotes } from '@redux-claude/cognitive-core/src/store/sel
 
 // Priority thresholds
 const PRIORITY_HIGH_THRESHOLD = 0.9
-const PRIORITY_MEDIUM_THRESHOLD = 0.7  
+const PRIORITY_MEDIUM_THRESHOLD = 0.7
 const PRIORITY_LOW_THRESHOLD = 0.5
 
 // Mock action - En FASE 4 se implementará acción real

@@ -20,7 +20,11 @@ interface MetricsContentProps {
   isStreaming: boolean
 }
 
-const renderUrgencySection = (urgencyData: UrgencyData, messagesCount: number, showHeader?: boolean) => {
+const renderUrgencySection = (
+  urgencyData: UrgencyData,
+  messagesCount: number,
+  showHeader?: boolean
+) => {
   if (urgencyData.level === 'low' && messagesCount === 0) {
     return showHeader ? (
       <div className="bg-gradient-to-r from-emerald-950/40 to-teal-950/40 backdrop-blur-xl rounded-xl p-4 border border-emerald-500/30">
@@ -28,13 +32,11 @@ const renderUrgencySection = (urgencyData: UrgencyData, messagesCount: number, s
           <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
             <span className="text-lg">🩺</span>
           </div>
-          <h3 className="text-sm font-semibold text-emerald-300 mb-2">
-            Sistema Médico Estable
-          </h3>
+          <h3 className="text-sm font-semibold text-emerald-300 mb-2">Sistema Médico Estable</h3>
           <p className="text-xs text-slate-400">No hay alertas médicas activas.</p>
         </div>
       </div>
-    ) : null;
+    ) : null
   }
 
   return (
@@ -59,8 +61,8 @@ const renderUrgencySection = (urgencyData: UrgencyData, messagesCount: number, s
         />
       )}
     </section>
-  );
-};
+  )
+}
 
 export const MetricsContent: React.FC<MetricsContentProps> = ({
   activeTab,

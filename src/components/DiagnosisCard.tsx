@@ -8,14 +8,9 @@ interface DiagnosisCardProps {
   probability?: number
 }
 
-export const DiagnosisCard: React.FC<DiagnosisCardProps> = ({
-  condition,
-  probability,
-}) => (
+export const DiagnosisCard: React.FC<DiagnosisCardProps> = ({ condition, probability }) => (
   <div className="bg-gradient-to-br from-cyan-900/30 to-blue-900/30 border border-cyan-600/50 rounded-xl p-3 sm:p-4">
-    <div className="text-base sm:text-lg font-bold text-cyan-300 mb-2 break-words">
-      {condition}
-    </div>
+    <div className="text-base sm:text-lg font-bold text-cyan-300 mb-2 break-words">{condition}</div>
     {probability && (
       <div className="flex items-center gap-2 sm:gap-3">
         <div className="flex-1 bg-slate-700 rounded-full h-2">

@@ -46,5 +46,4 @@ export const hasAllergies = (patientData: SOAPData['subjetivo']): boolean =>
 export const formatAllergies = (patientData: SOAPData['subjetivo']): string =>
   patientData.antecedentes?.alergias?.join(', ') || ''
 
-export const shouldShowUrgency = (urgencyLevel: string): boolean =>
-  urgencyLevel !== 'low'
+export const shouldShowUrgency = (urgencyLevel: string): boolean => urgencyLevel !== 'low'

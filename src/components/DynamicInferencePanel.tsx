@@ -174,7 +174,6 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     return inferences
   }
 
-
   // 🧠 Main function: Build all inferences from store data
   const buildInferencesFromStore = (): PatientInference[] => {
     console.log('🔍 [PANEL] Building inferences from store:', {

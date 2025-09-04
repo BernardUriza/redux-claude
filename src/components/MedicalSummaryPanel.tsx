@@ -60,23 +60,17 @@ export const MedicalSummaryPanel: React.FC<MedicalSummaryPanelProps> = ({
             </h5>
 
             {patientData.motivoConsulta && (
-              <MedicalInfoCard 
-                label="Motivo consulta" 
-                value={patientData.motivoConsulta} 
-              />
+              <MedicalInfoCard label="Motivo consulta" value={patientData.motivoConsulta} />
             )}
 
             {patientData.historiaActual && (
-              <MedicalInfoCard 
-                label="Historia actual" 
-                value={patientData.historiaActual} 
-              />
+              <MedicalInfoCard label="Historia actual" value={patientData.historiaActual} />
             )}
 
             {hasAllergies(patientData) && (
-              <MedicalInfoCard 
-                label="Alergias" 
-                value={formatAllergies(patientData)} 
+              <MedicalInfoCard
+                label="Alergias"
+                value={formatAllergies(patientData)}
                 variant="warning"
               />
             )}

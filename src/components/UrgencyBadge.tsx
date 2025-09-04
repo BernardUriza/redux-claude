@@ -19,7 +19,9 @@ const getUrgencyStyles = (level: string): string => {
 }
 
 export const UrgencyBadge: React.FC<UrgencyBadgeProps> = ({ urgencyLevel }) => (
-  <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-4 rounded-2xl text-xs sm:text-sm font-bold shadow-lg ${getUrgencyStyles(urgencyLevel)}`}>
+  <div
+    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-4 rounded-2xl text-xs sm:text-sm font-bold shadow-lg ${getUrgencyStyles(urgencyLevel)}`}
+  >
     <span className="text-lg sm:text-xl flex-shrink-0">⚠️</span>
     <span className="truncate">URGENCIA: {urgencyLevel.toUpperCase()}</span>
   </div>

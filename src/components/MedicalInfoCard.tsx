@@ -14,17 +14,13 @@ export const MedicalInfoCard: React.FC<MedicalInfoCardProps> = ({
   value,
   variant = 'default',
 }) => {
-  const cardStyles = variant === 'warning' 
-    ? 'bg-amber-900/20 border border-amber-600/50' 
-    : 'bg-slate-700/50'
-    
-  const labelStyles = variant === 'warning'
-    ? 'text-amber-400 flex items-center gap-1'
-    : 'text-slate-400'
-    
-  const valueStyles = variant === 'warning'
-    ? 'text-amber-200'
-    : 'text-white'
+  const cardStyles =
+    variant === 'warning' ? 'bg-amber-900/20 border border-amber-600/50' : 'bg-slate-700/50'
+
+  const labelStyles =
+    variant === 'warning' ? 'text-amber-400 flex items-center gap-1' : 'text-slate-400'
+
+  const valueStyles = variant === 'warning' ? 'text-amber-200' : 'text-white'
 
   return (
     <div className={`${cardStyles} rounded-lg p-2.5 sm:p-3`}>
@@ -32,9 +28,7 @@ export const MedicalInfoCard: React.FC<MedicalInfoCardProps> = ({
         {variant === 'warning' && <span className="text-sm">⚠️</span>}
         {label}
       </div>
-      <div className={`${valueStyles} font-medium text-sm sm:text-base break-words`}>
-        {value}
-      </div>
+      <div className={`${valueStyles} font-medium text-sm sm:text-base break-words`}>{value}</div>
     </div>
   )
 }
