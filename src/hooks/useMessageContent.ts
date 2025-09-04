@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import type { MedicalMessage } from '@redux-claude/cognitive-core'
 import { PERFORMANCE } from '../constants/magicNumbers'
 
-interface MessageContentState {
+interface _MessageContentState {
   clientTimeString: string
   copied: boolean
   isSOAPAnalysis: boolean

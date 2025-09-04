@@ -129,7 +129,7 @@ export const generatePlanSection = (plan: PlanData): string => {
 
 export const generateMarkdownContent = (
   soap: CompleteSOAP,
-  confidence: number = 0,
+  confidence = 0,
   lastUpdated: Date | number = Date.now()
 ): string => {
   let markdown = `# Análisis SOAP Completo\n\n`

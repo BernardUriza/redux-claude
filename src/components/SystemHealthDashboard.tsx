@@ -10,6 +10,9 @@ import {
   PerformanceAlert,
 } from '../monitoring/MedicalSystemMonitor'
 
+// Constants for health thresholds
+const WARNING_THRESHOLD_MULTIPLIER = 0.9
+
 interface HealthIndicatorProps {
   title: string
   value: number
@@ -35,7 +38,7 @@ const HealthIndicator: React.FC<HealthIndicatorProps> = ({
     const isHealthy = invertThreshold ? value >= threshold : value <= threshold
 
     if (isHealthy) return 'from-emerald-500 to-green-500'
-    if (value > threshold * 0.9) return 'from-yellow-500 to-orange-500'
+    if (value > threshold * WARNING_THRESHOLD_MULTIPLIER) return 'from-yellow-500 to-orange-500'
     return 'from-red-500 to-pink-500'
   }
 
@@ -43,7 +46,7 @@ const HealthIndicator: React.FC<HealthIndicatorProps> = ({
     const isHealthy = invertThreshold ? value >= threshold : value <= threshold
 
     if (isHealthy) return '✅'
-    if (value > threshold * 0.9) return '⚠️'
+    if (value > threshold * WARNING_THRESHOLD_MULTIPLIER) return '⚠️'
     return '🚨'
   }
 
@@ -191,15 +194,14 @@ const SystemUptime: React.FC<SystemUptimeProps> = ({ startTime }) => {
   )
 }
 
-export const SystemHealthDashboard: React.FC = () => {
+// Hook para métricas del sistema
+const useSystemMetrics = () => {
   const [metrics, setMetrics] = useState<SystemHealthMetrics | null>(null)
   const [alerts, setAlerts] = useState<PerformanceAlert[]>([])
-  const [isExpanded, setIsExpanded] = useState(false)
   const [systemHealth, setSystemHealth] = useState<'excellent' | 'good' | 'warning' | 'critical'>(
     'good'
   )
 
-  // 📊 Actualizar métricas
   useEffect(() => {
     const updateMetrics = () => {
       const snapshot = medicalSystemMonitor.getSystemSnapshot()
@@ -208,13 +210,8 @@ export const SystemHealthDashboard: React.FC = () => {
       setSystemHealth(medicalSystemMonitor.getSystemHealth())
     }
 
-    // Actualización inicial
     updateMetrics()
-
-    // Suscribirse a actualizaciones
     medicalSystemMonitor.on('metricsUpdated', updateMetrics)
-
-    // Intervalo de respaldo
     const interval = setInterval(updateMetrics, 5000)
 
     return () => {
@@ -223,7 +220,11 @@ export const SystemHealthDashboard: React.FC = () => {
     }
   }, [])
 
-  // 🎨 Color del sistema según salud
+  return { metrics, alerts, systemHealth }
+}
+
+// Hook para utilidades de salud del sistema
+const useSystemHealthUtils = (systemHealth: string) => {
   const getSystemHealthColor = () => {
     switch (systemHealth) {
       case 'excellent':
@@ -254,6 +255,14 @@ export const SystemHealthDashboard: React.FC = () => {
     }
   }
 
+  return { getSystemHealthColor, getSystemHealthIcon }
+}
+
+export const SystemHealthDashboard: React.FC = () => {
+  const { metrics, alerts, systemHealth } = useSystemMetrics()
+  const { getSystemHealthColor, getSystemHealthIcon } = useSystemHealthUtils(systemHealth)
+  const [isExpanded, setIsExpanded] = useState(false)
+
   if (!metrics) {
     return (
       <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl p-6 border border-slate-600/30">
@@ -267,173 +276,210 @@ export const SystemHealthDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header del Dashboard */}
-      <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/40 rounded-xl p-6 border border-slate-600/40">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div
-              className={`w-10 h-10 bg-gradient-to-br ${getSystemHealthColor()} rounded-xl flex items-center justify-center text-xl shadow-lg`}
-            >
-              {getSystemHealthIcon()}
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">Sistema Médico Multinúcleo</h2>
-              <p className="text-slate-400 text-sm capitalize">Estado: {systemHealth}</p>
-            </div>
-          </div>
+      <DashboardHeader
+        systemHealth={systemHealth}
+        getSystemHealthColor={getSystemHealthColor}
+        getSystemHealthIcon={getSystemHealthIcon}
+        isExpanded={isExpanded}
+        setIsExpanded={setIsExpanded}
+        metrics={metrics}
+      />
 
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
-          >
-            <span>{isExpanded ? 'Contraer' : 'Expandir'}</span>
-            <span
-              className="transform transition-transform duration-200"
-              style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
-            >
-              ↓
-            </span>
-          </button>
-        </div>
+      <MainMetrics metrics={metrics} />
 
-        <div className="text-sm text-slate-300">
-          Última actualización: {new Date(metrics.timestamp).toLocaleTimeString()}
-        </div>
-      </div>
-
-      {/* Métricas Principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <HealthIndicator title="Uso CPU" value={metrics.cpu} unit="%" threshold={80} icon="🖥️" />
-
-        <HealthIndicator title="Memoria" value={metrics.memory} unit="%" threshold={85} icon="💾" />
-
-        <HealthIndicator
-          title="Cache Hit Rate"
-          value={metrics.cacheHitRate}
-          unit="%"
-          threshold={80}
-          invertThreshold={true}
-          icon="🧠"
-        />
-
-        <HealthIndicator
-          title="Latencia Selectores"
-          value={metrics.selectorPerformance}
-          unit="ms"
-          threshold={50}
-          icon="⚡"
-        />
-      </div>
-
-      {/* Información Expandida */}
-      {isExpanded && (
-        <>
-          {/* Métricas Médicas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <HealthIndicator
-              title="Calidad Datos"
-              value={metrics.medicalDataQuality}
-              unit="%"
-              threshold={70}
-              invertThreshold={true}
-              icon="🏥"
-            />
-
-            <HealthIndicator
-              title="Componentes Cargados"
-              value={metrics.componentsLoaded}
-              unit=""
-              threshold={5}
-              icon="🧩"
-            />
-
-            <HealthIndicator
-              title="Errores (1h)"
-              value={metrics.errorsCount}
-              unit=""
-              threshold={3}
-              icon="❌"
-            />
-          </div>
-
-          {/* Dashboard Inferior */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <AlertSummary alerts={alerts} />
-            <SystemUptime startTime={Date.now() - 3600000} /> {/* 1 hora simulada */}
-            {/* Controles del Sistema */}
-            <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/40 rounded-xl p-4 border border-slate-600/40">
-              <div className="flex items-center space-x-2 mb-4">
-                <span className="text-lg">⚙️</span>
-                <h3 className="text-lg font-semibold text-white">Controles</h3>
-              </div>
-
-              <div className="space-y-3">
-                <button
-                  onClick={() => medicalSystemMonitor.start()}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
-                >
-                  🟢 Iniciar Monitor
-                </button>
-
-                <button
-                  onClick={() => medicalSystemMonitor.stop()}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
-                >
-                  🔴 Detener Monitor
-                </button>
-
-                <button
-                  onClick={() => {
-                    const stats = medicalSystemMonitor.getSystemSnapshot()
-                    console.log('📊 System Stats:', stats)
-                    alert('Stats enviados a consola')
-                  }}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
-                >
-                  📊 Ver Stats
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Alertas Recientes */}
-          {alerts.length > 0 && (
-            <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/40 rounded-xl p-6 border border-slate-600/40">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <span className="mr-2">🚨</span>
-                Alertas Recientes ({alerts.length})
-              </h3>
-
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {alerts.slice(0, 10).map(alert => (
-                  <div
-                    key={alert.id}
-                    className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          alert.type === 'error'
-                            ? 'bg-red-400'
-                            : alert.type === 'warning'
-                              ? 'bg-yellow-400'
-                              : 'bg-blue-400'
-                        }`}
-                      ></span>
-                      <span className="text-sm text-white">{alert.message}</span>
-                    </div>
-                    <span className="text-xs text-slate-400">
-                      {new Date(alert.timestamp).toLocaleTimeString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
+      {isExpanded && <ExpandedMetrics metrics={metrics} alerts={alerts} />}
     </div>
   )
 }
+
+// Componente Header del Dashboard
+interface DashboardHeaderProps {
+  systemHealth: string
+  getSystemHealthColor: () => string
+  getSystemHealthIcon: () => string
+  isExpanded: boolean
+  setIsExpanded: (value: boolean) => void
+  metrics: SystemHealthMetrics
+}
+
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({
+  systemHealth,
+  getSystemHealthColor,
+  getSystemHealthIcon,
+  isExpanded,
+  setIsExpanded,
+  metrics,
+}) => (
+  <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/40 rounded-xl p-6 border border-slate-600/40">
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center space-x-3">
+        <div
+          className={`w-10 h-10 bg-gradient-to-br ${getSystemHealthColor()} rounded-xl flex items-center justify-center text-xl shadow-lg`}
+        >
+          {getSystemHealthIcon()}
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-white">Sistema Médico Multinúcleo</h2>
+          <p className="text-slate-400 text-sm capitalize">Estado: {systemHealth}</p>
+        </div>
+      </div>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
+      >
+        <span>{isExpanded ? 'Contraer' : 'Expandir'}</span>
+        <span
+          className="transform transition-transform duration-200"
+          style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        >
+          ↓
+        </span>
+      </button>
+    </div>
+    <div className="text-sm text-slate-300">
+      Última actualización: {new Date(metrics.timestamp).toLocaleTimeString()}
+    </div>
+  </div>
+)
+
+// Componente Métricas Principales
+interface MainMetricsProps {
+  metrics: SystemHealthMetrics
+}
+
+const MainMetrics: React.FC<MainMetricsProps> = ({ metrics }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <HealthIndicator title="Uso CPU" value={metrics.cpu} unit="%" threshold={80} icon="🖥️" />
+    <HealthIndicator title="Memoria" value={metrics.memory} unit="%" threshold={85} icon="💾" />
+    <HealthIndicator
+      title="Cache Hit Rate"
+      value={metrics.cacheHitRate}
+      unit="%"
+      threshold={80}
+      invertThreshold={true}
+      icon="🧠"
+    />
+    <HealthIndicator
+      title="Latencia Selectores"
+      value={metrics.selectorPerformance}
+      unit="ms"
+      threshold={50}
+      icon="⚡"
+    />
+  </div>
+)
+
+// Componente Métricas Expandidas
+interface ExpandedMetricsProps {
+  metrics: SystemHealthMetrics
+  alerts: PerformanceAlert[]
+}
+
+const ExpandedMetrics: React.FC<ExpandedMetricsProps> = ({ metrics, alerts }) => (
+  <>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <HealthIndicator
+        title="Calidad Datos"
+        value={metrics.medicalDataQuality}
+        unit="%"
+        threshold={70}
+        invertThreshold={true}
+        icon="🏥"
+      />
+      <HealthIndicator
+        title="Componentes Cargados"
+        value={metrics.componentsLoaded}
+        unit=""
+        threshold={5}
+        icon="🧩"
+      />
+      <HealthIndicator
+        title="Errores (1h)"
+        value={metrics.errorsCount}
+        unit=""
+        threshold={3}
+        icon="❌"
+      />
+    </div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <AlertSummary alerts={alerts} />
+      <SystemUptime startTime={Date.now() - 3600000} />
+      <SystemControls />
+    </div>
+    {alerts.length > 0 && <RecentAlerts alerts={alerts} />}
+  </>
+)
+
+// Componente Controles del Sistema
+const SystemControls: React.FC = () => (
+  <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/40 rounded-xl p-4 border border-slate-600/40">
+    <div className="flex items-center space-x-2 mb-4">
+      <span className="text-lg">⚙️</span>
+      <h3 className="text-lg font-semibold text-white">Controles</h3>
+    </div>
+    <div className="space-y-3">
+      <button
+        onClick={() => medicalSystemMonitor.start()}
+        className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+      >
+        🟢 Iniciar Monitor
+      </button>
+      <button
+        onClick={() => medicalSystemMonitor.stop()}
+        className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+      >
+        🔴 Detener Monitor
+      </button>
+      <button
+        onClick={() => {
+          const stats = medicalSystemMonitor.getSystemSnapshot()
+          console.log('📊 System Stats:', stats)
+          alert('Stats enviados a consola')
+        }}
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+      >
+        📊 Ver Stats
+      </button>
+    </div>
+  </div>
+)
+
+// Componente Alertas Recientes
+interface RecentAlertsProps {
+  alerts: PerformanceAlert[]
+}
+
+const RecentAlerts: React.FC<RecentAlertsProps> = ({ alerts }) => (
+  <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/40 rounded-xl p-6 border border-slate-600/40">
+    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+      <span className="mr-2">🚨</span>
+      Alertas Recientes ({alerts.length})
+    </h3>
+    <div className="space-y-2 max-h-60 overflow-y-auto">
+      {alerts.slice(0, 10).map(alert => (
+        <div
+          key={alert.id}
+          className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg"
+        >
+          <div className="flex items-center space-x-3">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                alert.type === 'error'
+                  ? 'bg-red-400'
+                  : alert.type === 'warning'
+                    ? 'bg-yellow-400'
+                    : 'bg-blue-400'
+              }`}
+            ></span>
+            <span className="text-sm text-white">{alert.message}</span>
+          </div>
+          <span className="text-xs text-slate-400">
+            {new Date(alert.timestamp).toLocaleTimeString()}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+)
 
 export default SystemHealthDashboard

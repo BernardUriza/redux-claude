@@ -7,6 +7,10 @@
 import { useState } from 'react'
 import type { SOAPSectionData } from './SOAPSectionRenderer'
 
+// Constants for content limits
+const CONTENT_WARNING_THRESHOLD = 4500
+const CONTENT_MAX_LENGTH = 5000
+
 interface SOAPEditManagerProps {
   section: 'S' | 'O' | 'A' | 'P'
   initialData?: SOAPSectionData | null
@@ -88,7 +92,7 @@ export const SOAPEditManager = ({
       }
 
       onSave(parsedData)
-    } catch (error) {
+    } catch {
       setValidationError('Error al procesar el contenido')
     } finally {
       setIsValidating(false)
@@ -146,8 +150,10 @@ export const SOAPEditManager = ({
 
         {/* Character count indicator */}
         <div className="absolute bottom-2 right-2 text-xs text-slate-500">
-          {editContent.length > 4500 && (
-            <span className="text-orange-400">{5000 - editContent.length} restantes</span>
+          {editContent.length > CONTENT_WARNING_THRESHOLD && (
+            <span className="text-orange-400">
+              {CONTENT_MAX_LENGTH - editContent.length} restantes
+            </span>
           )}
         </div>
       </div>

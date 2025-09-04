@@ -40,7 +40,7 @@ export const useAlertManager = ({ maxVisible, autoHide, hideDelay }: UseAlertMan
 
         oscillator.start()
         oscillator.stop(audioContext.currentTime + CALCULATION_FACTORS.FADE_OPACITY)
-      } catch (error) {
+      } catch {
         // Silenciar errores de audio
       }
     }

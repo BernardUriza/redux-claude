@@ -21,7 +21,7 @@ interface MedicalDataOrchestratorReturn {
   // Medical extraction data
   completenessPercentage: number
   isNOMCompliant: boolean
-  extractedData: any
+  extractedData: unknown
   canProceedToSOAP: boolean
   // Medical validation
   isMedicalConsultation: (text: string) => boolean
