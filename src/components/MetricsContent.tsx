@@ -20,6 +20,48 @@ interface MetricsContentProps {
   isStreaming: boolean
 }
 
+const renderUrgencySection = (urgencyData: UrgencyData, messagesCount: number, showHeader?: boolean) => {
+  if (urgencyData.level === 'low' && messagesCount === 0) {
+    return showHeader ? (
+      <div className="bg-gradient-to-r from-emerald-950/40 to-teal-950/40 backdrop-blur-xl rounded-xl p-4 border border-emerald-500/30">
+        <div className="text-center">
+          <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+            <span className="text-lg">🩺</span>
+          </div>
+          <h3 className="text-sm font-semibold text-emerald-300 mb-2">
+            Sistema Médico Estable
+          </h3>
+          <p className="text-xs text-slate-400">No hay alertas médicas activas.</p>
+        </div>
+      </div>
+    ) : null;
+  }
+
+  return (
+    <section>
+      {showHeader && (
+        <div className="flex items-center space-x-2 mb-3">
+          <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
+          <h3 className="text-xs font-semibold text-red-300 uppercase tracking-wider">
+            Estado Médico Crítico
+          </h3>
+        </div>
+      )}
+      {urgencyData.level === 'critical' || urgencyData.level === 'high' ? (
+        <UrgencyIndicator
+          urgencyData={urgencyData}
+          className="rounded-xl border border-red-500/20 shadow-lg shadow-red-500/10"
+        />
+      ) : (
+        <CompactUrgencyIndicator
+          urgencyData={urgencyData}
+          className="rounded-xl border border-slate-600/30 shadow-lg shadow-slate-950/20"
+        />
+      )}
+    </section>
+  );
+};
+
 export const MetricsContent: React.FC<MetricsContentProps> = ({
   activeTab,
   urgencyData,
@@ -33,21 +75,7 @@ export const MetricsContent: React.FC<MetricsContentProps> = ({
       {activeTab === 'overview' && (
         <div className="space-y-4">
           {/* Estado Crítico - Siempre visible en resumen */}
-          {urgencyData.level !== 'low' || messagesCount > 0 ? (
-            <section>
-              {urgencyData.level === 'critical' || urgencyData.level === 'high' ? (
-                <UrgencyIndicator
-                  urgencyData={urgencyData}
-                  className="rounded-xl border border-red-500/20 shadow-lg shadow-red-500/10"
-                />
-              ) : (
-                <CompactUrgencyIndicator
-                  urgencyData={urgencyData}
-                  className="rounded-xl border border-slate-600/30 shadow-lg shadow-slate-950/20"
-                />
-              )}
-            </section>
-          ) : null}
+          {renderUrgencySection(urgencyData, messagesCount)}
 
           {/* Métricas Clave */}
           <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/60 backdrop-blur-xl rounded-xl border border-slate-600/30 p-4 shadow-xl shadow-slate-950/30">
@@ -59,39 +87,7 @@ export const MetricsContent: React.FC<MetricsContentProps> = ({
       {/* CLÍNICO - Información Médica */}
       {activeTab === 'clinical' && (
         <div className="space-y-4">
-          {urgencyData.level !== 'low' || messagesCount > 0 ? (
-            <section>
-              <div className="flex items-center space-x-2 mb-3">
-                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
-                <h3 className="text-xs font-semibold text-red-300 uppercase tracking-wider">
-                  Estado Médico Crítico
-                </h3>
-              </div>
-              {urgencyData.level === 'critical' || urgencyData.level === 'high' ? (
-                <UrgencyIndicator
-                  urgencyData={urgencyData}
-                  className="rounded-xl border border-red-500/20 shadow-lg shadow-red-500/10"
-                />
-              ) : (
-                <CompactUrgencyIndicator
-                  urgencyData={urgencyData}
-                  className="rounded-xl border border-slate-600/30 shadow-lg shadow-slate-950/20"
-                />
-              )}
-            </section>
-          ) : (
-            <div className="bg-gradient-to-r from-emerald-950/40 to-teal-950/40 backdrop-blur-xl rounded-xl p-4 border border-emerald-500/30">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <span className="text-lg">🩺</span>
-                </div>
-                <h3 className="text-sm font-semibold text-emerald-300 mb-2">
-                  Sistema Médico Estable
-                </h3>
-                <p className="text-xs text-slate-400">No hay alertas médicas activas.</p>
-              </div>
-            </div>
-          )}
+          {renderUrgencySection(urgencyData, messagesCount, true)}
 
           <div className="bg-gradient-to-br from-blue-950/20 to-indigo-950/30 backdrop-blur-xl rounded-xl border border-blue-700/20 p-4 shadow-xl shadow-blue-950/20">
             <IterativeDiagnosticProgress />

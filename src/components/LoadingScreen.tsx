@@ -57,7 +57,7 @@ export const LoadingScreen = ({ onLoadingComplete, duration = 3000 }: LoadingScr
     setProgress(loadingSteps[0].progress)
 
     return () => clearInterval(interval)
-  }, [duration, onLoadingComplete])
+  }, [duration, onLoadingComplete, loadingSteps])
 
   if (!isVisible) return null
 

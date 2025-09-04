@@ -8,6 +8,11 @@ import { useSelector, useDispatch } from 'react-redux'
 import type { RootState } from '@redux-claude/cognitive-core'
 import { selectPhysicianNotes } from '@redux-claude/cognitive-core/src/store/selectors'
 
+// Priority thresholds
+const PRIORITY_HIGH_THRESHOLD = 0.9
+const PRIORITY_MEDIUM_THRESHOLD = 0.7  
+const PRIORITY_LOW_THRESHOLD = 0.5
+
 // Mock action - En FASE 4 se implementará acción real
 const addPhysicianNote = (note: Omit<PhysicianNote, 'id' | 'timestamp'>) => ({
   type: 'ADD_PHYSICIAN_NOTE_MOCK',
@@ -161,7 +166,7 @@ const AddNoteModal = ({ isOpen, onClose, onAdd }: AddNoteModalProps) => {
 }
 
 const NoteCard = ({ note }: { note: PhysicianNote }) => {
-  const getTypeColor = (type: string) => {
+  const _getTypeColor = (type: string) => {
     switch (type) {
       case 'clinical':
         return 'from-blue-500 to-cyan-500'
@@ -275,11 +280,11 @@ export const MedicalNotes = () => {
     content: note.content,
     category: note.title || note.category,
     priority:
-      note.confidence > 0.9
+      note.confidence > PRIORITY_HIGH_THRESHOLD
         ? 'high'
-        : note.confidence > 0.7
+        : note.confidence > PRIORITY_MEDIUM_THRESHOLD
           ? 'medium'
-          : note.confidence > 0.5
+          : note.confidence > PRIORITY_LOW_THRESHOLD
             ? 'low'
             : 'critical',
     timestamp: note.createdAt,

@@ -25,10 +25,19 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   if (!showMobileMenu) return null
 
   return (
-    <div className={styles.mobileMenuOverlay} onClick={() => setShowMobileMenu(false)}>
+    <div 
+      className={styles.mobileMenuOverlay} 
+      onClick={() => setShowMobileMenu(false)}
+      onKeyDown={(e) => e.key === 'Escape' && setShowMobileMenu(false)}
+      role="button"
+      tabIndex={0}
+    >
       <div
         className={`${styles.mobileMenu} ${showMobileMenu ? styles.open : ''}`}
         onClick={e => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="menu"
+        tabIndex={0}
       >
         {/* Mobile Menu Header */}
         <div className="p-4 border-b border-slate-700/50">

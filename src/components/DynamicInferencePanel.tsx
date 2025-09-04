@@ -12,6 +12,48 @@ const GOOD_CONFIDENCE = CONFIDENCE_THRESHOLDS.HIGH
 const MEDIUM_CONFIDENCE = MEDICAL_CONSTANTS.DIAGNOSTIC_CONFIDENCE_MIN
 const NO_CONFIDENCE = 0
 
+// Helper: Format gender display
+const getGenderDisplay = (gender?: string): string => {
+  if (gender === 'masculino') return 'Masculino'
+  if (gender === 'femenino') return 'Femenino'
+  return 'No especificado'
+}
+
+// Helper component: Inference card
+const InferenceCard: React.FC<{ inference: PatientInference }> = ({ inference }) => {
+  const confidenceColor =
+    inference.confidence >= CONFIDENCE_THRESHOLDS.GOOD
+      ? 'text-green-400'
+      : inference.confidence >= CONFIDENCE_THRESHOLDS.MINIMUM
+        ? 'text-yellow-400'
+        : 'text-red-400'
+
+  const statusIcon =
+    inference.confidence >= CONFIDENCE_THRESHOLDS.GOOD
+      ? '✅'
+      : inference.confidence >= CONFIDENCE_THRESHOLDS.MINIMUM
+        ? '⚠️'
+        : '🔄'
+
+  return (
+    <div className="bg-slate-700/50 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-sm font-medium text-slate-200">{inference.label}</h4>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-bold ${confidenceColor}`}>
+            {Math.round(inference.confidence * 100)}%
+          </span>
+          <span className="text-sm">{statusIcon}</span>
+        </div>
+      </div>
+      <div className="text-white font-semibold">{inference.value}</div>
+      <div className="text-xs text-slate-400 mt-1">
+        Confianza: {Math.round(inference.confidence * 100)}%
+      </div>
+    </div>
+  )
+}
+
 interface PatientInference {
   id: string
   type: string
@@ -132,12 +174,6 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     return inferences
   }
 
-  // 🧠 Helper: Format gender display
-  const getGenderDisplay = (gender?: string): string => {
-    if (gender === 'masculino') return 'Masculino'
-    if (gender === 'femenino') return 'Femenino'
-    return 'No especificado'
-  }
 
   // 🧠 Main function: Build all inferences from store data
   const buildInferencesFromStore = (): PatientInference[] => {
@@ -194,39 +230,9 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
 
       {/* Inferencias */}
       <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
-        {inferences.map(inference => {
-          const confidenceColor =
-            inference.confidence >= CONFIDENCE_THRESHOLDS.GOOD
-              ? 'text-green-400'
-              : inference.confidence >= CONFIDENCE_THRESHOLDS.MINIMUM
-                ? 'text-yellow-400'
-                : 'text-red-400'
-
-          const statusIcon =
-            inference.confidence >= CONFIDENCE_THRESHOLDS.GOOD
-              ? '✅'
-              : inference.confidence >= CONFIDENCE_THRESHOLDS.MINIMUM
-                ? '⚠️'
-                : '🔄'
-
-          return (
-            <div key={inference.id} className="bg-slate-700/50 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-medium text-slate-200">{inference.label}</h4>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold ${confidenceColor}`}>
-                    {Math.round(inference.confidence * 100)}%
-                  </span>
-                  <span className="text-sm">{statusIcon}</span>
-                </div>
-              </div>
-              <div className="text-white font-semibold">{inference.value}</div>
-              <div className="text-xs text-slate-400 mt-1">
-                Confianza: {Math.round(inference.confidence * 100)}%
-              </div>
-            </div>
-          )
-        })}
+        {inferences.map(inference => (
+          <InferenceCard key={inference.id} inference={inference} />
+        ))}
       </div>
 
       {/* Footer */}

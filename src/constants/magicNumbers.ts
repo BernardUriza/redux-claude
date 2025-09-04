@@ -54,6 +54,9 @@ export const CALCULATION_FACTORS = {
   VELOCITY_DECAY: 7.5,
   MOMENTUM_FACTOR: 12,
   SYSTEM_LOAD_FACTOR: 40,
+  // 📊 METRICS DERIVATION FACTORS
+  CONSENSUS_RATE_FACTOR: 0.95, // Para derivar consenso médico de confianza
+  QUALITY_SCORE_FACTOR: 0.96, // Para derivar calidad de confianza
 } as const
 
 // 🏥 MEDICAL SPECIFIC

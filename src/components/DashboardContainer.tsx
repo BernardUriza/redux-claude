@@ -6,7 +6,8 @@ import { DashboardLayout } from './DashboardLayout'
 import { MedicalMetricsPanel } from './MedicalMetricsPanel'
 import { MobileInteractionLayer } from './MobileInteractionLayer'
 import MedicalAssistant from './MedicalAssistant'
-import type { ActiveMetricsTab } from '../types/dashboard'
+import type { ActiveMetricsTab, UrgencyData } from '../types/dashboard'
+import type { MedicalMessage } from '@redux-claude/cognitive-core'
 
 // Wrapper para MedicalChat con props agrupadas
 const MedicalChatWrapper = ({
@@ -31,9 +32,23 @@ const MedicalChatWrapper = ({
   onOpenAssistant,
   triggerHaptic,
 }: {
-  messages: unknown[]
+  messages: MedicalMessage[]
   isLoading: boolean
   isStreaming: boolean
+  input: string
+  setInput: (input: string) => void
+  isMobile: boolean
+  keyboardVisible: boolean
+  showAutoFillNotification: boolean
+  setShowAutoFillNotification: (show: boolean) => void
+  showDataRequiredAlert: boolean
+  setShowDataRequiredAlert: (show: boolean) => void
+  completenessPercentage: number
+  isNOMCompliant: boolean
+  canProceedToSOAP: boolean
+  onSubmit: (message: string) => Promise<void>
+  onNewSession: () => void
+  onMobileInputFocus: () => void
   onQuickTest: () => void
   onOpenAssistant: (input: string) => void
   triggerHaptic?: (type: 'light' | 'medium' | 'heavy') => void
@@ -100,10 +115,13 @@ interface DashboardContainerProps {
   showMainApp: boolean
 
   // Data props
-  cognitiveMetrics: unknown
-  urgencyData: unknown
-  messages: unknown[]
-  lastMessage: unknown
+  cognitiveMetrics?: {
+    systemConfidence: number
+    activeDebates: number
+  } | null
+  urgencyData: UrgencyData
+  messages: MedicalMessage[]
+  lastMessage?: MedicalMessage
   isStreaming: boolean
   isLoading: boolean
 

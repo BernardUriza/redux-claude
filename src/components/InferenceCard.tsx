@@ -4,6 +4,9 @@
 import React from 'react'
 import { MedicalInference } from '../../packages/cognitive-core/src/services/intelligent-medical-chat'
 
+const CONFIDENCE_HIGH = 0.8
+const CONFIDENCE_MEDIUM = 0.6
+
 interface InferenceCardProps {
   inference: MedicalInference
   onConfirm: (inference: MedicalInference, confirmed: boolean) => void
@@ -31,7 +34,7 @@ export const InferenceCard: React.FC<InferenceCardProps> = ({
             </span>
             <div className="flex items-center gap-2 bg-slate-700/50 px-3 py-1 rounded-full">
               <div
-                className={`w-2 h-2 rounded-full ${inference.confidence >= 0.8 ? 'bg-green-400' : inference.confidence >= 0.6 ? 'bg-yellow-400' : 'bg-orange-400'}`}
+                className={`w-2 h-2 rounded-full ${inference.confidence >= CONFIDENCE_HIGH ? 'bg-green-400' : inference.confidence >= CONFIDENCE_MEDIUM ? 'bg-yellow-400' : 'bg-orange-400'}`}
               ></div>
               <span className="text-sm font-bold text-slate-200">
                 {Math.round(inference.confidence * 100)}%
