@@ -28,6 +28,14 @@ interface MedicalSummaryPanelProps {
  * Componente que muestra el resumen de datos médicos recopilados
  * Solo muestra información que ya se ha obtenido del paciente
  */
+// Helper function to extract data from SOAP - reduces complexity
+const extractSOAPData = (soap: SOAPData) => ({
+  patientData: soap.subjetivo,
+  vitalSigns: soap.objetivo?.signosVitales || {},
+  diagnosis: soap.analisis,
+  medications: soap.plan?.tratamientoFarmacologico || [],
+})
+
 export const MedicalSummaryPanel: React.FC<MedicalSummaryPanelProps> = ({
   currentCase,
   className = '',
@@ -36,10 +44,7 @@ export const MedicalSummaryPanel: React.FC<MedicalSummaryPanelProps> = ({
 
   if (!soap) return null
 
-  const patientData = soap.subjetivo
-  const vitalSigns = soap.objetivo?.signosVitales || {}
-  const diagnosis = soap.analisis
-  const medications = soap.plan?.tratamientoFarmacologico || []
+  const { patientData, vitalSigns, diagnosis, medications } = extractSOAPData(soap)
 
   return (
     <div className={`${className}`}>

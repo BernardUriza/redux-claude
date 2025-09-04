@@ -165,6 +165,59 @@ const AddNoteModal = ({ isOpen, onClose, onAdd }: AddNoteModalProps) => {
   )
 }
 
+// Filter tabs component - extracted to reduce main function length
+const NotesFilterTabs = ({
+  filter,
+  setFilter,
+  notes,
+  notesCount,
+}: {
+  filter: 'all' | 'clinical' | 'administrative' | 'legal' | 'observation'
+  setFilter: (filter: 'all' | 'clinical' | 'administrative' | 'legal' | 'observation') => void
+  notes: PhysicianNote[]
+  notesCount: number
+}) => (
+  <div className="flex space-x-1 bg-slate-800/50 rounded-lg p-1">
+    {[
+      { key: 'all' as const, label: 'Todas', count: notesCount },
+      {
+        key: 'clinical' as const,
+        label: 'Clínicas',
+        count: notes.filter(n => n.type === 'clinical').length,
+      },
+      {
+        key: 'administrative' as const,
+        label: 'Admin',
+        count: notes.filter(n => n.type === 'administrative').length,
+      },
+      {
+        key: 'legal' as const,
+        label: 'Legales',
+        count: notes.filter(n => n.type === 'legal').length,
+      },
+    ].map(tab => (
+      <button
+        key={tab.key}
+        onClick={() => setFilter(tab.key)}
+        className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          filter === tab.key
+            ? 'bg-blue-600 text-white shadow-md'
+            : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+        }`}
+      >
+        {tab.label}
+        <span
+          className={`px-1.5 py-0.5 rounded-full text-xs ${
+            filter === tab.key ? 'bg-blue-500/30 text-blue-100' : 'bg-slate-600/50 text-slate-300'
+          }`}
+        >
+          {tab.count}
+        </span>
+      </button>
+    ))}
+  </div>
+)
+
 const NoteCard = ({ note }: { note: PhysicianNote }) => {
   const _getTypeColor = (type: string) => {
     switch (type) {
@@ -355,38 +408,12 @@ export const MedicalNotes = () => {
 
       {/* Filters and Sort */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex space-x-1 bg-slate-800/50 rounded-lg p-1">
-          {[
-            { key: 'all' as const, label: 'Todas', count: notesCount },
-            {
-              key: 'clinical' as const,
-              label: 'Clínicas',
-              count: notes.filter(n => n.type === 'clinical').length,
-            },
-            {
-              key: 'administrative' as const,
-              label: 'Admin',
-              count: notes.filter(n => n.type === 'administrative').length,
-            },
-            {
-              key: 'legal' as const,
-              label: 'Legales',
-              count: notes.filter(n => n.type === 'legal').length,
-            },
-          ].map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setFilter(tab.key)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                filter === tab.key
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              {tab.label} ({tab.count})
-            </button>
-          ))}
-        </div>
+        <NotesFilterTabs
+          filter={filter}
+          setFilter={setFilter}
+          notes={notes}
+          notesCount={notesCount}
+        />
 
         <select
           value={sortBy}

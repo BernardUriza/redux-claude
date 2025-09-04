@@ -6,13 +6,12 @@
 import { useSelector } from 'react-redux'
 import { RootState } from '@redux-claude/cognitive-core'
 import { memo } from 'react' // { useState, useEffect } removed
-import {
-  selectSystemMetrics,
-} from '@redux-claude/cognitive-core/src/store/selectors'
+import { selectSystemMetrics } from '@redux-claude/cognitive-core/src/store/selectors'
 import { CALCULATION_FACTORS } from '../constants/magicNumbers'
 
 // 🧮 SYSTEM METRICS CALCULATOR - Extraído para reducir complejidad
-const calculateSystemMetrics = (realMetrics: unknown, isLoading: boolean) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const calculateSystemMetrics = (realMetrics: any, isLoading: boolean) => {
   const systemMetrics = {
     confidence: realMetrics.confidence,
     cycles: realMetrics.cycles,
@@ -30,7 +29,8 @@ const calculateSystemMetrics = (realMetrics: unknown, isLoading: boolean) => {
 }
 
 // 🔍 SYSTEM STATUS CALCULATOR - Extraído para reducir complejidad
-const calculateSystemStatus = (realMetrics: unknown): SystemStatusProps => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const calculateSystemStatus = (realMetrics: any): SystemStatusProps => {
   const healthStatus = realMetrics.systemHealth
   const hasActivity = realMetrics.messagesCount > 1
 
@@ -117,8 +117,10 @@ const MetricsGrid = memo(function MetricsGrid({
   systemMetrics,
   realMetrics,
 }: {
-  systemMetrics: unknown
-  realMetrics: unknown
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  systemMetrics: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  realMetrics: any
 }) {
   return (
     <>
