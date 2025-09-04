@@ -30,7 +30,14 @@ const MedicalChatWrapper = ({
   onQuickTest,
   onOpenAssistant,
   triggerHaptic,
-}: any) => {
+}: {
+  messages: unknown[]
+  isLoading: boolean
+  isStreaming: boolean
+  onQuickTest: () => void
+  onOpenAssistant: (input: string) => void
+  triggerHaptic?: (type: 'light' | 'medium' | 'heavy') => void
+}) => {
   const { MedicalChat } = require('./MedicalChat')
   return (
     <MedicalChat
@@ -93,10 +100,10 @@ interface DashboardContainerProps {
   showMainApp: boolean
 
   // Data props
-  cognitiveMetrics: any
-  urgencyData: any
-  messages: any[]
-  lastMessage: any
+  cognitiveMetrics: unknown
+  urgencyData: unknown
+  messages: unknown[]
+  lastMessage: unknown
   isStreaming: boolean
   isLoading: boolean
 

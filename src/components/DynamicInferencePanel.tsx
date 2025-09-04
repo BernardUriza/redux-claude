@@ -1,12 +1,15 @@
 // 🧠 Panel de Inferencias Médicas - SOLO datos del extractor profesional
 // Creado por Bernard Orozco - Sin hardcode, solo Redux store
 
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import type { RootState } from '../../packages/cognitive-core/src/store/store'
+import { CONFIDENCE_THRESHOLDS, MEDICAL_CONSTANTS } from '../constants/magicNumbers'
 
 // Constants for inference confidence - NO MORE MAGIC NUMBERS
-const HIGH_CONFIDENCE = 0.95
+const HIGH_CONFIDENCE = CONFIDENCE_THRESHOLDS.CRITICAL
+const GOOD_CONFIDENCE = CONFIDENCE_THRESHOLDS.HIGH
+const MEDIUM_CONFIDENCE = MEDICAL_CONSTANTS.DIAGNOSTIC_CONFIDENCE_MIN
 const NO_CONFIDENCE = 0
 
 interface PatientInference {
@@ -40,16 +43,8 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
 
   const patientData = useSelector((state: RootState) => state.medicalChat.sharedState.patientData)
 
-  // 🧠 Construir inferencias desde datos REALES
-  const buildInferencesFromStore = (): PatientInference[] => {
-    console.log('🔍 [PANEL] Building inferences from store:', {
-      patientData,
-      extractedData,
-      patientData_age: patientData?.age,
-      patientData_gender: patientData?.gender,
-      patientData_primarySymptom: patientData?.primarySymptom,
-    })
-
+  // 🧠 Helper: Build patient demographics inferences
+  const buildPatientDemographics = (): PatientInference[] => {
     const inferences: PatientInference[] = []
 
     // Edad desde patientData
@@ -63,13 +58,7 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
     })
 
     // Género desde patientData
-    const genderDisplay =
-      patientData?.gender === 'masculino'
-        ? 'Masculino'
-        : patientData?.gender === 'femenino'
-          ? 'Femenino'
-          : 'No especificado'
-
+    const genderDisplay = getGenderDisplay(patientData?.gender)
     inferences.push({
       id: 'gender',
       type: 'gender',
@@ -79,13 +68,20 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       isEditable: false,
     })
 
+    return inferences
+  }
+
+  // 🧠 Helper: Build symptom inferences
+  const buildSymptomInferences = (): PatientInference[] => {
+    const inferences: PatientInference[] = []
+
     // Síntoma principal desde patientData (ya acumulado)
     inferences.push({
       id: 'symptom',
       type: 'symptom',
       label: 'Síntoma Principal',
       value: patientData?.primarySymptom || 'No identificado',
-      confidence: patientData?.primarySymptom ? 0.9 : 0,
+      confidence: patientData?.primarySymptom ? GOOD_CONFIDENCE : NO_CONFIDENCE,
       isEditable: false,
     })
 
@@ -96,9 +92,16 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       type: 'intensity',
       label: 'Intensidad (1-10)',
       value: intensity ? `${intensity}/10` : 'No especificada',
-      confidence: intensity ? 0.95 : 0,
+      confidence: intensity ? HIGH_CONFIDENCE : NO_CONFIDENCE,
       isEditable: false,
     })
+
+    return inferences
+  }
+
+  // 🧠 Helper: Build medical characteristics inferences
+  const buildMedicalCharacteristics = (): PatientInference[] => {
+    const inferences: PatientInference[] = []
 
     // Duración desde extractedData
     const duration = extractedData?.symptom_characteristics?.duration_description
@@ -107,7 +110,7 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       type: 'duration',
       label: 'Duración',
       value: duration && duration !== 'unknown' ? duration : 'No especificada',
-      confidence: duration && duration !== 'unknown' ? 0.85 : 0,
+      confidence: duration && duration !== 'unknown' ? MEDIUM_CONFIDENCE : NO_CONFIDENCE,
       isEditable: false,
     })
 
@@ -122,19 +125,51 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       type: 'associated',
       label: 'Síntomas Asociados',
       value: associatedDisplay,
-      confidence: associatedSymptoms?.length ? 0.9 : 0,
+      confidence: associatedSymptoms?.length ? GOOD_CONFIDENCE : NO_CONFIDENCE,
       isEditable: false,
     })
 
     return inferences
   }
 
+  // 🧠 Helper: Format gender display
+  const getGenderDisplay = (gender?: string): string => {
+    if (gender === 'masculino') return 'Masculino'
+    if (gender === 'femenino') return 'Femenino'
+    return 'No especificado'
+  }
+
+  // 🧠 Main function: Build all inferences from store data
+  const buildInferencesFromStore = (): PatientInference[] => {
+    console.log('🔍 [PANEL] Building inferences from store:', {
+      patientData,
+      extractedData,
+      patientData_age: patientData?.age,
+      patientData_gender: patientData?.gender,
+      patientData_primarySymptom: patientData?.primarySymptom,
+    })
+
+    return [
+      ...buildPatientDemographics(),
+      ...buildSymptomInferences(),
+      ...buildMedicalCharacteristics(),
+    ]
+  }
+
   const inferences = buildInferencesFromStore()
+
+  // Wrap callback to avoid dependency issues
+  const handleInferenceUpdate = useCallback(
+    (inferences: PatientInference[]) => {
+      onInferenceUpdate?.(inferences)
+    },
+    [onInferenceUpdate]
+  )
 
   // Notificar cambios a componente padre
   React.useEffect(() => {
-    onInferenceUpdate?.(inferences)
-  }, [extractedData, patientData])
+    handleInferenceUpdate(inferences)
+  }, [inferences, handleInferenceUpdate])
 
   return (
     <div className={`bg-slate-800 rounded-xl border border-slate-600 ${className}`}>
@@ -161,14 +196,18 @@ export const DynamicInferencePanel: React.FC<DynamicInferencePanelProps> = ({
       <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
         {inferences.map(inference => {
           const confidenceColor =
-            inference.confidence >= 0.8
+            inference.confidence >= CONFIDENCE_THRESHOLDS.GOOD
               ? 'text-green-400'
-              : inference.confidence >= 0.5
+              : inference.confidence >= CONFIDENCE_THRESHOLDS.MINIMUM
                 ? 'text-yellow-400'
                 : 'text-red-400'
 
           const statusIcon =
-            inference.confidence >= 0.8 ? '✅' : inference.confidence >= 0.5 ? '⚠️' : '🔄'
+            inference.confidence >= CONFIDENCE_THRESHOLDS.GOOD
+              ? '✅'
+              : inference.confidence >= CONFIDENCE_THRESHOLDS.MINIMUM
+                ? '⚠️'
+                : '🔄'
 
           return (
             <div key={inference.id} className="bg-slate-700/50 rounded-lg p-4">
