@@ -1,7 +1,7 @@
 // 🔄 useIterativeMedicalExtraction - Hook personalizado para extracción médica iterativa
 // Creado por Bernard Orozco - Phase 3: Iterative Logic
 
-import { useCallback, useEffect } from 'react'
+import { useCallback, useMemo, useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import {
   startExtractionProcess,
@@ -67,8 +67,8 @@ export const useIterativeMedicalExtraction = (): UseIterativeMedicalExtractionRe
   // Service instance
   const extractor = new MedicalDataExtractor()
 
-  // Determine current state machine state
-  const extractionState: ExtractionState = useCallback(() => {
+  // Determine current state machine state (Creado por Bernard Orozco)
+  const extractionState: ExtractionState = useMemo(() => {
     if (extractionProcess.error) return 'error'
     if (extractionProcess.isExtracting) return 'extracting'
     if (extractedData && completenessPercentage >= 80 && nomCompliant) return 'complete'
@@ -80,7 +80,7 @@ export const useIterativeMedicalExtraction = (): UseIterativeMedicalExtractionRe
     extractedData,
     completenessPercentage,
     nomCompliant,
-  ])()
+  ])
 
   // Start extraction process
   const startExtraction = useCallback(
