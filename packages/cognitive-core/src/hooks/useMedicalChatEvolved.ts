@@ -7,7 +7,7 @@ import {
   ClaudeAdapter,
   convertReduxMessagesToClaudeFormat,
 } from '../decision-engine/providers/claude'
-import { validateMedicalCase, generateRejectionMessage } from '../utils/aiMedicalValidator'
+import { validateMedicalInput, generateRejectionMessage } from '../utils/aiMedicalValidator'
 import { IterativeDiagnosticEngine } from '../engine/IterativeDiagnosticEngine'
 import type { RootState, AppDispatch } from '../store/store'
 import {
@@ -53,7 +53,7 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
         dispatch(setDashboardLoading(true))
 
         // Validación médica con IA
-        const validationResult = await validateMedicalCase(message)
+        const validationResult = await validateMedicalInput(message)
 
         if (!validationResult.isValid) {
           console.log(
@@ -69,7 +69,7 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
             isValid: validationResult.isValid,
             confidence: validationResult.confidence,
             rejectionReason: validationResult.rejectionReason,
-            suggestedFormat: validationResult.suggestedImprovements?.[0],
+            suggestedFormat: validationResult.suggestedFormat,
           })
 
           dispatch(

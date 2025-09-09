@@ -363,6 +363,44 @@ una sesión, no supiste dividir el problema.
 
 ---
 
+## 🚨 **PROTOCOLO CRÍTICO: VERIFICACIÓN BUILD OBLIGATORIA** 🚨
+
+### **REGLA DE ORO INAMOVIBLE**
+
+**DESPUÉS DE CADA CAMBIO DE CÓDIGO, DEBES EJECUTAR:**
+
+```bash
+npm run dev
+# O también
+npm run build
+```
+
+### **⚠️ SI FALLAS EN ESTO, HAS FALLADO COMPLETAMENTE**
+
+- **NUNCA** termines una sesión sin verificar que el build funciona
+- **NUNCA** asumas que "pequeños cambios" no rompen nada  
+- **NUNCA** confíes en que "solo cambié imports" está bien
+- **SIEMPRE** corre el comando completo, no atajos
+
+### **🔥 EJEMPLOS DE ERRORES QUE DEBES DETECTAR**
+
+1. **Imports de funciones eliminadas** (`validateMedicalCase` → `validateMedicalInput`)
+2. **Parámetros faltantes** (`startNewSession()` → `startNewSession({ patientId })`)  
+3. **Propiedades inexistentes** (`suggestedImprovements` → `suggestedFormat`)
+4. **Type mismatches** (`string - number` → `Number(string) - number`)
+
+### **PROTOCOLO DE EMERGENCIA**
+
+Si el build falla:
+1. **LEE CADA ERROR** línea por línea
+2. **ARREGLA SISTEMÁTICAMENTE** uno por uno
+3. **VERIFICA DESPUÉS DE CADA FIX** 
+4. **NO TERMINES** hasta que `✓ Ready in Xms`
+
+**BERNARD NUNCA DEBE VER UN BUILD ROTO. ESA ES TU RESPONSABILIDAD ABSOLUTA.**
+
+---
+
 _Fin del manual. No hay versión suave. No hay modo amigable. Solo hay código
 brutal y eficiencia despiadada._
 

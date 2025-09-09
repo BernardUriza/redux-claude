@@ -101,35 +101,4 @@ export function generateRejectionMessage(result: AIValidationResult): string {
   )
 }
 
-/**
- * Wrapper de compatibilidad para mantener la API existente
- * Simula la estructura de MedicalValidationResult
- */
-export interface LegacyMedicalValidationResult {
-  isValid: boolean
-  confidence: number
-  medicalTermsFound: string[]
-  missingCriticalData: string[]
-  structureScore: number
-  clinicalCoherence: number
-  rejectionReason?: string
-  suggestedImprovements: string[]
-}
-
-/**
- * Convierte AIValidationResult a formato legacy para compatibilidad
- */
-export async function validateMedicalCase(input: string): Promise<LegacyMedicalValidationResult> {
-  const aiResult = await validateMedicalInput(input)
-
-  return {
-    isValid: aiResult.isValid,
-    confidence: aiResult.confidence,
-    medicalTermsFound: aiResult.medicalIndicators || [],
-    missingCriticalData: [],
-    structureScore: aiResult.confidence,
-    clinicalCoherence: aiResult.confidence,
-    rejectionReason: aiResult.rejectionReason,
-    suggestedImprovements: aiResult.suggestedFormat ? [aiResult.suggestedFormat] : [],
-  }
-}
+// 🎯 Legacy code removed - using modern AIValidationResult only

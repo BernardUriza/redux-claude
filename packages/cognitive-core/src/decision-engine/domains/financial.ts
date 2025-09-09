@@ -136,10 +136,10 @@ Develop portfolio recommendations considering:
     // Financial-specific validation would go here
     if (decisionType === 'portfolio_recommendation' && decision.asset_allocation) {
       const total = Object.values(decision.asset_allocation).reduce(
-        (sum: number, val: any) => sum + val,
+        (sum: number, val: any) => sum + Number(val),
         0
       )
-      if (Math.abs(total - 100) > 1) {
+      if (Math.abs(Number(total) - 100) > 1) {
         warnings.push('Asset allocation should sum to 100%')
       }
     }

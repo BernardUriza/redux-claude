@@ -2,7 +2,7 @@
 // Motor de Diagnóstico Iterativo - Creado por Bernard Orozco
 import { ClaudeAdapter } from '../decision-engine/providers/claude'
 import { SOAPAnalysis, DiagnosticCycle, MedicalCase, AdditionalInfoRequest } from '../types/medical'
-import { validateMedicalCase } from '../utils/aiMedicalValidator'
+import { validateMedicalInput } from '../utils/aiMedicalValidator'
 import { multiAgentOrchestrator } from '../services/multi-agent-orchestrator'
 import { AgentType } from '../types/agents'
 import { callClaudeForDecision } from '../services/decisional-middleware'

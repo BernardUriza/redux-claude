@@ -7,6 +7,7 @@ import type { RootState } from '../medicalChatSlice'
 // 📊 Constants for stable references
 const EMPTY_HISTORY: any[] = []
 const EMPTY_FOCUS_AREAS: string[] = []
+const FOCUS_AREA_CACHE = new Map<string, string[]>()
 
 // 📊 Basic extraction data access
 export const selectExtractedData = (state: RootState) =>
@@ -26,10 +27,13 @@ export const selectCompletenessPercentage = createSelector([selectExtractedData]
   return extractedData.extraction_metadata.overall_completeness_percentage
 })
 
-// 🔥 Simple property access - no memoization needed
+// 💀 CONSTANTE ESTABLE para evitar referencias frescas
+const EMPTY_MISSING_FIELDS: string[] = []
+
+// 🔥 Simple property access - con referencia estable
 export const selectMissingCriticalFields = (state: RootState) =>
   state.medicalChat.medicalExtraction.currentExtraction?.extraction_metadata
-    ?.missing_critical_fields || []
+    ?.missing_critical_fields || EMPTY_MISSING_FIELDS
 
 export const selectNOMCompliance = (state: RootState) =>
   state.medicalChat.medicalExtraction.currentExtraction?.extraction_metadata?.nom_compliant || false
@@ -99,19 +103,31 @@ export const selectFieldCompleteness = createSelector([selectExtractedData], ext
   }
 })
 
-// 🔥 Extraction progress tracking
+// 🔥 Extraction progress tracking with STABLE REFERENCES
+const EMPTY_PROGRESS = {
+  isActive: false,
+  iteration: 0,
+  maxIterations: 3,
+  progressPercentage: 0,
+  shouldContinue: false,
+}
+
 export const selectExtractionProgress = createSelector(
   [selectExtractionProcess, selectCompletenessPercentage],
-  (process, completeness) => ({
-    isActive: process.isExtracting,
-    iteration: process.currentIteration,
-    maxIterations: process.maxIterations,
-    progressPercentage: Math.max(
-      (process.currentIteration / process.maxIterations) * 100,
-      completeness
-    ),
-    shouldContinue: process.currentIteration < process.maxIterations && completeness < 80,
-  })
+  (process, completeness) => {
+    if (!process) return EMPTY_PROGRESS
+    
+    return {
+      isActive: process.isExtracting,
+      iteration: process.currentIteration,
+      maxIterations: process.maxIterations,
+      progressPercentage: Math.max(
+        (process.currentIteration / process.maxIterations) * 100,
+        completeness
+      ),
+      shouldContinue: process.currentIteration < process.maxIterations && completeness < 80,
+    }
+  }
 )
 
 // 🔥 Focus areas calculation
@@ -119,6 +135,13 @@ export const selectFocusAreas = createSelector(
   [selectFieldCompleteness, selectMissingCriticalFields],
   (fieldCompleteness, missingFields) => {
     if (!fieldCompleteness) return EMPTY_FOCUS_AREAS
+
+    // 🧙‍♂️ Gandalf's Stable Reference Cache - Creado por Bernard Orozco  
+    const cacheKey = `${missingFields.join(',')}-${JSON.stringify(fieldCompleteness)}`
+    
+    if (FOCUS_AREA_CACHE.has(cacheKey)) {
+      return FOCUS_AREA_CACHE.get(cacheKey)!
+    }
 
     const focusAreas: string[] = []
 
@@ -136,6 +159,9 @@ export const selectFocusAreas = createSelector(
     if (!fieldCompleteness.context.duration) focusAreas.push('duration')
     if (!fieldCompleteness.context.intensity) focusAreas.push('intensity')
 
-    return focusAreas
+    // 🔥 Freeze reference for eternal stability
+    const result = Object.freeze(focusAreas)
+    FOCUS_AREA_CACHE.set(cacheKey, result)
+    return result
   }
 )

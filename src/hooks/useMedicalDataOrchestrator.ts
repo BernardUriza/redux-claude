@@ -134,12 +134,19 @@ export const useMedicalDataOrchestrator = ({
     ]
 
     const lowerText = text.toLowerCase()
-    const keywordMatches = medicalKeywords.filter(keyword =>
-      lowerText.includes(keyword.toLowerCase())
-    ).length
+    
+    // 💀 OPTIMIZATION BRUTAL: evita crear array con filter, solo cuenta matches
+    let keywordMatchCount = 0
+    for (const keyword of medicalKeywords) {
+      if (lowerText.includes(keyword.toLowerCase())) {
+        keywordMatchCount++
+        // Early exit optimization: si ya tenemos 2+ matches, no seguir buscando
+        if (keywordMatchCount >= 2) break
+      }
+    }
 
     // Si tiene 2+ keywords médicos Y más de 20 caracteres = consulta médica
-    return keywordMatches >= 2 && text.trim().length > 20
+    return keywordMatchCount >= 2 && text.trim().length > 20
   }
 
   const hasMinimumPatientData = (): boolean => {

@@ -9,8 +9,8 @@ export const useDashboardState = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showMobileFab, setShowMobileFab] = useState(false)
   const [keyboardVisible, setKeyboardVisible] = useState(false)
-  const [isAppLoading, setIsAppLoading] = useState(true)
-  const [showMainApp, setShowMainApp] = useState(false)
+  const [isAppLoading, setIsAppLoading] = useState(false) // 🧙‍♂️ GANDALF FIX: Skip loading screen
+  const [showMainApp, setShowMainApp] = useState(true) // 🧙‍♂️ GANDALF FIX: Show dashboard immediately
   const [showMedicalAssistant, setShowMedicalAssistant] = useState(false)
   const [lastRejectedInput, setLastRejectedInput] = useState('')
   const [showDataRequiredAlert, setShowDataRequiredAlert] = useState(false)

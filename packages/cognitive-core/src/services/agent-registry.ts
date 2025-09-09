@@ -10,7 +10,7 @@ import {
   isAgentEnabled,
 } from './agents'
 
-// Re-export everything for backward compatibility
+// 🎯 Clean modular exports
 export {
   AGENT_REGISTRY,
   getEnabledAgents,

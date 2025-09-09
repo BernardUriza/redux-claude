@@ -8,7 +8,7 @@ import {
   ClaudeAdapter,
   convertReduxMessagesToClaudeFormat,
 } from '../decision-engine/providers/claude'
-import { validateMedicalCase, generateRejectionMessage } from '../utils/aiMedicalValidator'
+import { validateMedicalInput, generateRejectionMessage } from '../utils/aiMedicalValidator'
 import { IterativeDiagnosticEngine } from '../engine/IterativeDiagnosticEngine'
 import type { RootState, AppDispatch } from '../store/store'
 import {
@@ -53,7 +53,7 @@ export const useAssistantChat = (options: UseAssistantChatOptions = {}) => {
         dispatch(setAssistantLoading(true))
 
         // Validación médica con IA
-        const validationResult = await validateMedicalCase(message)
+        const validationResult = await validateMedicalInput(message)
 
         if (!validationResult.isValid) {
           console.log(
@@ -69,14 +69,14 @@ export const useAssistantChat = (options: UseAssistantChatOptions = {}) => {
             isValid: validationResult.isValid,
             confidence: validationResult.confidence,
             rejectionReason: validationResult.rejectionReason,
-            suggestedFormat: validationResult.suggestedImprovements?.[0],
+            suggestedFormat: validationResult.suggestedFormat,
           })
 
           dispatch(
             addAssistantMessage({
               content: rejectionMessage,
               type: 'assistant',
-              confidence: validationResult.confidence,
+              metadata: { confidence: validationResult.confidence },
             })
           )
 
@@ -118,6 +118,7 @@ export const useAssistantChat = (options: UseAssistantChatOptions = {}) => {
   const startNewAssistantSession = useCallback(
     (patientId?: string) => {
       dispatch(startNewSession({ patientId }))
+      // PatientId logic can be handled at component level if needed
     },
     [dispatch]
   )

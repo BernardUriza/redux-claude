@@ -6,7 +6,7 @@ import { createMessage } from '../../utils/medicalChatUtils'
 
 // 💬 Message management reducers
 export const messageReducers = {
-  addMessage: (state: MedicalChatState, action: { payload: AddMessagePayload & { coreId?: string } }) => {
+  addMessage: (state: MedicalChatState, action: { payload: AddMessagePayload & { coreId?: keyof MedicalChatState['cores'] } }) => {
     const { content, type, metadata, coreId = 'dashboard' } = action.payload
     
     // Create message with proper factory
@@ -47,7 +47,7 @@ export const messageReducers = {
     }
   },
 
-  deleteMessage: (state: MedicalChatState, action: any) => {
+  deleteMessage: (state: MedicalChatState, action: { payload: { messageId: string } }) => {
     const { messageId } = action.payload
     
     // Remove from all cores
@@ -61,7 +61,7 @@ export const messageReducers = {
     }
   },
 
-  clearMessages: (state: MedicalChatState, action: any) => {
+  clearMessages: (state: MedicalChatState, action: { payload: { coreId?: keyof MedicalChatState['cores'] } }) => {
     const { coreId } = action.payload
     
     if (coreId && state.cores[coreId]) {
@@ -79,7 +79,7 @@ export const messageReducers = {
     }
   },
 
-  markMessageAsProcessed: (state: MedicalChatState, action: any) => {
+  markMessageAsProcessed: (state: MedicalChatState, action: { payload: { messageId: string; processingTime?: number; confidence?: number } }) => {
     const { messageId, processingTime, confidence } = action.payload
     
     for (const core of Object.values(state.cores)) {
@@ -105,7 +105,7 @@ export const selectAllMessages = (state: MedicalChatState) => {
 }
 
 export const selectMessagesByCore = (state: MedicalChatState, coreId: string) => {
-  return state.cores[coreId]?.messages || []
+  return state.cores[coreId as keyof typeof state.cores]?.messages || []
 }
 
 export const selectLastMessage = (state: MedicalChatState) => {

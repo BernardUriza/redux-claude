@@ -125,7 +125,7 @@ export const mergeSymptoms = (...symptomArrays: (string[] | undefined)[]): strin
   const allSymptoms = symptomArrays
     .filter(Boolean)
     .flat()
-    .filter(s => s && s !== 'unknown' && s.trim())
+    .filter((s): s is string => s !== undefined && s !== 'unknown' && s.trim() !== '')
   
   return deduplicateSymptoms(allSymptoms)
 }

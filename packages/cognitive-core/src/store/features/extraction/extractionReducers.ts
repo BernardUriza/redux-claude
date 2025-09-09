@@ -1,6 +1,7 @@
 // 🔬 Extraction Feature Reducers - Clean Architecture
 // Creado por Bernard Orozco + Gandalf el Blanco
 
+import { PayloadAction } from '@reduxjs/toolkit'
 import type { MedicalChatState } from '../../types/medicalChatTypes'
 import { createEmptyWipData, updatePatientDataFromExtraction } from '../../utils/medicalChatUtils'
 
@@ -37,9 +38,7 @@ export const createExtractionThunkHandlers = (thunk: any, failureMessage: string
 
     // Clear WIP data and update shared state
     state.medicalExtraction.wipData = createEmptyWipData()
-    if (isComplete && completeness.readyForSOAP) {
-      state.sharedState.readyForSOAP = true
-    }
+    // Note: readyForSOAP logic can be handled at component level
 
     // Update patient data using pure function
     state.sharedState.patientData = updatePatientDataFromExtraction(
@@ -64,7 +63,7 @@ export const createExtractionThunkHandlers = (thunk: any, failureMessage: string
 
 // 🔄 Extraction process actions
 export const extractionProcessReducers = {
-  startExtractionProcess: (state: MedicalChatState, action: any) => {
+  startExtractionProcess: (state: MedicalChatState, action: PayloadAction<{ sessionId: string; maxIterations?: number }>) => {
     const { sessionId, maxIterations = 5 } = action.payload
     state.medicalExtraction.extractionProcess = {
       isExtracting: false,
@@ -79,7 +78,7 @@ export const extractionProcessReducers = {
     }
   },
 
-  completeExtraction: (state: MedicalChatState, action: any) => {
+  completeExtraction: (state: MedicalChatState, action: PayloadAction<any>) => {
     const extractedData = action.payload
     state.medicalExtraction.currentExtraction = extractedData
     state.medicalExtraction.extractionProcess.isExtracting = false
@@ -96,7 +95,7 @@ export const extractionProcessReducers = {
     state.medicalExtraction.extractionProcess.currentIteration += 1
   },
 
-  setExtractionError: (state: MedicalChatState, action: any) => {
+  setExtractionError: (state: MedicalChatState, action: PayloadAction<string>) => {
     state.medicalExtraction.extractionProcess.error = action.payload
     state.medicalExtraction.extractionProcess.isExtracting = false
   },
@@ -119,22 +118,22 @@ export const extractionProcessReducers = {
 
 // 🔄 WIP data management
 export const wipDataReducers = {
-  updateDemographics: (state: MedicalChatState, action: any) => {
+  updateDemographics: (state: MedicalChatState, action: PayloadAction<{ field: string; value: any }>) => {
     const { field, value } = action.payload
     state.medicalExtraction.wipData.demographics[field] = value
   },
 
-  updateSymptoms: (state: MedicalChatState, action: any) => {
+  updateSymptoms: (state: MedicalChatState, action: PayloadAction<{ field: string; value: any }>) => {
     const { field, value } = action.payload
     state.medicalExtraction.wipData.clinical_presentation[field] = value
   },
 
-  updateContext: (state: MedicalChatState, action: any) => {
+  updateContext: (state: MedicalChatState, action: PayloadAction<{ field: string; value: any }>) => {
     const { field, value } = action.payload
     state.medicalExtraction.wipData.symptom_characteristics[field] = value
   },
 
-  updateCompleteness: (state: MedicalChatState, action: any) => {
+  updateCompleteness: (state: MedicalChatState, action: PayloadAction<any>) => {
     // This could trigger completeness recalculation if needed
     // Currently handled by extraction metadata
   },

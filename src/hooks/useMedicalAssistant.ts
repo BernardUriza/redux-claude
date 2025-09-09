@@ -67,13 +67,24 @@ const processSymptomCharacteristics = (data: PatientData) => {
   }
 }
 
+// 🧙‍♂️ Gandalf's Missing Fields Cache - NO MORE RE-RENDERS! - Creado por Bernard Orozco
+const MISSING_FIELDS_CACHE = new Map<string, string[]>()
+
 // Helper functions for metadata calculation
 const calculateMissingFields = (data: PatientData): string[] => {
+  const cacheKey = `${data.age || 'none'}-${data.gender || 'none'}-${data.primarySymptom || 'none'}`
+  if (MISSING_FIELDS_CACHE.has(cacheKey)) {
+    return MISSING_FIELDS_CACHE.get(cacheKey)!
+  }
+  
   const missing: string[] = []
   if (!data.age) missing.push('patient_age_years')
   if (!data.gender) missing.push('patient_gender')
   if (!data.primarySymptom) missing.push('chief_complaint')
-  return missing
+  
+  const result = Object.freeze(missing)
+  MISSING_FIELDS_CACHE.set(cacheKey, result)
+  return result
 }
 
 const calculateMetadata = (data: PatientData) => {
@@ -145,11 +156,24 @@ export const useMedicalAssistant = () => {
   }
 
   const getMissingFields = (): string[] => {
-    return [
-      !patientData.age && 'Edad',
-      !patientData.gender && 'Género',
-      !patientData.primarySymptom && 'Síntoma principal',
-    ].filter(Boolean) as string[]
+    // 🧙‍♂️ Use calculateMissingFields with cache instead of creating fresh arrays
+    const technicalMissing = calculateMissingFields(patientData)
+    
+    // Map technical fields to user-friendly Spanish labels with stable cache
+    const cacheKey = technicalMissing.join(',')
+    if (MISSING_FIELDS_CACHE.has(`spanish-${cacheKey}`)) {
+      return MISSING_FIELDS_CACHE.get(`spanish-${cacheKey}`)!
+    }
+    
+    const fieldMap: Record<string, string> = {
+      'patient_age_years': 'Edad',
+      'patient_gender': 'Género', 
+      'chief_complaint': 'Síntoma principal',
+    }
+    
+    const result = Object.freeze(technicalMissing.map(field => fieldMap[field]).filter(Boolean))
+    MISSING_FIELDS_CACHE.set(`spanish-${cacheKey}`, result)
+    return result
   }
 
   return {

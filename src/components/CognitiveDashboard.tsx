@@ -115,13 +115,17 @@ export const CognitiveDashboard = () => {
 
   // Loading completion handler
   const handleLoadingComplete = () => {
+    console.log('🧙‍♂️ GANDALF DEBUG: handleLoadingComplete called, setting isAppLoading to false')
     setIsAppLoading(false)
-    setTimeout(() => setShowMainApp(true), 100)
+    setTimeout(() => {
+      console.log('🧙‍♂️ GANDALF DEBUG: Setting showMainApp to true')
+      setShowMainApp(true)
+    }, 100)
   }
 
   // Show loading screen if app is loading
   if (isAppLoading) {
-    return <LoadingScreen onLoadingComplete={handleLoadingComplete} duration={3000} />
+    return <LoadingScreen onLoadingComplete={handleLoadingComplete} duration={1000} />
   }
 
   return (

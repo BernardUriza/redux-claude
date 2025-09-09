@@ -45,11 +45,13 @@ export const LoadingScreen = ({ onLoadingComplete, duration = 3000 }: LoadingScr
 
           // Fade out después de completar
           setTimeout(() => {
+            console.log('🧙‍♂️ GANDALF DEBUG: LoadingScreen completing, calling onLoadingComplete')
             setIsVisible(false)
             setTimeout(() => {
+              console.log('🧙‍♂️ GANDALF DEBUG: Executing onLoadingComplete callback')
               onLoadingComplete?.()
-            }, 500) // Esperar que termine el fade out
-          }, 500)
+            }, 100) // Reducir delay para transición más rápida
+          }, 200) // Reducir delay inicial
 
           return prev
         }

@@ -4,6 +4,17 @@
 
 import { useSelector, useDispatch } from 'react-redux'
 import { useMemo } from 'react'
+
+// 💀 CONSTANTES ESTÁTICAS BRUTALES - No más referencias frescas
+const EMPTY_MEDICAL_HISTORY: string[] = []
+const EMPTY_FAMILY_HISTORY: string[] = []
+const EMPTY_LAB_RESULTS: any[] = []
+const EMPTY_DIFFERENTIAL_DX: string[] = []
+const EMPTY_MEDICATIONS: any[] = []
+const EMPTY_PATIENT_EDUCATION: string[] = []
+
+// 🧠 CACHE INTELIGENTE para operaciones string-to-array que causan re-renders
+const STRING_ARRAY_CACHE = new Map<string, { immediate: string[], followUp: string[] }>()
 import type { RootState } from '@redux-claude/cognitive-core'
 import {
   selectCurrentSOAPAnalysis,
@@ -67,38 +78,47 @@ export const useSOAPData = (): SOAPDataState & SOAPDataActions => {
         ? {
             chiefComplaint: soapAnalysis.subjective.split('\n')[0] || '',
             presentIllness: soapAnalysis.subjective || '',
-            medicalHistory: [],
-            familyHistory: [],
+            medicalHistory: EMPTY_MEDICAL_HISTORY,
+            familyHistory: EMPTY_FAMILY_HISTORY,
           }
         : null,
       objetivo: soapAnalysis.objective
         ? {
             vitalSigns: {},
             physicalExam: { general: soapAnalysis.objective },
-            labResults: [],
+            labResults: EMPTY_LAB_RESULTS,
           }
         : null,
       analisis: soapAnalysis.assessment
         ? {
             primaryDx: soapAnalysis.assessment,
             confidence: soapAnalysis.confidence,
-            differentialDx: [],
+            differentialDx: EMPTY_DIFFERENTIAL_DX,
             reasoning: soapAnalysis.assessment,
           }
         : null,
       plan: soapAnalysis.plan
-        ? {
-            immediateActions: soapAnalysis.plan
-              .split('\n')
-              .filter(line => line.trim())
-              .slice(0, 3), // Limit to first 3 actions
-            medications: [],
-            followUp: soapAnalysis.plan
-              .split('\n')
-              .filter(line => line.trim())
-              .slice(3), // Remaining as follow-up
-            patientEducation: [],
-          }
+        ? (() => {
+            // 🧠 CACHE BRUTAL: evita crear arrays frescos en cada render
+            const cacheKey = soapAnalysis.plan
+            let cachedResult = STRING_ARRAY_CACHE.get(cacheKey)
+            
+            if (!cachedResult) {
+              const lines = soapAnalysis.plan.split('\n').filter(line => line.trim())
+              cachedResult = {
+                immediate: lines.slice(0, 3),
+                followUp: lines.slice(3)
+              }
+              STRING_ARRAY_CACHE.set(cacheKey, cachedResult)
+            }
+
+            return {
+              immediateActions: cachedResult.immediate,
+              medications: EMPTY_MEDICATIONS,
+              followUp: cachedResult.followUp,
+              patientEducation: EMPTY_PATIENT_EDUCATION,
+            }
+          })()
         : null,
     }
   }, [soapAnalysis])

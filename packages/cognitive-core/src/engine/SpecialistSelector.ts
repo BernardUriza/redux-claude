@@ -116,6 +116,9 @@ FORMATO REQUERIDO - Como decisión de triage:
 }`
   }
 
+  // 💀 CONSTANTE ESTÁTICA BRUTAL para evitar referencias frescas
+  private static readonly EMPTY_SPECIALISTS: SpecialistConfig[] = []
+
   /**
    * 🔍 Parsea respuesta de selección de agentes
    */
@@ -132,7 +135,7 @@ FORMATO REQUERIDO - Como decisión de triage:
       console.warn('Error parsing specialist selection:', error)
     }
 
-    return []
+    return SpecialistSelector.EMPTY_SPECIALISTS
   }
 
   /**

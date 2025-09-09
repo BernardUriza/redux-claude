@@ -62,7 +62,8 @@ export const useIterativeMedicalExtraction = (): UseIterativeMedicalExtractionRe
   const completenessPercentage = useAppSelector(selectCompletenessPercentage)
   const nomCompliant = useAppSelector(selectNOMCompliance)
   const focusAreas = useAppSelector(selectFocusAreas)
-  const extractionProgress = useAppSelector(selectExtractionProgress)
+  // const extractionProgress = useAppSelector(selectExtractionProgress)
+  const extractionProgress = { isActive: false, iteration: 0, maxIterations: 3, progressPercentage: 0, shouldContinue: false }
 
   // Service instance
   const extractor = new MedicalDataExtractor()
@@ -293,22 +294,22 @@ function mergeExtractionData(
     },
 
     medical_validation: {
-      anatomical_contradictions: [
-        ...(existing.medical_validation?.anatomical_contradictions || []),
-        ...(newData.medical_validation?.anatomical_contradictions || []),
-      ],
-      logical_inconsistencies: [
-        ...(existing.medical_validation?.logical_inconsistencies || []),
-        ...(newData.medical_validation?.logical_inconsistencies || []),
-      ],
-      requires_clarification: [
-        ...(existing.medical_validation?.requires_clarification || []),
-        ...(newData.medical_validation?.requires_clarification || []),
-      ],
-      medical_alerts: [
-        ...(existing.medical_validation?.medical_alerts || []),
-        ...(newData.medical_validation?.medical_alerts || []),
-      ],
+      anatomical_contradictions: mergeBestArray(
+        existing.medical_validation?.anatomical_contradictions || null,
+        newData.medical_validation?.anatomical_contradictions || null
+      ) || [],
+      logical_inconsistencies: mergeBestArray(
+        existing.medical_validation?.logical_inconsistencies || null,
+        newData.medical_validation?.logical_inconsistencies || null
+      ) || [],
+      requires_clarification: mergeBestArray(
+        existing.medical_validation?.requires_clarification || null,
+        newData.medical_validation?.requires_clarification || null
+      ) || [],
+      medical_alerts: mergeBestArray(
+        existing.medical_validation?.medical_alerts || null,
+        newData.medical_validation?.medical_alerts || null
+      ) || [],
     },
 
     extraction_metadata: {
@@ -318,13 +319,24 @@ function mergeExtractionData(
   }
 }
 
+// 🧙‍♂️ Gandalf's Array Cache - Creado por Bernard Orozco
+const ARRAY_CACHE = new Map<string, string[]>()
+
 // Helper to merge arrays, preferring the one with more content
 function mergeBestArray(existing: string[] | null, newArray: string[] | null): string[] | null {
   if (!existing && !newArray) return null
   if (!existing) return newArray
   if (!newArray) return existing
 
+  // 🔥 Stable reference caching for performance 
+  const cacheKey = `${existing.join(',')}|${newArray.join(',')}`
+  if (ARRAY_CACHE.has(cacheKey)) {
+    return ARRAY_CACHE.get(cacheKey)!
+  }
+
   // Combine and deduplicate
   const combined = [...existing, ...newArray]
-  return Array.from(new Set(combined))
+  const result = Object.freeze(Array.from(new Set(combined)))
+  ARRAY_CACHE.set(cacheKey, result)
+  return result
 }

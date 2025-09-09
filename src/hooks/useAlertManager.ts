@@ -2,7 +2,7 @@
 // Alert state management hook - extracted from AlertSystem.tsx
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { medicalSystemMonitor, PerformanceAlert } from '../monitoring/MedicalSystemMonitor'
 import { CALCULATION_FACTORS } from '../constants/magicNumbers'
 
@@ -114,8 +114,10 @@ export const useAlertManager = ({ maxVisible, autoHide, hideDelay }: UseAlertMan
     }
   }, [handleNewAlert, maxVisible])
 
-  // Filtrar alertas visibles
-  const visibleAlertsList = alerts.filter(alert => visibleAlerts.has(alert.id)).slice(0, maxVisible)
+  // 💀 MEMOIZACIÓN BRUTAL: evita crear array fresco en cada render
+  const visibleAlertsList = useMemo(() => {
+    return alerts.filter(alert => visibleAlerts.has(alert.id)).slice(0, maxVisible)
+  }, [alerts, visibleAlerts, maxVisible])
 
   return {
     alerts,

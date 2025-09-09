@@ -400,8 +400,9 @@ export const CognitiveAgentsPanel = ({
     return () => clearInterval(interval)
   }, [agents.length])
 
-  const activeAgents = agents.filter(agent => agent.status !== 'idle')
-  const completedAgents = agents.filter(agent => agent.status === 'completed')
+  // 🧙‍♂️ Gandalf's Agent Filter Cache - NO MORE RE-RENDERS! - Creado por Bernard Orozco
+  const activeAgents = useMemo(() => agents.filter(agent => agent.status !== 'idle'), [agents])
+  const completedAgents = useMemo(() => agents.filter(agent => agent.status === 'completed'), [agents])
 
   if (agents.length === 0) {
     return <EmptyAgentsState />

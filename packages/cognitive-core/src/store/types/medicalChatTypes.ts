@@ -24,6 +24,7 @@ export interface ChatCore {
   isLoading: boolean
   lastActivity: number
   sessionId: string
+  completedTasks: number
 }
 
 // 👤 Patient Data Domain
@@ -120,6 +121,7 @@ export interface WipData {
 export interface AddMessagePayload {
   content: string
   type: 'user' | 'assistant'
+  confidence?: number
   metadata?: MedicalMessage['metadata']
 }
 

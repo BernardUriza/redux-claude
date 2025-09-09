@@ -70,6 +70,7 @@ const createInitialChatCore = (type: 'dashboard' | 'assistant'): ChatCore => ({
   isLoading: false,
   lastActivity: Date.now(),
   sessionId: `${type}_session_${Date.now()}`,
+  completedTasks: 0,
 })
 
 const initialState: MedicalChatState = {
@@ -159,12 +160,14 @@ const medicalChatSlice = createSlice({
     },
 
     // 🔄 Session Management
-    resetSession: (state) => {
+    resetSession: (state, action: PayloadAction<{ patientId?: string } | undefined>) => {
       const newSessionId = `session_${Date.now()}`
+      const patientId = action.payload?.patientId
       state.sharedState.currentSession = {
         id: newSessionId,
         startTime: Date.now(),
         messageCount: 0,
+        patientId,
       }
       state.sharedState.patientData = createEmptyPatientData()
       state.sharedState.lastActivity = Date.now()
@@ -174,6 +177,7 @@ const medicalChatSlice = createSlice({
         state.cores[coreId].messages = []
         state.cores[coreId].isLoading = false
         state.cores[coreId].sessionId = `${coreId}_${newSessionId}`
+        state.cores[coreId].completedTasks = 0
       }
     },
   },
@@ -227,7 +231,10 @@ export const {
   resetSession,
 } = medicalChatSlice.actions
 
-// 🔄 LEGACY ACTION MAPPINGS - Backwards Compatibility
+// 🎯 Essential legacy functions (minimal set for app compatibility)
+export const startNewSession = resetSession
+
+// Core-specific legacy helpers (temporary until refactor)
 export const addDashboardMessage = (payload: AddMessagePayload) => 
   addMessage({ ...payload, coreId: 'dashboard' })
 export const addAssistantMessage = (payload: AddMessagePayload) => 
@@ -243,8 +250,9 @@ export const clearDashboardMessages = () =>
 export const clearAssistantMessages = () => 
   clearMessages({ coreId: 'assistant' })
 
-export const startNewSession = resetSession
 export const setError = (error: string) => setCoreError({ coreId: 'dashboard', error })
+
+// ✅ Actions already exported above (line 196-230) - No duplication needed
 
 export default medicalChatSlice.reducer
 

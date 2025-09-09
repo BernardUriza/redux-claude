@@ -3,7 +3,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState } from '@redux-claude/cognitive-core'
 import { selectPhysicianNotes } from '@redux-claude/cognitive-core/src/store/selectors'
@@ -169,33 +169,14 @@ const AddNoteModal = ({ isOpen, onClose, onAdd }: AddNoteModalProps) => {
 const NotesFilterTabs = ({
   filter,
   setFilter,
-  notes,
-  notesCount,
+  tabsData,
 }: {
   filter: 'all' | 'clinical' | 'administrative' | 'legal' | 'observation'
   setFilter: (filter: 'all' | 'clinical' | 'administrative' | 'legal' | 'observation') => void
-  notes: PhysicianNote[]
-  notesCount: number
+  tabsData: Array<{ key: 'all' | 'clinical' | 'administrative' | 'legal', label: string, count: number }>
 }) => (
   <div className="flex space-x-1 bg-slate-800/50 rounded-lg p-1">
-    {[
-      { key: 'all' as const, label: 'Todas', count: notesCount },
-      {
-        key: 'clinical' as const,
-        label: 'Clínicas',
-        count: notes.filter(n => n.type === 'clinical').length,
-      },
-      {
-        key: 'administrative' as const,
-        label: 'Admin',
-        count: notes.filter(n => n.type === 'administrative').length,
-      },
-      {
-        key: 'legal' as const,
-        label: 'Legales',
-        count: notes.filter(n => n.type === 'legal').length,
-      },
-    ].map(tab => (
+    {tabsData.map(tab => (
       <button
         key={tab.key}
         onClick={() => setFilter(tab.key)}
@@ -317,33 +298,34 @@ export const MedicalNotes = () => {
   >('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'priority'>('newest')
 
-  // Transformar datos reales del selector a formato legacy para compatibilidad
-  const notes: PhysicianNote[] = realPhysicianNotes.map(note => ({
-    id: note.id,
-    type:
-      note.category === 'diagnosis'
-        ? 'clinical'
-        : note.category === 'treatment'
+  // 💀 MEMOIZACIÓN BRUTAL: evita crear array fresco de notes en cada render
+  const notes: PhysicianNote[] = useMemo(() => 
+    realPhysicianNotes.map(note => ({
+      id: note.id,
+      type:
+        note.category === 'diagnosis'
           ? 'clinical'
-          : note.category === 'observation'
-            ? 'observation'
-            : note.category === 'plan'
-              ? 'administrative'
-              : ('clinical' as 'clinical' | 'administrative' | 'legal' | 'observation'),
-    content: note.content,
-    category: note.title || note.category,
-    priority:
-      note.confidence > PRIORITY_HIGH_THRESHOLD
-        ? 'high'
-        : note.confidence > PRIORITY_MEDIUM_THRESHOLD
-          ? 'medium'
-          : note.confidence > PRIORITY_LOW_THRESHOLD
-            ? 'low'
-            : 'critical',
-    timestamp: note.createdAt,
-    physicianId: 'sistema-multinucleo',
-    physicianName: 'Sistema Multinúcleo IA',
-  }))
+          : note.category === 'treatment'
+            ? 'clinical'
+            : note.category === 'observation'
+              ? 'observation'
+              : note.category === 'plan'
+                ? 'administrative'
+                : ('clinical' as 'clinical' | 'administrative' | 'legal' | 'observation'),
+      content: note.content,
+      category: note.title || note.category,
+      priority:
+        note.confidence > PRIORITY_HIGH_THRESHOLD
+          ? 'high'
+          : note.confidence > PRIORITY_MEDIUM_THRESHOLD
+            ? 'medium'
+            : note.confidence > PRIORITY_LOW_THRESHOLD
+              ? 'low'
+              : 'critical',
+      timestamp: note.createdAt,
+      physicianId: 'sistema-multinucleo',
+      physicianName: 'Sistema Multinúcleo IA',
+    })), [realPhysicianNotes])
 
   // Debug real notes (no fake data)
   console.log('📝 MedicalNotes DEBUG - Real Notes:', realPhysicianNotes)
@@ -362,25 +344,52 @@ export const MedicalNotes = () => {
     )
   }
 
-  const filteredNotes = notes
-    .filter(note => filter === 'all' || note.type === filter)
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'newest':
-          return b.timestamp - a.timestamp
-        case 'oldest':
-          return a.timestamp - b.timestamp
-        case 'priority': {
-          const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 }
-          return priorityOrder[b.priority] - priorityOrder[a.priority]
+  // 💀 MEMOIZACIÓN BRUTAL: filteredNotes evita crear array fresco en cada render
+  const filteredNotes = useMemo(() => {
+    return notes
+      .filter(note => filter === 'all' || note.type === filter)
+      .sort((a, b) => {
+        switch (sortBy) {
+          case 'newest':
+            return b.timestamp - a.timestamp
+          case 'oldest':
+            return a.timestamp - b.timestamp
+          case 'priority': {
+            const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 }
+            return priorityOrder[b.priority] - priorityOrder[a.priority]
+          }
+          default:
+            return b.timestamp - a.timestamp
         }
-        default:
-          return b.timestamp - a.timestamp
-      }
-    })
+      })
+  }, [notes, filter, sortBy])
 
   const notesCount = notes.length
-  const urgentCount = notes.filter(n => n.priority === 'critical' || n.priority === 'high').length
+  
+  // 💀 MEMOIZACIÓN BRUTAL: urgentCount evita filter en cada render
+  const urgentCount = useMemo(() => {
+    return notes.filter(n => n.priority === 'critical' || n.priority === 'high').length
+  }, [notes])
+
+  // 💀 MEMOIZACIÓN BRUTAL: tabs evita múltiples filter() en cada render
+  const tabsData = useMemo(() => [
+    { key: 'all' as const, label: 'Todas', count: notesCount },
+    {
+      key: 'clinical' as const,
+      label: 'Clínicas',
+      count: notes.filter(n => n.type === 'clinical').length,
+    },
+    {
+      key: 'administrative' as const,
+      label: 'Admin',
+      count: notes.filter(n => n.type === 'administrative').length,
+    },
+    {
+      key: 'legal' as const,
+      label: 'Legales',
+      count: notes.filter(n => n.type === 'legal').length,
+    },
+  ], [notes, notesCount])
 
   return (
     <div className="space-y-6">
@@ -411,8 +420,7 @@ export const MedicalNotes = () => {
         <NotesFilterTabs
           filter={filter}
           setFilter={setFilter}
-          notes={notes}
-          notesCount={notesCount}
+          tabsData={tabsData}
         />
 
         <select

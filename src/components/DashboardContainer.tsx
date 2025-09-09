@@ -9,6 +9,8 @@ import MedicalAssistant from './MedicalAssistant'
 import type { ActiveMetricsTab, UrgencyData } from '../types/dashboard'
 import type { MedicalMessage } from '@redux-claude/cognitive-core'
 
+import { MedicalChat } from './MedicalChat'
+
 // Wrapper para MedicalChat con props agrupadas
 const MedicalChatWrapper = ({
   messages,
@@ -53,7 +55,6 @@ const MedicalChatWrapper = ({
   onOpenAssistant: (input: string) => void
   triggerHaptic?: (type: 'light' | 'medium' | 'heavy') => void
 }) => {
-  const { MedicalChat } = require('./MedicalChat')
   return (
     <MedicalChat
       messages={messages}

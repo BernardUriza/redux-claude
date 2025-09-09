@@ -16,10 +16,9 @@ export { ClaudeAdapter } from './decision-engine/providers/claude'
 // === VALIDATORS ===
 export {
   validateMedicalInput,
-  validateMedicalCase,
   generateRejectionMessage,
 } from './utils/aiMedicalValidator'
-export type { AIValidationResult, LegacyMedicalValidationResult } from './utils/aiMedicalValidator'
+export type { AIValidationResult } from './utils/aiMedicalValidator'
 export type { MedicalValidationResult } from './types/medical'
 
 // === MEDICINA DEFENSIVA (FASE 3) ===
@@ -89,7 +88,7 @@ export {
   incrementIteration,
   setExtractionError,
   clearExtractionData,
-  resetExtractionForNewSession,
+  resetSession,
 } from './store/medicalChatSlice'
 
 // === SELECTORS MEMOIZADOS ===
@@ -109,7 +108,7 @@ export {
 } from './store/medicalChatSlice'
 
 // === ASYNC THUNKS ===
-export { extractMedicalDataThunk, continueExtractionThunk } from './store/medicalChatSlice'
+export { extractMedicalDataThunk, continueExtractionThunk } from './store/extractionThunks'
 
 // === HOOKS ===
 export { useIterativeMedicalExtraction } from './hooks/useIterativeMedicalExtraction'

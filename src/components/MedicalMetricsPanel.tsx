@@ -45,7 +45,7 @@ export const MedicalMetricsPanel: React.FC<MedicalMetricsPanelProps> = ({
 }) => {
   return (
     <div
-      className={`${sidebarCollapsed ? 'collapsed' : 'expanded'} flex-shrink-0 w-80 lg:w-96 bg-gradient-to-b from-slate-800/30 to-slate-900/50 backdrop-blur-xl border-l border-slate-700/50`}
+      className={`${sidebarCollapsed ? 'collapsed' : 'expanded'} flex-shrink-0 w-64 lg:w-72 bg-gradient-to-b from-slate-800/30 to-slate-900/50 backdrop-blur-xl border-l border-slate-700/50`}
     >
       <MetricsHeader cognitiveMetrics={cognitiveMetrics} messagesCount={messagesCount} />
 

@@ -3,7 +3,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useDispatch } from 'react-redux'
 // import { useSelector } from 'react-redux'
 // import type { RootState } from '@redux-claude/cognitive-core'
@@ -283,29 +283,33 @@ export const FollowUpTracker = () => {
   const [showAddModal, setShowAddModal] = useState(false)
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('pending')
 
-  const filteredReminders = mockReminders
-    .filter(reminder => {
-      switch (filter) {
-        case 'pending':
-          return !reminder.completed
-        case 'completed':
-          return reminder.completed
-        default:
-          return true
-      }
-    })
-    .sort((a, b) => {
-      // Prioritize by completion status, then by due date
-      if (a.completed !== b.completed) {
-        return a.completed ? 1 : -1
-      }
-      return a.dueDate - b.dueDate
-    })
+  // 🧙‍♂️ Gandalf's Reminder Cache - NO MORE RE-RENDERS! - Creado por Bernard Orozco
+  const filteredReminders = useMemo(() => {
+    return mockReminders
+      .filter(reminder => {
+        switch (filter) {
+          case 'pending':
+            return !reminder.completed
+          case 'completed':
+            return reminder.completed
+          default:
+            return true
+        }
+      })
+      .sort((a, b) => {
+        // Prioritize by completion status, then by due date
+        if (a.completed !== b.completed) {
+          return a.completed ? 1 : -1
+        }
+        return a.dueDate - b.dueDate
+      })
+  }, [mockReminders, filter])
 
-  const pendingCount = mockReminders.filter(r => !r.completed).length
-  const overdueCount = mockReminders.filter(
-    r => !r.completed && new Date(r.dueDate) < new Date()
-  ).length
+  const pendingCount = useMemo(() => mockReminders.filter(r => !r.completed).length, [mockReminders])
+  const overdueCount = useMemo(() => 
+    mockReminders.filter(r => !r.completed && new Date(r.dueDate) < new Date()).length, 
+    [mockReminders]
+  )
 
   return (
     <div className="space-y-6">

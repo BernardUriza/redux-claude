@@ -2,6 +2,7 @@
 // Los 5 Selectores Magistrales que DESTRUYEN el Mock Data para siempre
 
 import { createSelector } from '@reduxjs/toolkit'
+
 import type {
   SOAPAnalysis,
   SystemMetrics,
@@ -21,6 +22,10 @@ import {
 } from '../../types/medicalInterfaces'
 import type { RootState } from '../store'
 import type { MedicalMessage } from '../medicalChatSlice'
+
+// 🧙‍♂️ Gandalf's Stable References - NO MORE RE-RENDERS! - Creado por Bernard Orozco
+const EMPTY_REMINDERS: PatientReminder[] = []
+const EMPTY_NOTES: PhysicianNote[] = []
 
 // === UTILITY FUNCTIONS FOR EXTRACTION ===
 
@@ -92,8 +97,8 @@ const extractPlanFromMessages = (messages: MedicalMessage[]): string | null => {
 // 📊 Calcular métricas del sistema
 const calculateConfidenceFromMessages = (messages: MedicalMessage[]): number => {
   const confidenceScores = messages
-    .filter(msg => msg.confidence && msg.confidence > 0)
-    .map(msg => msg.confidence!)
+    .filter(msg => msg.metadata?.confidence && msg.metadata.confidence > 0)
+    .map(msg => msg.metadata!.confidence!)
 
   if (confidenceScores.length === 0) return 0
 
@@ -170,7 +175,7 @@ const extractCompletedPhases = (messages: MedicalMessage[]): DiagnosticPhase[] =
     phases.push('analysis')
   if (
     messages.some(
-      m => m.metadata?.sectionType === 'diagnosis' && m.confidence && m.confidence > 0.7
+      m => m.metadata?.sectionType === 'diagnosis' && m.metadata?.confidence && m.metadata?.confidence > 0.7
     )
   )
     phases.push('diagnosis')
@@ -212,8 +217,8 @@ export const selectCurrentSOAPAnalysis = createSelector(
 
     // Calcular confianza real (no mock)
     const confidenceScores = medicalMessages
-      .filter(msg => msg.confidence)
-      .map(msg => msg.confidence!)
+      .filter(msg => msg.metadata?.confidence)
+      .map(msg => msg.metadata?.confidence || 0)
     const avgConfidence =
       confidenceScores.length > 0
         ? confidenceScores.reduce((a, b) => a + b, 0) / confidenceScores.length
@@ -297,8 +302,8 @@ export const selectSystemMetrics = createSelector(
         assistant: createCoreMetrics(assistant),
         // 🪦 inference eliminado por decreto de Gandalf
       },
-      uptime: Date.now() - sharedState.currentSession.startedAt,
-      avgSessionDuration: Date.now() - sharedState.currentSession.startedAt, // Simplified
+      uptime: Date.now() - sharedState.currentSession.startTime,
+      avgSessionDuration: Date.now() - sharedState.currentSession.startTime, // Simplified
       peakLoadTime: Date.now(), // Simplified
     }
   }
@@ -339,7 +344,7 @@ export const selectDiagnosticProgress = createSelector(
 
     // Tendencia de confianza
     const recentMessages = medicalMessages.slice(-5)
-    const recentConfidences = recentMessages.filter(m => m.confidence).map(m => m.confidence!)
+    const recentConfidences = recentMessages.filter(m => m.metadata?.confidence).map(m => m.metadata?.confidence || 0)
     let confidenceTrend: DiagnosticProgress['confidenceTrend'] = 'stable'
     if (recentConfidences.length > 2) {
       const first = recentConfidences[0]
@@ -402,7 +407,7 @@ export const selectPatientReminders = createSelector(
       msg => msg.metadata?.sectionType === 'followup' || msg.metadata?.sectionType === 'treatment'
     )
 
-    if (followupMessages.length === 0) return []
+    if (followupMessages.length === 0) return EMPTY_REMINDERS
 
     const reminders: PatientReminder[] = []
 
@@ -491,7 +496,7 @@ export const selectPhysicianNotes = createSelector(
         msg.id !== 'welcome_multinucleus'
     )
 
-    if (noteWorthyMessages.length === 0) return []
+    if (noteWorthyMessages.length === 0) return EMPTY_NOTES
 
     const notes: PhysicianNote[] = noteWorthyMessages.map((message, index) => {
       // Mapear sectionType a category
@@ -526,7 +531,7 @@ export const selectPhysicianNotes = createSelector(
 
       // Determinar importancia
       const isImportant =
-        (message.confidence || 0) > 0.8 || tags.includes('urgent') || category === 'diagnosis'
+        (message.metadata?.confidence || 0) > 0.8 || tags.includes('urgent') || category === 'diagnosis'
 
       return {
         id: `note_${message.id}_${index}`,
@@ -537,8 +542,8 @@ export const selectPhysicianNotes = createSelector(
         category,
         tags,
         specialtyRelevant: ['general_medicine'], // Simplified
-        confidence: message.confidence || 0,
-        qualityScore: Math.min((message.confidence || 0) + 0.2, 1),
+        confidence: message.metadata?.confidence || 0,
+        qualityScore: Math.min((message.metadata?.confidence || 0) + 0.2, 1),
         isImportant,
         createdAt: message.timestamp,
         lastModified: message.timestamp,
