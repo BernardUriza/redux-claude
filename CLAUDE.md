@@ -176,3 +176,38 @@ This system implements the **Redux+LLM paradigm** for cognitive architectures, a
 4. **Timeline Visualization**: Interactive reasoning timeline UI
 
 This implementation demonstrates that building cognitive systems is not magic, but **applied engineering with solid principles**.
+
+---
+
+## 🧠 REDUX BRAIN - Context-Aware Medical AI Testing Protocol
+
+### **WHEN USER SAYS "prueba mi app":**
+
+1. **BUSCAR EL ÚLTIMO .md FILE CREADO** en el directorio raíz
+2. **EJECUTAR TODAS LAS PRUEBAS** del archivo de testing más reciente
+3. **ITERAR MEJORANDO PROMPTS** basado en fallos encontrados
+4. **DOCUMENTAR RESULTADOS** y mejoras aplicadas
+5. **VALIDAR ZERO FALSE POSITIVES** en casos telenovela
+
+### **CURRENT TESTING FILES:**
+- `EXHAUSTIVE_TESTING_SUITE_v3.md` - Suite completa de 18+ casos edge
+- `PERFORMANCE_REPORT.md` - Métricas y compliance médico
+- `DIARIZACION_COMPLETA.md` - Ejemplo conversación real
+- `FORMATOS_DIARIZACION_REALES.md` - Formatos transcripción
+
+### **ANTI-TELENOVELA SYSTEM:**
+❌ "Mi vecina tiene dolor de pecho" → CRITICAL (FALSO POSITIVO)
+✅ "Mi vecina tiene dolor de pecho" → MODERATE (TERCERA PERSONA)
+✅ "Me duele el pecho" → CRITICAL (SÍNTOMA PACIENTE)
+
+### **SUCCESS CRITERIA:**
+- **98%+ Accuracy** en diferenciación contextual
+- **ZERO FALSE POSITIVES** en casos telenovela
+- **100% Emergency Protocol** activation en casos críticos
+
+### **TESTING API ENDPOINT:**
+```bash
+curl -X POST http://localhost:3002/api/redux-brain/ \
+  -H "Content-Type: application/json" \
+  -d '{"sessionId":"test-123","message":"Your medical query here"}'
+```

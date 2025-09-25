@@ -180,34 +180,41 @@ CRITICAL CONTEXT - USE THIS TO MAKE DECISIONS:
 
 NEW INPUT TO ANALYZE: "${input}"
 
-CONTEXTUAL REASONING RULES - CRITICAL FOR ACCURACY:
-1. "Mi papá murió de infarto" = FAMILY HISTORY (not current emergency)
-2. "Me duele el pecho ahora" = CURRENT SYMPTOM (potential emergency)
-3. "El doctor dijo que era infarto" = PAST DIAGNOSIS (not current emergency)
-4. "Mi vecina dice que le duele el pecho" = THIRD PARTY STORY (not current emergency)
-5. "Cuando a ella le da dolor..." = SOMEONE ELSE'S SYMPTOMS (not patient)
-6. Multiple symptoms in SAME PATIENT = SYNDROME CLUSTER (higher urgency)
-7. Age + symptom severity = RISK STRATIFICATION
+ANTI-TELENOVELA RULES - CRITICAL FOR ACCURACY:
+1. WHO IS THE PATIENT?
+   - "ME duele" / "TENGO dolor" / "SIENTO" = PATIENT SYMPTOMS → Assess urgency normally
+   - "Mi vecina/amigo dice que LE duele" = THIRD PARTY STORY → LOW/MODERATE (not patient)
+   - "Mi hijo/bebé que está aquí tiene..." = PATIENT PRESENT → Assess urgency normally
+   - "¿Qué opina de...?" = MEDICAL QUESTION → MODERATE
 
-WHO IS THE PATIENT? CRITICAL DISTINCTION:
-- "ME duele" / "TENGO dolor" = PATIENT SYMPTOMS → Assess urgency
-- "Mi vecina/mamá/amigo tiene..." = OTHER PERSON → Usually LOW urgency (unless asking for someone present)
-- "¿Qué opina de...?" = MEDICAL QUESTION → Usually LOW urgency
+2. TEMPORAL CONTEXT - CRITICAL:
+   - "hace X tiempo" / "el mes pasado" / "ayer tuve" = PAST → Context only, NOT current urgency
+   - "ahora" / "actualmente" / "tengo" / "me duele" = CURRENT → Assess urgency
+   - Example: "El mes pasado tuve dolor de pecho, pero ahora me duele la espalda" = CURRENT: back pain
+
+3. PEDIATRIC CRITICAL RULES:
+   - Age < 0.25 years (3 months) with fever = CRITICAL (neonatal sepsis risk)
+   - Age 0.167 years = 2 months (NOT 2 years!)
+   - Infant + fever + lethargy = CRITICAL
+
+4. FAMILY HISTORY vs CURRENT SYMPTOMS:
+   - "Mi papá murió de infarto" = FAMILY HISTORY → Context only
+   - "Tengo dolor como el que tuvo mi papá" = CURRENT SYMPTOMS + context → Assess urgency
 
 Return JSON:
 {
   "level": "CRITICAL|HIGH|MODERATE|LOW",
   "protocol": "specific protocol name or null",
   "actions": ["array of immediate actions"],
-  "pediatricFlag": boolean,
-  "reasoning": "detailed contextual analysis explaining WHY this urgency level"
+  "pediatricFlag": boolean (true if age < 18 years),
+  "reasoning": "detailed contextual analysis explaining WHY this urgency level, who is the patient, and temporal context"
 }
 
-PROTOCOLS:
-- CRITICAL: Life-threatening (MI, stroke, sepsis, respiratory failure)
-- HIGH: Urgent but stable (hypertensive crisis, severe pain, pediatric fever >39°C)
-- MODERATE: Important but can wait (chronic pain flare, medication questions)
-- LOW: Information, family history, casual conversation`
+URGENCY LEVELS:
+- CRITICAL: Life-threatening, immediate action (<15 min) - MI, stroke, sepsis, anaphylaxis, neonatal fever
+- HIGH: Urgent but stable (<2 hours) - severe pain, adult fever >39°C, respiratory distress
+- MODERATE: Important but can wait (<24 hours) - medication questions, non-urgent symptoms
+- LOW: Information, family history, casual conversation, third-party stories`
 
   try {
     const response = await callClaude(contextualPrompt, input)
@@ -283,13 +290,29 @@ async function validateInput(input: string): Promise<{
 }> {
   const systemPrompt = `You are a medical input validator. Analyze the input and respond in Spanish.
 
+CRITICAL AGE PARSING RULES - PEDIATRIC SAFETY:
+- "X meses" = X/12 years (e.g., "2 meses" = 0.167 years, "6 meses" = 0.5 years)
+- "X días" = X/365 years (e.g., "15 días" = 0.041 years)
+- "X semanas" = X/52 years (e.g., "3 semanas" = 0.058 years)
+- "X años" = X years (e.g., "5 años" = 5 years)
+- If unclear, return null for age
+
+TEMPORAL CONTEXT RULES:
+- "hace X tiempo" / "el mes pasado" / "ayer" = HISTÓRICO (not current emergency)
+- "ahora" / "actualmente" / "tengo" / "siento" = ACTUAL (current symptoms)
+
+WHO IS THE PATIENT - CRITICAL:
+- "Mi bebé/hijo/hija tiene..." = PATIENT (if present with parent)
+- "Mi vecina/amigo dice..." = THIRD PARTY (not patient)
+- "Tengo/siento/me duele" = PATIENT DIRECT
+
 Return a JSON object:
 {
   "isValid": true/false,
   "category": "greeting|partial_medical|valid_medical|mixed|follow_up",
   "message": "Personalized response in Spanish",
   "extractedInfo": {
-    "age": number or null,
+    "age": number or null (CAREFUL WITH MONTHS/DAYS - USE DECIMAL YEARS),
     "gender": "string or null",
     "symptoms": ["array of symptoms"],
     "duration": "string or null"

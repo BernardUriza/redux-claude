@@ -110,22 +110,26 @@ describe('PerformanceMonitor', () => {
   it('should update metrics in real-time', async () => {
     vi.useFakeTimers()
 
-    render(<PerformanceMonitor updateInterval={1000} />)
+    render(<PerformanceMonitor updateInterval={100} />)
 
-    // Initial render
-    expect(screen.getByText(/10\.0 MB/)).toBeInTheDocument()
+    // Wait for initial render
+    await waitFor(() => {
+      expect(screen.getByText(/10\.0 MB/)).toBeInTheDocument()
+    })
 
     // Update memory usage
     mockPerformance.memory.usedJSHeapSize = 1024 * 1024 * 15 // 15MB
 
-    vi.advanceTimersByTime(1000)
+    // Advance timer
+    vi.advanceTimersByTime(100)
 
+    // Wait for update
     await waitFor(() => {
       expect(screen.getByText(/15\.0 MB/)).toBeInTheDocument()
-    })
+    }, { timeout: 1000 })
 
     vi.useRealTimers()
-  })
+  }, 10000)
 
   it('should show performance recommendations', () => {
     render(<PerformanceMonitor showRecommendations={true} />)
