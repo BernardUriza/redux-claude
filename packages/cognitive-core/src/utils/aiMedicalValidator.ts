@@ -86,19 +86,28 @@ export async function validateMedicalInput(input: string): Promise<AIValidationR
  * Genera mensaje de rechazo usando la información de la IA
  */
 export function generateRejectionMessage(result: AIValidationResult): string {
-  const baseMessage = '## ⚠️ Consulta No Válida\n\n'
-
-  if (result.rejectionReason) {
-    return (
-      baseMessage +
-      `**${result.rejectionReason}**\n\n${result.suggestedFormat || 'Por favor, reformula tu consulta como un caso médico específico.'}`
-    )
+  // Si la IA ya proporcionó un mensaje amigable, úsalo directamente
+  if (result.rejectionReason && result.suggestedFormat) {
+    return `${result.rejectionReason}\n\n${result.suggestedFormat}`
   }
 
-  return (
-    baseMessage +
-    `**Consulta no reconocida como contenido médico**\n\n${result.suggestedFormat || 'Incluye información médica relevante: síntomas, paciente, contexto clínico.'}`
-  )
+  // Fallback para casos donde la IA no proporcione mensaje completo
+  if (result.rejectionReason) {
+    return result.rejectionReason
+  }
+
+  // Fallback genérico (no debería llegar aquí con el nuevo validador)
+  return `¡Hola! 👋 Soy tu asistente médico virtual. Para ayudarte mejor, necesito información médica más específica.
+
+📝 **Ejemplo de consulta válida:**
+"Paciente de 45 años con dolor de pecho opresivo desde hace 2 horas"
+
+💡 **Información útil:**
+• Edad y género del paciente
+• Síntomas principales y duración
+• Antecedentes médicos relevantes
+
+¿Cómo puedo ayudarte hoy?`
 }
 
 // 🎯 Legacy code removed - using modern AIValidationResult only

@@ -51,7 +51,12 @@
       "Bash(timeout 30s npx tsc -p tsconfig.bypass.json)",
       "Bash(timeout 10s npx cypress run:*)",
       "Bash(tree:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Read(//c/Users/Bernard.Orozco/Pictures/**)",
+      "Bash(where npm)",
+      "Bash(\"C:\\Program Files\\nodejs\\npm.cmd\" run dev)",
+      "Bash(python:*)",
+      "WebFetch(domain:docs.withcue.ai)"
     ],
     "deny": [],
     "ask": []
