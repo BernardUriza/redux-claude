@@ -148,6 +148,54 @@ export class DefensiveMedicineValidator {
         gravityScore: 8,
       },
     ],
+
+    // 🚨 SEPSIS MIMICS - GREAT MASQUERADERS (2024 Research Enhancement)
+    [
+      'sepsis_like_presentation',
+      {
+        symptoms: ['fiebre', 'hipotensión', 'taquicardia', 'alteración mental', 'leucocitosis'],
+        criticalDifferentials: [
+          'Disección Aórtica con translocación bacteriana',
+          'Tormenta Tiroidea',
+          'Crisis Adrenal (Addison)',
+          'Sepsis verdadero',
+          'Embolia Pulmonar masiva',
+          'Taponamiento cardíaco',
+          'Síndrome Neuroléptico Maligno',
+        ],
+        redFlags: [
+          'dolor abdominal + HTA previa (disección)',
+          'fibrilación auricular nueva (tiroidea)',
+          'hiperpigmentación + hiponatremia (adrenal)',
+          'uso neurolépticos recientes',
+          'sin foco infeccioso claro',
+        ],
+        timeToAction: 'immediate',
+        gravityScore: 10,
+      },
+    ],
+
+    [
+      'shock_distributivo_no_infeccioso',
+      {
+        symptoms: ['shock', 'vasodilatación', 'hipotensión', 'taquicardia'],
+        criticalDifferentials: [
+          'Crisis Adrenal Aguda',
+          'Tormenta Tiroidea',
+          'Anafilaxia',
+          'Overdosis/Intoxicación',
+          'Síndrome Serotonérgico',
+        ],
+        redFlags: [
+          'historia tiroidea previa',
+          'suspensión corticoides',
+          'exposición alérgenos',
+          'uso múltiples medicamentos',
+        ],
+        timeToAction: 'immediate',
+        gravityScore: 9,
+      },
+    ],
   ])
 
   /**
@@ -245,14 +293,19 @@ export class DefensiveMedicineValidator {
   private assessGravityScore(diagnosis: string): number {
     const diagnosisLower = diagnosis.toLowerCase()
 
-    // Patologías críticas (9-10)
+    // Patologías críticas (9-10) - Incluyendo sepsis mimics
     if (
       diagnosisLower.includes('infarto') ||
       diagnosisLower.includes('embolia') ||
       diagnosisLower.includes('disección') ||
       diagnosisLower.includes('hemorragia') ||
       diagnosisLower.includes('meningitis') ||
-      diagnosisLower.includes('sepsis')
+      diagnosisLower.includes('sepsis') ||
+      diagnosisLower.includes('tormenta tiroidea') ||
+      diagnosisLower.includes('crisis adrenal') ||
+      diagnosisLower.includes('addison') ||
+      diagnosisLower.includes('taponamiento') ||
+      diagnosisLower.includes('neuroléptico maligno')
     ) {
       return 10
     }
@@ -262,7 +315,9 @@ export class DefensiveMedicineValidator {
       diagnosisLower.includes('neumonía') ||
       diagnosisLower.includes('apendicitis') ||
       diagnosisLower.includes('obstrucción') ||
-      diagnosisLower.includes('isquemia')
+      diagnosisLower.includes('isquemia') ||
+      diagnosisLower.includes('hipertiroidismo') ||
+      diagnosisLower.includes('insuficiencia adrenal')
     ) {
       return 8
     }
@@ -377,6 +432,20 @@ INSTRUCCIONES CRÍTICAS:
 2. Priorizar diagnósticos con GravityScore ≥ 8
 3. Aplicar regla "No harm principle" - mejor sobrediagnosticar que subdiagnosticar
 
+🔍 SEPSIS MIMICS - GREAT MASQUERADERS (2024 Research):
+Para CUALQUIER presentación tipo sepsis (fiebre + hipotensión + alteración mental):
+• Disección Aórtica → Buscar: dolor abdominal + HTA previa + pulsos asimétricos
+• Tormenta Tiroidea → Buscar: fibrilación auricular nueva + historia tiroidea
+• Crisis Adrenal → Buscar: hiperpigmentación + hiponatremia + suspensión corticoides
+• Embolia Pulmonar masiva → Buscar: disnea + factores trombóticos
+• Taponamiento cardíaco → Buscar: tríada Beck + ingurgitación yugular
+
+⚠️ RED FLAGS para sepsis mimics:
+• Sepsis SIN foco infeccioso claro → Considerar causes no-infecciosas
+• Dolor abdominal + shock → ¡SIEMPRE descartar disección aórtica!
+• Fibrilación auricular de novo + fiebre → Pensar tormenta tiroidea
+• Shock + bronceado/hiperpigmentación → Crisis adrenal
+
 PATRONES URGENTES IDENTIFICADOS:
 ${patternsText}
 
@@ -385,7 +454,8 @@ ${overallUrgency.immediateActions.map((action: string) => `• ${action}`).join(
 
 En tu análisis SOAP, DEBES:
 - Colocar diagnósticos de alta gravedad al inicio de diferenciales
-- Explicar por qué se descartan patologías críticas
+- SIEMPRE considerar sepsis mimics en presentaciones SIRS
+- Explicar por qué se descartan patologías críticas y sepsis mimics
 - Incluir tiempo estimado para intervención
 - Especificar signos de alarma para seguimiento
 `

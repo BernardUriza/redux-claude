@@ -189,6 +189,35 @@ This implementation demonstrates that building cognitive systems is not magic, b
 4. **DOCUMENTAR RESULTADOS** y mejoras aplicadas
 5. **VALIDAR ZERO FALSE POSITIVES** en casos telenovela
 
+### 🚨 **CRITICAL PATTERN RULE - SPECIALIZATION TRIGGER**
+
+**IF ANY MEDICAL CONDITION SHOWS <80% CONFIDENCE IN TESTING:**
+- **IMMEDIATE ACTION:** Create dedicated `CriticalPatternMiddleware` for that condition
+- **HARDCODE PATTERN:** Add explicit recognition rules in main prompt
+- **WIDOW MAKER PRIORITY:** Life-threatening conditions get highest priority
+
+**IMPLEMENTATION PATTERN:**
+```typescript
+// For conditions with <80% recognition rate
+export class CriticalPatternMiddleware {
+  // Dedicated pattern detection for critical conditions
+  analyzeCriticalPatterns(input: string): CriticalPatternResult
+  generateMandatoryPrompt(result: CriticalPatternResult): string
+}
+```
+
+**CURRENT CRITICAL CONDITIONS REQUIRING DEDICATED MIDDLEWARE:**
+- ✅ **Aortic Dissection:** 0% → CriticalPatternMiddleware created
+- 🎯 **Future <80% conditions:** Automatic middleware creation required
+
+**HARDCODING RULE:** When pattern recognition fails, directly hardcode in system prompt:
+```
+🚨 HARDCODED WIDOW MAKER PATTERN:
+IF (sepsis + abdominal pain + HTN history)
+THEN MUST consider aortic dissection
+This is NOT optional - patient safety requires this consideration.
+```
+
 ### **CURRENT TESTING FILES:**
 - `EXHAUSTIVE_TESTING_SUITE_v3.md` - Suite completa de 18+ casos edge
 - `PERFORMANCE_REPORT.md` - Métricas y compliance médico

@@ -34,9 +34,17 @@ export {
   type RiskFactor,
 } from './classifiers'
 
-// === HOOKS MULTINÚCLEO ===
-export { useMedicalChat } from './hooks/useMedicalChatEvolved'
-export { useAssistantChat } from './hooks/useAssistantChat'
+// === CRITICAL PATTERN MIDDLEWARE (WIDOW MAKER DETECTION) ===
+export {
+  criticalPatternMiddleware,
+  CriticalPatternMiddleware,
+  type CriticalPattern,
+  type CriticalPatternResult,
+} from './middleware/CriticalPatternMiddleware'
+
+// === HOOKS MULTINÚCLEO === (Excluded from server-side exports)
+// export { useMedicalChat } from './hooks/useMedicalChatEvolved'
+// export { useAssistantChat } from './hooks/useAssistantChat'
 
 // === SOAP PROCESSING ===
 export { SOAPResolver } from './soap/SOAPResolver'

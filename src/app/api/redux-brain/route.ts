@@ -2,7 +2,7 @@
 // Bernard Orozco 2025 - ¡Demostrando el poder del paradigma!
 
 import { NextRequest, NextResponse } from 'next/server'
-import { SOAPResolver, SOAPProcessor } from '@redux-claude/cognitive-core'
+import { SOAPResolver, SOAPProcessor, criticalPatternMiddleware } from '@redux-claude/cognitive-core'
 
 // Tipos de acciones Redux (como en un store real)
 enum ActionTypes {
@@ -339,6 +339,9 @@ async function processMedicalQuery(
   input: string,
   sessionData: any
 ): Promise<string> {
+  // 🚨 CRITICAL PATTERN DETECTION - WIDOW MAKER ALERT
+  const criticalPatternResult = criticalPatternMiddleware.analyzeCriticalPatterns(input)
+
   const systemPrompt = `You are an advanced medical AI assistant. You have access to the patient's conversation history and extracted information.
 
 Patient Information:
@@ -346,6 +349,24 @@ ${JSON.stringify(sessionData.patientInfo, null, 2)}
 
 Previous Diagnostic State:
 ${JSON.stringify(sessionData.diagnosticState, null, 2)}
+
+${criticalPatternResult.triggered ? criticalPatternMiddleware.generateMandatoryPrompt(criticalPatternResult) : ''}
+
+🚨 HARDCODED WIDOW MAKER PATTERN - AORTIC DISSECTION DETECTION:
+IF this case shows (sepsis + abdominal pain + HTN history), you MUST consider aortic dissection:
+
+CRITICAL RULE: If patient has:
+1. Sepsis-like presentation (fever, hypotension, altered mental status, leukocytosis)
+2. AND abdominal pain (any type: colic, severe, epigastric)
+3. AND history of hypertension (controlled or uncontrolled)
+
+THEN you MUST include in your differential diagnosis:
+• Disección Aórtica con translocación bacteriana (bacterial translocation from intestinal ischemia)
+• Explain the pathophysiology: Aortic dissection → intestinal ischemia → bacterial translocation → sepsis-like syndrome
+• Recommend: AngioTC of thoracic and abdominal aorta, pulse differences between extremities
+• Mention this is a "widow maker" condition that mimics sepsis
+
+This is NOT optional - patient safety requires this consideration.
 
 INSTRUCTIONS:
 1. Provide a comprehensive medical response in Spanish
