@@ -56,7 +56,8 @@
       "Bash(where npm)",
       "Bash(\"C:\\Program Files\\nodejs\\npm.cmd\" run dev)",
       "Bash(python:*)",
-      "WebFetch(domain:docs.withcue.ai)"
+      "WebFetch(domain:docs.withcue.ai)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []

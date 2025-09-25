@@ -14,7 +14,18 @@ enum ActionTypes {
   SOAP_A_UPDATED = 'SOAP_A_UPDATED',
   SOAP_P_UPDATED = 'SOAP_P_UPDATED',
   DIAGNOSIS_GENERATED = 'DIAGNOSIS_GENERATED',
-  RESPONSE_GENERATED = 'RESPONSE_GENERATED'
+  RESPONSE_GENERATED = 'RESPONSE_GENERATED',
+  // 🚨 URGENCY DETECTION SYSTEM
+  URGENCY_DETECTED = 'URGENCY_DETECTED',
+  PROTOCOL_ACTIVATED = 'PROTOCOL_ACTIVATED',
+  CRITICAL_FLAG = 'CRITICAL_FLAG',
+  // 👶 PEDIATRIC PROTOCOLS
+  PEDIATRIC_ALERT = 'PEDIATRIC_ALERT',
+  WEIGHT_CALCULATION = 'WEIGHT_CALCULATION',
+  // 📊 MICRO-REDUX ACTIONS
+  ENTITY_EXTRACTED = 'ENTITY_EXTRACTED',
+  SYMPTOM_PARSED = 'SYMPTOM_PARSED',
+  VITAL_SIGN_DETECTED = 'VITAL_SIGN_DETECTED'
 }
 
 // Store Redux con historial de acciones
@@ -45,6 +56,13 @@ const reduxStore = new Map<string, {
     objetivo?: string
     analisis?: string
     plan?: string
+  }
+  // 🚨 URGENCY ASSESSMENT - Evaluación automática de urgencias
+  urgencyAssessment?: {
+    level: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'
+    protocol?: string
+    actions: string[]
+    pediatricFlag?: boolean
   }
   // Historial de acciones Redux con trazabilidad completa
   actionHistory: Array<{
@@ -137,6 +155,123 @@ async function callClaude(systemPrompt: string, userMessage: string, conversatio
   }
 
   throw new Error('Invalid Claude response')
+}
+
+// 🧠 CONTEXT-AWARE URGENCY ENGINE - LLM-based contextual analysis
+async function detectUrgencyWithContext(
+  input: string,
+  sessionStore: any,
+  extractedInfo: any
+): Promise<{
+  level: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'
+  protocol?: string
+  actions: string[]
+  pediatricFlag?: boolean
+  reasoning: string
+}> {
+
+  const contextualPrompt = `You are an expert emergency medicine physician analyzing a patient interaction for urgency levels.
+
+CRITICAL CONTEXT - USE THIS TO MAKE DECISIONS:
+- Current conversation: ${JSON.stringify(sessionStore.messages?.slice(-3) || [])}
+- Patient data extracted: ${JSON.stringify(extractedInfo)}
+- SOAP progress: ${sessionStore.soapState ? JSON.stringify(sessionStore.soapState) : 'None'}
+- Previous urgency assessments: ${sessionStore.urgencyAssessment?.level || 'None'}
+
+NEW INPUT TO ANALYZE: "${input}"
+
+CONTEXTUAL REASONING RULES - CRITICAL FOR ACCURACY:
+1. "Mi papá murió de infarto" = FAMILY HISTORY (not current emergency)
+2. "Me duele el pecho ahora" = CURRENT SYMPTOM (potential emergency)
+3. "El doctor dijo que era infarto" = PAST DIAGNOSIS (not current emergency)
+4. "Mi vecina dice que le duele el pecho" = THIRD PARTY STORY (not current emergency)
+5. "Cuando a ella le da dolor..." = SOMEONE ELSE'S SYMPTOMS (not patient)
+6. Multiple symptoms in SAME PATIENT = SYNDROME CLUSTER (higher urgency)
+7. Age + symptom severity = RISK STRATIFICATION
+
+WHO IS THE PATIENT? CRITICAL DISTINCTION:
+- "ME duele" / "TENGO dolor" = PATIENT SYMPTOMS → Assess urgency
+- "Mi vecina/mamá/amigo tiene..." = OTHER PERSON → Usually LOW urgency (unless asking for someone present)
+- "¿Qué opina de...?" = MEDICAL QUESTION → Usually LOW urgency
+
+Return JSON:
+{
+  "level": "CRITICAL|HIGH|MODERATE|LOW",
+  "protocol": "specific protocol name or null",
+  "actions": ["array of immediate actions"],
+  "pediatricFlag": boolean,
+  "reasoning": "detailed contextual analysis explaining WHY this urgency level"
+}
+
+PROTOCOLS:
+- CRITICAL: Life-threatening (MI, stroke, sepsis, respiratory failure)
+- HIGH: Urgent but stable (hypertensive crisis, severe pain, pediatric fever >39°C)
+- MODERATE: Important but can wait (chronic pain flare, medication questions)
+- LOW: Information, family history, casual conversation`
+
+  try {
+    const response = await callClaude(contextualPrompt, input)
+
+    // Clean response and try to parse JSON
+    let cleanResponse = response.trim()
+    if (cleanResponse.startsWith('```json')) {
+      cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?$/g, '')
+    }
+
+    const result = JSON.parse(cleanResponse)
+
+    // Validate required fields
+    if (!result.level || !Array.isArray(result.actions)) {
+      throw new Error('Invalid LLM response structure')
+    }
+
+    return {
+      level: result.level,
+      protocol: result.protocol || null,
+      actions: result.actions || [],
+      pediatricFlag: result.pediatricFlag || false,
+      reasoning: result.reasoning || 'No reasoning provided'
+    }
+  } catch (error) {
+    console.error('Context-aware urgency detection failed:', error)
+    // Fallback to basic assessment
+    return {
+      level: extractedInfo.symptoms?.length > 0 ? 'MODERATE' : 'LOW',
+      actions: [],
+      reasoning: `LLM context analysis failed: ${error.message}. Using basic fallback.`
+    }
+  }
+}
+
+// 📊 MICRO-PARSER de entidades médicas para Redux granular
+function parseMedicalEntities(text: string): {
+  vitalSigns: { type: string, value: string }[]
+  symptoms: string[]
+  duration: string | null
+  severity: string | null
+} {
+  const entities = {
+    vitalSigns: [] as { type: string, value: string }[],
+    symptoms: [] as string[],
+    duration: null as string | null,
+    severity: null as string | null
+  }
+
+  // Signos vitales
+  const bpMatch = text.match(/(\d{2,3})[\/x](\d{2,3})/)
+  if (bpMatch) entities.vitalSigns.push({ type: 'PA', value: `${bpMatch[1]}/${bpMatch[2]}` })
+
+  const tempMatch = text.match(/(\d{2,3})[.,]?(\d)?.*°?[CF]?.*fiebre|fiebre.*(\d{2,3})[.,]?(\d)?/)
+  if (tempMatch) entities.vitalSigns.push({ type: 'TEMP', value: tempMatch[1] || tempMatch[3] })
+
+  const fcMatch = text.match(/(\d{2,3}).*latidos|frecuencia.*(\d{2,3})/)
+  if (fcMatch) entities.vitalSigns.push({ type: 'FC', value: fcMatch[1] || fcMatch[2] })
+
+  // Duración temporal
+  const durationMatch = text.match(/desde hace (\d+.*?(?:día|hora|semana|mes))|hace (\d+.*?(?:día|hora|semana|mes))|desde.*?(\w+)\s+pasado/)
+  if (durationMatch) entities.duration = durationMatch[1] || durationMatch[2] || durationMatch[3]
+
+  return entities
 }
 
 // 🎯 VALIDADOR AMIGABLE
@@ -259,6 +394,86 @@ export async function POST(req: NextRequest) {
         ...validation.extractedInfo
       }
 
+      // 📊 MICRO-REDUX: Parse entidades médicas granularmente
+      const entities = parseMedicalEntities(message)
+
+      // Despachar micro-acciones por cada entidad detectada
+      entities.vitalSigns.forEach(vital => {
+        dispatchAction(sessionId, {
+          type: ActionTypes.VITAL_SIGN_DETECTED,
+          payload: { type: vital.type, value: vital.value }
+        })
+      })
+
+      validation.extractedInfo.symptoms?.forEach(symptom => {
+        dispatchAction(sessionId, {
+          type: ActionTypes.SYMPTOM_PARSED,
+          payload: { symptom, severity: entities.severity }
+        })
+      })
+
+      // 🚨 CONTEXT-AWARE URGENCY DETECTION - Análisis contextual con LLM
+      const urgency = await detectUrgencyWithContext(
+        message,
+        session,
+        validation.extractedInfo
+      )
+
+      // Despachar alerta de urgencia si es crítica
+      if (urgency.level === 'CRITICAL' || urgency.level === 'HIGH') {
+        dispatchAction(sessionId, {
+          type: ActionTypes.URGENCY_DETECTED,
+          payload: {
+            level: urgency.level,
+            protocol: urgency.protocol,
+            actions: urgency.actions,
+            isPediatric: urgency.pediatricFlag
+          }
+        })
+
+        // Si hay protocolo específico, activarlo
+        if (urgency.protocol) {
+          dispatchAction(sessionId, {
+            type: ActionTypes.PROTOCOL_ACTIVATED,
+            payload: { protocol: urgency.protocol, actions: urgency.actions }
+          })
+        }
+
+        // Flag crítico para casos que requieren intervención inmediata
+        if (urgency.level === 'CRITICAL') {
+          dispatchAction(sessionId, {
+            type: ActionTypes.CRITICAL_FLAG,
+            payload: { protocol: urgency.protocol, reason: 'VIDA_EN_RIESGO' }
+          })
+        }
+      }
+
+      // 👶 PEDIATRIC PROTOCOLS - Flags especiales para menores
+      if (validation.extractedInfo.age && validation.extractedInfo.age < 18) {
+        dispatchAction(sessionId, {
+          type: ActionTypes.PEDIATRIC_ALERT,
+          payload: {
+            age: validation.extractedInfo.age,
+            pesoEstimado: validation.extractedInfo.age * 3 + 7,
+            requiereAdultoResponsable: true
+          }
+        })
+
+        // Calcular peso estimado para dosificación
+        if (urgency.pediatricFlag) {
+          dispatchAction(sessionId, {
+            type: ActionTypes.WEIGHT_CALCULATION,
+            payload: {
+              pesoEstimado: validation.extractedInfo.age * 3 + 7,
+              formula: 'PEDIATRICA_STANDAR'
+            }
+          })
+        }
+      }
+
+      // Guardar detección de urgencia en sesión
+      session.urgencyAssessment = urgency
+
       // Actualizar SOAP Subjetivo con nueva información
       if (validation.extractedInfo.symptoms?.length) {
         session.soapState.subjetivo = `Paciente refiere: ${validation.extractedInfo.symptoms.join(', ')}`
@@ -373,11 +588,20 @@ export async function POST(req: NextRequest) {
           currentState: session.actionHistory[session.actionHistory.length - 1]?.stateSnapshot
         }
       },
+      // 🚨 URGENCY ASSESSMENT - Información crítica para decisiones médicas
+      urgencyAssessment: {
+        ...session.urgencyAssessment || { level: 'LOW', actions: [] },
+        reasoning: session.urgencyAssessment?.reasoning || 'No contextual analysis performed'
+      },
       reduxState: {
         storeSize: reduxStore.size,
         activeSession: sessionId,
         totalMessages: session.messages.length,
-        actionCount: session.actionHistory.length
+        actionCount: session.actionHistory.length,
+        // Flags críticos para alertas
+        hasCriticalUrgency: session.urgencyAssessment?.level === 'CRITICAL',
+        pediatricCase: session.patientInfo.age ? session.patientInfo.age < 18 : false,
+        protocolsActivated: session.actionHistory.filter(a => a.type === ActionTypes.PROTOCOL_ACTIVATED).length
       }
     })
 
