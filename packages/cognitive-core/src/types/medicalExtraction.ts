@@ -16,7 +16,7 @@ export interface MedicalExtractionOutput {
   // 30% Weight - Primary Medical Data
   clinical_presentation: {
     chief_complaint: string | 'unknown'
-    primary_symptoms: string[] | null
+    primary_symptoms: readonly string[] | null
     anatomical_location: string | 'unknown'
     confidence_symptoms: number // 0.0-1.0
   }
@@ -25,20 +25,20 @@ export interface MedicalExtractionOutput {
   symptom_characteristics: {
     duration_description: string | 'unknown' // "2 días", "1 semana"
     pain_intensity_scale: number | null // 1-10 NRS scale
-    pain_characteristics: string[] | null // ["punzante", "constante"]
-    aggravating_factors: string[] | null
-    relieving_factors: string[] | null
-    associated_symptoms: string[] | null
+    pain_characteristics: readonly string[] | null // ["punzante", "constante"]
+    aggravating_factors: readonly string[] | null
+    relieving_factors: readonly string[] | null
+    associated_symptoms: readonly string[] | null
     temporal_pattern: string | 'unknown' // "matutino", "nocturno"
     confidence_context: number // 0.0-1.0
   }
 
   // 🩺 Medical Intelligence & Validation (NEW 2025)
   medical_validation: {
-    anatomical_contradictions: string[] // ["dolor de mano reportado pero paciente sin brazos"]
-    logical_inconsistencies: string[] // ["edad pediátrica con síntomas de adulto mayor"]
-    requires_clarification: string[] // ["confirmar presencia de extremidades superiores"]
-    medical_alerts: string[] // ["revisar anatomía antes de continuar evaluación"]
+    anatomical_contradictions: readonly string[] // ["dolor de mano reportado pero paciente sin brazos"]
+    logical_inconsistencies: readonly string[] // ["edad pediátrica con síntomas de adulto mayor"]
+    requires_clarification: readonly string[] // ["confirmar presencia de extremidades superiores"]
+    medical_alerts: readonly string[] // ["revisar anatomía antes de continuar evaluación"]
   }
 
   // Completeness Metrics (Automated Calculation)
@@ -49,7 +49,7 @@ export interface MedicalExtractionOutput {
     context_complete: boolean // ≥2 contextual fields present
     nom_compliant: boolean // Ready for Mexican healthcare standards
     ready_for_soap_generation: boolean // ≥80% + NOM compliant
-    missing_critical_fields: string[] // ["patient_age_years", "duration"]
+    missing_critical_fields: readonly string[] // ["patient_age_years", "duration"]
     data_points_extracted_this_iteration: number // Efficiency metric
     extraction_timestamp: string // ISO 8601
     claude_model_used: 'claude-sonnet-4' | string
@@ -62,7 +62,7 @@ export interface MedicalExtractionOutput {
 export interface MedicalExtractionInput {
   patient_input: string // Raw text from doctor/patient
   existing_data?: Partial<MedicalExtractionOutput> // Previous extraction data for iteration
-  conversation_context?: string[] // Previous conversation messages
+  conversation_context?: readonly string[] // Previous conversation messages
   iteration_number?: number // Which iteration is this (1, 2, 3...)
   max_iterations?: number // Stop condition (default: 5)
 }
@@ -73,7 +73,7 @@ export interface MedicalExtractionInput {
 export interface MedicalExtractionDecision {
   extracted_data: MedicalExtractionOutput
   requires_more_input: boolean
-  suggested_followup_questions: string[]
+  suggested_followup_questions: readonly string[]
   extraction_confidence: number // Overall confidence 0.0-1.0
   processing_time_ms: number
 }
@@ -198,7 +198,7 @@ export interface UpdateDemographicsPayload {
 
 export interface UpdateSymptomsPayload {
   chief_complaint?: string | 'unknown'
-  primary_symptoms?: string[] | null
+  primary_symptoms?: readonly string[] | null
   anatomical_location?: string | 'unknown'
   confidence_symptoms?: number
 }
@@ -206,10 +206,10 @@ export interface UpdateSymptomsPayload {
 export interface UpdateContextPayload {
   duration_description?: string | 'unknown'
   pain_intensity_scale?: number | null
-  pain_characteristics?: string[] | null
-  aggravating_factors?: string[] | null
-  relieving_factors?: string[] | null
-  associated_symptoms?: string[] | null
+  pain_characteristics?: readonly string[] | null
+  aggravating_factors?: readonly string[] | null
+  relieving_factors?: readonly string[] | null
+  associated_symptoms?: readonly string[] | null
   temporal_pattern?: string | 'unknown'
   confidence_context?: number
 }

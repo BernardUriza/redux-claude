@@ -49,7 +49,9 @@
       "Bash(npx next:*)",
       "Bash(node:*)",
       "Bash(timeout 30s npx tsc -p tsconfig.bypass.json)",
-      "Bash(timeout 10s npx cypress run:*)"
+      "Bash(timeout 10s npx cypress run:*)",
+      "Bash(tree:*)",
+      "Bash(touch:*)"
     ],
     "deny": [],
     "ask": []

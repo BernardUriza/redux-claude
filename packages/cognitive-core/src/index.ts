@@ -45,7 +45,6 @@ export type { SOAPResult, SOAPSection, AgentPersonalityResult } from './soap/SOA
 
 // === ITERATIVE ENGINE ===
 export { IterativeDiagnosticEngine } from './engine/IterativeDiagnosticEngine'
-export { AdditionalInfoService } from './services/additional-info-service'
 
 // === MEDICAL TYPES ===
 export type { MedicalMessage, ChatCore, MedicalChatState } from './store/medicalChatSlice'
@@ -153,12 +152,9 @@ export type { StreamingChunk } from './streaming'
 export { AGENT_REGISTRY } from './services/agent-registry'
 
 // === INTELLIGENT CHAT SERVICE ===
-export { IntelligentMedicalChat } from './services/intelligent-medical-chat'
-export type { IntelligentChatResponse } from './services/intelligent-medical-chat'
 
 // === DECISIONAL MIDDLEWARE ===
 export { callClaudeForDecision } from './services/decisional-middleware'
 export type { DecisionType } from './services/decisional-middleware'
 
 // === ADDITIONAL INFO SERVICE ===
-export type { InfoRequestMessage } from './services/additional-info-service'

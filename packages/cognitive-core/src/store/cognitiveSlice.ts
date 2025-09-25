@@ -77,17 +77,29 @@ const initialState: CognitiveState = {
 
 // Async thunk para procesamiento cognitivo
 export const processCognitively = createAsyncThunk('cognitive/process', async (input: string) => {
-  // Dynamic import to avoid circular dependency
-  const { cognitiveOrchestrator } = await import('../services/cognitive-orchestrator')
+  // Cognitive orchestrator has been removed - use decisional middleware instead
+  const { callClaudeForDecision } = await import('../services/decisional-middleware')
 
-  const result = await cognitiveOrchestrator.processWithCognition(input)
-  const cognitiveState = cognitiveOrchestrator.getCognitiveState()
-  const systemHealth = cognitiveOrchestrator.getSystemHealth()
+  const result = await callClaudeForDecision('intelligent_medical_chat', input)
 
+  // Return a simplified structure since cognitive orchestrator is no longer available
   return {
-    ...result,
-    cognitiveState,
-    systemHealth,
+    decision: result.decision,
+    confidence: result.confidence,
+    cognitiveState: {
+      confidence: result.confidence,
+      uncertainty: 1 - result.confidence,
+      activeGoals: [],
+      knowledgeGaps: [],
+      selfAssessment: null
+    },
+    systemHealth: {
+      overallHealth: result.success ? 1 : 0,
+      memoryHealth: null,
+      learningHealth: null,
+      consensusHealth: null,
+      pipelineHealth: null
+    }
   }
 })
 
@@ -184,9 +196,9 @@ const cognitiveSlice = createSlice({
       })
       .addCase(processCognitively.fulfilled, (state, action) => {
         state.isProcessing = false
-        state.lastDecisions = action.payload.decisions
-        state.lastConsensus = action.payload.consensus
-        state.lastInsights = action.payload.insights
+        state.lastDecisions = action.payload.decision ? [action.payload.decision] : []
+        state.lastConsensus = null
+        state.lastInsights = null
 
         // Update cognitive state
         const { cognitiveState, systemHealth } = action.payload

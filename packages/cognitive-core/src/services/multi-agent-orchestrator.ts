@@ -19,8 +19,6 @@ import { callClaudeForDecision, mapAgentTypeToDecisionType } from './decisional-
 import { nanoid } from '@reduxjs/toolkit'
 import { store } from '../store/store'
 // Simplified imports
-import { contextualMemory } from './contextual-memory'
-import { reinforcementLearning } from './reinforcement-learning'
 
 export class MultiAgentOrchestrator {
   private abortControllers: Map<string, AbortController> = new Map()
@@ -61,8 +59,8 @@ export class MultiAgentOrchestrator {
     const startTime = Date.now()
 
     try {
-      // Get contextual memory for agent
-      const agentContext = contextualMemory.getRelevantContext(agentType)
+      // Get contextual memory for agent (if available)
+      const agentContext = undefined // Contextual memory service has been removed
 
       // Simulate agent-specific system prompt call to Claude
       const response = await this.callAgentSpecificClaude(

@@ -6,8 +6,8 @@ import type { RootState } from '../medicalChatSlice'
 
 // 📊 Constants for stable references
 const EMPTY_HISTORY: any[] = []
-const EMPTY_FOCUS_AREAS: string[] = []
-const FOCUS_AREA_CACHE = new Map<string, string[]>()
+const EMPTY_FOCUS_AREAS: readonly string[] = []
+const FOCUS_AREA_CACHE = new Map<string, readonly string[]>()
 
 // 📊 Basic extraction data access
 export const selectExtractedData = (state: RootState) =>

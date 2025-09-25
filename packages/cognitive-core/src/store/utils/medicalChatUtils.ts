@@ -77,7 +77,7 @@ export const updatePatientDataFromExtraction = (
     const sc = extractedData.symptom_characteristics
     if (sc.duration_description !== 'unknown') updated.duration = sc.duration_description
     if (sc.pain_intensity_scale !== null) updated.intensity = sc.pain_intensity_scale
-    if (sc.associated_symptoms) updated.associatedSymptoms = sc.associated_symptoms
+    if (sc.associated_symptoms) updated.associatedSymptoms = [...sc.associated_symptoms]
   }
 
   // Completeness check

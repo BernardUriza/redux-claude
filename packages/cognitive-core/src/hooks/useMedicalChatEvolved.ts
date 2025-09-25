@@ -92,12 +92,16 @@ export const useMedicalChat = (options: UseMedicalChatOptions = {}) => {
         // Agregar mensaje válido y procesar
         dispatch(addDashboardMessage({ content: message, type: 'user' }))
 
-        // 🚀 USAR CHAT INTELIGENTE EN NÚCLEO DASHBOARD
-        const { IntelligentMedicalChat } = await import('../services/intelligent-medical-chat')
-        const intelligentService = new IntelligentMedicalChat(dispatch, 'dashboard')
+        // 🚀 Llamar directamente a Claude
+        const { callClaudeForDecision } = await import('../services/decisional-middleware')
+        const response = await callClaudeForDecision('intelligent_medical_chat', message)
 
-        // El chat inteligente maneja todo internamente y actualiza el store
-        await intelligentService.processUserInput(message)
+        if (response.decision) {
+          dispatch(addDashboardMessage({
+            content: response.decision,
+            type: 'assistant'
+          }))
+        }
 
         dispatch(setDashboardLoading(false))
       } catch (error) {

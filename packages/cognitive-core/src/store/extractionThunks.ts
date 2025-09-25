@@ -290,7 +290,7 @@ function mergeExtractionData(
 /**
  * Helper function to merge string arrays with deduplication
  */
-function mergeArrays(existing: string[] | null, newArray: string[] | null): string[] | null {
+function mergeArrays(existing: readonly string[] | null, newArray: readonly string[] | null): readonly string[] | null {
   if (!existing && !newArray) return null
   if (!existing) return newArray
   if (!newArray) return existing

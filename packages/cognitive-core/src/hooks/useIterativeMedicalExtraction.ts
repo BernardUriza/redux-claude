@@ -38,7 +38,7 @@ export interface UseIterativeMedicalExtractionReturn {
   maxIterations: number
   completenessPercentage: number
   isNOMCompliant: boolean
-  focusAreas: string[]
+  focusAreas: readonly string[]
   extractedData: MedicalExtractionOutput | null
   error: string | null
 
@@ -320,10 +320,10 @@ function mergeExtractionData(
 }
 
 // 🧙‍♂️ Gandalf's Array Cache - Creado por Bernard Orozco
-const ARRAY_CACHE = new Map<string, string[]>()
+const ARRAY_CACHE = new Map<string, readonly string[]>()
 
 // Helper to merge arrays, preferring the one with more content
-function mergeBestArray(existing: string[] | null, newArray: string[] | null): string[] | null {
+function mergeBestArray(existing: readonly string[] | null, newArray: readonly string[] | null): readonly string[] | null {
   if (!existing && !newArray) return null
   if (!existing) return newArray
   if (!newArray) return existing
