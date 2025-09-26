@@ -34,11 +34,14 @@
   * {
     box-sizing: border-box;
   }
-  
+
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    height: 100%;
   }
-  
+
   body {
     background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
     color: var(--text-primary);
@@ -46,6 +49,51 @@
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     min-height: 100vh;
     line-height: 1.6;
+    height: 100%;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* iOS Safe Area Support */
+  @supports (padding: max(0px)) {
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+
+  /* Prevent iOS Rubber Band Scrolling */
+  #__next {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Custom Scrollbar for Webkit browsers */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.5);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.7);
+  }
+
+  /* Utility class for thin scrollbars */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.5) transparent;
   }
   
   /* Improved focus states for accessibility */

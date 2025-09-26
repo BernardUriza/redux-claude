@@ -24,52 +24,50 @@ export default function ParadigmV2() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      {/* Minimal Header */}
-      <header className="bg-gray-900 border-b border-gray-800 p-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+    <div className="min-h-screen h-screen bg-gray-950 text-gray-100 flex flex-col overflow-hidden">
+      {/* Mobile-Optimized Header */}
+      <header className="bg-gray-900 border-b border-gray-800 px-4 py-3 md:py-4 flex-shrink-0">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <div>
-            <h1 className="text-2xl font-bold text-blue-400">
-              Redux Brain Medical System
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-400">
+              🧠 Redux Brain
             </h1>
-            <p className="text-sm text-gray-400 mt-1">
-              REST API • SOAP Generation • Urgency Detection • Redux Actions
+            <p className="text-xs sm:text-sm text-gray-400 mt-1 hidden sm:block">
+              REST API • SOAP Generation • Urgency Detection
             </p>
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 hidden md:block">
             <p>Backend: /api/redux-brain/</p>
             <p>Version: 2.0 Production</p>
           </div>
         </div>
       </header>
 
-      {/* Main Chat Interface */}
-      <main className="max-w-7xl mx-auto p-4">
-        <div className="bg-gray-900 rounded-xl overflow-hidden border border-gray-800 h-[calc(100vh-180px)]">
-          <ChatInterfaceAPI />
-        </div>
+      {/* Main Chat Interface - Full Height */}
+      <main className="flex-1 overflow-hidden">
+        <ChatInterfaceAPI />
       </main>
 
-      {/* Status Bar */}
-      <footer className="bg-gray-900 border-t border-gray-800 p-3 fixed bottom-0 left-0 right-0">
-        <div className="max-w-7xl mx-auto flex justify-between items-center text-xs">
-          <div className="flex gap-4">
+      {/* Mobile-Friendly Status Bar (Hidden on Mobile) */}
+      <footer className="hidden sm:block bg-gray-900 border-t border-gray-800 p-2 md:p-3 flex-shrink-0">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center text-xs gap-2">
+          <div className="flex flex-wrap gap-2 sm:gap-4">
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
               System Online
             </span>
-            <span className="text-gray-400">
-              Urgency Detection: Active
+            <span className="text-gray-400 hidden sm:inline">
+              Urgency: Active
             </span>
-            <span className="text-gray-400">
-              SOAP Generation: Active
+            <span className="text-gray-400 hidden md:inline">
+              SOAP: Active
             </span>
-            <span className="text-gray-400">
-              Anti-Telenovela: Enabled
+            <span className="text-gray-400 hidden lg:inline">
+              Anti-Telenovela: On
             </span>
           </div>
-          <div className="text-gray-500">
-            Redux+LLM Architecture • Defensive Medicine Active
+          <div className="text-gray-500 hidden lg:block">
+            Redux+LLM • Defensive Medicine
           </div>
         </div>
       </footer>

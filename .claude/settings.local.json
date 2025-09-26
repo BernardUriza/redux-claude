@@ -63,7 +63,8 @@
       "Bash(netstat:*)",
       "Bash(cat:*)",
       "Bash(chmod:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []
