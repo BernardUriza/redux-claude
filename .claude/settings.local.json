@@ -64,7 +64,9 @@
       "Bash(cat:*)",
       "Bash(chmod:*)",
       "Bash(bash:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npm publish:*)",
+      "Read(//c/Users/Bernard.Orozco/Documents/Github/**)"
     ],
     "deny": [],
     "ask": []

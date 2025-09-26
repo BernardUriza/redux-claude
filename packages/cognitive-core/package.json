@@ -1,9 +1,30 @@
 {
-  "name": "@redux-claude/cognitive-core",
-  "version": "1.0.0",
-  "description": "Motor de decisiones médicas híbrido con IA para plataformas clínicas latinoamericanas",
+  "name": "redux-brain-medical-ai",
+  "version": "1.0.1",
+  "description": "Medical AI decision engine for LATAM healthcare - Intelligent triage, SOAP generation, and clinical decision support",
   "author": "Bernard Orozco",
   "license": "ISC",
+  "keywords": [
+    "medical",
+    "ai",
+    "healthcare",
+    "triage",
+    "soap",
+    "clinical",
+    "redux",
+    "claude",
+    "anthropic",
+    "latam",
+    "telemedicine"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BernardUriza/redux-claude"
+  },
+  "bugs": {
+    "url": "https://github.com/BernardUriza/redux-claude/issues"
+  },
+  "homepage": "https://github.com/BernardUriza/redux-claude#readme",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,7 +43,8 @@
     "build:strict": "tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",

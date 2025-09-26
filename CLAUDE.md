@@ -1,6 +1,35 @@
-# CLAUDE.md
+# CLAUDE.md 🚀 OPTIMIZED FOR NPM PACKAGE
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides CRITICAL guidance to Claude Code for maximum efficiency.
+
+## 🎯 CORE PHILOSOPHY: NPM PACKAGE FIRST
+
+**THIS IS AN NPM PACKAGE** - Everything revolves around `@redux-claude/cognitive-core`
+- The Next.js app is just a demo/test harness
+- ALL logic must live in `packages/cognitive-core/`
+- If it's not exportable, it's not valuable
+
+## ⚡ PERFORMANCE OPTIMIZATIONS (ALWAYS APPLY)
+
+### 1. Intelligent Agent Routing (50% faster)
+```typescript
+// ❌ BAD: Evaluating all 13 agents
+const results = await Promise.all(ALL_AGENTS.map(a => a.evaluate()))
+
+// ✅ GOOD: Claude selects 1-3 relevant agents
+const agents = await selectRelevantAgents(message) // Uses Haiku, 100ms
+const results = await executeAgents(agents) // Only 1-3 agents
+```
+
+### 2. Urgency-Based Processing
+- CRITICAL: Sequential, 1-2 agents max
+- HIGH: Parallel, 2-3 agents
+- MODERATE/LOW: Parallel, up to 3 agents
+
+### 3. Model Selection Strategy
+- Routing: `claude-3-haiku` (fast, cheap)
+- Agents: `claude-3-haiku` (specialized tasks)
+- Final response: `claude-3.5-sonnet` (quality)
 
 ## Common Development Commands
 

@@ -1,0 +1,36 @@
+# Source files (only ship compiled)
+src/
+*.ts
+!*.d.ts
+
+# Config files
+tsconfig.json
+tsconfig.bypass.json
+.eslintrc
+
+# Development files
+*.tsbuildinfo
+node_modules/
+.env*
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Tests
+__tests__/
+*.test.*
+*.spec.*
+
+# Docs (README.md is included by default)
+docs/
+examples/
+
+# Misc
+*.log
+.DS_Store
+Thumbs.db
