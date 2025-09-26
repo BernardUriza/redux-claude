@@ -165,7 +165,11 @@ export { AGENT_REGISTRY } from './services/agent-registry'
 // === INTELLIGENT CHAT SERVICE ===
 
 // === DECISIONAL MIDDLEWARE ===
-export { callClaudeForDecision } from './services/decisional-middleware'
-export type { DecisionType } from './services/decisional-middleware'
+export { callClaudeForDecision, processReduxBrainMessage } from './services/decisional-middleware'
+export type { DecisionType, ReduxBrainSession } from './services/decisional-middleware'
+
+// === REDUX BRAIN HOOK (NPM READY) ===
+export { useReduxBrain } from './hooks/useReduxBrain'
+export type { ReduxBrainMessage, UseReduxBrainOptions } from './hooks/useReduxBrain'
 
 // === ADDITIONAL INFO SERVICE ===
