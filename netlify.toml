@@ -33,11 +33,8 @@
   included_files = ["public/**", ".next/**", "packages/**"]
   external_node_modules = ["@anthropic-ai/sdk"]
 
-# Netlify Functions configuration for API routes
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+# API routes handled by Next.js adapter plugin
+# Functions are automatically created from api/ directory
 
 # Essential Netlify plugin for Next.js
 [[plugins]]

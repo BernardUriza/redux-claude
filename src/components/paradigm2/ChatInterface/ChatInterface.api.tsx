@@ -69,7 +69,13 @@ export const ChatInterfaceAPI = () => {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/redux-brain/', {
+      // Auto-detect Netlify environment
+      const isNetlify = typeof window !== 'undefined' && window.location.hostname.includes('netlify');
+      const apiUrl = isNetlify
+        ? '/.netlify/functions/redux-brain'
+        : '/api/redux-brain/';
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
