@@ -1,11 +1,12 @@
 [build]
   base = "."
-  command = "npm run build"
+  command = "npm run netlify-build"
   publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
+  NEXT_USE_NETLIFY_EDGE = "true"
 
 [context.production]
   command = "npm run build"
@@ -26,10 +27,17 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.anthropic.com;"
 
-# Next.js runtime
+# Next.js runtime with API routes support
 [functions]
   node_bundler = "esbuild"
-  included_files = ["public/**", ".next/**"]
+  included_files = ["public/**", ".next/**", "packages/**"]
+  external_node_modules = ["@anthropic-ai/sdk"]
+
+# Netlify Functions configuration for API routes
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
 # Essential Netlify plugin for Next.js
 [[plugins]]
