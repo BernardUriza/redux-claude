@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useMedicalChat } from '@redux-claude/cognitive-core'
+import { useMedicalChat } from '@redux-claude/cognitive-core/dist/hooks/useMedicalChatEvolved'
 
 export const ChatInterface = () => {
   const [input, setInput] = useState('')

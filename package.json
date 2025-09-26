@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run build:core && next dev",
+    "dev": "npm run build:core && next dev -p 3100",
     "build": "npm run build:core && next build",
     "build:core": "cd packages/cognitive-core && npm run build",
     "start": "next start",

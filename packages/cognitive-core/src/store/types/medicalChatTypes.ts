@@ -15,6 +15,11 @@ export interface MedicalMessage {
     sessionId?: string
     isStreaming?: boolean
     sectionType?: 'diagnosis' | 'treatment' | 'education' | 'followup'
+    inferences?: any[]
+    confidence_level?: string
+    stage?: string
+    critical_alert?: string | null
+    immediate_actions?: string[]
   }
 }
 

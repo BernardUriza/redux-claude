@@ -57,7 +57,13 @@
       "Bash(\"C:\\Program Files\\nodejs\\npm.cmd\" run dev)",
       "Bash(python:*)",
       "WebFetch(domain:docs.withcue.ai)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(/bashes)",
+      "Bash(npm run build:core:*)",
+      "Bash(netstat:*)",
+      "Bash(cat:*)",
+      "Bash(chmod:*)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []

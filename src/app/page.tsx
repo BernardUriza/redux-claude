@@ -1,9 +1,9 @@
 // src/app/page.tsx
-// Sistema Cognitivo Médico Corporativo 2025 - Bernard Orozco
+// Redux Brain Medical System - Redirect to Main Interface
 'use client'
 
-import { CognitiveDashboard } from '@/components/CognitiveDashboard'
+import { redirect } from 'next/navigation'
 
 export default function Home() {
-  return <CognitiveDashboard />
+  redirect('/paradigm2')
 }

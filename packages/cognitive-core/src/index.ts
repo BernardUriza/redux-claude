@@ -42,7 +42,10 @@ export {
   type CriticalPatternResult,
 } from './middleware/CriticalPatternMiddleware'
 
-// === HOOKS MULTINÚCLEO === (Excluded from server-side exports)
+// === HOOKS MULTINÚCLEO ===
+// NOTE: Hooks only work in client components. Import directly when needed:
+// import { useMedicalChat } from '@redux-claude/cognitive-core/dist/hooks/useMedicalChatEvolved'
+// import { useAssistantChat } from '@redux-claude/cognitive-core/dist/hooks/useAssistantChat'
 // export { useMedicalChat } from './hooks/useMedicalChatEvolved'
 // export { useAssistantChat } from './hooks/useAssistantChat'
 

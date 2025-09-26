@@ -97,8 +97,13 @@ export const useAssistantChat = (options: UseAssistantChatOptions = {}) => {
         const response = await callClaudeForDecision('intelligent_medical_chat', message)
 
         if (response.decision) {
+          // Extract content if response.decision is an object with content property
+          const messageContent = typeof response.decision === 'object' && response.decision !== null && 'content' in response.decision
+            ? (response.decision as any).content
+            : response.decision
+
           dispatch(addAssistantMessage({
-            content: response.decision,
+            content: String(messageContent),
             type: 'assistant'
           }))
         }
