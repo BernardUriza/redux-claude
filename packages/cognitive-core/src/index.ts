@@ -169,7 +169,9 @@ export { callClaudeForDecision, processReduxBrainMessage } from './services/deci
 export type { DecisionType, ReduxBrainSession } from './services/decisional-middleware'
 
 // === REDUX BRAIN HOOK (NPM READY) ===
-export { useReduxBrain } from './hooks/useReduxBrain'
+// NOTE: Hook only works in client components. Import directly when needed:
+// import { useReduxBrain } from '@redux-claude/cognitive-core/dist/hooks/useReduxBrain'
+// export { useReduxBrain } from './hooks/useReduxBrain'
 export type { ReduxBrainMessage, UseReduxBrainOptions } from './hooks/useReduxBrain'
 
 // === ADDITIONAL INFO SERVICE ===

@@ -1,3 +1,5 @@
+'use client'
+
 // 🧠 useReduxBrain Hook - Simple interface for any Next.js app
 // Install: npm install @redux-claude/cognitive-core
 // Usage: const { sendMessage, messages, isLoading } = useReduxBrain()
