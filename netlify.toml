@@ -30,7 +30,8 @@
 # Next.js runtime with API routes support
 [functions]
   node_bundler = "esbuild"
-  included_files = ["public/**", ".next/**", "packages/**"]
+  # Don't include unnecessary files to keep function size small
+  included_files = []
   external_node_modules = ["@anthropic-ai/sdk"]
 
 # API routes handled by Next.js adapter plugin

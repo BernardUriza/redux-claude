@@ -1,5 +1,5 @@
-// Netlify Function for Redux Brain API
-// Independent implementation that doesn't require Next.js build
+// Netlify Function for Redux Brain API - Minimal size version
+// No external dependencies to keep size under 250MB limit
 
 exports.handler = async (event, context) => {
   // CORS headers
@@ -141,8 +141,10 @@ function detectUrgencyLevel(input) {
   return 'LOW';
 }
 
-// Helper function to call Claude API
+// Helper function to call Claude API using https module
 async function callClaude(apiKey, message, validation) {
+  const https = require('https');
+
   const systemPrompt = `Eres un asistente médico avanzado. Responde en español de manera profesional y empática.
 
   REGLAS IMPORTANTES:
@@ -154,38 +156,60 @@ async function callClaude(apiKey, message, validation) {
   Contexto de validación: ${JSON.stringify(validation)}
   `;
 
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const postData = JSON.stringify({
+    model: 'claude-3-haiku-20240307',
+    max_tokens: 1500,
+    temperature: 0.3,
+    system: systemPrompt,
+    messages: [
+      {
+        role: 'user',
+        content: message
+      }
+    ]
+  });
+
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'api.anthropic.com',
+      path: '/v1/messages',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData),
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 1500,
-        temperature: 0.3,
-        system: systemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: message
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          if (result.content && result.content[0]?.text) {
+            resolve(result.content[0].text);
+          } else {
+            resolve('Entiendo tu consulta. Para brindarte una mejor asistencia médica, ¿podrías proporcionar más detalles sobre los síntomas?');
           }
-        ]
-      })
+        } catch (error) {
+          console.error('Parse error:', error);
+          resolve('Disculpa, hubo un problema al procesar tu consulta. Por favor, intenta nuevamente.');
+        }
+      });
     });
 
-    const result = await response.json();
+    req.on('error', (error) => {
+      console.error('Request error:', error);
+      resolve('Disculpa, hubo un problema al procesar tu consulta. Por favor, intenta nuevamente.');
+    });
 
-    if (result.content && result.content[0]?.text) {
-      return result.content[0].text;
-    }
-
-    return 'Entiendo tu consulta. Para brindarte una mejor asistencia médica, ¿podrías proporcionar más detalles sobre los síntomas?';
-
-  } catch (error) {
-    console.error('Claude API Error:', error);
-    return 'Disculpa, hubo un problema al procesar tu consulta. Por favor, intenta nuevamente.';
-  }
+    req.write(postData);
+    req.end();
+  });
 }
