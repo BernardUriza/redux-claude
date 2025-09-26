@@ -3,7 +3,7 @@
 // Uses REST API instead of direct hooks - Bernard Orozco 2025
 
 import { useState, useEffect } from 'react'
-import { ChatInterfaceAPI } from '@/components/paradigm2/ChatInterface/ChatInterface.api'
+import { ChatInterfaceAPI } from '@/presentation/features/chat/ChatInterface'
 
 export default function ParadigmV2() {
   const [mounted, setMounted] = useState(false)
