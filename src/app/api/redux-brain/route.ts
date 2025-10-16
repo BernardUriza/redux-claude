@@ -41,62 +41,85 @@ enum ActionTypes {
   VITAL_SIGN_DETECTED = 'VITAL_SIGN_DETECTED',
 }
 
-// Store Redux con historial de acciones
-const reduxStore = new Map<
-  string,
-  {
-    sessionId: string
-    messages: Array<{
-      role: 'user' | 'assistant'
-      content: string
-      timestamp: Date
-      validated: boolean
-      category?: string
-    }>
-    patientInfo: {
-      age?: number
-      gender?: string
-      symptoms?: string[]
-      duration?: string
-      medicalHistory?: string[]
-    }
-    diagnosticState: {
-      differentialDiagnosis?: string[]
-      recommendedTests?: string[]
-      treatmentPlan?: string[]
-      urgencyLevel?: string
-    }
-    soapState: {
-      subjetivo?: string
-      objetivo?: string
-      analisis?: string
-      plan?: string
-    }
-    // 🚨 URGENCY ASSESSMENT - Evaluación automática de urgencias
-    urgencyAssessment?: {
-      level: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'
-      protocol?: string
-      actions: string[]
-      pediatricFlag?: boolean
-      reasoning?: string
-    }
-    // Historial de acciones Redux con trazabilidad completa
-    actionHistory: Array<{
-      type: string
-      payload: any
-      timestamp: Date
-      stateSnapshot: {
-        messageCount: number
-        hasPatientInfo: boolean
-        soapProgress: number
-        currentPhase: string
-      }
-    }>
+// 📊 TYPE DEFINITIONS for Redux Actions and Session Data
+
+interface ActionPayload {
+  [key: string]: unknown
+}
+
+interface SOAPState {
+  subjetivo?: string
+  objetivo?: string
+  analisis?: string
+  plan?: string
+}
+
+interface PatientInfo {
+  age?: number | null
+  gender?: string | null
+  symptoms?: string[]
+  duration?: string | null
+  medicalHistory?: string[]
+}
+
+interface ConversationMessage {
+  role: 'user' | 'assistant'
+  content: string
+  timestamp?: Date
+  validated?: boolean
+  category?: string
+}
+
+interface ExtractedInfo {
+  age: number | null
+  gender: string | null
+  symptoms: string[]
+  duration: string | null
+  medicalHistory?: string[]
+}
+
+interface StateSnapshot {
+  messageCount: number
+  hasPatientInfo: boolean
+  soapProgress: number
+  currentPhase: string
+}
+
+interface ReduxAction {
+  type: string
+  payload: ActionPayload
+  timestamp: Date
+  stateSnapshot: StateSnapshot
+}
+
+interface UrgencyAssessment {
+  level: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'
+  protocol?: string
+  actions: string[]
+  pediatricFlag?: boolean
+  reasoning?: string
+}
+
+interface SessionData {
+  sessionId: string
+  messages: ConversationMessage[]
+  patientInfo: PatientInfo
+  diagnosticState: {
+    differentialDiagnosis?: string[]
+    recommendedTests?: string[]
+    treatmentPlan?: string[]
+    urgencyLevel?: string
   }
->()
+  soapState: SOAPState
+  urgencyAssessment?: UrgencyAssessment
+  actionHistory: ReduxAction[]
+}
+
+// Store Redux con historial de acciones
+const reduxStore = new Map<string, SessionData>()
 
 // Función para despachar acciones (como en Redux real)
-function dispatchAction(sessionId: string, action: { type: string; payload: any }) {
+function dispatchAction(sessionId: string, action: { type: string; payload: ActionPayload }) {
   const session = reduxStore.get(sessionId)
   if (!session) return
 
@@ -122,7 +145,7 @@ function dispatchAction(sessionId: string, action: { type: string; payload: any 
 }
 
 // Calcular progreso SOAP (0-100%)
-function calculateSOAPProgress(soapState: any): number {
+function calculateSOAPProgress(soapState: SOAPState): number {
   let progress = 0
   if (soapState.subjetivo) progress += SOAP_SECTION_PROGRESS_PERCENT
   if (soapState.objetivo) progress += SOAP_SECTION_PROGRESS_PERCENT
@@ -132,7 +155,7 @@ function calculateSOAPProgress(soapState: any): number {
 }
 
 // Determinar fase actual del proceso médico
-function determineCurrentPhase(session: any): string {
+function determineCurrentPhase(session: SessionData): string {
   if (!session.messages.length) return 'INICIO'
   if (!session.patientInfo.age) return 'ANAMNESIS'
   if (!session.soapState.objetivo) return 'EXPLORACIÓN'
@@ -144,7 +167,7 @@ function determineCurrentPhase(session: any): string {
 async function callClaude(
   systemPrompt: string,
   userMessage: string,
-  conversationHistory: any[] = []
+  conversationHistory: ConversationMessage[] = []
 ) {
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY
 
@@ -182,8 +205,8 @@ async function callClaude(
 // 🧠 CONTEXT-AWARE URGENCY ENGINE - LLM-based contextual analysis
 async function detectUrgencyWithContext(
   input: string,
-  sessionStore: any,
-  extractedInfo: any
+  sessionStore: SessionData,
+  extractedInfo: ExtractedInfo
 ): Promise<{
   level: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'
   protocol?: string
@@ -312,7 +335,7 @@ async function validateInput(input: string): Promise<{
   isValid: boolean
   category: string
   message: string
-  extractedInfo?: any
+  extractedInfo?: ExtractedInfo
 }> {
   const systemPrompt = `You are a medical input validator. Analyze the input and respond in Spanish.
 
@@ -361,7 +384,7 @@ Be friendly and helpful. Extract any medical information present.`
 }
 
 // 🏥 PROCESADOR MÉDICO PRINCIPAL
-async function processMedicalQuery(input: string, sessionData: any): Promise<string> {
+async function processMedicalQuery(input: string, sessionData: SessionData): Promise<string> {
   // 🚨 CRITICAL PATTERN DETECTION - WIDOW MAKER ALERT
   const criticalPatternResult = criticalPatternMiddleware.analyzeCriticalPatterns(input)
 
@@ -401,7 +424,7 @@ INSTRUCTIONS:
 
 Remember: You're helping a medical professional, so be thorough and precise.`
 
-  const conversationHistory = sessionData.messages.map((m: any) => ({
+  const conversationHistory = sessionData.messages.map((m: ConversationMessage) => ({
     role: m.role,
     content: m.content,
   }))
@@ -645,8 +668,8 @@ export async function POST(req: NextRequest) {
       try {
         const soapProcessor = new SOAPProcessor()
         const soapAnalysis = await soapProcessor.processCase(sanitizedMessage, {
-          age: validation.extractedInfo.age,
-          gender: validation.extractedInfo.gender,
+          age: validation.extractedInfo.age ?? undefined,
+          gender: validation.extractedInfo.gender ?? undefined,
           comorbidities: validation.extractedInfo.medicalHistory,
           medications: [],
           vitalSigns: {},

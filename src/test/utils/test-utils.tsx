@@ -43,13 +43,8 @@ const mockMedicalChatSlice = createSlice({
   },
 })
 
-// Test store state interface
-interface TestStoreState {
-  medicalChat: MedicalChatState
-}
-
 // Mock store for testing
-const createTestStore = (preloadedState: Partial<TestStoreState> = {}) => {
+const createTestStore = (preloadedState = {}) => {
   return configureStore({
     reducer: {
       medicalChat: mockMedicalChatSlice.reducer,
@@ -63,7 +58,7 @@ const createTestStore = (preloadedState: Partial<TestStoreState> = {}) => {
 }
 
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
-  preloadedState?: Partial<TestStoreState>
+  preloadedState?: Record<string, unknown>
   store?: ReturnType<typeof createTestStore>
 }
 
