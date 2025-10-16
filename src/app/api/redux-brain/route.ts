@@ -644,14 +644,16 @@ function activateProtocols(
 
 // 📝 SOAP SECTION UPDATE HELPERS
 
-// Update Subjective (S) section
+// Update Subjective (S) section - CUMULATIVE MODE
 function updateSOAPSubjective(
   sessionId: string,
   session: SessionData,
   sanitizedMessage: string,
   soapAnalysis: Awaited<ReturnType<SOAPProcessor['processCase']>>
 ): void {
-  if (!session.soapState.subjetivo || session.messages.length <= 2) {
+  // ✅ CUMULATIVE SOAP: Accumulate, don't replace
+  if (!session.soapState.subjetivo) {
+    // First subjective data EVER - initialize
     session.soapState.subjetivo = sanitizedMessage
   } else if (soapAnalysis.soap?.subjetivo) {
     const subjetivoValue =
@@ -659,8 +661,27 @@ function updateSOAPSubjective(
         ? soapAnalysis.soap.subjetivo
         : soapAnalysis.soap.subjetivo.motivoConsulta || sanitizedMessage
 
-    if (subjetivoValue !== 'Paciente acude por evaluación médica') {
-      session.soapState.subjetivo = subjetivoValue
+    if (
+      subjetivoValue !== 'Paciente acude por evaluación médica' &&
+      subjetivoValue.trim().length > 10
+    ) {
+      // ✅ ACCUMULATE: Append new information, don't replace
+      if (!session.soapState.subjetivo.includes(subjetivoValue)) {
+        session.soapState.subjetivo = `${session.soapState.subjetivo}\n\n📝 ACTUALIZACIÓN: ${subjetivoValue}`
+      }
+    } else {
+      // Generic update - append the raw message if it adds value
+      if (
+        sanitizedMessage.length > 15 &&
+        !session.soapState.subjetivo.includes(sanitizedMessage)
+      ) {
+        session.soapState.subjetivo = `${session.soapState.subjetivo}\n\n📝 ACTUALIZACIÓN: ${sanitizedMessage}`
+      }
+    }
+  } else {
+    // No SOAP analysis but new message - append it
+    if (sanitizedMessage.length > 15 && !session.soapState.subjetivo.includes(sanitizedMessage)) {
+      session.soapState.subjetivo = `${session.soapState.subjetivo}\n\n📝 ACTUALIZACIÓN: ${sanitizedMessage}`
     }
   }
 
@@ -670,7 +691,7 @@ function updateSOAPSubjective(
   })
 }
 
-// Update Objective (O) section
+// Update Objective (O) section - CUMULATIVE MODE
 function updateSOAPObjective(
   sessionId: string,
   session: SessionData,
@@ -681,7 +702,7 @@ function updateSOAPObjective(
       soapAnalysis.soap.objetivo.signosVitales &&
       Object.keys(soapAnalysis.soap.objetivo.signosVitales).length > 0
 
-    session.soapState.objetivo =
+    const newObjectiveData =
       typeof soapAnalysis.soap.objetivo === 'string'
         ? soapAnalysis.soap.objetivo
         : hasVitalSigns
@@ -692,6 +713,20 @@ function updateSOAPObjective(
             }`
           : 'Pendiente - Se requiere evaluación física y signos vitales'
 
+    // ✅ CUMULATIVE SOAP: Only update if new real data (not placeholder)
+    if (!newObjectiveData.includes('Pendiente')) {
+      if (!session.soapState.objetivo || session.soapState.objetivo.includes('Pendiente')) {
+        // First real objective data - replace placeholder
+        session.soapState.objetivo = newObjectiveData
+      } else if (!session.soapState.objetivo.includes(newObjectiveData)) {
+        // Additional objective data - append
+        session.soapState.objetivo = `${session.soapState.objetivo}\n\n📊 ACTUALIZACIÓN: ${newObjectiveData}`
+      }
+    } else if (!session.soapState.objetivo) {
+      // Initialize with placeholder if nothing exists
+      session.soapState.objetivo = newObjectiveData
+    }
+
     dispatchAction(sessionId, {
       type: ActionTypes.SOAP_O_UPDATED,
       payload: { objetivo: session.soapState.objetivo },
@@ -699,19 +734,37 @@ function updateSOAPObjective(
   }
 }
 
-// Update Analysis (A) section
+// Update Analysis (A) section - CUMULATIVE MODE
 function updateSOAPAnalysis(
   sessionId: string,
   session: SessionData,
   soapAnalysis: Awaited<ReturnType<SOAPProcessor['processCase']>>
 ): void {
   if (soapAnalysis.soap?.analisis) {
-    session.soapState.analisis =
+    const newAnalysisData =
       typeof soapAnalysis.soap.analisis === 'string'
         ? soapAnalysis.soap.analisis
         : soapAnalysis.soap.analisis.diagnosticoPrincipal?.condicion ||
           'Análisis pendiente - Se requiere más información clínica'
-  } else {
+
+    // ✅ CUMULATIVE SOAP: Only update if new real analysis (not placeholder)
+    if (!newAnalysisData.includes('pendiente') && !newAnalysisData.includes('por definir')) {
+      if (
+        !session.soapState.analisis ||
+        session.soapState.analisis.includes('pendiente') ||
+        session.soapState.analisis.includes('por definir')
+      ) {
+        // First real analysis - replace placeholder
+        session.soapState.analisis = newAnalysisData
+      } else if (!session.soapState.analisis.includes(newAnalysisData)) {
+        // Additional analysis - refine diagnosis
+        session.soapState.analisis = `${session.soapState.analisis}\n\n🧠 ACTUALIZACIÓN DDx: ${newAnalysisData}`
+      }
+    } else if (!session.soapState.analisis) {
+      // Initialize with placeholder if nothing exists
+      session.soapState.analisis = newAnalysisData
+    }
+  } else if (!session.soapState.analisis) {
     session.soapState.analisis = 'Análisis pendiente - Se requiere más información clínica'
   }
 
@@ -721,15 +774,16 @@ function updateSOAPAnalysis(
   })
 }
 
-// Update Plan (P) section
+// Update Plan (P) section - CUMULATIVE MODE
 function updateSOAPPlan(
   sessionId: string,
   session: SessionData,
   soapAnalysis: Awaited<ReturnType<SOAPProcessor['processCase']>>
 ): void {
   if (soapAnalysis.soap?.plan) {
+    let newPlanData: string
     if (typeof soapAnalysis.soap.plan === 'string') {
-      session.soapState.plan = soapAnalysis.soap.plan
+      newPlanData = soapAnalysis.soap.plan
     } else {
       const hasTreatment =
         (Array.isArray(soapAnalysis.soap.plan.tratamientoFarmacologico) &&
@@ -737,11 +791,29 @@ function updateSOAPPlan(
         (Array.isArray(soapAnalysis.soap.plan.tratamientoNoFarmacologico) &&
           soapAnalysis.soap.plan.tratamientoNoFarmacologico.length > 0)
 
-      session.soapState.plan = hasTreatment
+      newPlanData = hasTreatment
         ? JSON.stringify(soapAnalysis.soap.plan, null, 2)
         : 'Plan pendiente - Requiere completar anamnesis y evaluación'
     }
-  } else {
+
+    // ✅ CUMULATIVE SOAP: Only update if new real plan (not placeholder)
+    if (!newPlanData.includes('pendiente') && !newPlanData.includes('por completar')) {
+      if (
+        !session.soapState.plan ||
+        session.soapState.plan.includes('pendiente') ||
+        session.soapState.plan.includes('por completar')
+      ) {
+        // First real plan - replace placeholder
+        session.soapState.plan = newPlanData
+      } else if (!session.soapState.plan.includes(newPlanData)) {
+        // Additional plan - append treatment updates
+        session.soapState.plan = `${session.soapState.plan}\n\n📋 ACTUALIZACIÓN PLAN: ${newPlanData}`
+      }
+    } else if (!session.soapState.plan) {
+      // Initialize with placeholder if nothing exists
+      session.soapState.plan = newPlanData
+    }
+  } else if (!session.soapState.plan) {
     session.soapState.plan = 'Plan pendiente - Requiere completar anamnesis y evaluación'
   }
 
@@ -749,6 +821,63 @@ function updateSOAPPlan(
     type: ActionTypes.SOAP_P_UPDATED,
     payload: { plan: session.soapState.plan },
   })
+}
+
+// 🔍 SOAP GAP ANALYSIS - Identify missing data for complete assessment
+function identifySOAPGaps(soapState: SOAPState, patientInfo: PatientInfo): string[] {
+  const gaps: string[] = []
+
+  // S - SUBJETIVO gaps
+  if (!soapState.subjetivo || soapState.subjetivo.length < 30) {
+    gaps.push('Motivo de consulta detallado')
+    gaps.push('Historia de enfermedad actual (inicio, evolución, factores agravantes/aliviantes)')
+  }
+  if (!patientInfo.medicalHistory || patientInfo.medicalHistory.length === 0) {
+    gaps.push('Antecedentes médicos personales')
+  }
+  if (!patientInfo.duration) {
+    gaps.push('Tiempo de evolución de síntomas')
+  }
+
+  // O - OBJETIVO gaps
+  if (!soapState.objetivo || soapState.objetivo.includes('Pendiente')) {
+    gaps.push('Signos vitales completos (PA, FC, FR, Temp, SatO2)')
+    gaps.push('Examen físico dirigido por sistemas')
+  }
+
+  // A - ANÁLISIS gaps
+  if (
+    !soapState.analisis ||
+    soapState.analisis.includes('pendiente') ||
+    soapState.analisis.includes('por definir')
+  ) {
+    if (gaps.length === 0) {
+      // Only request analysis if we have enough data
+      gaps.push('Análisis clínico y diagnósticos diferenciales')
+    }
+  }
+
+  // P - PLAN gaps
+  if (
+    !soapState.plan ||
+    soapState.plan.includes('pendiente') ||
+    soapState.plan.includes('por completar')
+  ) {
+    if (soapState.analisis && !soapState.analisis.includes('pendiente')) {
+      // Only request plan if we have analysis
+      gaps.push('Plan terapéutico y seguimiento')
+    }
+  }
+
+  // Patient demographics
+  if (!patientInfo.age) {
+    gaps.push('Edad del paciente')
+  }
+  if (!patientInfo.gender) {
+    gaps.push('Sexo del paciente')
+  }
+
+  return gaps
 }
 
 // 🧠 SOAP PROCESSING ORCHESTRATOR
@@ -826,41 +955,47 @@ async function processMedicalQuery(input: string, sessionData: SessionData): Pro
   // 🚨 CRITICAL PATTERN DETECTION - WIDOW MAKER ALERT
   const criticalPatternResult = criticalPatternMiddleware.analyzeCriticalPatterns(input)
 
-  const systemPrompt = `You are an advanced medical AI assistant. You have access to the patient's conversation history and extracted information.
+  // 🔍 IDENTIFY MISSING SOAP DATA
+  const soapGaps = identifySOAPGaps(sessionData.soapState, sessionData.patientInfo)
 
-Patient Information:
-${JSON.stringify(sessionData.patientInfo, null, 2)}
+  const systemPrompt = `Asistente médico AI. Respuestas CONCISAS para profesionales médicos.
 
-Previous Diagnostic State:
-${JSON.stringify(sessionData.diagnosticState, null, 2)}
+📊 ESTADO ACTUAL:
+Paciente: ${sessionData.patientInfo.age ? `${sessionData.patientInfo.age} años` : 'Edad no registrada'}, ${sessionData.patientInfo.gender || 'Sexo no registrado'}
+Síntomas: ${sessionData.patientInfo.symptoms?.join(', ') || 'No registrados'}
+SOAP: ${calculateSOAPProgress(sessionData.soapState)}%
 
-${criticalPatternResult.triggered ? criticalPatternMiddleware.generateMandatoryPrompt(criticalPatternResult) : ''}
+${soapGaps.length > 0 ? `🚨 DATOS FALTANTES (${soapGaps.length}):
+${soapGaps.map(g => `• ${g}`).join('\n')}` : '✅ SOAP COMPLETO'}
 
-🚨 HARDCODED WIDOW MAKER PATTERN - AORTIC DISSECTION DETECTION:
-IF this case shows (sepsis + abdominal pain + HTN history), you MUST consider aortic dissection:
+${criticalPatternResult.triggered ? `\n🚨 CRITICAL PATTERN DETECTED:\n${criticalPatternMiddleware.generateMandatoryPrompt(criticalPatternResult)}\n` : ''}
 
-CRITICAL RULE: If patient has:
-1. Sepsis-like presentation (fever, hypotension, altered mental status, leukocytosis)
-2. AND abdominal pain (any type: colic, severe, epigastric)
-3. AND history of hypertension (controlled or uncontrolled)
+🚨 WIDOW MAKER RULE:
+IF (sepsis + abdominal pain + HTN) → MUST consider aortic dissection with bacterial translocation. AngioTC required.
 
-THEN you MUST include in your differential diagnosis:
-• Disección Aórtica con translocación bacteriana (bacterial translocation from intestinal ischemia)
-• Explain the pathophysiology: Aortic dissection → intestinal ischemia → bacterial translocation → sepsis-like syndrome
-• Recommend: AngioTC of thoracic and abdominal aorta, pulse differences between extremities
-• Mention this is a "widow maker" condition that mimics sepsis
+📋 FORMATO OBLIGATORIO (Máximo 150 palabras):
 
-This is NOT optional - patient safety requires this consideration.
+${soapGaps.length > 0 ? `**DATOS FALTANTES:**
+${soapGaps.slice(0, 3).map(g => `• ${g}`).join('\n')}
+` : ''}**EVALUACIÓN:**
+• [Punto clave 1]
+• [Punto clave 2]
 
-INSTRUCTIONS:
-1. Provide a comprehensive medical response in Spanish
-2. If information is complete, provide differential diagnosis
-3. Suggest treatment plans when appropriate
-4. Maintain context from previous messages
-5. Be professional but empathetic
-6. Ask for missing critical information when needed
+**DDx:** [Máx 3 diagnósticos]
 
-Remember: You're helping a medical professional, so be thorough and precise.`
+**PLAN INMEDIATO:**
+• [Acción 1]
+• [Acción 2]
+
+REGLAS:
+✅ Bullets, NO narrativa
+✅ Pedir datos faltantes PRIMERO
+✅ Máx 150 palabras
+✅ Directos y escaneables
+❌ NO explicaciones largas
+❌ NO frases de cortesía
+
+Context: ${sessionData.messages.length} mensajes previos`
 
   const conversationHistory = sessionData.messages.map((m: ConversationMessage) => ({
     role: m.role,
