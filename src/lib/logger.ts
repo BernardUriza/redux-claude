@@ -9,7 +9,7 @@ const HTTP_SERVER_ERROR_THRESHOLD = 500 // Status codes >= 500 indicate server e
 type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 
 interface LogContext {
-  [key: string]: any
+  [key: string]: unknown
 }
 
 interface LogEntry {
@@ -137,7 +137,7 @@ class StructuredLogger {
       sessionId: string
       urgencyLevel?: string
       protocol?: string
-      [key: string]: any
+      [key: string]: unknown
     }
   ) {
     this.info(`🏥 MEDICAL DECISION: ${message}`, {
@@ -153,7 +153,7 @@ class StructuredLogger {
       protocol?: string
       triggered: boolean
       widowMaker?: boolean
-      [key: string]: any
+      [key: string]: unknown
     }
   ) {
     const emoji = result.level === 'CRITICAL' ? '🚨' : result.level === 'HIGH' ? '⚡' : '📊'
@@ -187,7 +187,7 @@ class StructuredLogger {
     }
   }
 
-  reduxAction(action: { type: string; payload?: any; sessionId?: string }) {
+  reduxAction(action: { type: string; payload?: unknown; sessionId?: string }) {
     this.debug(`📝 Redux Action: ${action.type}`, {
       ...action,
       category: 'redux',

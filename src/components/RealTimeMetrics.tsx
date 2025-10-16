@@ -9,8 +9,19 @@ import { memo } from 'react'
 import { selectSystemMetrics } from '@redux-claude/cognitive-core/src/store/selectors'
 import { CALCULATION_FACTORS } from '../constants/magicNumbers'
 
+// 📊 METRICS TYPES
+interface RealMetrics {
+  confidence: number
+  cycles: number
+  processingTime: number
+  agentsActive: number
+  healthScore: number
+  systemHealth: string
+  messagesCount: number
+}
+
 // 🧮 SYSTEM METRICS CALCULATOR - Compacto y eficiente
-const calculateSystemMetrics = (realMetrics: any, isLoading: boolean) => {
+const calculateSystemMetrics = (realMetrics: RealMetrics, isLoading: boolean) => {
   const systemMetrics = {
     confidence: realMetrics.confidence,
     cycles: realMetrics.cycles,
@@ -187,7 +198,7 @@ const SystemStatus = memo(function SystemStatus({ status, message }: SystemStatu
 })
 
 // 🔍 SYSTEM STATUS CALCULATOR
-const calculateSystemStatus = (realMetrics: any): SystemStatusProps => {
+const calculateSystemStatus = (realMetrics: RealMetrics): SystemStatusProps => {
   const healthStatus = realMetrics.systemHealth
   const hasActivity = realMetrics.messagesCount > 1
 

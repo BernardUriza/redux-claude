@@ -278,10 +278,12 @@ const ReminderCard = ({ reminder }: { reminder: Reminder }) => {
 
 export const FollowUpTracker = () => {
   const dispatch = useDispatch()
-  // 🧠 MULTINÚCLEO: Mock data temporal para mantener funcionalidad
-  const mockReminders: Reminder[] = []
   const [showAddModal, setShowAddModal] = useState(false)
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('pending')
+
+  // 🧠 MULTINÚCLEO: Mock data temporal para mantener funcionalidad
+  // Wrapped in useMemo to prevent recreation on every render
+  const mockReminders: Reminder[] = useMemo(() => [], [])
 
   // 🧙‍♂️ Gandalf's Reminder Cache - NO MORE RE-RENDERS! - Creado por Bernard Orozco
   const filteredReminders = useMemo(() => {

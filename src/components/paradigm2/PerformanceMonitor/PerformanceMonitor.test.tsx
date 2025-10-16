@@ -16,8 +16,8 @@ const mockPerformance = {
   },
 }
 
-// Mock bundle analyzer
-const mockBundleStats = {
+// Mock bundle analyzer (unused but kept for future reference)
+const _mockBundleStats = {
   original: { size: 1024 * 512, modules: 1217 }, // 512KB, 1217 modules
   optimized: { size: 1024 * 256, modules: 156 }, // 256KB, 156 modules
 }

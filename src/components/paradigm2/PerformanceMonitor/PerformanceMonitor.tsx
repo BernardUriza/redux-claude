@@ -1,5 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 
+// Chrome-specific Performance API extension for memory
+interface PerformanceMemory {
+  usedJSHeapSize: number
+  totalJSHeapSize: number
+  jsHeapSizeLimit: number
+}
+
+// Extended Performance interface with Chrome memory API
+interface ExtendedPerformance extends Performance {
+  memory?: PerformanceMemory
+}
+
 interface PerformanceMetrics {
   bundleSize: { original: number; optimized: number }
   memoryUsage: { used: number; total: number; limit: number }
@@ -58,8 +70,8 @@ export const PerformanceMonitor = ({
       optimized: BYTES_PER_KB * OPTIMIZED_BUNDLE_SIZE_KB,
     }
 
-    // Memory usage from performance.memory
-    const memory = (performance as any).memory || {
+    // Memory usage from performance.memory (Chrome-specific API)
+    const memory = (performance as ExtendedPerformance).memory || {
       usedJSHeapSize: BYTES_PER_MB * DEFAULT_USED_HEAP_MB,
       totalJSHeapSize: BYTES_PER_MB * DEFAULT_TOTAL_HEAP_MB,
       jsHeapSizeLimit: BYTES_PER_MB * DEFAULT_HEAP_LIMIT_MB,
