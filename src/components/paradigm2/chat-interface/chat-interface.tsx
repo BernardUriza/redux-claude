@@ -1,6 +1,53 @@
 import { useState } from 'react'
 import { useMedicalChat } from '@redux-claude/cognitive-core/hooks/useMedicalChatEvolved'
 
+// Simple markdown parser for medical messages
+const parseMarkdown = (text: string) => {
+  const lines = text.split('\n')
+  const elements: JSX.Element[] = []
+  let key = 0
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+
+    // Skip empty lines
+    if (!line.trim()) {
+      elements.push(<div key={key++} className="h-2" />)
+      continue
+    }
+
+    // Bold sections (**text**)
+    if (line.includes('**')) {
+      const parts = line.split('**')
+      const rendered = parts.map((part, idx) => {
+        if (idx % 2 === 1) {
+          return <strong key={idx} className="font-bold text-white">{part}</strong>
+        }
+        return <span key={idx}>{part}</span>
+      })
+      elements.push(<p key={key++} className="mb-1">{rendered}</p>)
+      continue
+    }
+
+    // Bullets (• or - at start)
+    if (line.trim().startsWith('•') || line.trim().startsWith('-')) {
+      const content = line.trim().substring(1).trim()
+      elements.push(
+        <div key={key++} className="flex gap-2 ml-2 mb-1">
+          <span className="text-cyan-400">•</span>
+          <span className="flex-1">{content}</span>
+        </div>
+      )
+      continue
+    }
+
+    // Regular paragraph
+    elements.push(<p key={key++} className="mb-1">{line}</p>)
+  }
+
+  return elements
+}
+
 export const ChatInterface = () => {
   const [input, setInput] = useState('')
   const { messages, isLoading, sendMedicalQuery } = useMedicalChat()
@@ -37,7 +84,9 @@ export const ChatInterface = () => {
               <div className="text-xs text-gray-400 mb-2 font-mono">
                 {msg.type === 'user' ? 'YOU' : 'COGNITIVE AI'}
               </div>
-              <div className="text-sm leading-relaxed">{msg.content}</div>
+              <div className="text-sm leading-relaxed">
+                {parseMarkdown(msg.content)}
+              </div>
             </div>
           ))
         )}
