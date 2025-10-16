@@ -8,7 +8,6 @@ import type { MedicalMessage } from '@redux-claude/cognitive-core'
 
 import { MessageAvatar } from '../../../components/medical-message/MessageAvatar'
 import { StreamingIndicator } from '../../../components/medical-message/StreamingIndicator'
-import { ConfidenceIndicator } from '../../../components/medical-message/ConfidenceIndicator'
 import { SOAPBadge } from '../../../components/medical-message/SOAPBadge'
 import { IterativeMetrics } from '../../../components/medical-message/IterativeMetrics'
 import { AgentInsights } from '../../../components/medical-message/AgentInsights'

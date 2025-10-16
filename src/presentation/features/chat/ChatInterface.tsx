@@ -3,9 +3,13 @@
 
 import { useState, useEffect, useRef } from 'react'
 
+// 🔧 UI CONSTANTS
+const ID_RANDOM_LENGTH = 11 // Length for random ID generation (substring end index)
+const SESSION_ID_DISPLAY_LENGTH = 16 // Characters to show in UI for session ID
+
 // Simple UUID generator - no external dependencies
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+  return `${Date.now()}-${Math.random().toString(36).substring(2, ID_RANDOM_LENGTH)}`
 }
 
 interface Message {
@@ -168,7 +172,7 @@ export const ChatInterfaceAPI = () => {
               Medical Assistant
             </h2>
             <p className="text-xs text-gray-400 mt-1 hidden sm:block">
-              Session: {sessionId.slice(0, 16)}...
+              Session: {sessionId.slice(0, SESSION_ID_DISPLAY_LENGTH)}...
             </p>
           </div>
           <button

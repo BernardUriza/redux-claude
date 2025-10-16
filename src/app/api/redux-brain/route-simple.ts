@@ -24,14 +24,14 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   return NextResponse.json({
     service: '🧠 Redux Brain API (Simple)',
     description:
       'This API just calls the processReduxBrainMessage from @redux-claude/cognitive-core',
     usage: {
       install: 'npm install @redux-claude/cognitive-core',
-      import: "import { processReduxBrainMessage } from '@redux-claude/cognitive-core'",
+      import: "import { processReduxBrainMessage} from '@redux-claude/cognitive-core'",
       hook: "import { useReduxBrain } from '@redux-claude/cognitive-core'",
       endpoint: 'POST /api/redux-brain',
       payload: {

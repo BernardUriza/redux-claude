@@ -2,6 +2,10 @@
 // Zero dependencies, maximum performance
 // Bernard Orozco 2025
 
+// 📊 HTTP STATUS CODE CONSTANTS
+const HTTP_CLIENT_ERROR_THRESHOLD = 400 // Status codes >= 400 indicate client errors
+const HTTP_SERVER_ERROR_THRESHOLD = 500 // Status codes >= 500 indicate server errors
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 
 interface LogContext {
@@ -198,7 +202,12 @@ class StructuredLogger {
   }
 
   apiResponse(method: string, path: string, statusCode: number, duration: number) {
-    const level = statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info'
+    const level =
+      statusCode >= HTTP_SERVER_ERROR_THRESHOLD
+        ? 'error'
+        : statusCode >= HTTP_CLIENT_ERROR_THRESHOLD
+          ? 'warn'
+          : 'info'
     this[level](`✅ ${method} ${path} ${statusCode}`, {
       statusCode,
       duration: `${duration}ms`,

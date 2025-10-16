@@ -17,6 +17,17 @@ interface PerformanceMonitorProps {
   updateInterval?: number
 }
 
+// 📊 PERFORMANCE CONSTANTS
+const BYTES_PER_KB = 1024
+const BYTES_PER_MB = 1024 * 1024
+const ORIGINAL_BUNDLE_SIZE_KB = 512 // Original dashboard bundle size
+const OPTIMIZED_BUNDLE_SIZE_KB = 256 // TDD version bundle size
+const DEFAULT_USED_HEAP_MB = 10 // Default used heap size when API unavailable
+const DEFAULT_TOTAL_HEAP_MB = 20 // Default total heap size when API unavailable
+const DEFAULT_HEAP_LIMIT_MB = 100 // Default heap limit when API unavailable
+const GRADE_A_PLUS_THRESHOLD = 40 // Improvement percentage for A+ grade
+const GRADE_B_THRESHOLD = 20 // Improvement percentage for B grade
+
 export const PerformanceMonitor = ({
   showComparison = false,
   trackRenderTime = false,
@@ -43,15 +54,15 @@ export const PerformanceMonitor = ({
 
     // Bundle size data (from real server metrics we saw)
     const bundleSize = {
-      original: 1024 * 512, // 512KB (original dashboard)
-      optimized: 1024 * 256, // 256KB (TDD version)
+      original: BYTES_PER_KB * ORIGINAL_BUNDLE_SIZE_KB,
+      optimized: BYTES_PER_KB * OPTIMIZED_BUNDLE_SIZE_KB,
     }
 
     // Memory usage from performance.memory
     const memory = (performance as any).memory || {
-      usedJSHeapSize: 1024 * 1024 * 10,
-      totalJSHeapSize: 1024 * 1024 * 20,
-      jsHeapSizeLimit: 1024 * 1024 * 100,
+      usedJSHeapSize: BYTES_PER_MB * DEFAULT_USED_HEAP_MB,
+      totalJSHeapSize: BYTES_PER_MB * DEFAULT_TOTAL_HEAP_MB,
+      jsHeapSizeLimit: BYTES_PER_MB * DEFAULT_HEAP_LIMIT_MB,
     }
 
     const memoryUsage = {
@@ -75,7 +86,8 @@ export const PerformanceMonitor = ({
     )
 
     // Performance grade calculation
-    const grade = improvement > 40 ? 'A+' : improvement > 20 ? 'B' : 'C-'
+    const grade =
+      improvement > GRADE_A_PLUS_THRESHOLD ? 'A+' : improvement > GRADE_B_THRESHOLD ? 'B' : 'C-'
 
     return {
       bundleSize,
@@ -124,12 +136,12 @@ export const PerformanceMonitor = ({
   }
 
   const formatBytes = (bytes: number): string => {
-    const mb = bytes / (1024 * 1024)
+    const mb = bytes / BYTES_PER_MB
     return `${mb.toFixed(1)} MB`
   }
 
   const formatKB = (bytes: number): string => {
-    const kb = bytes / 1024
+    const kb = bytes / BYTES_PER_KB
     return `${Math.round(kb)} KB`
   }
 

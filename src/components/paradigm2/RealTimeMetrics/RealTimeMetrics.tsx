@@ -13,24 +13,33 @@ interface SystemMetrics {
   healthScore: number
 }
 
+// 📊 METRICS CONSTANTS
+const CONSENSUS_RATE_FACTOR = 0.95 // 95% factor for consensus calculation
+const GRADE_A_PLUS_THRESHOLD = 90 // Confidence threshold for A+ grade
+const GRADE_A_THRESHOLD = 80 // Confidence threshold for A grade
+const GRADE_B_THRESHOLD = 70 // Confidence threshold for B grade
+const GRADE_C_THRESHOLD = 60 // Confidence threshold for C grade
+const TREND_UP_THRESHOLD = 80 // Threshold for upward trend
+const TREND_STABLE_THRESHOLD = 50 // Threshold for stable trend
+
 // Calculate derived metrics
 const calculateDerivedMetrics = (metrics: SystemMetrics) => {
-  const consensusRate = Math.round(metrics.confidence * 0.95) // 95% factor
+  const consensusRate = Math.round(metrics.confidence * CONSENSUS_RATE_FACTOR)
   const qualityScore = metrics.healthScore
 
   // Determine performance grade
   const getGrade = () => {
-    if (metrics.confidence >= 90) return 'A+'
-    if (metrics.confidence >= 80) return 'A'
-    if (metrics.confidence >= 70) return 'B'
-    if (metrics.confidence >= 60) return 'C'
+    if (metrics.confidence >= GRADE_A_PLUS_THRESHOLD) return 'A+'
+    if (metrics.confidence >= GRADE_A_THRESHOLD) return 'A'
+    if (metrics.confidence >= GRADE_B_THRESHOLD) return 'B'
+    if (metrics.confidence >= GRADE_C_THRESHOLD) return 'C'
     return 'D'
   }
 
   // Determine trend based on confidence
   const getTrend = (value: number): 'up' | 'down' | 'stable' => {
-    if (value >= 80) return 'up'
-    if (value >= 50) return 'stable'
+    if (value >= TREND_UP_THRESHOLD) return 'up'
+    if (value >= TREND_STABLE_THRESHOLD) return 'stable'
     return 'down'
   }
 

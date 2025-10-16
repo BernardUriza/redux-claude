@@ -3,14 +3,19 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import {
-  SOAPResolver,
   SOAPProcessor,
   criticalPatternMiddleware,
   callClaudeForDecision,
   DefensiveMedicineValidator,
 } from '@redux-claude/cognitive-core'
 import { logger } from '@/lib/logger'
-import { sanitizeInput, validateMedicalInput, normalizeText } from '@/lib/textUtils'
+import { sanitizeInput, validateMedicalInput } from '@/lib/textUtils'
+
+// 📊 CONSTANTS
+const SOAP_SECTION_PROGRESS_PERCENT = 25 // Each SOAP section contributes 25% to total progress
+const ADULT_AGE_THRESHOLD = 18 // Age threshold for pediatric vs adult
+const RECENT_MESSAGES_COUNT = 3 // Number of recent messages to include in context
+const RECENT_ACTIONS_COUNT = 5 // Number of recent Redux actions to return
 
 // Tipos de acciones Redux (como en un store real)
 enum ActionTypes {
@@ -119,10 +124,10 @@ function dispatchAction(sessionId: string, action: { type: string; payload: any 
 // Calcular progreso SOAP (0-100%)
 function calculateSOAPProgress(soapState: any): number {
   let progress = 0
-  if (soapState.subjetivo) progress += 25
-  if (soapState.objetivo) progress += 25
-  if (soapState.analisis) progress += 25
-  if (soapState.plan) progress += 25
+  if (soapState.subjetivo) progress += SOAP_SECTION_PROGRESS_PERCENT
+  if (soapState.objetivo) progress += SOAP_SECTION_PROGRESS_PERCENT
+  if (soapState.analisis) progress += SOAP_SECTION_PROGRESS_PERCENT
+  if (soapState.plan) progress += SOAP_SECTION_PROGRESS_PERCENT
   return progress
 }
 
@@ -189,7 +194,7 @@ async function detectUrgencyWithContext(
   const contextualPrompt = `You are an expert emergency medicine physician analyzing a patient interaction for urgency levels.
 
 CRITICAL CONTEXT - USE THIS TO MAKE DECISIONS:
-- Current conversation: ${JSON.stringify(sessionStore.messages?.slice(-3) || [])}
+- Current conversation: ${JSON.stringify(sessionStore.messages?.slice(-RECENT_MESSAGES_COUNT) || [])}
 - Patient data extracted: ${JSON.stringify(extractedInfo)}
 - SOAP progress: ${sessionStore.soapState ? JSON.stringify(sessionStore.soapState) : 'None'}
 - Previous urgency assessments: ${sessionStore.urgencyAssessment?.level || 'None'}
@@ -553,7 +558,9 @@ export async function POST(req: NextRequest) {
           level: 'CRITICAL',
           protocol: criticalPatternResult.patterns[0]?.name || 'Critical Pattern Protocol',
           actions: overallUrgency.immediateActions,
-          pediatricFlag: validation.extractedInfo?.age ? validation.extractedInfo.age < 18 : false,
+          pediatricFlag: validation.extractedInfo?.age
+            ? validation.extractedInfo.age < ADULT_AGE_THRESHOLD
+            : false,
           reasoning: `🚨 CRITICAL PATTERN OVERRIDE: ${criticalPatternResult.patterns.map(p => p.name).join(', ')}. ${criticalPatternResult.widowMakerAlert ? '💀 WIDOW MAKER RISK DETECTED' : ''}`,
         }
       } else if (overallUrgency.level === 'critical' || overallUrgency.level === 'high') {
@@ -565,7 +572,9 @@ export async function POST(req: NextRequest) {
               ? urgentPatterns[0].criticalDifferentials[0]
               : 'Emergency Protocol',
           actions: overallUrgency.immediateActions,
-          pediatricFlag: validation.extractedInfo?.age ? validation.extractedInfo.age < 18 : false,
+          pediatricFlag: validation.extractedInfo?.age
+            ? validation.extractedInfo.age < ADULT_AGE_THRESHOLD
+            : false,
           reasoning: `DefensiveMedicineValidator: Gravity Score ${overallUrgency.maxGravity}/10. Urgent patterns detected: ${urgentPatterns.map(p => p.symptoms[0]).join(', ')}`,
         }
       } else {
@@ -607,7 +616,7 @@ export async function POST(req: NextRequest) {
       }
 
       // 👶 PEDIATRIC PROTOCOLS - Flags especiales para menores
-      if (validation.extractedInfo.age && validation.extractedInfo.age < 18) {
+      if (validation.extractedInfo.age && validation.extractedInfo.age < ADULT_AGE_THRESHOLD) {
         dispatchAction(sessionId, {
           type: ActionTypes.PEDIATRIC_ALERT,
           payload: {
@@ -828,7 +837,7 @@ export async function POST(req: NextRequest) {
       },
       reduxFlow: {
         totalActions: session.actionHistory.length,
-        recentActions: session.actionHistory.slice(-5).map(a => ({
+        recentActions: session.actionHistory.slice(-RECENT_ACTIONS_COUNT).map(a => ({
           type: a.type,
           timestamp: a.timestamp,
           phase: a.stateSnapshot.currentPhase,
@@ -851,7 +860,9 @@ export async function POST(req: NextRequest) {
         actionCount: session.actionHistory.length,
         // Flags críticos para alertas
         hasCriticalUrgency: session.urgencyAssessment?.level === 'CRITICAL',
-        pediatricCase: session.patientInfo.age ? session.patientInfo.age < 18 : false,
+        pediatricCase: session.patientInfo.age
+          ? session.patientInfo.age < ADULT_AGE_THRESHOLD
+          : false,
         protocolsActivated: session.actionHistory.filter(
           a => a.type === ActionTypes.PROTOCOL_ACTIVATED
         ).length,

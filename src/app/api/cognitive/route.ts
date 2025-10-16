@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   // Redirect to the main endpoint
-  const body = await req.json()
+  await req.json()
   return NextResponse.redirect(new URL('/api/redux-brain/', req.url), {
     status: 308, // Permanent redirect preserving method
     headers: {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   })
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   return NextResponse.json(
     {
       message: 'This endpoint has been consolidated. Please use /api/redux-brain/ instead.',

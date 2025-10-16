@@ -2,6 +2,11 @@
 // Zero dependencies, maximum reliability
 // Bernard Orozco 2025
 
+// 📊 TIME CONVERSION CONSTANTS
+const MONTHS_PER_YEAR = 12 // For converting months to years
+const WEEKS_PER_YEAR = 52 // For converting weeks to years
+const DAYS_PER_YEAR = 365 // For converting days to years
+
 /**
  * Normalizes text by removing diacritics and handling encoding corruption
  *
@@ -59,15 +64,15 @@ export function extractAge(text: string): number | null {
 
   // Months
   const monthsMatch = normalized.match(/(\d+)\s*(?:mes|month)/i)
-  if (monthsMatch) return Math.round((parseInt(monthsMatch[1]) / 12) * 1000) / 1000
+  if (monthsMatch) return Math.round((parseInt(monthsMatch[1]) / MONTHS_PER_YEAR) * 1000) / 1000
 
   // Weeks
   const weeksMatch = normalized.match(/(\d+)\s*(?:semana|week)/i)
-  if (weeksMatch) return Math.round((parseInt(weeksMatch[1]) / 52) * 1000) / 1000
+  if (weeksMatch) return Math.round((parseInt(weeksMatch[1]) / WEEKS_PER_YEAR) * 1000) / 1000
 
   // Days
   const daysMatch = normalized.match(/(\d+)\s*(?:dia|day)/i)
-  if (daysMatch) return Math.round((parseInt(daysMatch[1]) / 365) * 1000) / 1000
+  if (daysMatch) return Math.round((parseInt(daysMatch[1]) / DAYS_PER_YEAR) * 1000) / 1000
 
   return null
 }
@@ -129,7 +134,6 @@ export interface MedicalEntity {
 
 export function extractMedicalEntities(text: string): MedicalEntity[] {
   const entities: MedicalEntity[] = []
-  const normalized = normalizeText(text)
 
   // Common symptoms patterns
   const symptomPatterns = [
