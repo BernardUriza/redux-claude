@@ -3,7 +3,7 @@
 'use client'
 
 import React from 'react'
-import { PerformanceAlert } from '../monitoring/MedicalSystemMonitor'
+import { PerformanceAlert } from '../../../monitoring/MedicalSystemMonitor'
 
 interface AlertCardProps {
   alert: PerformanceAlert

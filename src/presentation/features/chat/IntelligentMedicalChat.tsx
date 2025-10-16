@@ -1,9 +1,10 @@
 'use client'
 
-import { useMedicalChat, useAssistantChat } from '@redux-claude/cognitive-core'
+import { useMedicalChat } from '@redux-claude/cognitive-core/hooks/useMedicalChatEvolved'
+import { useAssistantChat } from '@redux-claude/cognitive-core/hooks/useAssistantChat'
 import React, { useRef, useEffect, useState } from 'react'
-import { DynamicInferencePanel } from './DynamicInferencePanel'
-import { MedicalChatMessage } from './MedicalChatMessage'
+import { DynamicInferencePanel } from '../../../components/DynamicInferencePanel'
+import { MedicalChatMessage } from '../../../components/MedicalChatMessage'
 import styles from '../styles/components/IntelligentMedicalChat.module.css'
 
 // interface MedicalMessage {

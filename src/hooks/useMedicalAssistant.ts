@@ -5,7 +5,11 @@
 
 import { useSelector } from 'react-redux'
 import type { RootState } from '../../packages/cognitive-core/src/store/store'
-import { generateMedicalPrompt, type MedicalExtractionOutput } from '@redux-claude/cognitive-core'
+import {
+  generateMedicalPrompt,
+  type MedicalExtractionOutput,
+  selectReadyForSOAP,
+} from '@redux-claude/cognitive-core'
 import { CONFIDENCE_THRESHOLDS } from '../constants/magicNumbers'
 
 interface PatientData {
@@ -67,21 +71,21 @@ const processSymptomCharacteristics = (data: PatientData) => {
   }
 }
 
-// 🧙‍♂️ Gandalf's Missing Fields Cache - NO MORE RE-RENDERS! - Creado por Bernard Orozco
-const MISSING_FIELDS_CACHE = new Map<string, string[]>()
+// 🧙‍♂️ Gandalf's Missing Fields Cache - NO MORE RE-RENDERS! - Creado by Bernard Orozco
+const MISSING_FIELDS_CACHE = new Map<string, readonly string[]>()
 
 // Helper functions for metadata calculation
-const calculateMissingFields = (data: PatientData): string[] => {
+const calculateMissingFields = (data: PatientData): readonly string[] => {
   const cacheKey = `${data.age || 'none'}-${data.gender || 'none'}-${data.primarySymptom || 'none'}`
   if (MISSING_FIELDS_CACHE.has(cacheKey)) {
     return MISSING_FIELDS_CACHE.get(cacheKey)!
   }
-  
+
   const missing: string[] = []
   if (!data.age) missing.push('patient_age_years')
   if (!data.gender) missing.push('patient_gender')
   if (!data.primarySymptom) missing.push('chief_complaint')
-  
+
   const result = Object.freeze(missing)
   MISSING_FIELDS_CACHE.set(cacheKey, result)
   return result
@@ -112,9 +116,7 @@ export const useMedicalAssistant = () => {
     (state: RootState) => state.medicalChat.sharedState.patientData
   ) as PatientData
 
-  const readyForSOAP = useSelector(
-    (state: RootState) => state.medicalChat.sharedState.readyForSOAP
-  ) as boolean
+  const readyForSOAP = useSelector(selectReadyForSOAP)
 
   const currentExtraction = useSelector(
     (state: RootState) => state.medicalChat.medicalExtraction.currentExtraction
@@ -155,22 +157,22 @@ export const useMedicalAssistant = () => {
     }
   }
 
-  const getMissingFields = (): string[] => {
+  const getMissingFields = (): readonly string[] => {
     // 🧙‍♂️ Use calculateMissingFields with cache instead of creating fresh arrays
     const technicalMissing = calculateMissingFields(patientData)
-    
+
     // Map technical fields to user-friendly Spanish labels with stable cache
     const cacheKey = technicalMissing.join(',')
     if (MISSING_FIELDS_CACHE.has(`spanish-${cacheKey}`)) {
       return MISSING_FIELDS_CACHE.get(`spanish-${cacheKey}`)!
     }
-    
+
     const fieldMap: Record<string, string> = {
-      'patient_age_years': 'Edad',
-      'patient_gender': 'Género', 
-      'chief_complaint': 'Síntoma principal',
+      patient_age_years: 'Edad',
+      patient_gender: 'Género',
+      chief_complaint: 'Síntoma principal',
     }
-    
+
     const result = Object.freeze(technicalMissing.map(field => fieldMap[field]).filter(Boolean))
     MISSING_FIELDS_CACHE.set(`spanish-${cacheKey}`, result)
     return result

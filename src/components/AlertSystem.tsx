@@ -3,7 +3,7 @@
 'use client'
 
 import React from 'react'
-import { AlertCard } from './AlertCard'
+import { AlertCard } from '../presentation/components/ui/AlertCard'
 import { useAlertManager } from '../hooks/useAlertManager'
 
 interface AlertSystemProps {

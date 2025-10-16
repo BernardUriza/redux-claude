@@ -63,12 +63,12 @@ const nextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
 
-  // 🧙‍♂️ GANDALF'S TEMPORAL BYPASS - Para capturar belleza visual
+  // ✅ TypeScript Strict Mode Enabled - Production Ready
   typescript: {
-    ignoreBuildErrors: true, // Temporal para screenshots
+    ignoreBuildErrors: false, // Strict type checking enabled
   },
   eslint: {
-    ignoreDuringBuilds: true, // Temporal para screenshots
+    ignoreDuringBuilds: false, // ESLint validation enabled
   },
 }
 

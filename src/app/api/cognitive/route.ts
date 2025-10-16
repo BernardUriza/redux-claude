@@ -7,15 +7,18 @@ export async function POST(req: NextRequest) {
   return NextResponse.redirect(new URL('/api/redux-brain/', req.url), {
     status: 308, // Permanent redirect preserving method
     headers: {
-      'X-Redirect-Reason': 'Consolidated to redux-brain endpoint'
-    }
+      'X-Redirect-Reason': 'Consolidated to redux-brain endpoint',
+    },
   })
 }
 
 export async function GET(req: NextRequest) {
-  return NextResponse.json({
-    message: 'This endpoint has been consolidated. Please use /api/redux-brain/ instead.',
-    redirect: '/api/redux-brain/',
-    status: 'deprecated'
-  }, { status: 301 })
+  return NextResponse.json(
+    {
+      message: 'This endpoint has been consolidated. Please use /api/redux-brain/ instead.',
+      redirect: '/api/redux-brain/',
+      status: 'deprecated',
+    },
+    { status: 301 }
+  )
 }

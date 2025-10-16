@@ -2,7 +2,7 @@
 // Sistema Cognitivo Médico Corporativo 2025 - Bernard Orozco (REFACTORED)
 'use client'
 
-import { useMedicalChat } from '@redux-claude/cognitive-core'
+import { useMedicalChat } from '@redux-claude/cognitive-core/hooks/useMedicalChatEvolved'
 
 // Extracted Components
 import { LoadingScreen } from './LoadingScreen'

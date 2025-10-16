@@ -134,7 +134,7 @@ export const useMedicalDataOrchestrator = ({
     ]
 
     const lowerText = text.toLowerCase()
-    
+
     // 💀 OPTIMIZATION BRUTAL: evita crear array con filter, solo cuenta matches
     let keywordMatchCount = 0
     for (const keyword of medicalKeywords) {

@@ -66,7 +66,9 @@
       "Bash(bash:*)",
       "Bash(findstr:*)",
       "Bash(npm publish:*)",
-      "Read(//c/Users/Bernard.Orozco/Documents/Github/**)"
+      "Read(//c/Users/Bernard.Orozco/Documents/Github/**)",
+      "Bash(timeout 30 bash -c 'while ! netstat -ano | findstr :3100 > /dev/null 2>&1; do echo \"\"Waiting for server...\"\"; sleep 2; done; echo \"\"Server is ready!\"\"')",
+      "Bash(timeout 90s npm run build:*)"
     ],
     "deny": [],
     "ask": []

@@ -3,7 +3,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { MedicalMessage } from '@redux-claude/cognitive-core'
 
 // Constantes de configuración
@@ -304,7 +304,7 @@ const generateAgentsFromSOAP = (message?: MedicalMessage): SpecializedAgent[] =>
   }
 
   const content = message.content.toLowerCase()
-  const confidence = message.confidence || DEFAULT_CONFIDENCE
+  const confidence = DEFAULT_CONFIDENCE
   const agents: SpecializedAgent[] = []
 
   // Agente general siempre presente
@@ -402,7 +402,10 @@ export const CognitiveAgentsPanel = ({
 
   // 🧙‍♂️ Gandalf's Agent Filter Cache - NO MORE RE-RENDERS! - Creado por Bernard Orozco
   const activeAgents = useMemo(() => agents.filter(agent => agent.status !== 'idle'), [agents])
-  const completedAgents = useMemo(() => agents.filter(agent => agent.status === 'completed'), [agents])
+  const completedAgents = useMemo(
+    () => agents.filter(agent => agent.status === 'completed'),
+    [agents]
+  )
 
   if (agents.length === 0) {
     return <EmptyAgentsState />

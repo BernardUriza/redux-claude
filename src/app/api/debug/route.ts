@@ -9,6 +9,6 @@ export async function GET() {
     apiKeyLength: apiKey?.length || 0,
     apiKeyStart: apiKey ? apiKey.substring(0, 10) + '...' : 'NOT SET',
     nodeEnv: process.env.NODE_ENV,
-    tlsReject: process.env.NODE_TLS_REJECT_UNAUTHORIZED
+    tlsReject: process.env.NODE_TLS_REJECT_UNAUTHORIZED,
   })
 }

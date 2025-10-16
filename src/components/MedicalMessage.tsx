@@ -137,11 +137,12 @@ export const MedicalMessageComponent = ({ message, isStreaming = false }: Medica
           )}
 
           {/* Metadata */}
-          {message.confidence && (
+          {/* Confidence property removed from MedicalMessage type */}
+          {/* {message.confidence && (
             <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded-full">
               Confianza: {Math.round(message.confidence * 100)}%
             </span>
-          )}
+          )} */}
 
           {/* Timestamp */}
           <span className="text-xs text-gray-500">{clientTimeString || '--:--'}</span>

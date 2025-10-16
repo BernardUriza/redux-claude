@@ -28,7 +28,7 @@ interface CognitiveState {
   uncertaintyLevel: number
   activeGoals: Goal[]
   knowledgeGaps: string[]
-  selfAssessment: SelfAssessment
+  selfAssessment: SelfAssessment | null
 
   // Resultados de procesamiento
   lastDecisions: DecisionResult[]
@@ -114,7 +114,7 @@ const cognitiveSlice = createSlice({
         uncertainty: number
         activeGoals: Goal[]
         knowledgeGaps: string[]
-        selfAssessment: SelfAssessment
+        selfAssessment: SelfAssessment | null
       }>
     ) => {
       const { confidence, uncertainty, activeGoals, knowledgeGaps, selfAssessment } = action.payload

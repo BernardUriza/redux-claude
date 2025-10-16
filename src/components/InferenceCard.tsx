@@ -2,7 +2,16 @@
 // Creado por Bernard Orozco - Solo maneja renderizado de inferencias
 
 import React from 'react'
-import { MedicalInference } from '../../packages/cognitive-core/src/services/intelligent-medical-chat'
+// import { MedicalInference } from '../../packages/cognitive-core/src/services/intelligent-medical-chat'
+
+// Temporary type definition until intelligent-medical-chat service is restored
+interface MedicalInference {
+  category: string
+  confidence: number
+  inference: string
+  evidence: string[]
+  needs_confirmation: boolean
+}
 
 const CONFIDENCE_HIGH = 0.8
 const CONFIDENCE_MEDIUM = 0.6

@@ -56,19 +56,11 @@ export default function ParadigmV2() {
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
               System Online
             </span>
-            <span className="text-gray-400 hidden sm:inline">
-              Urgency: Active
-            </span>
-            <span className="text-gray-400 hidden md:inline">
-              SOAP: Active
-            </span>
-            <span className="text-gray-400 hidden lg:inline">
-              Anti-Telenovela: On
-            </span>
+            <span className="text-gray-400 hidden sm:inline">Urgency: Active</span>
+            <span className="text-gray-400 hidden md:inline">SOAP: Active</span>
+            <span className="text-gray-400 hidden lg:inline">Anti-Telenovela: On</span>
           </div>
-          <div className="text-gray-500 hidden lg:block">
-            Redux+LLM • Defensive Medicine
-          </div>
+          <div className="text-gray-500 hidden lg:block">Redux+LLM • Defensive Medicine</div>
         </div>
       </footer>
     </div>

@@ -173,7 +173,11 @@ const NotesFilterTabs = ({
 }: {
   filter: 'all' | 'clinical' | 'administrative' | 'legal' | 'observation'
   setFilter: (filter: 'all' | 'clinical' | 'administrative' | 'legal' | 'observation') => void
-  tabsData: Array<{ key: 'all' | 'clinical' | 'administrative' | 'legal', label: string, count: number }>
+  tabsData: Array<{
+    key: 'all' | 'clinical' | 'administrative' | 'legal'
+    label: string
+    count: number
+  }>
 }) => (
   <div className="flex space-x-1 bg-slate-800/50 rounded-lg p-1">
     {tabsData.map(tab => (
@@ -299,50 +303,36 @@ export const MedicalNotes = () => {
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'priority'>('newest')
 
   // 💀 MEMOIZACIÓN BRUTAL: evita crear array fresco de notes en cada render
-  const notes: PhysicianNote[] = useMemo(() => 
-    realPhysicianNotes.map(note => ({
-      id: note.id,
-      type:
-        note.category === 'diagnosis'
-          ? 'clinical'
-          : note.category === 'treatment'
+  const notes: PhysicianNote[] = useMemo(
+    () =>
+      realPhysicianNotes.map(note => ({
+        id: note.id,
+        type:
+          note.category === 'diagnosis'
             ? 'clinical'
-            : note.category === 'observation'
-              ? 'observation'
-              : note.category === 'plan'
-                ? 'administrative'
-                : ('clinical' as 'clinical' | 'administrative' | 'legal' | 'observation'),
-      content: note.content,
-      category: note.title || note.category,
-      priority:
-        note.confidence > PRIORITY_HIGH_THRESHOLD
-          ? 'high'
-          : note.confidence > PRIORITY_MEDIUM_THRESHOLD
-            ? 'medium'
-            : note.confidence > PRIORITY_LOW_THRESHOLD
-              ? 'low'
-              : 'critical',
-      timestamp: note.createdAt,
-      physicianId: 'sistema-multinucleo',
-      physicianName: 'Sistema Multinúcleo IA',
-    })), [realPhysicianNotes])
-
-  // Debug real notes (no fake data)
-  console.log('📝 MedicalNotes DEBUG - Real Notes:', realPhysicianNotes)
-  console.log('📝 MedicalNotes DEBUG - Transformed Notes:', notes)
-
-  // Estados de error reales
-  if (error) {
-    return (
-      <div className="text-center py-8">
-        <div className="w-16 h-16 bg-gradient-to-br from-red-700 to-red-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <span className="text-2xl">❌</span>
-        </div>
-        <h3 className="text-red-400 font-semibold mb-2">Error en notas médicas</h3>
-        <p className="text-slate-400 text-sm">{error}</p>
-      </div>
-    )
-  }
+            : note.category === 'treatment'
+              ? 'clinical'
+              : note.category === 'observation'
+                ? 'observation'
+                : note.category === 'plan'
+                  ? 'administrative'
+                  : ('clinical' as 'clinical' | 'administrative' | 'legal' | 'observation'),
+        content: note.content,
+        category: note.title || note.category,
+        priority:
+          note.confidence > PRIORITY_HIGH_THRESHOLD
+            ? 'high'
+            : note.confidence > PRIORITY_MEDIUM_THRESHOLD
+              ? 'medium'
+              : note.confidence > PRIORITY_LOW_THRESHOLD
+                ? 'low'
+                : 'critical',
+        timestamp: note.createdAt,
+        physicianId: 'sistema-multinucleo',
+        physicianName: 'Sistema Multinúcleo IA',
+      })),
+    [realPhysicianNotes]
+  )
 
   // 💀 MEMOIZACIÓN BRUTAL: filteredNotes evita crear array fresco en cada render
   const filteredNotes = useMemo(() => {
@@ -365,31 +355,51 @@ export const MedicalNotes = () => {
   }, [notes, filter, sortBy])
 
   const notesCount = notes.length
-  
+
   // 💀 MEMOIZACIÓN BRUTAL: urgentCount evita filter en cada render
   const urgentCount = useMemo(() => {
     return notes.filter(n => n.priority === 'critical' || n.priority === 'high').length
   }, [notes])
 
   // 💀 MEMOIZACIÓN BRUTAL: tabs evita múltiples filter() en cada render
-  const tabsData = useMemo(() => [
-    { key: 'all' as const, label: 'Todas', count: notesCount },
-    {
-      key: 'clinical' as const,
-      label: 'Clínicas',
-      count: notes.filter(n => n.type === 'clinical').length,
-    },
-    {
-      key: 'administrative' as const,
-      label: 'Admin',
-      count: notes.filter(n => n.type === 'administrative').length,
-    },
-    {
-      key: 'legal' as const,
-      label: 'Legales',
-      count: notes.filter(n => n.type === 'legal').length,
-    },
-  ], [notes, notesCount])
+  const tabsData = useMemo(
+    () => [
+      { key: 'all' as const, label: 'Todas', count: notesCount },
+      {
+        key: 'clinical' as const,
+        label: 'Clínicas',
+        count: notes.filter(n => n.type === 'clinical').length,
+      },
+      {
+        key: 'administrative' as const,
+        label: 'Admin',
+        count: notes.filter(n => n.type === 'administrative').length,
+      },
+      {
+        key: 'legal' as const,
+        label: 'Legales',
+        count: notes.filter(n => n.type === 'legal').length,
+      },
+    ],
+    [notes, notesCount]
+  )
+
+  // Debug real notes (no fake data)
+  console.log('📝 MedicalNotes DEBUG - Real Notes:', realPhysicianNotes)
+  console.log('📝 MedicalNotes DEBUG - Transformed Notes:', notes)
+
+  // Estados de error reales
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <div className="w-16 h-16 bg-gradient-to-br from-red-700 to-red-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <span className="text-2xl">❌</span>
+        </div>
+        <h3 className="text-red-400 font-semibold mb-2">Error en notas médicas</h3>
+        <p className="text-slate-400 text-sm">{error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -417,11 +427,7 @@ export const MedicalNotes = () => {
 
       {/* Filters and Sort */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <NotesFilterTabs
-          filter={filter}
-          setFilter={setFilter}
-          tabsData={tabsData}
-        />
+        <NotesFilterTabs filter={filter} setFilter={setFilter} tabsData={tabsData} />
 
         <select
           value={sortBy}

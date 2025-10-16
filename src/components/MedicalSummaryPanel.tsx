@@ -7,7 +7,7 @@ import { VitalSignCard } from './VitalSignCard'
 import { MedicalInfoCard } from './MedicalInfoCard'
 import { UrgencyBadge } from './UrgencyBadge'
 import { MedicationCard } from './MedicationCard'
-import { DiagnosisCard } from './DiagnosisCard'
+import { DiagnosisCard } from '../presentation/features/medical/DiagnosisCard'
 import {
   VITAL_SIGNS_CONFIG,
   hasVitalSigns,

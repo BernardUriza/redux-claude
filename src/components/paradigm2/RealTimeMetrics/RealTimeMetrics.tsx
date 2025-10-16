@@ -1,4 +1,4 @@
-import { useAppSelector } from '@redux-claude/cognitive-core'
+import { useAppSelector, selectSystemMetrics } from '@redux-claude/cognitive-core'
 import { memo } from 'react'
 
 interface RealTimeMetricsProps {
@@ -57,9 +57,7 @@ const MetricCard = memo(({ title, value, subtitle, icon, trend, size = 'sm' }: M
   const getTrendIcon = () => {
     if (!trend) return null
     const iconClass =
-      trend === 'up' ? 'text-emerald-400' :
-      trend === 'down' ? 'text-red-400' :
-      'text-gray-400'
+      trend === 'up' ? 'text-emerald-400' : trend === 'down' ? 'text-red-400' : 'text-gray-400'
     const arrow = trend === 'up' ? '↗' : trend === 'down' ? '↘' : '→'
     return <span className={`text-xs ${iconClass} font-mono`}>{arrow}</span>
   }
@@ -67,17 +65,21 @@ const MetricCard = memo(({ title, value, subtitle, icon, trend, size = 'sm' }: M
   const isLarge = size === 'lg'
 
   return (
-    <div className={`
+    <div
+      className={`
       bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700/50
       hover:border-gray-600/70 transition-all duration-200 hover:shadow-lg
       ${isLarge ? 'p-6' : 'p-4'}
-    `}>
+    `}
+    >
       <div className="flex items-start justify-between mb-2">
-        <div className={`
+        <div
+          className={`
           ${isLarge ? 'w-12 h-12' : 'w-8 h-8'}
           bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center
           ${isLarge ? 'text-xl' : 'text-base'}
-        `}>
+        `}
+        >
           {icon}
         </div>
         {getTrendIcon()}
@@ -91,9 +93,7 @@ const MetricCard = memo(({ title, value, subtitle, icon, trend, size = 'sm' }: M
         {title}
       </div>
 
-      <div className="text-xs text-gray-400 leading-tight">
-        {subtitle}
-      </div>
+      <div className="text-xs text-gray-400 leading-tight">{subtitle}</div>
 
       {/* Progress bar for percentage values */}
       {typeof value === 'string' && value.includes('%') && (
@@ -113,15 +113,8 @@ const MetricCard = memo(({ title, value, subtitle, icon, trend, size = 'sm' }: M
 MetricCard.displayName = 'MetricCard'
 
 export const RealTimeMetrics = memo(({ isLoading = false }: RealTimeMetricsProps) => {
-  // Get metrics from Redux store
-  const systemMetrics = useAppSelector(state => {
-    try {
-      // Try to get real metrics from store
-      return state?.medicalChat?.cores?.dashboardCore?.metrics || null
-    } catch {
-      return null
-    }
-  })
+  // Get metrics from Redux store using selector
+  const systemMetrics = useAppSelector(selectSystemMetrics)
 
   // Loading state
   if (isLoading) {

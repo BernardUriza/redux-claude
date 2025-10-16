@@ -1,6 +1,10 @@
 // packages/cognitive-core/src/middleware/CriticalPatternMiddleware.ts
-// CRITICAL PATTERN MIDDLEWARE - Dedicated to Life-Threatening Missed Diagnoses
+// CRITICAL PATTERN MIDDLEWARE - Refactored for Maintainability
 // Created by Bernard Orozco - 2025
+
+import { normalizeText, containsAllPatterns, containsAnyPattern } from '../utils/textNormalization'
+import { getLogger } from '../utils/logger'
+import { CRITICAL_PATTERNS } from '../config/criticalPatterns'
 
 export interface CriticalPattern {
   id: string
@@ -23,98 +27,42 @@ export interface CriticalPatternResult {
 }
 
 /**
- * 🚨 CRITICAL PATTERN MIDDLEWARE
+ * 🚨 CRITICAL PATTERN MIDDLEWARE (Refactored)
  *
  * Dedicated middleware for detecting life-threatening conditions with <80% baseline recognition.
  * When any condition shows <80% confidence in testing, it gets its own dedicated middleware.
  *
- * CURRENT FOCUS: AORTIC DISSECTION - The "Widow Maker" of Emergency Medicine
+ * IMPROVEMENTS:
+ * - Uses shared text normalization utilities
+ * - Pattern definitions externalized to config
+ * - Proper structured logging
+ * - Better separation of concerns
+ * - Easier to test and maintain
  */
 export class CriticalPatternMiddleware {
-  private criticalPatterns: Map<string, CriticalPattern> = new Map([
-    // 🩸 AORTIC DISSECTION - WIDOW MAKER PATTERN
-    [
-      'aortic_dissection_sepsis_mimic',
-      {
-        id: 'aortic_dissection_sepsis_mimic',
-        name: 'Disección Aórtica Mimificando Sepsis',
-        confidence: 0, // Previously 0% recognition - CRITICAL GAP
-        triggerConditions: [
-          'sepsis|sirs|shock séptico|infección grave',
-          'dolor abdominal|dolor estomago|dolor vientre|dolor epigástrico',
-          'hipertensión|hta|presión alta|antecedente hipertensivo'
-        ],
-        excludeConditions: [
-          'foco infeccioso claro',
-          'cultivos positivos confirmados',
-          'respuesta clara a antibióticos'
-        ],
-        mandatoryConsideration: `
-🚨 WIDOW MAKER ALERT: DISECCIÓN AÓRTICA CON TRANSLOCACIÓN BACTERIANA
+  private criticalPatterns: Map<string, CriticalPattern>
+  private logger = getLogger()
+  private debugMode: boolean
 
-PATRÓN CRÍTICO DETECTADO:
-• Presentación tipo sepsis (fiebre, hipotensión, alteración mental)
-• Dolor abdominal severo
-• Historia de hipertensión arterial
-
-⚠️ MECANISMO FISIOPATOLÓGICO:
-La disección aórtica puede causar isquemia intestinal → translocación bacteriana →
-síndrome séptico SIN infección primaria.
-
-🔍 DIAGNÓSTICOS DIFERENCIALES OBLIGATORIOS:
-1. Disección Aórtica Tipo A o B con translocación bacteriana
-2. Sepsis intraabdominal verdadera
-3. Aneurisma aórtico roto
-4. Isquemia mesentérica
-
-📋 ESTUDIOS URGENTES REQUERIDOS:
-• AngioTC de aorta torácica y abdominal
-• Diferencias de pulsos entre extremidades
-• Radiografía de tórax (mediastino ensanchado)
-• Eco transesofágico si disponible
-
-⏱️ VENTANA DE INTERVENCIÓN: < 6 HORAS PARA TIPO A
-        `,
-        urgencyOverride: 'critical',
-        widowMakerRisk: true,
-        interventionWindow: '< 6 horas'
-      }
-    ],
-
-    // 🫀 FUTURE PATTERNS - Template for other <80% conditions
-    [
-      'massive_pe_mimic',
-      {
-        id: 'massive_pe_mimic',
-        name: 'Embolia Pulmonar Masiva',
-        confidence: 85, // Above threshold, but keeping for completeness
-        triggerConditions: [
-          'disnea súbita|falta de aire|ahogo',
-          'dolor torácico pleurítico',
-          'factores de riesgo trombótico|cirugía reciente|inmovilización'
-        ],
-        excludeConditions: ['infiltrados pulmonares claros'],
-        mandatoryConsideration: 'Considerar embolia pulmonar masiva en contexto post-quirúrgico',
-        urgencyOverride: 'critical',
-        widowMakerRisk: true,
-        interventionWindow: '< 1 hora'
-      }
-    ]
-  ])
+  constructor(patterns?: Map<string, CriticalPattern>, debugMode: boolean = false) {
+    this.criticalPatterns = patterns || CRITICAL_PATTERNS
+    this.debugMode = debugMode
+  }
 
   /**
    * Analiza el input clínico para detectar patrones críticos
    */
   analyzeCriticalPatterns(clinicalInput: string): CriticalPatternResult {
-    const input = clinicalInput.toLowerCase()
+    const normalizedInput = normalizeText(clinicalInput)
+
     const triggeredPatterns: CriticalPattern[] = []
-    let mandatoryPrompts: string[] = []
+    const mandatoryPrompts: string[] = []
     let urgencyOverride: 'critical' | null = null
     let widowMakerAlert = false
 
     // Evaluar cada patrón crítico
     this.criticalPatterns.forEach(pattern => {
-      const isTriggered = this.evaluatePattern(input, pattern)
+      const isTriggered = this.evaluatePattern(normalizedInput, pattern)
 
       if (isTriggered) {
         triggeredPatterns.push(pattern)
@@ -127,37 +75,95 @@ síndrome séptico SIN infección primaria.
         if (pattern.widowMakerRisk) {
           widowMakerAlert = true
         }
+
+        this.logger.warn(`Critical pattern triggered: ${pattern.name}`, {
+          patternId: pattern.id,
+          widowMaker: pattern.widowMakerRisk,
+          interventionWindow: pattern.interventionWindow
+        })
       }
     })
 
-    return {
+    const result: CriticalPatternResult = {
       triggered: triggeredPatterns.length > 0,
       patterns: triggeredPatterns,
       mandatoryPrompt: mandatoryPrompts.join('\n\n'),
       urgencyOverride,
       widowMakerAlert
     }
+
+    if (result.triggered) {
+      this.logger.error('WIDOW MAKER ALERT', {
+        patterns: triggeredPatterns.map(p => p.name),
+        urgencyOverride,
+        widowMakerAlert
+      })
+    }
+
+    return result
   }
 
   /**
    * Evalúa si un patrón específico se dispara
    */
-  private evaluatePattern(input: string, pattern: CriticalPattern): boolean {
-    // Verificar condiciones trigger (TODAS deben estar presentes)
-    const hasAllTriggers = pattern.triggerConditions.every(condition => {
+  private evaluatePattern(normalizedInput: string, pattern: CriticalPattern): boolean {
+    if (this.debugMode) {
+      this.logger.debug(`Evaluating pattern: ${pattern.name}`, {
+        inputLength: normalizedInput.length
+      })
+    }
+
+    // Check trigger conditions (ALL must be present - AND logic)
+    const triggerResults = pattern.triggerConditions.map((condition, idx) => {
       const regex = new RegExp(condition, 'i')
-      return regex.test(input)
+      const matches = regex.test(normalizedInput)
+
+      if (this.debugMode) {
+        this.logger.debug(`  Condition ${idx + 1}: ${matches ? 'MATCH' : 'NO MATCH'}`, {
+          pattern: condition,
+          matched: matches
+        })
+      }
+
+      return matches
     })
 
-    if (!hasAllTriggers) return false
+    const hasAllTriggers = triggerResults.every(result => result)
 
-    // Verificar condiciones de exclusión (NINGUNA debe estar presente)
-    const hasExclusions = pattern.excludeConditions.some(exclusion => {
+    if (!hasAllTriggers) {
+      if (this.debugMode) {
+        this.logger.debug(`Pattern not triggered: ${pattern.name}`, {
+          missingConditions: triggerResults.filter(r => !r).length,
+          totalConditions: triggerResults.length
+        })
+      }
+      return false
+    }
+
+    // Check exclusion conditions (NONE should be present - NOT logic)
+    const exclusionResults = pattern.excludeConditions.map(exclusion => {
       const regex = new RegExp(exclusion, 'i')
-      return regex.test(input)
+      return regex.test(normalizedInput)
     })
 
-    return !hasExclusions
+    const hasExclusions = exclusionResults.some(result => result)
+
+    if (hasExclusions) {
+      if (this.debugMode) {
+        this.logger.debug(`Pattern excluded: ${pattern.name}`, {
+          reason: 'Exclusion condition found'
+        })
+      }
+      return false
+    }
+
+    // Pattern triggered!
+    this.logger.info(`✅ PATTERN TRIGGERED: ${pattern.name}`, {
+      patternId: pattern.id,
+      widowMaker: pattern.widowMakerRisk
+    })
+
+    return true
   }
 
   /**
@@ -166,7 +172,7 @@ síndrome séptico SIN infección primaria.
   generateMandatoryPrompt(result: CriticalPatternResult): string {
     if (!result.triggered) return ''
 
-    let prompt = `
+    const prompt = `
 🚨🚨🚨 CRITICAL PATTERN MIDDLEWARE ALERT 🚨🚨🚨
 
 ${result.mandatoryPrompt}
@@ -208,6 +214,9 @@ No es opcional - es obligatorio considerar estos diagnósticos.
    */
   addCriticalPattern(pattern: CriticalPattern): void {
     this.criticalPatterns.set(pattern.id, pattern)
+    this.logger.info(`New critical pattern registered: ${pattern.name}`, {
+      patternId: pattern.id
+    })
   }
 
   /**
@@ -216,12 +225,25 @@ No es opcional - es obligatorio considerar estos diagnósticos.
   updatePatternConfidence(patternId: string, newConfidence: number): void {
     const pattern = this.criticalPatterns.get(patternId)
     if (pattern) {
+      const oldConfidence = pattern.confidence
       pattern.confidence = newConfidence
+      this.logger.info(`Pattern confidence updated: ${pattern.name}`, {
+        patternId,
+        oldConfidence,
+        newConfidence
+      })
     }
+  }
+
+  /**
+   * Enables or disables debug mode
+   */
+  setDebugMode(enabled: boolean): void {
+    this.debugMode = enabled
   }
 }
 
 /**
  * Instancia singleton para uso global
  */
-export const criticalPatternMiddleware = new CriticalPatternMiddleware()
+export const criticalPatternMiddleware = new CriticalPatternMiddleware(CRITICAL_PATTERNS, false)

@@ -5,7 +5,11 @@
 // Usage: const { sendMessage, messages, isLoading } = useReduxBrain()
 
 import { useState, useCallback, useRef } from 'react'
-import { v4 as uuidv4 } from 'uuid'
+
+// 🔧 Simple UUID generator - no external dependencies
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+}
 
 export interface ReduxBrainMessage {
   id: string
@@ -31,7 +35,7 @@ export interface UseReduxBrainOptions {
 export function useReduxBrain(options: UseReduxBrainOptions = {}) {
   const {
     apiEndpoint = '/api/redux-brain/',
-    sessionId = useRef(`session-${uuidv4()}`).current,
+    sessionId = useRef(`session-${generateId()}`).current,
     onError
   } = options
 
@@ -44,7 +48,7 @@ export function useReduxBrain(options: UseReduxBrainOptions = {}) {
 
     // Add user message
     const userMessage: ReduxBrainMessage = {
-      id: uuidv4(),
+      id: generateId(),
       role: 'user',
       content,
       timestamp: new Date()
@@ -74,7 +78,7 @@ export function useReduxBrain(options: UseReduxBrainOptions = {}) {
       if (data.success) {
         // Add assistant message with all metadata
         const assistantMessage: ReduxBrainMessage = {
-          id: uuidv4(),
+          id: generateId(),
           role: 'assistant',
           content: data.message,
           timestamp: new Date(),
@@ -94,7 +98,7 @@ export function useReduxBrain(options: UseReduxBrainOptions = {}) {
       } else {
         // Default error message
         const errorMessage: ReduxBrainMessage = {
-          id: uuidv4(),
+          id: generateId(),
           role: 'assistant',
           content: 'Error: Unable to process your request. Please try again.',
           timestamp: new Date()

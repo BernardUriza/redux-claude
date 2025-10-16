@@ -12,7 +12,7 @@ async function testValidator(input: string) {
       isValid: false,
       confidence: 0,
       rejectionReason: 'API key not configured',
-      suggestedFormat: 'Configure CLAUDE_API_KEY in .env.local'
+      suggestedFormat: 'Configure CLAUDE_API_KEY in .env.local',
     }
   }
 
@@ -23,7 +23,7 @@ async function testValidator(input: string) {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
         model: 'claude-3-haiku-20240307',
@@ -53,11 +53,13 @@ For greeting "hola":
   "rejection_reason": "¡Hola! 👋 Soy tu asistente médico virtual. Estoy aquí para ayudarte con consultas médicas.",
   "suggested_format": "Para comenzar, cuéntame sobre el paciente. Por ejemplo: 'Tengo un paciente de 45 años con dolor torácico'"
 }`,
-        messages: [{
-          role: 'user',
-          content: input
-        }]
-      })
+        messages: [
+          {
+            role: 'user',
+            content: input,
+          },
+        ],
+      }),
     })
 
     const result = await anthropicResponse.json()
@@ -70,7 +72,7 @@ For greeting "hola":
           isValid: false,
           confidence: 0.5,
           rejectionReason: 'Could not parse validation response',
-          suggestedFormat: 'Please try again'
+          suggestedFormat: 'Please try again',
         }
       }
     }
@@ -80,7 +82,7 @@ For greeting "hola":
       isValid: false,
       confidence: 0,
       rejectionReason: result.error?.message || 'API call failed',
-      suggestedFormat: 'Check API configuration'
+      suggestedFormat: 'Check API configuration',
     }
   } catch (error) {
     console.error('Fetch error:', error)
@@ -93,14 +95,15 @@ For greeting "hola":
         isValid: false,
         confidence: 0.95,
         validationCategory: 'greeting',
-        rejectionReason: '¡Hola! 👋 Soy tu asistente médico virtual. Estoy aquí para ayudarte con consultas médicas.',
+        rejectionReason:
+          '¡Hola! 👋 Soy tu asistente médico virtual. Estoy aquí para ayudarte con consultas médicas.',
         suggestedFormat: `Para comenzar, cuéntame sobre el paciente. Por ejemplo:
 
 • "Tengo un paciente de 45 años con dolor torácico"
 • "Mi hijo de 5 años tiene fiebre desde ayer"
 • "Soy mujer de 30 años con migraña frecuente"
 
-¿Sobre quién necesitas consultar hoy?`
+¿Sobre quién necesitas consultar hoy?`,
       }
     }
 
@@ -117,12 +120,15 @@ For greeting "hola":
 • ¿Hace cuánto comenzó?
 • ¿Hay otros síntomas?
 
-Ejemplo: "Soy hombre de 40 años con dolor de espalda desde hace 3 días"`
+Ejemplo: "Soy hombre de 40 años con dolor de espalda desde hace 3 días"`,
       }
     }
 
     // Mixed greeting + medical
-    if (lowerInput.includes('hola') && (lowerInput.includes('hijo') || lowerInput.includes('paciente'))) {
+    if (
+      lowerInput.includes('hola') &&
+      (lowerInput.includes('hijo') || lowerInput.includes('paciente'))
+    ) {
       return {
         isValid: false,
         confidence: 0.9,
@@ -134,16 +140,19 @@ Ejemplo: "Soy hombre de 40 años con dolor de espalda desde hace 3 días"`
 • Duración de los síntomas
 • Antecedentes relevantes
 
-Comparte los detalles disponibles y te orientaré.`
+Comparte los detalles disponibles y te orientaré.`,
       }
     }
 
     // Valid medical (simple check)
-    if (lowerInput.match(/\d+\s*(años|meses)/) && (lowerInput.includes('dolor') || lowerInput.includes('fiebre'))) {
+    if (
+      lowerInput.match(/\d+\s*(años|meses)/) &&
+      (lowerInput.includes('dolor') || lowerInput.includes('fiebre'))
+    ) {
       return {
         isValid: true,
         confidence: 0.95,
-        validationCategory: 'valid_medical'
+        validationCategory: 'valid_medical',
       }
     }
 
@@ -153,7 +162,7 @@ Comparte los detalles disponibles y te orientaré.`
       confidence: 0.7,
       validationCategory: 'unclear',
       rejectionReason: 'No pude entender tu consulta.',
-      suggestedFormat: 'Por favor, describe el caso médico con más detalle.'
+      suggestedFormat: 'Por favor, describe el caso médico con más detalle.',
     }
   }
 }
@@ -173,17 +182,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       input,
       validation: result,
-      message: result.rejection_reason && result.suggested_format
-        ? `${result.rejection_reason}\n\n${result.suggested_format}`
-        : result.is_valid
-          ? '✅ Valid medical input'
-          : result.rejection_reason || result.rejectionReason || 'Invalid input'
+      message:
+        result.rejection_reason && result.suggested_format
+          ? `${result.rejection_reason}\n\n${result.suggested_format}`
+          : result.is_valid
+            ? '✅ Valid medical input'
+            : result.rejection_reason || result.rejectionReason || 'Invalid input',
     })
-
   } catch (error) {
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    )
   }
 }
 
@@ -193,8 +205,8 @@ export async function GET() {
     method: 'POST',
     description: 'Test medical input validator',
     example: {
-      input: 'hola'
+      input: 'hola',
     },
-    testCurl: `curl -X POST http://localhost:3002/api/test-validator -H "Content-Type: application/json" -d '{"input":"hola"}'`
+    testCurl: `curl -X POST http://localhost:3002/api/test-validator -H "Content-Type: application/json" -d '{"input":"hola"}'`,
   })
 }

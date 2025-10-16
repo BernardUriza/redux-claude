@@ -6,13 +6,13 @@
 import ReactMarkdown from 'react-markdown'
 import type { MedicalMessage } from '@redux-claude/cognitive-core'
 
-import { MessageAvatar } from './medical-message/MessageAvatar'
-import { StreamingIndicator } from './medical-message/StreamingIndicator'
-import { ConfidenceIndicator } from './medical-message/ConfidenceIndicator'
-import { SOAPBadge } from './medical-message/SOAPBadge'
-import { IterativeMetrics } from './medical-message/IterativeMetrics'
-import { AgentInsights } from './medical-message/AgentInsights'
-import { useMessageContent } from '../hooks/useMessageContent'
+import { MessageAvatar } from '../../../components/medical-message/MessageAvatar'
+import { StreamingIndicator } from '../../../components/medical-message/StreamingIndicator'
+import { ConfidenceIndicator } from '../../../components/medical-message/ConfidenceIndicator'
+import { SOAPBadge } from '../../../components/medical-message/SOAPBadge'
+import { IterativeMetrics } from '../../../components/medical-message/IterativeMetrics'
+import { AgentInsights } from '../../../components/medical-message/AgentInsights'
+import { useMessageContent } from '../../../hooks/useMessageContent'
 
 interface MedicalMessageProps {
   message: MedicalMessage
@@ -50,7 +50,8 @@ export const EnhancedMedicalMessage = ({ message, isStreaming = false }: Medical
           </h4>
 
           {isStreaming && <StreamingIndicator isSOAPAnalysis={isSOAPAnalysis} />}
-          {message.confidence && <ConfidenceIndicator confidence={message.confidence} />}
+          {/* Confidence property removed from MedicalMessage type */}
+          {/* {message.confidence && <ConfidenceIndicator confidence={message.confidence} />} */}
 
           {isSOAPAnalysis && (
             <div className="flex items-center space-x-1">

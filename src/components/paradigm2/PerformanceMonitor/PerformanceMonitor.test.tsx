@@ -13,7 +13,7 @@ const mockPerformance = {
     usedJSHeapSize: 1024 * 1024 * 10, // 10MB
     totalJSHeapSize: 1024 * 1024 * 20, // 20MB
     jsHeapSizeLimit: 1024 * 1024 * 100, // 100MB
-  }
+  },
 }
 
 // Mock bundle analyzer
@@ -44,7 +44,7 @@ describe('PerformanceMonitor', () => {
   it('should display bundle size comparison', async () => {
     mockPerformance.getEntriesByType.mockReturnValue([
       { name: 'bundle-original', transferSize: 1024 * 512 },
-      { name: 'bundle-optimized', transferSize: 1024 * 256 }
+      { name: 'bundle-optimized', transferSize: 1024 * 256 },
     ])
 
     render(<PerformanceMonitor />)
@@ -124,9 +124,12 @@ describe('PerformanceMonitor', () => {
     vi.advanceTimersByTime(100)
 
     // Wait for update
-    await waitFor(() => {
-      expect(screen.getByText(/15\.0 MB/)).toBeInTheDocument()
-    }, { timeout: 1000 })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/15\.0 MB/)).toBeInTheDocument()
+      },
+      { timeout: 1000 }
+    )
 
     vi.useRealTimers()
   }, 10000)

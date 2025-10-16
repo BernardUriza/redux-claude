@@ -26,7 +26,7 @@ export const PerformanceMonitor = ({
 }: PerformanceMonitorProps) => {
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const renderStartTime = useRef<number>()
+  const renderStartTime = useRef<number | undefined>(undefined)
 
   // Track render time
   useEffect(() => {
@@ -63,13 +63,11 @@ export const PerformanceMonitor = ({
     // Module count from Next.js compilation
     const moduleCount = {
       original: 1217, // From server logs
-      optimized: 156,  // Estimated TDD version
+      optimized: 156, // Estimated TDD version
     }
 
     // Render time calculation
-    const renderTime = renderStartTime.current
-      ? performance.now() - renderStartTime.current
-      : 50
+    const renderTime = renderStartTime.current ? performance.now() - renderStartTime.current : 50
 
     // Performance improvement
     const improvement = Math.round(
@@ -139,15 +137,17 @@ export const PerformanceMonitor = ({
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-yellow-400">
-          ⚡ Performance Monitor
-        </h3>
+        <h3 className="text-lg font-semibold text-yellow-400">⚡ Performance Monitor</h3>
         <div className="flex items-center space-x-2">
-          <span className={`px-2 py-1 rounded text-xs font-bold ${
-            metrics.grade === 'A+' ? 'bg-green-900/50 text-green-400' :
-            metrics.grade === 'B' ? 'bg-yellow-900/50 text-yellow-400' :
-            'bg-red-900/50 text-red-400'
-          }`}>
+          <span
+            className={`px-2 py-1 rounded text-xs font-bold ${
+              metrics.grade === 'A+'
+                ? 'bg-green-900/50 text-green-400'
+                : metrics.grade === 'B'
+                  ? 'bg-yellow-900/50 text-yellow-400'
+                  : 'bg-red-900/50 text-red-400'
+            }`}
+          >
             Grade: {metrics.grade}
           </span>
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -166,9 +166,7 @@ export const PerformanceMonitor = ({
             {formatKB(metrics.bundleSize.optimized)}
           </div>
           {showComparison && (
-            <div className="text-xs text-gray-400">
-              vs {formatKB(metrics.bundleSize.original)}
-            </div>
+            <div className="text-xs text-gray-400">vs {formatKB(metrics.bundleSize.original)}</div>
           )}
         </div>
 
@@ -181,9 +179,7 @@ export const PerformanceMonitor = ({
           <div className="text-xl font-bold text-white">
             {formatBytes(metrics.memoryUsage.used)}
           </div>
-          <div className="text-xs text-gray-400">
-            of {formatBytes(metrics.memoryUsage.total)}
-          </div>
+          <div className="text-xs text-gray-400">of {formatBytes(metrics.memoryUsage.total)}</div>
         </div>
 
         {/* Render Time */}
@@ -193,12 +189,8 @@ export const PerformanceMonitor = ({
               <span className="text-green-400">⚡</span>
               <span className="text-sm font-medium text-gray-300">Render Time</span>
             </div>
-            <div className="text-xl font-bold text-white">
-              {Math.round(metrics.renderTime)}ms
-            </div>
-            <div className="text-xs text-gray-400">
-              Initial paint
-            </div>
+            <div className="text-xl font-bold text-white">{Math.round(metrics.renderTime)}ms</div>
+            <div className="text-xs text-gray-400">Initial paint</div>
           </div>
         )}
 
@@ -210,11 +202,10 @@ export const PerformanceMonitor = ({
               <span className="text-sm font-medium text-gray-300">Modules</span>
             </div>
             <div className="text-lg font-bold text-white">
-              {metrics.moduleCount.original.toLocaleString()} → {metrics.moduleCount.optimized.toLocaleString()}
+              {metrics.moduleCount.original.toLocaleString()} →{' '}
+              {metrics.moduleCount.optimized.toLocaleString()}
             </div>
-            <div className="text-xs text-gray-400">
-              87% reduction
-            </div>
+            <div className="text-xs text-gray-400">87% reduction</div>
           </div>
         )}
       </div>
@@ -226,9 +217,7 @@ export const PerformanceMonitor = ({
             <span className="text-green-400">🚀</span>
             <span className="text-sm font-medium text-green-300">Performance Improvement</span>
           </div>
-          <div className="text-2xl font-bold text-green-400">
-            {metrics.improvement}% faster
-          </div>
+          <div className="text-2xl font-bold text-green-400">{metrics.improvement}% faster</div>
           <div className="text-xs text-green-300">
             {formatKB(metrics.bundleSize.original - metrics.bundleSize.optimized)} saved
           </div>

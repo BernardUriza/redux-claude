@@ -117,6 +117,15 @@ export {
   selectFocusAreas,
 } from './store/medicalChatSlice'
 
+// === MEDICAL SELECTORS ===
+export {
+  selectCurrentSOAPAnalysis,
+  selectSystemMetrics,
+  selectDiagnosticProgress,
+  selectPatientReminders,
+  selectPhysicianNotes,
+} from './store/selectors/medicalSelectors'
+
 // === ASYNC THUNKS ===
 export { extractMedicalDataThunk, continueExtractionThunk } from './store/extractionThunks'
 

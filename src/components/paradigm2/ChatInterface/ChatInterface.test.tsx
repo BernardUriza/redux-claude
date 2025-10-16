@@ -70,7 +70,7 @@ describe('ChatInterface', () => {
   it('should render messages when available', () => {
     const mockMessages = [
       { type: 'user', content: 'Patient has fever' },
-      { type: 'assistant', content: 'I need more information about the fever.' }
+      { type: 'assistant', content: 'I need more information about the fever.' },
     ]
 
     vi.mocked(require('@redux-claude/cognitive-core').useMedicalChat).mockReturnValue({

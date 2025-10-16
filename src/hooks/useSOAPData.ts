@@ -14,7 +14,7 @@ const EMPTY_MEDICATIONS: any[] = []
 const EMPTY_PATIENT_EDUCATION: string[] = []
 
 // 🧠 CACHE INTELIGENTE para operaciones string-to-array que causan re-renders
-const STRING_ARRAY_CACHE = new Map<string, { immediate: string[], followUp: string[] }>()
+const STRING_ARRAY_CACHE = new Map<string, { immediate: string[]; followUp: string[] }>()
 import type { RootState } from '@redux-claude/cognitive-core'
 import {
   selectCurrentSOAPAnalysis,
@@ -102,12 +102,12 @@ export const useSOAPData = (): SOAPDataState & SOAPDataActions => {
             // 🧠 CACHE BRUTAL: evita crear arrays frescos en cada render
             const cacheKey = soapAnalysis.plan
             let cachedResult = STRING_ARRAY_CACHE.get(cacheKey)
-            
+
             if (!cachedResult) {
               const lines = soapAnalysis.plan.split('\n').filter(line => line.trim())
               cachedResult = {
                 immediate: lines.slice(0, 3),
-                followUp: lines.slice(3)
+                followUp: lines.slice(3),
               }
               STRING_ARRAY_CACHE.set(cacheKey, cachedResult)
             }

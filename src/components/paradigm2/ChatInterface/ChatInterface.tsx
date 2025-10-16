@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useMedicalChat } from '@redux-claude/cognitive-core/dist/hooks/useMedicalChatEvolved'
+import { useMedicalChat } from '@redux-claude/cognitive-core/hooks/useMedicalChatEvolved'
 
 export const ChatInterface = () => {
   const [input, setInput] = useState('')
@@ -15,9 +15,7 @@ export const ChatInterface = () => {
 
   return (
     <section className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-      <h2 className="text-xl font-semibold mb-4 text-green-400">
-        💬 Medical Chat
-      </h2>
+      <h2 className="text-xl font-semibold mb-4 text-green-400">💬 Medical Chat</h2>
 
       {/* Messages Container */}
       <div className="h-96 overflow-y-auto mb-4 space-y-3">
@@ -59,7 +57,7 @@ export const ChatInterface = () => {
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={e => setInput(e.target.value)}
           placeholder="Describe symptoms or medical case..."
           className="flex-1 bg-gray-800 rounded-lg px-4 py-3 text-sm border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           disabled={isLoading}

@@ -12,7 +12,7 @@ interface PatientData {
 interface MedicalAssistantFooterProps {
   canGeneratePrompt: boolean
   patientData: PatientData
-  missingFields: string[]
+  missingFields: readonly string[]
 }
 
 export const MedicalAssistantFooter = ({

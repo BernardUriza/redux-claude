@@ -45,13 +45,14 @@ export const MedicalChatMessage: React.FC<MedicalChatMessageProps> = ({
           {new Date(message.timestamp).toLocaleTimeString()}
         </p>
 
-        {message.confidence && (
+        {/* Confidence property removed from MedicalMessage type */}
+        {/* {message.confidence && (
           <div className="mt-1">
             <span className="text-xs bg-gray-700 text-cyan-400 px-2 py-0.5 rounded">
               {Math.round(message.confidence * 100)}% confianza
             </span>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   )

@@ -2,7 +2,11 @@
 // Redux Brain Medical System - Full SOAP & Urgency Display
 
 import { useState, useEffect, useRef } from 'react'
-import { v4 as uuidv4 } from 'uuid'
+
+// Simple UUID generator - no external dependencies
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+}
 
 interface Message {
   id: string
@@ -48,7 +52,7 @@ interface ApiResponse {
 }
 
 export const ChatInterfaceAPI = () => {
-  const [sessionId] = useState(() => `session-${uuidv4()}`)
+  const [sessionId] = useState(() => `session-${generateId()}`)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -64,10 +68,10 @@ export const ChatInterfaceAPI = () => {
     if (!input.trim() || isLoading) return
 
     const userMessage: Message = {
-      id: uuidv4(),
+      id: generateId(),
       role: 'user',
       content: input,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
 
     setMessages(prev => [...prev, userMessage])
@@ -76,10 +80,9 @@ export const ChatInterfaceAPI = () => {
 
     try {
       // Auto-detect Netlify environment
-      const isNetlify = typeof window !== 'undefined' && window.location.hostname.includes('netlify');
-      const apiUrl = isNetlify
-        ? '/.netlify/functions/redux-brain'
-        : '/api/redux-brain/';
+      const isNetlify =
+        typeof window !== 'undefined' && window.location.hostname.includes('netlify')
+      const apiUrl = isNetlify ? '/.netlify/functions/redux-brain' : '/api/redux-brain/'
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -88,8 +91,8 @@ export const ChatInterfaceAPI = () => {
         },
         body: JSON.stringify({
           sessionId,
-          message: input
-        })
+          message: input,
+        }),
       })
 
       const data: ApiResponse = await response.json()
@@ -97,13 +100,13 @@ export const ChatInterfaceAPI = () => {
 
       if (data.success) {
         const assistantMessage: Message = {
-          id: uuidv4(),
+          id: generateId(),
           role: 'assistant',
           content: data.message,
           timestamp: new Date(),
           urgencyLevel: data.urgencyAssessment?.level,
           soapProgress: data.sessionData?.soapProgress,
-          soapState: data.soapState
+          soapState: data.soapState,
         }
         setMessages(prev => [...prev, assistantMessage])
       } else {
@@ -112,10 +115,10 @@ export const ChatInterfaceAPI = () => {
     } catch (error) {
       console.error('Error calling API:', error)
       const errorMessage: Message = {
-        id: uuidv4(),
+        id: generateId(),
         role: 'assistant',
         content: 'Error: Unable to process your request. Please try again.',
-        timestamp: new Date()
+        timestamp: new Date(),
       }
       setMessages(prev => [...prev, errorMessage])
     } finally {
@@ -124,12 +127,17 @@ export const ChatInterfaceAPI = () => {
   }
 
   const getUrgencyColor = (level?: string) => {
-    switch(level) {
-      case 'CRITICAL': return 'border-red-500 bg-red-900/20'
-      case 'HIGH': return 'border-orange-500 bg-orange-900/20'
-      case 'MODERATE': return 'border-yellow-500 bg-yellow-900/20'
-      case 'LOW': return 'border-green-500 bg-green-900/20'
-      default: return 'border-gray-600 bg-gray-800'
+    switch (level) {
+      case 'CRITICAL':
+        return 'border-red-500 bg-red-900/20'
+      case 'HIGH':
+        return 'border-orange-500 bg-orange-900/20'
+      case 'MODERATE':
+        return 'border-yellow-500 bg-yellow-900/20'
+      case 'LOW':
+        return 'border-green-500 bg-green-900/20'
+      default:
+        return 'border-gray-600 bg-gray-800'
     }
   }
 
@@ -139,10 +147,12 @@ export const ChatInterfaceAPI = () => {
       CRITICAL: 'bg-red-600 text-white',
       HIGH: 'bg-orange-600 text-white',
       MODERATE: 'bg-yellow-600 text-black',
-      LOW: 'bg-green-600 text-white'
+      LOW: 'bg-green-600 text-white',
     }
     return (
-      <span className={`px-2 py-1 rounded text-xs font-bold ${colors[level as keyof typeof colors]}`}>
+      <span
+        className={`px-2 py-1 rounded text-xs font-bold ${colors[level as keyof typeof colors]}`}
+      >
         {level}
       </span>
     )
@@ -154,8 +164,12 @@ export const ChatInterfaceAPI = () => {
       <div className="bg-gray-900 px-3 py-2 sm:p-4 border-b border-gray-800 flex-shrink-0">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-green-400">Medical Assistant</h2>
-            <p className="text-xs text-gray-400 mt-1 hidden sm:block">Session: {sessionId.slice(0, 16)}...</p>
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-green-400">
+              Medical Assistant
+            </h2>
+            <p className="text-xs text-gray-400 mt-1 hidden sm:block">
+              Session: {sessionId.slice(0, 16)}...
+            </p>
           </div>
           <button
             onClick={() => setShowDebug(!showDebug)}
@@ -175,10 +189,12 @@ export const ChatInterfaceAPI = () => {
               <div className="text-gray-500 text-center mt-8 sm:mt-16 px-4">
                 <div className="text-5xl sm:text-6xl mb-4">🧠</div>
                 <p className="text-base sm:text-lg">Redux Brain Medical AI</p>
-                <p className="text-xs sm:text-sm mt-2">Describe your symptoms or medical condition...</p>
+                <p className="text-xs sm:text-sm mt-2">
+                  Describe your symptoms or medical condition...
+                </p>
               </div>
             ) : (
-              messages.map((msg) => (
+              messages.map(msg => (
                 <div
                   key={msg.id}
                   className={`p-3 sm:p-4 rounded-lg transition-all max-w-full sm:max-w-[90%] ${
@@ -214,33 +230,43 @@ export const ChatInterfaceAPI = () => {
                   {/* SOAP Display when 100% complete */}
                   {msg.role === 'assistant' && msg.soapProgress === 100 && msg.soapState && (
                     <div className="mt-4 p-3 bg-gray-800 rounded-lg border border-gray-700">
-                      <h4 className="text-xs font-bold text-green-400 mb-2">📋 SOAP NOTES COMPLETE</h4>
+                      <h4 className="text-xs font-bold text-green-400 mb-2">
+                        📋 SOAP NOTES COMPLETE
+                      </h4>
 
                       {msg.soapState.subjetivo && (
                         <div className="mb-2">
                           <span className="text-yellow-400 font-bold text-xs">S (Subjetivo):</span>
-                          <p className="text-xs text-gray-300 ml-4 mt-1">{msg.soapState.subjetivo}</p>
+                          <p className="text-xs text-gray-300 ml-4 mt-1">
+                            {msg.soapState.subjetivo}
+                          </p>
                         </div>
                       )}
 
                       {msg.soapState.objetivo && (
                         <div className="mb-2">
                           <span className="text-blue-400 font-bold text-xs">O (Objetivo):</span>
-                          <p className="text-xs text-gray-300 ml-4 mt-1 whitespace-pre-wrap">{msg.soapState.objetivo}</p>
+                          <p className="text-xs text-gray-300 ml-4 mt-1 whitespace-pre-wrap">
+                            {msg.soapState.objetivo}
+                          </p>
                         </div>
                       )}
 
                       {msg.soapState.analisis && (
                         <div className="mb-2">
                           <span className="text-purple-400 font-bold text-xs">A (Análisis):</span>
-                          <p className="text-xs text-gray-300 ml-4 mt-1">{msg.soapState.analisis}</p>
+                          <p className="text-xs text-gray-300 ml-4 mt-1">
+                            {msg.soapState.analisis}
+                          </p>
                         </div>
                       )}
 
                       {msg.soapState.plan && (
                         <div className="mb-2">
                           <span className="text-orange-400 font-bold text-xs">P (Plan):</span>
-                          <p className="text-xs text-gray-300 ml-4 mt-1 whitespace-pre-wrap">{msg.soapState.plan}</p>
+                          <p className="text-xs text-gray-300 ml-4 mt-1 whitespace-pre-wrap">
+                            {msg.soapState.plan}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -269,23 +295,26 @@ export const ChatInterfaceAPI = () => {
 
           {/* ChatGPT-Style Input Form */}
           <form
-            onSubmit={(e) => { e.preventDefault(); sendMessage() }}
+            onSubmit={e => {
+              e.preventDefault()
+              sendMessage()
+            }}
             className="px-3 py-3 sm:p-4 bg-gray-900 border-t border-gray-800 flex-shrink-0"
           >
             <div className="max-w-4xl mx-auto">
               <div className="relative flex items-end bg-gray-800 rounded-2xl border border-gray-700 focus-within:border-gray-600 transition-colors">
                 <textarea
                   value={input}
-                  onChange={(e) => {
-                    setInput(e.target.value);
+                  onChange={e => {
+                    setInput(e.target.value)
                     // Auto-resize textarea
-                    e.target.style.height = 'auto';
-                    e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
+                    e.target.style.height = 'auto'
+                    e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px'
                   }}
-                  onKeyDown={(e) => {
+                  onKeyDown={e => {
                     if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      sendMessage();
+                      e.preventDefault()
+                      sendMessage()
                     }
                   }}
                   placeholder="Message Medical Assistant..."
@@ -302,12 +331,28 @@ export const ChatInterfaceAPI = () => {
                 >
                   {isLoading ? (
                     <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
                   ) : (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                      />
                     </svg>
                   )}
                 </button>
@@ -329,7 +374,12 @@ export const ChatInterfaceAPI = () => {
                 className="sm:hidden p-1 text-gray-400 hover:text-white"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -339,17 +389,28 @@ export const ChatInterfaceAPI = () => {
               <div className="mb-4">
                 <h4 className="text-sm font-semibold text-green-400 mb-2">Urgency Assessment</h4>
                 <div className="bg-gray-900 p-3 rounded text-xs space-y-1">
-                  <p><span className="text-gray-400">Level:</span> {lastResponse.urgencyAssessment.level}</p>
+                  <p>
+                    <span className="text-gray-400">Level:</span>{' '}
+                    {lastResponse.urgencyAssessment.level}
+                  </p>
                   {lastResponse.urgencyAssessment.protocol && (
-                    <p><span className="text-gray-400">Protocol:</span> {lastResponse.urgencyAssessment.protocol}</p>
+                    <p>
+                      <span className="text-gray-400">Protocol:</span>{' '}
+                      {lastResponse.urgencyAssessment.protocol}
+                    </p>
                   )}
-                  <p><span className="text-gray-400">Pediatric:</span> {lastResponse.urgencyAssessment.pediatricFlag ? 'Yes' : 'No'}</p>
+                  <p>
+                    <span className="text-gray-400">Pediatric:</span>{' '}
+                    {lastResponse.urgencyAssessment.pediatricFlag ? 'Yes' : 'No'}
+                  </p>
                   {lastResponse.urgencyAssessment.actions.length > 0 && (
                     <div>
                       <span className="text-gray-400">Actions:</span>
                       <ul className="ml-2 mt-1">
                         {lastResponse.urgencyAssessment.actions.map((action, idx) => (
-                          <li key={idx} className="text-gray-300">• {action}</li>
+                          <li key={idx} className="text-gray-300">
+                            • {action}
+                          </li>
                         ))}
                       </ul>
                     </div>

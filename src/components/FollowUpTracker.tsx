@@ -305,9 +305,12 @@ export const FollowUpTracker = () => {
       })
   }, [mockReminders, filter])
 
-  const pendingCount = useMemo(() => mockReminders.filter(r => !r.completed).length, [mockReminders])
-  const overdueCount = useMemo(() => 
-    mockReminders.filter(r => !r.completed && new Date(r.dueDate) < new Date()).length, 
+  const pendingCount = useMemo(
+    () => mockReminders.filter(r => !r.completed).length,
+    [mockReminders]
+  )
+  const overdueCount = useMemo(
+    () => mockReminders.filter(r => !r.completed && new Date(r.dueDate) < new Date()).length,
     [mockReminders]
   )
 

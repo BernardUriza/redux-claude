@@ -38,35 +38,46 @@ interface MetricCardProps {
 }
 
 const MetricCard = memo(function MetricCard({
-  title, value, subtitle, icon, color, trend, size = 'sm'
+  title,
+  value,
+  subtitle,
+  icon,
+  color,
+  trend,
+  size = 'sm',
 }: MetricCardProps) {
   const isLarge = size === 'lg'
-  
+
   const getTrendIcon = () => {
     if (!trend) return null
-    const iconClass = trend === 'up' ? 'text-emerald-400' : trend === 'down' ? 'text-red-400' : 'text-slate-400'
+    const iconClass =
+      trend === 'up' ? 'text-emerald-400' : trend === 'down' ? 'text-red-400' : 'text-slate-400'
     const arrow = trend === 'up' ? '↗' : trend === 'down' ? '↘' : '→'
-    
+
     return <span className={`text-xs ${iconClass} font-mono`}>{arrow}</span>
   }
 
   return (
-    <div className={`
+    <div
+      className={`
       bg-slate-800/60 backdrop-blur-sm rounded-lg border border-slate-700/50 
       hover:border-slate-600/70 transition-all duration-200 hover:shadow-lg
       ${isLarge ? 'p-6' : 'p-4'}
-    `}>
+    `}
+    >
       <div className="flex items-start justify-between mb-2">
-        <div className={`
+        <div
+          className={`
           ${isLarge ? 'w-12 h-12' : 'w-8 h-8'} 
           bg-gradient-to-br ${color} rounded-lg flex items-center justify-center
           ${isLarge ? 'text-xl' : 'text-base'}
-        `}>
+        `}
+        >
           {icon}
         </div>
         {getTrendIcon()}
       </div>
-      
+
       <div className={`${isLarge ? 'text-3xl' : 'text-2xl'} font-bold text-white mb-1`}>
         {value}
       </div>
@@ -76,16 +87,17 @@ const MetricCard = memo(function MetricCard({
       <div className={`${isLarge ? 'text-sm' : 'text-xs'} text-slate-400 leading-tight`}>
         {subtitle}
       </div>
-      
+
       {/* Progress bar minimalista */}
       <div className="mt-3">
         <div className="w-full bg-slate-700/30 rounded-full h-1 overflow-hidden">
           <div
             className={`bg-gradient-to-r ${color} h-1 rounded-full transition-all duration-500`}
             style={{
-              width: typeof value === 'string' && value.includes('%') 
-                ? value 
-                : `${Math.min(Number(String(value).replace(/\D/g, '')), 100)}%`
+              width:
+                typeof value === 'string' && value.includes('%')
+                  ? value
+                  : `${Math.min(Number(String(value).replace(/\D/g, '')), 100)}%`,
             }}
           />
         </div>
@@ -115,7 +127,7 @@ const StreamingProgress = memo(function StreamingProgress({ progress }: { progre
         </div>
         <div className="text-lg font-bold text-white">{Math.round(progress)}%</div>
       </div>
-      
+
       <div className="w-full bg-slate-700/50 rounded-full h-2 overflow-hidden">
         <div
           className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
@@ -126,7 +138,7 @@ const StreamingProgress = memo(function StreamingProgress({ progress }: { progre
   )
 })
 
-// 🚨 SYSTEM STATUS - Compacto con estados visuales claros  
+// 🚨 SYSTEM STATUS - Compacto con estados visuales claros
 interface SystemStatusProps {
   status: 'optimal' | 'good' | 'warning' | 'critical'
   message: string
@@ -137,16 +149,23 @@ const SystemStatus = memo(function SystemStatus({ status, message }: SystemStatu
     optimal: { color: 'from-emerald-500 to-green-500', icon: '✅', text: 'text-emerald-300' },
     good: { color: 'from-blue-500 to-cyan-500', icon: '🔵', text: 'text-blue-300' },
     warning: { color: 'from-yellow-500 to-orange-500', icon: '⚠️', text: 'text-yellow-300' },
-    critical: { color: 'from-red-500 to-pink-500', icon: '🚨', text: 'text-red-300' }
+    critical: { color: 'from-red-500 to-pink-500', icon: '🚨', text: 'text-red-300' },
   }
-  
+
   const config = configs[status]
-  const statusText = { optimal: 'Óptimo', good: 'Operativo', warning: 'Alerta', critical: 'Crítico' }
+  const statusText = {
+    optimal: 'Óptimo',
+    good: 'Operativo',
+    warning: 'Alerta',
+    critical: 'Crítico',
+  }
 
   return (
     <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-700/50 mb-6">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 bg-gradient-to-br ${config.color} rounded-lg flex items-center justify-center text-lg`}>
+        <div
+          className={`w-10 h-10 bg-gradient-to-br ${config.color} rounded-lg flex items-center justify-center text-lg`}
+        >
           {config.icon}
         </div>
         <div className="flex-1 min-w-0">
@@ -156,9 +175,11 @@ const SystemStatus = memo(function SystemStatus({ status, message }: SystemStatu
           <div className="text-sm text-slate-400 truncate">{message}</div>
         </div>
         {(status === 'optimal' || status === 'critical') && (
-          <div className={`w-2 h-2 rounded-full animate-pulse ${
-            status === 'optimal' ? 'bg-emerald-400' : 'bg-red-400'
-          }`} />
+          <div
+            className={`w-2 h-2 rounded-full animate-pulse ${
+              status === 'optimal' ? 'bg-emerald-400' : 'bg-red-400'
+            }`}
+          />
         )}
       </div>
     </div>
@@ -175,22 +196,22 @@ const calculateSystemStatus = (realMetrics: any): SystemStatusProps => {
   }
 
   const statusMap: Record<string, SystemStatusProps> = {
-    optimal: { 
-      status: 'optimal', 
-      message: `Sistema óptimo - ${realMetrics.agentsActive} cores activos, ${realMetrics.cycles} ciclos` 
+    optimal: {
+      status: 'optimal',
+      message: `Sistema óptimo - ${realMetrics.agentsActive} cores activos, ${realMetrics.cycles} ciclos`,
     },
-    good: { 
-      status: 'good', 
-      message: `Sistema operativo - Confianza ${realMetrics.confidence}%, ${realMetrics.messagesCount} mensajes` 
+    good: {
+      status: 'good',
+      message: `Sistema operativo - Confianza ${realMetrics.confidence}%, ${realMetrics.messagesCount} mensajes`,
     },
-    warning: { 
-      status: 'warning', 
-      message: `Alerta - Performance degradado, tiempo respuesta ${realMetrics.processingTime}ms` 
+    warning: {
+      status: 'warning',
+      message: `Alerta - Performance degradado, tiempo respuesta ${realMetrics.processingTime}ms`,
     },
-    critical: { 
-      status: 'critical', 
-      message: 'Sistema crítico - Intervención requerida en cores multinúcleo' 
-    }
+    critical: {
+      status: 'critical',
+      message: 'Sistema crítico - Intervención requerida en cores multinúcleo',
+    },
   }
 
   return statusMap[healthStatus] || statusMap.good
@@ -210,7 +231,9 @@ export const RealTimeMetrics = () => {
   if (error) {
     return (
       <div className="text-center py-8">
-        <div className="w-12 h-12 bg-red-800 rounded-lg flex items-center justify-center mx-auto mb-3 text-lg">❌</div>
+        <div className="w-12 h-12 bg-red-800 rounded-lg flex items-center justify-center mx-auto mb-3 text-lg">
+          ❌
+        </div>
         <h3 className="text-red-400 font-semibold mb-2">Error en métricas</h3>
         <p className="text-slate-400 text-sm">{error}</p>
       </div>
@@ -231,7 +254,13 @@ export const RealTimeMetrics = () => {
             subtitle="Nivel de certeza del análisis actual"
             icon="🎯"
             color="from-blue-500 to-cyan-500"
-            trend={systemMetrics.confidence > 80 ? 'up' : systemMetrics.confidence > 0 ? 'stable' : undefined}
+            trend={
+              systemMetrics.confidence > 80
+                ? 'up'
+                : systemMetrics.confidence > 0
+                  ? 'stable'
+                  : undefined
+            }
             size="lg"
           />
 

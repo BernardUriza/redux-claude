@@ -4,7 +4,7 @@
 
 import styles from '../styles/components/CognitiveDashboard.module.css'
 import { useRef, useEffect } from 'react'
-import { EnhancedMedicalMessage } from './EnhancedMedicalMessage'
+import { EnhancedMedicalMessage } from '../presentation/features/medical/EnhancedMedicalMessage'
 import type { MedicalMessage } from '@redux-claude/cognitive-core'
 
 const ANIMATION_DELAY_STEP = 150
