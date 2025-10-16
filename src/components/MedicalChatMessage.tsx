@@ -2,12 +2,58 @@
 // Creado por Bernard Orozco - Solo renderiza mensajes, sin lógica de negocio
 
 import React from 'react'
-import ReactMarkdown from 'react-markdown'
 import type { MedicalMessage } from '../../packages/cognitive-core/src/store/medicalChatSlice'
 
 interface MedicalChatMessageProps {
   message: MedicalMessage
   className?: string
+}
+
+// Simple markdown parser for medical messages
+const parseMarkdown = (text: string) => {
+  const lines = text.split('\n')
+  const elements: JSX.Element[] = []
+  let key = 0
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+
+    // Skip empty lines
+    if (!line.trim()) {
+      elements.push(<div key={key++} className="h-2" />)
+      continue
+    }
+
+    // Bold sections (**text**)
+    if (line.includes('**')) {
+      const parts = line.split('**')
+      const rendered = parts.map((part, idx) => {
+        if (idx % 2 === 1) {
+          return <strong key={idx} className="font-bold text-white">{part}</strong>
+        }
+        return <span key={idx}>{part}</span>
+      })
+      elements.push(<p key={key++} className="mb-1">{rendered}</p>)
+      continue
+    }
+
+    // Bullets (• or - at start)
+    if (line.trim().startsWith('•') || line.trim().startsWith('-')) {
+      const content = line.trim().substring(1).trim()
+      elements.push(
+        <div key={key++} className="flex gap-2 ml-2 mb-1">
+          <span className="text-cyan-400">•</span>
+          <span className="flex-1">{content}</span>
+        </div>
+      )
+      continue
+    }
+
+    // Regular paragraph
+    elements.push(<p key={key++} className="mb-1">{line}</p>)
+  }
+
+  return elements
 }
 
 /**
@@ -37,25 +83,8 @@ export const MedicalChatMessage: React.FC<MedicalChatMessageProps> = ({
           </div>
         )}
 
-        <div className="text-sm prose prose-invert prose-sm max-w-none">
-          <ReactMarkdown
-            components={{
-              // Bullets
-              ul: ({ children }) => <ul className="list-disc ml-4 space-y-1">{children}</ul>,
-              ol: ({ children }) => <ol className="list-decimal ml-4 space-y-1">{children}</ol>,
-              li: ({ children }) => <li className="text-gray-200">{children}</li>,
-              // Bold
-              strong: ({ children }) => <strong className="font-bold text-white">{children}</strong>,
-              // Headings
-              h1: ({ children }) => <h1 className="text-lg font-bold text-white mb-2">{children}</h1>,
-              h2: ({ children }) => <h2 className="text-base font-bold text-white mb-1">{children}</h2>,
-              h3: ({ children }) => <h3 className="text-sm font-bold text-white mb-1">{children}</h3>,
-              // Paragraphs
-              p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-            }}
-          >
-            {message.content}
-          </ReactMarkdown>
+        <div className="text-sm max-w-none">
+          {parseMarkdown(message.content)}
         </div>
 
         <p className="text-xs opacity-70 mt-1">
