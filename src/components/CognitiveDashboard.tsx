@@ -8,14 +8,16 @@ import { useMedicalChat } from '@redux-claude/cognitive-core/hooks/useMedicalCha
 import { LoadingScreen } from './LoadingScreen'
 import { DashboardContainer } from './DashboardContainer'
 
-// Extracted Hooks
-import { useMobileInteractions } from '../hooks/use-mobile-interactions'
-import { useDashboardState } from '../hooks/use-dashboard-state'
-import { useMedicalDataOrchestrator } from '../hooks/use-medical-data-orchestrator'
-import { useUrgencyData } from '../hooks/use-urgency-data'
-import { useDashboardHandlers } from '../hooks/use-dashboard-handlers'
-import { useDashboardEffects } from '../hooks/use-dashboard-effects'
-import { useCognitiveMetrics } from '../hooks/use-cognitive-metrics'
+// Extracted Hooks - using barrel exports
+import {
+  useMobileInteractions,
+  useDashboardState,
+  useMedicalDataOrchestrator,
+  useUrgencyData,
+  useDashboardHandlers,
+  useDashboardEffects,
+  useCognitiveMetrics,
+} from '../hooks'
 
 // Main Cognitive Dashboard Component - BRUTAL ORCHESTRATOR
 

@@ -4,7 +4,7 @@
 
 import React from 'react'
 import { AlertCard } from '../presentation/components/ui/AlertCard'
-import { useAlertManager } from '../hooks/use-alert-manager'
+import { useAlertManager } from '../hooks'
 
 interface AlertSystemProps {
   maxVisible?: number

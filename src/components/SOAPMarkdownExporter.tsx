@@ -4,7 +4,7 @@
 'use client'
 
 import ReactMarkdown from 'react-markdown'
-import type { CompleteSOAP } from '../hooks/use-soap-data'
+import type { CompleteSOAP } from '../hooks'
 import { generateMarkdownContent } from '../utils/soapMarkdownUtils'
 import { markdownComponents } from './soap-markdown/MarkdownComponents'
 

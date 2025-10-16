@@ -1,7 +1,7 @@
 // src/utils/soapMarkdownUtils.ts
 // SOAP Markdown Utility Functions - Extracted from SOAPMarkdownExporter
 
-import type { CompleteSOAP } from '../hooks/use-soap-data'
+import type { CompleteSOAP } from '../hooks'
 import type {
   SubjectiveData,
   ObjectiveData,
