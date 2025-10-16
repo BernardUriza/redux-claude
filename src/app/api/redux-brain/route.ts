@@ -144,14 +144,93 @@ function dispatchAction(sessionId: string, action: { type: string; payload: Acti
   })
 }
 
-// Calcular progreso SOAP (0-100%)
+// 📊 INTELLIGENT SOAP CONFIDENCE CALCULATION
+// Evaluates REAL content quality, not just presence
 function calculateSOAPProgress(soapState: SOAPState): number {
-  let progress = 0
-  if (soapState.subjetivo) progress += SOAP_SECTION_PROGRESS_PERCENT
-  if (soapState.objetivo) progress += SOAP_SECTION_PROGRESS_PERCENT
-  if (soapState.analisis) progress += SOAP_SECTION_PROGRESS_PERCENT
-  if (soapState.plan) progress += SOAP_SECTION_PROGRESS_PERCENT
-  return progress
+  // Placeholder detection patterns
+  const placeholders = [
+    /pendiente/i,
+    /por definir/i,
+    /por documentar/i,
+    /por evaluar/i,
+    /se requiere/i,
+    /evaluación pendiente/i,
+    /sin compromiso vital inmediato/i, // Generic prognosis
+    /síndrome clínico/i, // Generic diagnosis
+    /ninguno referido/i,
+  ]
+
+  const isPlaceholder = (text: string | undefined): boolean => {
+    if (!text || text.trim().length === 0) return true
+    return placeholders.some(pattern => pattern.test(text))
+  }
+
+  const hasRealStructuredData = (text: string | undefined): boolean => {
+    if (!text) return false
+    // Check for JSON structure (indicates detailed plan)
+    try {
+      const parsed = JSON.parse(text)
+      return parsed && typeof parsed === 'object' && Object.keys(parsed).length > 2
+    } catch {
+      return false
+    }
+  }
+
+  const evaluateSectionQuality = (content: string | undefined, minLength: number): number => {
+    if (!content || content.trim().length === 0) return 0
+
+    // Placeholder check
+    if (isPlaceholder(content)) return 0
+
+    // Length check
+    if (content.trim().length < minLength) return 10 // Minimal info
+
+    // Structured data bonus
+    if (hasRealStructuredData(content)) return 25
+
+    // Quality tiers based on length and specificity
+    if (content.length > 200) return 25 // Complete section
+    if (content.length > 100) return 20 // Good detail
+    if (content.length > 50) return 15 // Moderate detail
+    return 10 // Minimal info
+  }
+
+  let totalConfidence = 0
+
+  // S - SUBJETIVO (Weight: 25%)
+  // Requires: Chief complaint + some detail (min 20 chars)
+  totalConfidence += evaluateSectionQuality(soapState.subjetivo, 20)
+
+  // O - OBJETIVO (Weight: 25%)
+  // Requires: Real vital signs or physical findings (not "Pendiente")
+  const objetivoScore = evaluateSectionQuality(soapState.objetivo, 30)
+  // Extra penalty for "Pendiente" in objetivo
+  if (soapState.objetivo?.includes('Pendiente')) {
+    totalConfidence += 0 // No credit for placeholder
+  } else {
+    totalConfidence += objetivoScore
+  }
+
+  // A - ANÁLISIS (Weight: 25%)
+  // Requires: Specific diagnosis (not "Síndrome clínico por definir")
+  const analisisScore = evaluateSectionQuality(soapState.analisis, 30)
+  if (soapState.analisis?.includes('por definir') || soapState.analisis?.includes('pendiente')) {
+    totalConfidence += 0 // No credit for generic diagnosis
+  } else {
+    totalConfidence += analisisScore
+  }
+
+  // P - PLAN (Weight: 25%)
+  // Requires: Real treatment plan with specific actions
+  const planScore = evaluateSectionQuality(soapState.plan, 40)
+  if (soapState.plan?.includes('pendiente') || soapState.plan?.includes('por completar')) {
+    totalConfidence += 0 // No credit for pending plan
+  } else {
+    totalConfidence += planScore
+  }
+
+  // Cap at 100% and round to nearest integer
+  return Math.min(Math.round(totalConfidence), 100)
 }
 
 // Determinar fase actual del proceso médico
