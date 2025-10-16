@@ -202,19 +202,15 @@ async function callClaude(
   throw new Error('Invalid Claude response')
 }
 
-// 🧠 CONTEXT-AWARE URGENCY ENGINE - LLM-based contextual analysis
-async function detectUrgencyWithContext(
+// 🔧 URGENCY DETECTION HELPERS
+
+// Build contextual prompt for urgency analysis
+function buildUrgencyPrompt(
   input: string,
   sessionStore: SessionData,
   extractedInfo: ExtractedInfo
-): Promise<{
-  level: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'
-  protocol?: string
-  actions: string[]
-  pediatricFlag?: boolean
-  reasoning: string
-}> {
-  const contextualPrompt = `You are an expert emergency medicine physician analyzing a patient interaction for urgency levels.
+): string {
+  return `You are an expert emergency medicine physician analyzing a patient interaction for urgency levels.
 
 CRITICAL CONTEXT - USE THIS TO MAKE DECISIONS:
 - Current conversation: ${JSON.stringify(sessionStore.messages?.slice(-RECENT_MESSAGES_COUNT) || [])}
@@ -259,30 +255,54 @@ URGENCY LEVELS:
 - HIGH: Urgent but stable (<2 hours) - severe pain, adult fever >39°C, respiratory distress
 - MODERATE: Important but can wait (<24 hours) - medication questions, non-urgent symptoms
 - LOW: Information, family history, casual conversation, third-party stories`
+}
 
+// Parse and validate urgency response from LLM
+function parseUrgencyResponse(response: string): {
+  level: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'
+  protocol?: string
+  actions: string[]
+  pediatricFlag?: boolean
+  reasoning: string
+} {
+  // Clean response and try to parse JSON
+  let cleanResponse = response.trim()
+  if (cleanResponse.startsWith('```json')) {
+    cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?$/g, '')
+  }
+
+  const result = JSON.parse(cleanResponse)
+
+  // Validate required fields
+  if (!result.level || !Array.isArray(result.actions)) {
+    throw new Error('Invalid LLM response structure')
+  }
+
+  return {
+    level: result.level,
+    protocol: result.protocol || null,
+    actions: result.actions || [],
+    pediatricFlag: result.pediatricFlag || false,
+    reasoning: result.reasoning || 'No reasoning provided',
+  }
+}
+
+// 🧠 CONTEXT-AWARE URGENCY ENGINE - LLM-based contextual analysis
+async function detectUrgencyWithContext(
+  input: string,
+  sessionStore: SessionData,
+  extractedInfo: ExtractedInfo
+): Promise<{
+  level: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'
+  protocol?: string
+  actions: string[]
+  pediatricFlag?: boolean
+  reasoning: string
+}> {
   try {
+    const contextualPrompt = buildUrgencyPrompt(input, sessionStore, extractedInfo)
     const response = await callClaude(contextualPrompt, input)
-
-    // Clean response and try to parse JSON
-    let cleanResponse = response.trim()
-    if (cleanResponse.startsWith('```json')) {
-      cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?$/g, '')
-    }
-
-    const result = JSON.parse(cleanResponse)
-
-    // Validate required fields
-    if (!result.level || !Array.isArray(result.actions)) {
-      throw new Error('Invalid LLM response structure')
-    }
-
-    return {
-      level: result.level,
-      protocol: result.protocol || null,
-      actions: result.actions || [],
-      pediatricFlag: result.pediatricFlag || false,
-      reasoning: result.reasoning || 'No reasoning provided',
-    }
+    return parseUrgencyResponse(response)
   } catch (error) {
     logger.error(
       'Context-aware urgency detection failed',
@@ -383,6 +403,345 @@ Be friendly and helpful. Extract any medical information present.`
   }
 }
 
+// 🔄 SESSION INITIALIZATION HELPER
+function getOrCreateSession(sessionId: string): SessionData {
+  let session = reduxStore.get(sessionId)
+
+  if (!session) {
+    session = {
+      sessionId,
+      messages: [],
+      patientInfo: {},
+      diagnosticState: {},
+      soapState: {},
+      actionHistory: [],
+    }
+    reduxStore.set(sessionId, session)
+
+    dispatchAction(sessionId, {
+      type: ActionTypes.SESSION_INIT,
+      payload: { sessionId, timestamp: new Date() },
+    })
+  }
+
+  return session
+}
+
+// 📊 ENTITY PROCESSING HELPER
+function processEntitiesAndDispatchActions(
+  sessionId: string,
+  message: string,
+  extractedInfo: ExtractedInfo
+): void {
+  const entities = parseMedicalEntities(message)
+
+  // Dispatch vital signs
+  entities.vitalSigns.forEach(vital => {
+    dispatchAction(sessionId, {
+      type: ActionTypes.VITAL_SIGN_DETECTED,
+      payload: { type: vital.type, value: vital.value },
+    })
+  })
+
+  // Dispatch symptoms
+  extractedInfo.symptoms?.forEach((symptom: string) => {
+    dispatchAction(sessionId, {
+      type: ActionTypes.SYMPTOM_PARSED,
+      payload: { symptom, severity: entities.severity },
+    })
+  })
+}
+
+// 🚨 URGENCY DETECTION ORCHESTRATOR
+async function detectAndAssessUrgency(
+  sessionId: string,
+  sanitizedMessage: string,
+  session: SessionData,
+  extractedInfo: ExtractedInfo
+): Promise<UrgencyAssessment> {
+  // Critical pattern detection
+  const criticalPatternResult = criticalPatternMiddleware.analyzeCriticalPatterns(sanitizedMessage)
+  logger.criticalPattern(sessionId, {
+    triggered: criticalPatternResult.triggered,
+    patterns: criticalPatternResult.patterns.map(p => p.name),
+    urgencyOverride: criticalPatternResult.urgencyOverride || undefined,
+    widowMaker: criticalPatternResult.widowMakerAlert,
+  })
+
+  // Defensive medicine validation
+  const defensiveValidator = new DefensiveMedicineValidator()
+  const urgentPatterns = defensiveValidator.identifyUrgentPatterns(sanitizedMessage)
+  const overallUrgency = defensiveValidator.calculateOverallUrgency(urgentPatterns)
+  logger.info('Defensive medicine validator completed', {
+    sessionId,
+    level: overallUrgency.level,
+    maxGravity: overallUrgency.maxGravity,
+    patternsDetected: urgentPatterns.map(p => p.symptoms[0]),
+    category: 'defensive_medicine',
+  })
+
+  // Priority order: Critical Pattern > Defensive Medicine > LLM Contextual
+  if (criticalPatternResult.urgencyOverride === 'critical') {
+    return {
+      level: 'CRITICAL',
+      protocol: criticalPatternResult.patterns[0]?.name || 'Critical Pattern Protocol',
+      actions: overallUrgency.immediateActions,
+      pediatricFlag: extractedInfo?.age ? extractedInfo.age < ADULT_AGE_THRESHOLD : false,
+      reasoning: `🚨 CRITICAL PATTERN OVERRIDE: ${criticalPatternResult.patterns.map(p => p.name).join(', ')}. ${criticalPatternResult.widowMakerAlert ? '💀 WIDOW MAKER RISK DETECTED' : ''}`,
+    }
+  }
+
+  if (overallUrgency.level === 'critical' || overallUrgency.level === 'high') {
+    return {
+      level: overallUrgency.level === 'critical' ? 'CRITICAL' : 'HIGH',
+      protocol:
+        urgentPatterns.length > 0
+          ? urgentPatterns[0].criticalDifferentials[0]
+          : 'Emergency Protocol',
+      actions: overallUrgency.immediateActions,
+      pediatricFlag: extractedInfo?.age ? extractedInfo.age < ADULT_AGE_THRESHOLD : false,
+      reasoning: `DefensiveMedicineValidator: Gravity Score ${overallUrgency.maxGravity}/10. Urgent patterns detected: ${urgentPatterns.map(p => p.symptoms[0]).join(', ')}`,
+    }
+  }
+
+  return await detectUrgencyWithContext(sanitizedMessage, session, extractedInfo)
+}
+
+// 🚨 PROTOCOL ACTIVATION HELPER
+function activateProtocols(
+  sessionId: string,
+  urgency: UrgencyAssessment,
+  extractedInfo: ExtractedInfo
+): void {
+  // Dispatch urgency alerts
+  if (urgency.level === 'CRITICAL' || urgency.level === 'HIGH') {
+    dispatchAction(sessionId, {
+      type: ActionTypes.URGENCY_DETECTED,
+      payload: {
+        level: urgency.level,
+        protocol: urgency.protocol,
+        actions: urgency.actions,
+        isPediatric: urgency.pediatricFlag,
+      },
+    })
+
+    if (urgency.protocol) {
+      dispatchAction(sessionId, {
+        type: ActionTypes.PROTOCOL_ACTIVATED,
+        payload: { protocol: urgency.protocol, actions: urgency.actions },
+      })
+    }
+
+    if (urgency.level === 'CRITICAL') {
+      dispatchAction(sessionId, {
+        type: ActionTypes.CRITICAL_FLAG,
+        payload: { protocol: urgency.protocol, reason: 'VIDA_EN_RIESGO' },
+      })
+    }
+  }
+
+  // Pediatric protocols
+  if (extractedInfo.age && extractedInfo.age < ADULT_AGE_THRESHOLD) {
+    dispatchAction(sessionId, {
+      type: ActionTypes.PEDIATRIC_ALERT,
+      payload: {
+        age: extractedInfo.age,
+        pesoEstimado: extractedInfo.age * 3 + 7,
+        requiereAdultoResponsable: true,
+      },
+    })
+
+    if (urgency.pediatricFlag) {
+      dispatchAction(sessionId, {
+        type: ActionTypes.WEIGHT_CALCULATION,
+        payload: {
+          pesoEstimado: extractedInfo.age * 3 + 7,
+          formula: 'PEDIATRICA_STANDAR',
+        },
+      })
+    }
+  }
+}
+
+// 📝 SOAP SECTION UPDATE HELPERS
+
+// Update Subjective (S) section
+function updateSOAPSubjective(
+  sessionId: string,
+  session: SessionData,
+  sanitizedMessage: string,
+  soapAnalysis: Awaited<ReturnType<SOAPProcessor['processCase']>>
+): void {
+  if (!session.soapState.subjetivo || session.messages.length <= 2) {
+    session.soapState.subjetivo = sanitizedMessage
+  } else if (soapAnalysis.soap?.subjetivo) {
+    const subjetivoValue =
+      typeof soapAnalysis.soap.subjetivo === 'string'
+        ? soapAnalysis.soap.subjetivo
+        : soapAnalysis.soap.subjetivo.motivoConsulta || sanitizedMessage
+
+    if (subjetivoValue !== 'Paciente acude por evaluación médica') {
+      session.soapState.subjetivo = subjetivoValue
+    }
+  }
+
+  dispatchAction(sessionId, {
+    type: ActionTypes.SOAP_S_UPDATED,
+    payload: { subjetivo: session.soapState.subjetivo },
+  })
+}
+
+// Update Objective (O) section
+function updateSOAPObjective(
+  sessionId: string,
+  session: SessionData,
+  soapAnalysis: Awaited<ReturnType<SOAPProcessor['processCase']>>
+): void {
+  if (soapAnalysis.soap?.objetivo) {
+    const hasVitalSigns =
+      soapAnalysis.soap.objetivo.signosVitales &&
+      Object.keys(soapAnalysis.soap.objetivo.signosVitales).length > 0
+
+    session.soapState.objetivo =
+      typeof soapAnalysis.soap.objetivo === 'string'
+        ? soapAnalysis.soap.objetivo
+        : hasVitalSigns
+          ? `Signos vitales: ${JSON.stringify(soapAnalysis.soap.objetivo.signosVitales, null, 2)}. Exploración: ${
+              typeof soapAnalysis.soap.objetivo.exploracionFisica === 'object'
+                ? JSON.stringify(soapAnalysis.soap.objetivo.exploracionFisica, null, 2)
+                : soapAnalysis.soap.objetivo.exploracionFisica || 'Pendiente'
+            }`
+          : 'Pendiente - Se requiere evaluación física y signos vitales'
+
+    dispatchAction(sessionId, {
+      type: ActionTypes.SOAP_O_UPDATED,
+      payload: { objetivo: session.soapState.objetivo },
+    })
+  }
+}
+
+// Update Analysis (A) section
+function updateSOAPAnalysis(
+  sessionId: string,
+  session: SessionData,
+  soapAnalysis: Awaited<ReturnType<SOAPProcessor['processCase']>>
+): void {
+  if (soapAnalysis.soap?.analisis) {
+    session.soapState.analisis =
+      typeof soapAnalysis.soap.analisis === 'string'
+        ? soapAnalysis.soap.analisis
+        : soapAnalysis.soap.analisis.diagnosticoPrincipal?.condicion ||
+          'Análisis pendiente - Se requiere más información clínica'
+  } else {
+    session.soapState.analisis = 'Análisis pendiente - Se requiere más información clínica'
+  }
+
+  dispatchAction(sessionId, {
+    type: ActionTypes.SOAP_A_UPDATED,
+    payload: { analisis: session.soapState.analisis },
+  })
+}
+
+// Update Plan (P) section
+function updateSOAPPlan(
+  sessionId: string,
+  session: SessionData,
+  soapAnalysis: Awaited<ReturnType<SOAPProcessor['processCase']>>
+): void {
+  if (soapAnalysis.soap?.plan) {
+    if (typeof soapAnalysis.soap.plan === 'string') {
+      session.soapState.plan = soapAnalysis.soap.plan
+    } else {
+      const hasTreatment =
+        (Array.isArray(soapAnalysis.soap.plan.tratamientoFarmacologico) &&
+          soapAnalysis.soap.plan.tratamientoFarmacologico.length > 0) ||
+        (Array.isArray(soapAnalysis.soap.plan.tratamientoNoFarmacologico) &&
+          soapAnalysis.soap.plan.tratamientoNoFarmacologico.length > 0)
+
+      session.soapState.plan = hasTreatment
+        ? JSON.stringify(soapAnalysis.soap.plan, null, 2)
+        : 'Plan pendiente - Requiere completar anamnesis y evaluación'
+    }
+  } else {
+    session.soapState.plan = 'Plan pendiente - Requiere completar anamnesis y evaluación'
+  }
+
+  dispatchAction(sessionId, {
+    type: ActionTypes.SOAP_P_UPDATED,
+    payload: { plan: session.soapState.plan },
+  })
+}
+
+// 🧠 SOAP PROCESSING ORCHESTRATOR
+async function processSOAPAnalysis(
+  sessionId: string,
+  session: SessionData,
+  sanitizedMessage: string,
+  extractedInfo: ExtractedInfo
+): Promise<void> {
+  try {
+    const soapProcessor = new SOAPProcessor()
+    const soapAnalysis = await soapProcessor.processCase(sanitizedMessage, {
+      age: extractedInfo.age ?? undefined,
+      gender: extractedInfo.gender ?? undefined,
+      comorbidities: extractedInfo.medicalHistory,
+      medications: [],
+      vitalSigns: {},
+    })
+
+    // Update all SOAP sections using helper functions
+    updateSOAPSubjective(sessionId, session, sanitizedMessage, soapAnalysis)
+    updateSOAPObjective(sessionId, session, soapAnalysis)
+    updateSOAPAnalysis(sessionId, session, soapAnalysis)
+    updateSOAPPlan(sessionId, session, soapAnalysis)
+  } catch (soapError) {
+    logger.error(
+      'SOAP processing failed',
+      soapError instanceof Error ? soapError : { error: soapError, sessionId }
+    )
+  }
+}
+
+// 💬 RESPONSE GENERATION HELPER
+async function generateMedicalResponse(
+  sessionId: string,
+  session: SessionData,
+  sanitizedMessage: string,
+  validation: Awaited<ReturnType<typeof validateInput>>
+): Promise<string> {
+  if (!validation.isValid) {
+    return validation.message
+  }
+
+  const responseMessage = await processMedicalQuery(sanitizedMessage, session)
+
+  // Use Decisional Middleware for SOAP completion detection
+  const fullConversation = session.messages.map(m => m.content).join(' ')
+  const extractionDecision = await callClaudeForDecision('medical_data_extractor', fullConversation)
+
+  if (extractionDecision.decision?.treatmentExecuted) {
+    if (!session.soapState.analisis) {
+      session.soapState.analisis = extractionDecision.decision.diagnosis || 'Diagnóstico procesado'
+      dispatchAction(sessionId, {
+        type: ActionTypes.SOAP_A_UPDATED,
+        payload: { analisis: session.soapState.analisis },
+      })
+    }
+
+    if (!session.soapState.plan || !session.soapState.plan.includes('ejecutado')) {
+      session.soapState.plan =
+        'Plan terapéutico ejecutado y documentado. ' +
+        (extractionDecision.decision.treatmentDetails || '')
+      dispatchAction(sessionId, {
+        type: ActionTypes.SOAP_P_UPDATED,
+        payload: { plan: session.soapState.plan },
+      })
+    }
+  }
+
+  return responseMessage
+}
+
 // 🏥 PROCESADOR MÉDICO PRINCIPAL
 async function processMedicalQuery(input: string, sessionData: SessionData): Promise<string> {
   // 🚨 CRITICAL PATTERN DETECTION - WIDOW MAKER ALERT
@@ -436,10 +795,10 @@ export async function POST(req: NextRequest) {
   try {
     const { sessionId, message } = await req.json()
 
-    // 🔒 SANITIZE INPUT - Remove malicious content and encoding issues
+    // 🔒 SANITIZE INPUT
     const sanitizedMessage = sanitizeInput(message)
 
-    // 📋 VALIDATE INPUT - Check for basic sanity
+    // 📋 VALIDATE INPUT - Basic sanity check
     const inputValidation = validateMedicalInput(sanitizedMessage)
     if (!inputValidation.isValid && inputValidation.issues.length > 1) {
       logger.warn('Invalid input received', {
@@ -458,7 +817,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Log encoding warnings if any
     if (inputValidation.suggestions.length > 0) {
       logger.debug('Input has encoding issues (auto-normalized)', {
         sessionId,
@@ -466,27 +824,8 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Obtener o crear sesión con estado SOAP y acciones Redux
-    let session = reduxStore.get(sessionId)
-
-    if (!session) {
-      session = {
-        sessionId,
-        messages: [],
-        patientInfo: {},
-        diagnosticState: {},
-        soapState: {},
-        actionHistory: [],
-      }
-      // Guardar la nueva sesión antes de despachar acciones
-      reduxStore.set(sessionId, session)
-
-      // Ahora sí despachar acción de inicio
-      dispatchAction(sessionId, {
-        type: ActionTypes.SESSION_INIT,
-        payload: { sessionId, timestamp: new Date() },
-      })
-    }
+    // 🔄 GET OR CREATE SESSION
+    const session = getOrCreateSession(sessionId)
 
     logger.info('Redux Brain session started', {
       sessionId,
@@ -497,13 +836,13 @@ export async function POST(req: NextRequest) {
     })
     logger.debug(`User input received (sanitized): "${sanitizedMessage}"`, { sessionId })
 
-    // Despachar acción de mensaje recibido
+    // Dispatch message received action
     dispatchAction(sessionId, {
       type: ActionTypes.MESSAGE_RECEIVED,
       payload: { message: sanitizedMessage, role: 'user' },
     })
 
-    // PASO 1: Validación con extracción de información
+    // 🎯 VALIDATE AND EXTRACT INFORMATION
     const validation = await validateInput(sanitizedMessage)
     logger.info('Input validation completed', {
       sessionId,
@@ -512,262 +851,40 @@ export async function POST(req: NextRequest) {
       hasExtractedInfo: !!validation.extractedInfo,
     })
 
-    // Despachar acción de validación completada
     dispatchAction(sessionId, {
       type: ActionTypes.VALIDATION_COMPLETED,
       payload: { isValid: validation.isValid, category: validation.category },
     })
 
-    // Actualizar información del paciente si hay nueva data
+    // 📊 PROCESS MEDICAL DATA IF AVAILABLE
     if (validation.extractedInfo) {
       session.patientInfo = {
         ...session.patientInfo,
         ...validation.extractedInfo,
       }
 
-      // 📊 MICRO-REDUX: Parse entidades médicas granularmente
-      const entities = parseMedicalEntities(message)
+      // Process entities and dispatch micro-actions
+      processEntitiesAndDispatchActions(sessionId, message, validation.extractedInfo)
 
-      // Despachar micro-acciones por cada entidad detectada
-      entities.vitalSigns.forEach(vital => {
-        dispatchAction(sessionId, {
-          type: ActionTypes.VITAL_SIGN_DETECTED,
-          payload: { type: vital.type, value: vital.value },
-        })
-      })
-
-      validation.extractedInfo.symptoms?.forEach((symptom: string) => {
-        dispatchAction(sessionId, {
-          type: ActionTypes.SYMPTOM_PARSED,
-          payload: { symptom, severity: entities.severity },
-        })
-      })
-
-      // 🚨 CRITICAL PATTERN DETECTION FIRST - WIDOW MAKER PRIORITY
-      // Use sanitized message for pattern matching
-      const criticalPatternResult =
-        criticalPatternMiddleware.analyzeCriticalPatterns(sanitizedMessage)
-      logger.criticalPattern(sessionId, {
-        triggered: criticalPatternResult.triggered,
-        patterns: criticalPatternResult.patterns.map(p => p.name),
-        urgencyOverride: criticalPatternResult.urgencyOverride || undefined,
-        widowMaker: criticalPatternResult.widowMakerAlert,
-      })
-
-      // 🚨 DEFENSIVE MEDICINE VALIDATION
-      const defensiveValidator = new DefensiveMedicineValidator()
-      const urgentPatterns = defensiveValidator.identifyUrgentPatterns(sanitizedMessage)
-      const overallUrgency = defensiveValidator.calculateOverallUrgency(urgentPatterns)
-      logger.info('Defensive medicine validator completed', {
+      // Detect and assess urgency
+      const urgency = await detectAndAssessUrgency(
         sessionId,
-        level: overallUrgency.level,
-        maxGravity: overallUrgency.maxGravity,
-        patternsDetected: urgentPatterns.map(p => p.symptoms[0]),
-        category: 'defensive_medicine',
-      })
+        sanitizedMessage,
+        session,
+        validation.extractedInfo
+      )
 
-      // PRIORITY ORDER: Critical Pattern Override > DefensiveMedicineValidator > LLM Contextual
-      let urgency: {
-        level: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'
-        protocol?: string
-        actions: string[]
-        pediatricFlag?: boolean
-        reasoning?: string
-      }
-      if (criticalPatternResult.urgencyOverride === 'critical') {
-        // 🚨 CRITICAL PATTERN OVERRIDE - WIDOW MAKER DETECTED
-        // El CriticalPatternMiddleware tiene la máxima prioridad
-        urgency = {
-          level: 'CRITICAL',
-          protocol: criticalPatternResult.patterns[0]?.name || 'Critical Pattern Protocol',
-          actions: overallUrgency.immediateActions,
-          pediatricFlag: validation.extractedInfo?.age
-            ? validation.extractedInfo.age < ADULT_AGE_THRESHOLD
-            : false,
-          reasoning: `🚨 CRITICAL PATTERN OVERRIDE: ${criticalPatternResult.patterns.map(p => p.name).join(', ')}. ${criticalPatternResult.widowMakerAlert ? '💀 WIDOW MAKER RISK DETECTED' : ''}`,
-        }
-      } else if (overallUrgency.level === 'critical' || overallUrgency.level === 'high') {
-        // Si el validator detecta algo crítico, usarlo directamente
-        urgency = {
-          level: overallUrgency.level === 'critical' ? 'CRITICAL' : 'HIGH',
-          protocol:
-            urgentPatterns.length > 0
-              ? urgentPatterns[0].criticalDifferentials[0]
-              : 'Emergency Protocol',
-          actions: overallUrgency.immediateActions,
-          pediatricFlag: validation.extractedInfo?.age
-            ? validation.extractedInfo.age < ADULT_AGE_THRESHOLD
-            : false,
-          reasoning: `DefensiveMedicineValidator: Gravity Score ${overallUrgency.maxGravity}/10. Urgent patterns detected: ${urgentPatterns.map(p => p.symptoms[0]).join(', ')}`,
-        }
-      } else {
-        // Si no es crítico según ninguno, usar el LLM contextual
-        urgency = await detectUrgencyWithContext(
-          sanitizedMessage,
-          session,
-          validation.extractedInfo
-        )
-      }
+      // Activate protocols
+      activateProtocols(sessionId, urgency, validation.extractedInfo)
 
-      // Despachar alerta de urgencia si es crítica
-      if (urgency.level === 'CRITICAL' || urgency.level === 'HIGH') {
-        dispatchAction(sessionId, {
-          type: ActionTypes.URGENCY_DETECTED,
-          payload: {
-            level: urgency.level,
-            protocol: urgency.protocol,
-            actions: urgency.actions,
-            isPediatric: urgency.pediatricFlag,
-          },
-        })
-
-        // Si hay protocolo específico, activarlo
-        if (urgency.protocol) {
-          dispatchAction(sessionId, {
-            type: ActionTypes.PROTOCOL_ACTIVATED,
-            payload: { protocol: urgency.protocol, actions: urgency.actions },
-          })
-        }
-
-        // Flag crítico para casos que requieren intervención inmediata
-        if (urgency.level === 'CRITICAL') {
-          dispatchAction(sessionId, {
-            type: ActionTypes.CRITICAL_FLAG,
-            payload: { protocol: urgency.protocol, reason: 'VIDA_EN_RIESGO' },
-          })
-        }
-      }
-
-      // 👶 PEDIATRIC PROTOCOLS - Flags especiales para menores
-      if (validation.extractedInfo.age && validation.extractedInfo.age < ADULT_AGE_THRESHOLD) {
-        dispatchAction(sessionId, {
-          type: ActionTypes.PEDIATRIC_ALERT,
-          payload: {
-            age: validation.extractedInfo.age,
-            pesoEstimado: validation.extractedInfo.age * 3 + 7,
-            requiereAdultoResponsable: true,
-          },
-        })
-
-        // Calcular peso estimado para dosificación
-        if (urgency.pediatricFlag) {
-          dispatchAction(sessionId, {
-            type: ActionTypes.WEIGHT_CALCULATION,
-            payload: {
-              pesoEstimado: validation.extractedInfo.age * 3 + 7,
-              formula: 'PEDIATRICA_STANDAR',
-            },
-          })
-        }
-      }
-
-      // Guardar detección de urgencia en sesión
+      // Save urgency assessment
       session.urgencyAssessment = urgency
 
-      // 🧠 USAR SOAPPROCESSOR PARA GENERAR SOAP COMPLETO
-      try {
-        const soapProcessor = new SOAPProcessor()
-        const soapAnalysis = await soapProcessor.processCase(sanitizedMessage, {
-          age: validation.extractedInfo.age ?? undefined,
-          gender: validation.extractedInfo.gender ?? undefined,
-          comorbidities: validation.extractedInfo.medicalHistory,
-          medications: [],
-          vitalSigns: {},
-        })
-
-        // Actualizar estado SOAP con el análisis completo
-        // SIEMPRE usar el mensaje del usuario para el subjetivo si es la primera interacción
-        if (!session.soapState.subjetivo || session.messages.length <= 2) {
-          // Usar el mensaje actual del usuario (sanitizado)
-          session.soapState.subjetivo = sanitizedMessage
-        } else if (soapAnalysis.soap?.subjetivo) {
-          // Solo actualizar si hay información nueva y no es genérica
-          const subjetivoValue =
-            typeof soapAnalysis.soap.subjetivo === 'string'
-              ? soapAnalysis.soap.subjetivo
-              : soapAnalysis.soap.subjetivo.motivoConsulta || sanitizedMessage
-
-          if (subjetivoValue !== 'Paciente acude por evaluación médica') {
-            session.soapState.subjetivo = subjetivoValue
-          }
-        }
-
-        dispatchAction(sessionId, {
-          type: ActionTypes.SOAP_S_UPDATED,
-          payload: { subjetivo: session.soapState.subjetivo },
-        })
-
-        if (soapAnalysis.soap?.objetivo) {
-          // For incomplete cases, just mark as pending
-          const hasVitalSigns =
-            soapAnalysis.soap.objetivo.signosVitales &&
-            Object.keys(soapAnalysis.soap.objetivo.signosVitales).length > 0
-          session.soapState.objetivo =
-            typeof soapAnalysis.soap.objetivo === 'string'
-              ? soapAnalysis.soap.objetivo
-              : hasVitalSigns
-                ? `Signos vitales: ${JSON.stringify(soapAnalysis.soap.objetivo.signosVitales, null, 2)}. Exploración: ${
-                    typeof soapAnalysis.soap.objetivo.exploracionFisica === 'object'
-                      ? JSON.stringify(soapAnalysis.soap.objetivo.exploracionFisica, null, 2)
-                      : soapAnalysis.soap.objetivo.exploracionFisica || 'Pendiente'
-                  }`
-                : 'Pendiente - Se requiere evaluación física y signos vitales'
-
-          dispatchAction(sessionId, {
-            type: ActionTypes.SOAP_O_UPDATED,
-            payload: { objetivo: session.soapState.objetivo },
-          })
-        }
-
-        if (soapAnalysis.soap?.analisis) {
-          session.soapState.analisis =
-            typeof soapAnalysis.soap.analisis === 'string'
-              ? soapAnalysis.soap.analisis
-              : soapAnalysis.soap.analisis.diagnosticoPrincipal?.condicion ||
-                'Análisis pendiente - Se requiere más información clínica'
-        } else {
-          session.soapState.analisis = 'Análisis pendiente - Se requiere más información clínica'
-        }
-
-        dispatchAction(sessionId, {
-          type: ActionTypes.SOAP_A_UPDATED,
-          payload: { analisis: session.soapState.analisis },
-        })
-
-        if (soapAnalysis.soap?.plan) {
-          if (typeof soapAnalysis.soap.plan === 'string') {
-            session.soapState.plan = soapAnalysis.soap.plan
-          } else {
-            // Check for treatment data in the structured object
-            const hasTreatment =
-              (Array.isArray(soapAnalysis.soap.plan.tratamientoFarmacologico) &&
-                soapAnalysis.soap.plan.tratamientoFarmacologico.length > 0) ||
-              (Array.isArray(soapAnalysis.soap.plan.tratamientoNoFarmacologico) &&
-                soapAnalysis.soap.plan.tratamientoNoFarmacologico.length > 0)
-
-            if (hasTreatment) {
-              session.soapState.plan = JSON.stringify(soapAnalysis.soap.plan, null, 2)
-            } else {
-              session.soapState.plan = 'Plan pendiente - Requiere completar anamnesis y evaluación'
-            }
-          }
-        } else {
-          session.soapState.plan = 'Plan pendiente - Requiere completar anamnesis y evaluación'
-        }
-
-        dispatchAction(sessionId, {
-          type: ActionTypes.SOAP_P_UPDATED,
-          payload: { plan: session.soapState.plan },
-        })
-      } catch (soapError) {
-        logger.error(
-          'SOAP processing failed',
-          soapError instanceof Error ? soapError : { error: soapError, sessionId }
-        )
-      }
+      // Process SOAP analysis
+      await processSOAPAnalysis(sessionId, session, sanitizedMessage, validation.extractedInfo)
     }
 
-    // Agregar mensaje del usuario (sanitizado)
+    // 💬 ADD USER MESSAGE
     session.messages.push({
       role: 'user',
       content: sanitizedMessage,
@@ -776,52 +893,15 @@ export async function POST(req: NextRequest) {
       category: validation.category,
     })
 
-    let responseMessage = ''
+    // 🎨 GENERATE MEDICAL RESPONSE
+    const responseMessage = await generateMedicalResponse(
+      sessionId,
+      session,
+      sanitizedMessage,
+      validation
+    )
 
-    // PASO 2: Procesar según categoría
-    if (!validation.isValid) {
-      // Respuesta amigable para saludos o info incompleta
-      responseMessage = validation.message
-    } else {
-      // Procesar consulta médica completa
-      responseMessage = await processMedicalQuery(sanitizedMessage, session)
-
-      // 🧠 USAR DECISIONAL MIDDLEWARE PARA COMPLETAR SOAP
-      // El DecisionalMiddleware detecta automáticamente cuando se proporciona
-      // información completa de tratamiento ejecutado
-      const fullConversation = session.messages.map(m => m.content).join(' ')
-
-      // Usar el agent de medical_data_extractor para detectar completitud
-      const extractionDecision = await callClaudeForDecision(
-        'medical_data_extractor',
-        fullConversation
-      )
-
-      // Si detecta tratamiento ejecutado, actualizar SOAP automáticamente
-      if (extractionDecision.decision?.treatmentExecuted) {
-        // El sistema detectó que se proporcionó información de tratamiento completo
-        if (!session.soapState.analisis) {
-          session.soapState.analisis =
-            extractionDecision.decision.diagnosis || 'Diagnóstico procesado'
-          dispatchAction(sessionId, {
-            type: ActionTypes.SOAP_A_UPDATED,
-            payload: { analisis: session.soapState.analisis },
-          })
-        }
-
-        if (!session.soapState.plan || !session.soapState.plan.includes('ejecutado')) {
-          session.soapState.plan =
-            'Plan terapéutico ejecutado y documentado. ' +
-            (extractionDecision.decision.treatmentDetails || '')
-          dispatchAction(sessionId, {
-            type: ActionTypes.SOAP_P_UPDATED,
-            payload: { plan: session.soapState.plan },
-          })
-        }
-      }
-    }
-
-    // Agregar respuesta del asistente
+    // 💬 ADD ASSISTANT MESSAGE
     session.messages.push({
       role: 'assistant',
       content: responseMessage,
@@ -830,7 +910,7 @@ export async function POST(req: NextRequest) {
       category: 'response',
     })
 
-    // Despachar acción de respuesta generada
+    // Dispatch response generated action
     dispatchAction(sessionId, {
       type: ActionTypes.RESPONSE_GENERATED,
       payload: { messageLength: responseMessage.length },
