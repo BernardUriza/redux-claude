@@ -12,6 +12,13 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, ID_RANDOM_LENGTH)}`
 }
 
+// Redux action interface for debug panel
+interface ReduxAction {
+  type: string
+  phase: string
+  soapProgress: number
+}
+
 interface Message {
   id: string
   role: 'user' | 'assistant'
@@ -51,7 +58,7 @@ interface ApiResponse {
   }
   reduxFlow?: {
     totalActions: number
-    recentActions: any[]
+    recentActions: ReduxAction[]
   }
 }
 

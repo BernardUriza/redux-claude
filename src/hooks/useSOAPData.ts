@@ -5,12 +5,29 @@
 import { useSelector, useDispatch } from 'react-redux'
 import { useMemo } from 'react'
 
+// 📊 Type definitions for medical data
+interface LabResult {
+  test: string
+  value: string
+  unit: string
+  referenceRange: string
+  status: 'normal' | 'abnormal' | 'critical'
+}
+
+interface Medication {
+  name: string
+  dosage: string
+  frequency: string
+  duration: string
+  instructions?: string
+}
+
 // 💀 CONSTANTES ESTÁTICAS BRUTALES - No más referencias frescas
 const EMPTY_MEDICAL_HISTORY: string[] = []
 const EMPTY_FAMILY_HISTORY: string[] = []
-const EMPTY_LAB_RESULTS: any[] = []
+const EMPTY_LAB_RESULTS: LabResult[] = []
 const EMPTY_DIFFERENTIAL_DX: string[] = []
-const EMPTY_MEDICATIONS: any[] = []
+const EMPTY_MEDICATIONS: Medication[] = []
 const EMPTY_PATIENT_EDUCATION: string[] = []
 
 // 🧠 CACHE INTELIGENTE para operaciones string-to-array que causan re-renders
