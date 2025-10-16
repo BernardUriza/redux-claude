@@ -9,7 +9,7 @@ import '@testing-library/jest-dom'
 
 // Components
 import { SOAPDisplay } from '../../src/components/SOAPDisplay'
-import { RealTimeMetrics } from '../../src/components/RealTimeMetrics'
+import { RealTimeMetrics } from '../../src/components/real-time-metrics'
 import { IterativeDiagnosticProgress } from '../../src/components/IterativeDiagnosticProgress'
 import { FollowUpTracker } from '../../src/components/FollowUpTracker'
 import { MedicalNotes } from '../../src/components/MedicalNotes'

@@ -7,7 +7,7 @@
 import { useState } from 'react'
 import { SOAPSection, type SOAPSectionData } from './SOAPSectionRenderer'
 import { SOAPMarkdownExporter } from './SOAPMarkdownExporter'
-import { useSOAPData, type SOAPEditSection } from '../hooks/useSOAPData'
+import { useSOAPData, type SOAPEditSection } from '../hooks/use-soap-data'
 
 /**
  * SOAPDisplay Container - CLEAN ARCHITECTURE

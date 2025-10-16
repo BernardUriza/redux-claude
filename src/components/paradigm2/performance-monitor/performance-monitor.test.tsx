@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@/test/utils/test-utils'
-import { PerformanceMonitor } from './PerformanceMonitor'
+import { PerformanceMonitor } from './performance-monitor'
 
 // Mock performance APIs
 const mockPerformance = {

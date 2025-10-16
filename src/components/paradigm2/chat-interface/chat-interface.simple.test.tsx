@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { ChatInterface } from './ChatInterface'
+import { ChatInterface } from './chat-interface'
 
 // Simple mock - just mock what we need
 vi.mock('@redux-claude/cognitive-core', () => ({

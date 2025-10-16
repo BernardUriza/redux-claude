@@ -3,7 +3,7 @@
 'use client'
 
 import { UrgencyIndicator, CompactUrgencyIndicator, type UrgencyData } from './UrgencyIndicator'
-import { RealTimeMetrics } from './RealTimeMetrics'
+import { RealTimeMetrics } from './real-time-metrics'
 import { IterativeDiagnosticProgress } from './IterativeDiagnosticProgress'
 import { SOAPDisplay } from './SOAPDisplay'
 import { FollowUpTracker } from './FollowUpTracker'

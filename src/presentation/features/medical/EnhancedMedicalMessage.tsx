@@ -11,7 +11,7 @@ import { StreamingIndicator } from '../../../components/medical-message/Streamin
 import { SOAPBadge } from '../../../components/medical-message/SOAPBadge'
 import { IterativeMetrics } from '../../../components/medical-message/IterativeMetrics'
 import { AgentInsights } from '../../../components/medical-message/AgentInsights'
-import { useMessageContent } from '../../../hooks/useMessageContent'
+import { useMessageContent } from '../../../hooks/use-message-content'
 
 interface MedicalMessageProps {
   message: MedicalMessage

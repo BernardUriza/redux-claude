@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@/test/utils/test-utils'
-import { RealTimeMetrics } from './RealTimeMetrics'
+import { RealTimeMetrics } from './real-time-metrics'
 
 // Simple mock - avoid cognitive-core issues
 vi.mock('@redux-claude/cognitive-core', () => ({

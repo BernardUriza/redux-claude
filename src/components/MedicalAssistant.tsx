@@ -5,7 +5,7 @@ import { selectSystemMetrics } from '../../packages/cognitive-core/src/store/sel
 import IntelligentMedicalChat from '../presentation/features/chat/IntelligentMedicalChat'
 import { MedicalAssistantHeader } from './medical-assistant/MedicalAssistantHeader'
 import { MedicalAssistantFooter } from './medical-assistant/MedicalAssistantFooter'
-import { useMedicalAssistant } from '../hooks/useMedicalAssistant'
+import { useMedicalAssistant } from '../hooks/use-medical-assistant'
 
 interface MedicalAssistantProps {
   partialInput: string

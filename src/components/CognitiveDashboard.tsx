@@ -9,13 +9,13 @@ import { LoadingScreen } from './LoadingScreen'
 import { DashboardContainer } from './DashboardContainer'
 
 // Extracted Hooks
-import { useMobileInteractions } from '../hooks/useMobileInteractions'
-import { useDashboardState } from '../hooks/useDashboardState'
-import { useMedicalDataOrchestrator } from '../hooks/useMedicalDataOrchestrator'
-import { useUrgencyData } from '../hooks/useUrgencyData'
-import { useDashboardHandlers } from '../hooks/useDashboardHandlers'
-import { useDashboardEffects } from '../hooks/useDashboardEffects'
-import { useCognitiveMetrics } from '../hooks/useCognitiveMetrics'
+import { useMobileInteractions } from '../hooks/use-mobile-interactions'
+import { useDashboardState } from '../hooks/use-dashboard-state'
+import { useMedicalDataOrchestrator } from '../hooks/use-medical-data-orchestrator'
+import { useUrgencyData } from '../hooks/use-urgency-data'
+import { useDashboardHandlers } from '../hooks/use-dashboard-handlers'
+import { useDashboardEffects } from '../hooks/use-dashboard-effects'
+import { useCognitiveMetrics } from '../hooks/use-cognitive-metrics'
 
 // Main Cognitive Dashboard Component - BRUTAL ORCHESTRATOR
 

@@ -8,7 +8,7 @@ import { lazy, Suspense } from 'react'
 // 🚀 LAZY LOADING DE COMPONENTES MÉDICOS MULTINÚCLEO
 const SOAPDisplay = lazy(() => import('./SOAPDisplay').then(m => ({ default: m.SOAPDisplay })))
 const RealTimeMetrics = lazy(() =>
-  import('./RealTimeMetrics').then(m => ({ default: m.RealTimeMetrics }))
+  import('./real-time-metrics').then(m => ({ default: m.RealTimeMetrics }))
 )
 const IterativeDiagnosticProgress = lazy(() =>
   import('./IterativeDiagnosticProgress').then(m => ({ default: m.IterativeDiagnosticProgress }))

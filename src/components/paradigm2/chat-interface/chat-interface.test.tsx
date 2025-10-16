@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@/test/utils/test-utils'
-import { ChatInterface } from './ChatInterface'
+import { ChatInterface } from './chat-interface'
 
 // Mock the entire cognitive-core module
 const mockSendMedicalQuery = vi.fn()
