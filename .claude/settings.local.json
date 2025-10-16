@@ -69,7 +69,14 @@
       "Read(//c/Users/Bernard.Orozco/Documents/Github/**)",
       "Bash(timeout 30 bash -c 'while ! netstat -ano | findstr :3100 > /dev/null 2>&1; do echo \"\"Waiting for server...\"\"; sleep 2; done; echo \"\"Server is ready!\"\"')",
       "Bash(timeout 90s npm run build:*)",
-      "Read(//c/Users/Bernard.Orozco/Documents/**)"
+      "Read(//c/Users/Bernard.Orozco/Documents/**)",
+      "Bash(for file in /c/Users/Bernard.Orozco/Documents/Github/cognitive-ai/redux-claude/src/components/*.tsx)",
+      "Bash(do basename \"$file\" .tsx)",
+      "Bash(done)",
+      "Bash(for comp in AlertSystem AppHeader ChatInput ChatMessageList ChatNotifications CognitiveAgentsPanel CognitiveDashboard DashboardContainer DashboardLayout DynamicInferencePanel FollowUpTracker InferenceCard IterativeDiagnosticProgress LoadingScreen MedicalAssistant MedicalChat)",
+      "Bash(do echo -n \"$comp: \")",
+      "Bash(for hook in use-alert-manager use-cognitive-metrics use-dashboard-effects use-dashboard-handlers use-dashboard-state use-medical-assistant use-medical-data-orchestrator use-message-content use-mobile-interactions use-soap-data use-urgency-data)",
+      "Bash(do echo -n \"$hook: \")"
     ],
     "deny": [],
     "ask": []
