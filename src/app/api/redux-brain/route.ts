@@ -1,5 +1,6 @@
 // 🧠 REDUX BRAIN API - Sistema completo con SOAP y trazabilidad Redux
 // Bernard Orozco 2025 - ¡Demostrando el poder del paradigma!
+// REFACTORED: Clean Architecture with SessionManager & SOAPOrchestrator
 
 import { NextRequest, NextResponse } from 'next/server'
 import {
@@ -10,6 +11,8 @@ import {
 } from '@redux-claude/cognitive-core'
 import { logger } from '@/lib/logger'
 import { sanitizeInput, validateMedicalInput } from '@/lib/textUtils'
+import { sessionManager, type SessionData } from '@/services/redux-brain/SessionManager'
+import { soapOrchestrator } from '@/services/redux-brain/SOAPOrchestrator'
 
 // 📊 CONSTANTS
 const SOAP_SECTION_PROGRESS_PERCENT = 25 // Each SOAP section contributes 25% to total progress
@@ -41,35 +44,15 @@ enum ActionTypes {
   VITAL_SIGN_DETECTED = 'VITAL_SIGN_DETECTED',
 }
 
-// 📊 TYPE DEFINITIONS for Redux Actions and Session Data
+// 📊 TYPE DEFINITIONS - Importing from SessionManager (Clean Architecture)
+import type {
+  SOAPState,
+  PatientInfo,
+  ConversationMessage,
+  UrgencyAssessment,
+} from '@/services/redux-brain/SessionManager'
 
-interface ActionPayload {
-  [key: string]: unknown
-}
-
-interface SOAPState {
-  subjetivo?: string
-  objetivo?: string
-  analisis?: string
-  plan?: string
-}
-
-interface PatientInfo {
-  age?: number | null
-  gender?: string | null
-  symptoms?: string[]
-  duration?: string | null
-  medicalHistory?: string[]
-}
-
-interface ConversationMessage {
-  role: 'user' | 'assistant'
-  content: string
-  timestamp?: Date
-  validated?: boolean
-  category?: string
-}
-
+// Local types specific to this route
 interface ExtractedInfo {
   age: number | null
   gender: string | null
@@ -78,49 +61,9 @@ interface ExtractedInfo {
   medicalHistory?: string[]
 }
 
-interface StateSnapshot {
-  messageCount: number
-  hasPatientInfo: boolean
-  soapProgress: number
-  currentPhase: string
-}
-
-interface ReduxAction {
-  type: string
-  payload: ActionPayload
-  timestamp: Date
-  stateSnapshot: StateSnapshot
-}
-
-interface UrgencyAssessment {
-  level: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'
-  protocol?: string
-  actions: string[]
-  pediatricFlag?: boolean
-  reasoning?: string
-}
-
-interface SessionData {
-  sessionId: string
-  messages: ConversationMessage[]
-  patientInfo: PatientInfo
-  diagnosticState: {
-    differentialDiagnosis?: string[]
-    recommendedTests?: string[]
-    treatmentPlan?: string[]
-    urgencyLevel?: string
-  }
-  soapState: SOAPState
-  urgencyAssessment?: UrgencyAssessment
-  actionHistory: ReduxAction[]
-}
-
-// Store Redux con historial de acciones
-const reduxStore = new Map<string, SessionData>()
-
 // Función para despachar acciones (como en Redux real)
-function dispatchAction(sessionId: string, action: { type: string; payload: ActionPayload }) {
-  const session = reduxStore.get(sessionId)
+function dispatchAction(sessionId: string, action: { type: string; payload: Record<string, unknown> }) {
+  const session = sessionManager.get(sessionId)
   if (!session) return
 
   // Agregar acción al historial
@@ -135,6 +78,9 @@ function dispatchAction(sessionId: string, action: { type: string; payload: Acti
       currentPhase: determineCurrentPhase(session),
     },
   })
+
+  // Update session in manager
+  sessionManager.update(sessionId, session)
 
   // Log structured action
   logger.reduxAction({
@@ -484,19 +430,17 @@ Be friendly and helpful. Extract any medical information present.`
 
 // 🔄 SESSION INITIALIZATION HELPER
 function getOrCreateSession(sessionId: string): SessionData {
-  let session = reduxStore.get(sessionId)
+  const session = sessionManager.getOrCreate(sessionId, {
+    sessionId,
+    messages: [],
+    patientInfo: {},
+    diagnosticState: {},
+    soapState: {},
+    actionHistory: [],
+  })
 
-  if (!session) {
-    session = {
-      sessionId,
-      messages: [],
-      patientInfo: {},
-      diagnosticState: {},
-      soapState: {},
-      actionHistory: [],
-    }
-    reduxStore.set(sessionId, session)
-
+  // If newly created (no action history), dispatch init action
+  if (session.actionHistory.length === 0) {
     dispatchAction(sessionId, {
       type: ActionTypes.SESSION_INIT,
       payload: { sessionId, timestamp: new Date() },
@@ -642,243 +586,6 @@ function activateProtocols(
   }
 }
 
-// 📝 SOAP SECTION UPDATE HELPERS
-
-// Update Subjective (S) section - CUMULATIVE MODE
-function updateSOAPSubjective(
-  sessionId: string,
-  session: SessionData,
-  sanitizedMessage: string,
-  soapAnalysis: Awaited<ReturnType<SOAPProcessor['processCase']>>
-): void {
-  // ✅ CUMULATIVE SOAP: Accumulate, don't replace
-  if (!session.soapState.subjetivo) {
-    // First subjective data EVER - initialize
-    session.soapState.subjetivo = sanitizedMessage
-  } else if (soapAnalysis.soap?.subjetivo) {
-    const subjetivoValue =
-      typeof soapAnalysis.soap.subjetivo === 'string'
-        ? soapAnalysis.soap.subjetivo
-        : soapAnalysis.soap.subjetivo.motivoConsulta || sanitizedMessage
-
-    if (
-      subjetivoValue !== 'Paciente acude por evaluación médica' &&
-      subjetivoValue.trim().length > 10
-    ) {
-      // ✅ ACCUMULATE: Append new information, don't replace
-      if (!session.soapState.subjetivo.includes(subjetivoValue)) {
-        session.soapState.subjetivo = `${session.soapState.subjetivo}\n\n📝 ACTUALIZACIÓN: ${subjetivoValue}`
-      }
-    } else {
-      // Generic update - append the raw message if it adds value
-      if (
-        sanitizedMessage.length > 15 &&
-        !session.soapState.subjetivo.includes(sanitizedMessage)
-      ) {
-        session.soapState.subjetivo = `${session.soapState.subjetivo}\n\n📝 ACTUALIZACIÓN: ${sanitizedMessage}`
-      }
-    }
-  } else {
-    // No SOAP analysis but new message - append it
-    if (sanitizedMessage.length > 15 && !session.soapState.subjetivo.includes(sanitizedMessage)) {
-      session.soapState.subjetivo = `${session.soapState.subjetivo}\n\n📝 ACTUALIZACIÓN: ${sanitizedMessage}`
-    }
-  }
-
-  dispatchAction(sessionId, {
-    type: ActionTypes.SOAP_S_UPDATED,
-    payload: { subjetivo: session.soapState.subjetivo },
-  })
-}
-
-// Update Objective (O) section - CUMULATIVE MODE
-function updateSOAPObjective(
-  sessionId: string,
-  session: SessionData,
-  soapAnalysis: Awaited<ReturnType<SOAPProcessor['processCase']>>
-): void {
-  if (soapAnalysis.soap?.objetivo) {
-    const hasVitalSigns =
-      soapAnalysis.soap.objetivo.signosVitales &&
-      Object.keys(soapAnalysis.soap.objetivo.signosVitales).length > 0
-
-    const newObjectiveData =
-      typeof soapAnalysis.soap.objetivo === 'string'
-        ? soapAnalysis.soap.objetivo
-        : hasVitalSigns
-          ? `Signos vitales: ${JSON.stringify(soapAnalysis.soap.objetivo.signosVitales, null, 2)}. Exploración: ${
-              typeof soapAnalysis.soap.objetivo.exploracionFisica === 'object'
-                ? JSON.stringify(soapAnalysis.soap.objetivo.exploracionFisica, null, 2)
-                : soapAnalysis.soap.objetivo.exploracionFisica || 'Pendiente'
-            }`
-          : 'Pendiente - Se requiere evaluación física y signos vitales'
-
-    // ✅ CUMULATIVE SOAP: Only update if new real data (not placeholder)
-    if (!newObjectiveData.includes('Pendiente')) {
-      if (!session.soapState.objetivo || session.soapState.objetivo.includes('Pendiente')) {
-        // First real objective data - replace placeholder
-        session.soapState.objetivo = newObjectiveData
-      } else if (!session.soapState.objetivo.includes(newObjectiveData)) {
-        // Additional objective data - append
-        session.soapState.objetivo = `${session.soapState.objetivo}\n\n📊 ACTUALIZACIÓN: ${newObjectiveData}`
-      }
-    } else if (!session.soapState.objetivo) {
-      // Initialize with placeholder if nothing exists
-      session.soapState.objetivo = newObjectiveData
-    }
-
-    dispatchAction(sessionId, {
-      type: ActionTypes.SOAP_O_UPDATED,
-      payload: { objetivo: session.soapState.objetivo },
-    })
-  }
-}
-
-// Update Analysis (A) section - CUMULATIVE MODE
-function updateSOAPAnalysis(
-  sessionId: string,
-  session: SessionData,
-  soapAnalysis: Awaited<ReturnType<SOAPProcessor['processCase']>>
-): void {
-  if (soapAnalysis.soap?.analisis) {
-    const newAnalysisData =
-      typeof soapAnalysis.soap.analisis === 'string'
-        ? soapAnalysis.soap.analisis
-        : soapAnalysis.soap.analisis.diagnosticoPrincipal?.condicion ||
-          'Análisis pendiente - Se requiere más información clínica'
-
-    // ✅ CUMULATIVE SOAP: Only update if new real analysis (not placeholder)
-    if (!newAnalysisData.includes('pendiente') && !newAnalysisData.includes('por definir')) {
-      if (
-        !session.soapState.analisis ||
-        session.soapState.analisis.includes('pendiente') ||
-        session.soapState.analisis.includes('por definir')
-      ) {
-        // First real analysis - replace placeholder
-        session.soapState.analisis = newAnalysisData
-      } else if (!session.soapState.analisis.includes(newAnalysisData)) {
-        // Additional analysis - refine diagnosis
-        session.soapState.analisis = `${session.soapState.analisis}\n\n🧠 ACTUALIZACIÓN DDx: ${newAnalysisData}`
-      }
-    } else if (!session.soapState.analisis) {
-      // Initialize with placeholder if nothing exists
-      session.soapState.analisis = newAnalysisData
-    }
-  } else if (!session.soapState.analisis) {
-    session.soapState.analisis = 'Análisis pendiente - Se requiere más información clínica'
-  }
-
-  dispatchAction(sessionId, {
-    type: ActionTypes.SOAP_A_UPDATED,
-    payload: { analisis: session.soapState.analisis },
-  })
-}
-
-// Update Plan (P) section - CUMULATIVE MODE
-function updateSOAPPlan(
-  sessionId: string,
-  session: SessionData,
-  soapAnalysis: Awaited<ReturnType<SOAPProcessor['processCase']>>
-): void {
-  if (soapAnalysis.soap?.plan) {
-    let newPlanData: string
-    if (typeof soapAnalysis.soap.plan === 'string') {
-      newPlanData = soapAnalysis.soap.plan
-    } else {
-      const hasTreatment =
-        (Array.isArray(soapAnalysis.soap.plan.tratamientoFarmacologico) &&
-          soapAnalysis.soap.plan.tratamientoFarmacologico.length > 0) ||
-        (Array.isArray(soapAnalysis.soap.plan.tratamientoNoFarmacologico) &&
-          soapAnalysis.soap.plan.tratamientoNoFarmacologico.length > 0)
-
-      newPlanData = hasTreatment
-        ? JSON.stringify(soapAnalysis.soap.plan, null, 2)
-        : 'Plan pendiente - Requiere completar anamnesis y evaluación'
-    }
-
-    // ✅ CUMULATIVE SOAP: Only update if new real plan (not placeholder)
-    if (!newPlanData.includes('pendiente') && !newPlanData.includes('por completar')) {
-      if (
-        !session.soapState.plan ||
-        session.soapState.plan.includes('pendiente') ||
-        session.soapState.plan.includes('por completar')
-      ) {
-        // First real plan - replace placeholder
-        session.soapState.plan = newPlanData
-      } else if (!session.soapState.plan.includes(newPlanData)) {
-        // Additional plan - append treatment updates
-        session.soapState.plan = `${session.soapState.plan}\n\n📋 ACTUALIZACIÓN PLAN: ${newPlanData}`
-      }
-    } else if (!session.soapState.plan) {
-      // Initialize with placeholder if nothing exists
-      session.soapState.plan = newPlanData
-    }
-  } else if (!session.soapState.plan) {
-    session.soapState.plan = 'Plan pendiente - Requiere completar anamnesis y evaluación'
-  }
-
-  dispatchAction(sessionId, {
-    type: ActionTypes.SOAP_P_UPDATED,
-    payload: { plan: session.soapState.plan },
-  })
-}
-
-// 🔍 SOAP GAP ANALYSIS - Identify missing data for complete assessment
-function identifySOAPGaps(soapState: SOAPState, patientInfo: PatientInfo): string[] {
-  const gaps: string[] = []
-
-  // S - SUBJETIVO gaps
-  if (!soapState.subjetivo || soapState.subjetivo.length < 30) {
-    gaps.push('Motivo de consulta detallado')
-    gaps.push('Historia de enfermedad actual (inicio, evolución, factores agravantes/aliviantes)')
-  }
-  if (!patientInfo.medicalHistory || patientInfo.medicalHistory.length === 0) {
-    gaps.push('Antecedentes médicos personales')
-  }
-  if (!patientInfo.duration) {
-    gaps.push('Tiempo de evolución de síntomas')
-  }
-
-  // O - OBJETIVO gaps
-  if (!soapState.objetivo || soapState.objetivo.includes('Pendiente')) {
-    gaps.push('Signos vitales completos (PA, FC, FR, Temp, SatO2)')
-    gaps.push('Examen físico dirigido por sistemas')
-  }
-
-  // A - ANÁLISIS gaps
-  if (
-    !soapState.analisis ||
-    soapState.analisis.includes('pendiente') ||
-    soapState.analisis.includes('por definir')
-  ) {
-    if (gaps.length === 0) {
-      // Only request analysis if we have enough data
-      gaps.push('Análisis clínico y diagnósticos diferenciales')
-    }
-  }
-
-  // P - PLAN gaps
-  if (
-    !soapState.plan ||
-    soapState.plan.includes('pendiente') ||
-    soapState.plan.includes('por completar')
-  ) {
-    if (soapState.analisis && !soapState.analisis.includes('pendiente')) {
-      // Only request plan if we have analysis
-      gaps.push('Plan terapéutico y seguimiento')
-    }
-  }
-
-  // Patient demographics
-  if (!patientInfo.age) {
-    gaps.push('Edad del paciente')
-  }
-  if (!patientInfo.gender) {
-    gaps.push('Sexo del paciente')
-  }
-
-  return gaps
-}
 
 // 🧠 SOAP PROCESSING ORCHESTRATOR
 async function processSOAPAnalysis(
@@ -897,11 +604,16 @@ async function processSOAPAnalysis(
       vitalSigns: {},
     })
 
-    // Update all SOAP sections using helper functions
-    updateSOAPSubjective(sessionId, session, sanitizedMessage, soapAnalysis)
-    updateSOAPObjective(sessionId, session, soapAnalysis)
-    updateSOAPAnalysis(sessionId, session, soapAnalysis)
-    updateSOAPPlan(sessionId, session, soapAnalysis)
+    // Update all SOAP sections using the orchestrator
+    soapOrchestrator.updateAllSections(session.soapState, {
+      sessionId,
+      sanitizedMessage,
+      soapAnalysis,
+      dispatchAction: (action) => dispatchAction(sessionId, action),
+    })
+
+    // Update session in manager after SOAP updates
+    sessionManager.update(sessionId, session)
   } catch (soapError) {
     logger.error(
       'SOAP processing failed',
@@ -956,7 +668,7 @@ async function processMedicalQuery(input: string, sessionData: SessionData): Pro
   const criticalPatternResult = criticalPatternMiddleware.analyzeCriticalPatterns(input)
 
   // 🔍 IDENTIFY MISSING SOAP DATA
-  const soapGaps = identifySOAPGaps(sessionData.soapState, sessionData.patientInfo)
+  const soapGaps = soapOrchestrator.identifyGaps(sessionData.soapState, sessionData.patientInfo)
 
   const systemPrompt = `Asistente médico AI. Respuestas CONCISAS para profesionales médicos.
 
@@ -1130,8 +842,8 @@ export async function POST(req: NextRequest) {
       payload: { messageLength: responseMessage.length },
     })
 
-    // Guardar sesión actualizada
-    reduxStore.set(sessionId, session)
+    // Save final session state with all messages
+    sessionManager.update(sessionId, session)
 
     // Respuesta completa con metadatos y flujo Redux completo
     return NextResponse.json({
@@ -1171,7 +883,7 @@ export async function POST(req: NextRequest) {
         reasoning: session.urgencyAssessment?.reasoning || 'No contextual analysis performed',
       },
       reduxState: {
-        storeSize: reduxStore.size,
+        storeSize: sessionManager.size(),
         activeSession: sessionId,
         totalMessages: session.messages.length,
         actionCount: session.actionHistory.length,
@@ -1201,8 +913,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const sessionId = searchParams.get('sessionId')
 
-  if (sessionId && reduxStore.has(sessionId)) {
-    const session = reduxStore.get(sessionId)!
+  if (sessionId && sessionManager.has(sessionId)) {
+    const session = sessionManager.get(sessionId)!
     return NextResponse.json({
       sessionId,
       messageCount: session.messages.length,
@@ -1215,7 +927,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     service: '🧠 Redux Brain API',
     description: 'Complete medical consultation system with Redux-like state management',
-    activeSessions: reduxStore.size,
+    activeSessions: sessionManager.size(),
     usage: {
       endpoint: 'POST /api/redux-brain',
       payload: {
