@@ -415,11 +415,14 @@ Return a JSON object:
 
 Be friendly and helpful. Extract any medical information present.`
 
-  const response = await callClaude(systemPrompt, input)
-
   try {
+    const response = await callClaude(systemPrompt, input)
     return JSON.parse(response)
-  } catch {
+  } catch (error) {
+    logger.warn('Validation parse failed', {
+      error: error instanceof Error ? error.message : String(error),
+      input: input.substring(0, 100), // Log first 100 chars
+    })
     return {
       isValid: false,
       category: 'error',
@@ -721,8 +724,20 @@ export async function POST(req: NextRequest) {
   try {
     const { sessionId, message } = await req.json()
 
-    // 🔒 SANITIZE INPUT
-    const sanitizedMessage = sanitizeInput(message)
+    // 🔒 SANITIZE INPUT - Extra trim for safety
+    const sanitizedMessage = sanitizeInput(message?.trim() || '')
+
+    // 🔍 VALIDATE MIN LENGTH
+    if (sanitizedMessage.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Empty message',
+          message: 'Por favor, escribe un mensaje',
+        },
+        { status: 400 }
+      )
+    }
 
     // 📋 VALIDATE INPUT - Basic sanity check
     const inputValidation = validateMedicalInput(sanitizedMessage)
