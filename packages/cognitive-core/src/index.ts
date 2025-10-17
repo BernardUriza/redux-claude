@@ -1,6 +1,22 @@
 // 🧠 Cognitive Core MULTINÚCLEO - API Pública
 // Creado por Bernard Orozco + Gandalf el Blanco
 
+// ============================================================================
+// ⭐ MAIN EXPORT - Medical Processor (NPM Package Entry Point)
+// ============================================================================
+export { MedicalProcessor } from './MedicalProcessor'
+export type {
+  MedicalContext,
+  MedicalResult,
+  MedicalConfig,
+  ConversationMessage as ProcessorConversationMessage,
+  PatientInfo as ProcessorPatientInfo,
+  SOAPState as ProcessorSOAPState,
+  UrgencyAssessment as ProcessorUrgencyAssessment,
+  ExtractedInfo,
+  ValidationResult as ProcessorValidationResult,
+} from './MedicalProcessor'
+
 // === DECISION ENGINE (CORE) ===
 import { decisionEngineService } from './decision-engine/DecisionEngineService'
 export { decisionEngineService }
