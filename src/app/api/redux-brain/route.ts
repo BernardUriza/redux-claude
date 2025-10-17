@@ -726,7 +726,7 @@ Context: ${sessionData.messages.length} mensajes previos`
 
 export async function POST(req: NextRequest) {
   try {
-    const { sessionId, message } = await req.json()
+    const { sessionId, message, clientSessionData } = await req.json()
 
     // 🔒 SANITIZE INPUT - Extra trim for safety
     const sanitizedMessage = sanitizeInput(message?.trim() || '')
@@ -770,13 +770,36 @@ export async function POST(req: NextRequest) {
     }
 
     // 🔄 GET OR CREATE SESSION
-    const session = getOrCreateSession(sessionId)
+    // Priority: clientSessionData (from browser localStorage) > server memory (fallback)
+    let session: SessionData
+    const isClientSideSession = !!clientSessionData
+
+    if (isClientSideSession) {
+      // 🌐 SERVERLESS MODE: Use client-provided session data
+      session = {
+        sessionId,
+        messages: clientSessionData.messages || [],
+        patientInfo: clientSessionData.patientInfo || {},
+        diagnosticState: clientSessionData.diagnosticState || {},
+        soapState: clientSessionData.soapState || {},
+        urgencyAssessment: clientSessionData.urgencyAssessment,
+        actionHistory: clientSessionData.actionHistory || [],
+        lastAccess: Date.now(),
+        createdAt: clientSessionData.createdAt || Date.now(),
+      }
+      logger.info('Using client-side session (serverless mode)', { sessionId })
+    } else {
+      // 🖥️ TRADITIONAL MODE: Use server memory (backward compatibility)
+      session = getOrCreateSession(sessionId)
+      logger.info('Using server-side session (traditional mode)', { sessionId })
+    }
 
     logger.info('Redux Brain session started', {
       sessionId,
       messageLength: sanitizedMessage.length,
       originalLength: message.length,
       wasSanitized: sanitizedMessage !== message,
+      isClientSideSession,
       category: 'session',
     })
     logger.debug(`User input received (sanitized): "${sanitizedMessage}"`, { sessionId })
@@ -872,9 +895,13 @@ export async function POST(req: NextRequest) {
       validation,
       soapState: session.soapState, // Add SOAP state at root level for UI
       sessionData: {
-        messageCount: session.messages.length,
+        messages: session.messages, // 🔑 FULL CONVERSATION - for client-side persistence
         patientInfo: session.patientInfo,
+        diagnosticState: session.diagnosticState,
         soapState: session.soapState,
+        urgencyAssessment: session.urgencyAssessment,
+        actionHistory: session.actionHistory,
+        messageCount: session.messages.length,
         hasCompleteInfo: !!(
           session.patientInfo.age &&
           session.patientInfo.gender &&

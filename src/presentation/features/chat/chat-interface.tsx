@@ -2,6 +2,7 @@
 // Redux Brain Medical System - Full SOAP & Urgency Display
 
 import { useState, useEffect, useRef } from 'react'
+import { clientSessionManager } from '@/services/redux-brain/ClientSessionManager'
 
 // 🔧 UI CONSTANTS
 const ID_RANDOM_LENGTH = 11 // Length for random ID generation (substring end index)
@@ -46,6 +47,26 @@ interface ApiResponse {
     reasoning?: string
   }
   sessionData?: {
+    // Complete session data for client-side persistence
+    messages?: Array<{ role: string; content: string; timestamp: string }>
+    patientInfo?: Record<string, unknown>
+    diagnosticState?: Record<string, unknown>
+    soapState?: {
+      subjetivo?: string
+      objetivo?: string
+      analisis?: string
+      plan?: string
+    }
+    urgencyAssessment?: {
+      level: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'
+      protocol?: string
+      actions: string[]
+      pediatricFlag?: boolean
+      reasoning?: string
+    }
+    actionHistory?: Array<Record<string, unknown>>
+    // UI-specific fields
+    messageCount?: number
     soapProgress: number
     currentPhase: string
     hasCompleteInfo: boolean
@@ -90,6 +111,9 @@ export const ChatInterfaceAPI = () => {
     setIsLoading(true)
 
     try {
+      // 🌐 CLIENT-SIDE PERSISTENCE: Get session data from localStorage
+      const clientSessionData = clientSessionManager.getSession(sessionId)
+
       // Auto-detect Netlify environment
       const isNetlify =
         typeof window !== 'undefined' && window.location.hostname.includes('netlify')
@@ -103,6 +127,7 @@ export const ChatInterfaceAPI = () => {
         body: JSON.stringify({
           sessionId,
           message: input,
+          clientSessionData, // 🔑 Send session history to serverless API
         }),
       })
 
@@ -120,6 +145,18 @@ export const ChatInterfaceAPI = () => {
           soapState: data.soapState,
         }
         setMessages(prev => [...prev, assistantMessage])
+
+        // 💾 SAVE SESSION: Persist complete session data to localStorage
+        if (data.sessionData) {
+          clientSessionManager.saveSession(sessionId, {
+            messages: data.sessionData.messages || [],
+            patientInfo: data.sessionData.patientInfo || {},
+            diagnosticState: data.sessionData.diagnosticState || {},
+            soapState: data.sessionData.soapState || data.soapState || {},
+            urgencyAssessment: data.sessionData.urgencyAssessment || data.urgencyAssessment,
+            actionHistory: data.sessionData.actionHistory || [],
+          })
+        }
       } else {
         throw new Error('API response indicates failure')
       }
