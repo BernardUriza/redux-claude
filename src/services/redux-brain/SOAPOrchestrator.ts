@@ -368,7 +368,10 @@ export class SOAPOrchestrator {
 
     // P - PLAN gaps
     if (!soapState.plan || this.strategies.plan.canUpdate('pendiente', soapState.plan)) {
-      if (soapState.analisis && !this.strategies.analisis.canUpdate('pendiente', soapState.analisis)) {
+      if (
+        soapState.analisis &&
+        !this.strategies.analisis.canUpdate('pendiente', soapState.analisis)
+      ) {
         gaps.push('Plan terapéutico y seguimiento')
       }
     }

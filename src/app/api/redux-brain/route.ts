@@ -11,11 +11,17 @@ import {
 } from '@redux-claude/cognitive-core'
 import { logger } from '@/lib/logger'
 import { sanitizeInput, validateMedicalInput } from '@/lib/textUtils'
-import { sessionManager, type SessionData } from '@/services/redux-brain/SessionManager'
+import {
+  sessionManager,
+  type SessionData,
+  type SOAPState,
+  type PatientInfo,
+  type ConversationMessage,
+  type UrgencyAssessment,
+} from '@/services/redux-brain/SessionManager'
 import { soapOrchestrator } from '@/services/redux-brain/SOAPOrchestrator'
 
 // 📊 CONSTANTS
-const SOAP_SECTION_PROGRESS_PERCENT = 25 // Each SOAP section contributes 25% to total progress
 const ADULT_AGE_THRESHOLD = 18 // Age threshold for pediatric vs adult
 const RECENT_MESSAGES_COUNT = 3 // Number of recent messages to include in context
 const RECENT_ACTIONS_COUNT = 5 // Number of recent Redux actions to return
@@ -44,14 +50,6 @@ enum ActionTypes {
   VITAL_SIGN_DETECTED = 'VITAL_SIGN_DETECTED',
 }
 
-// 📊 TYPE DEFINITIONS - Importing from SessionManager (Clean Architecture)
-import type {
-  SOAPState,
-  PatientInfo,
-  ConversationMessage,
-  UrgencyAssessment,
-} from '@/services/redux-brain/SessionManager'
-
 // Local types specific to this route
 interface ExtractedInfo {
   age: number | null
@@ -62,7 +60,10 @@ interface ExtractedInfo {
 }
 
 // Función para despachar acciones (como en Redux real)
-function dispatchAction(sessionId: string, action: { type: string; payload: Record<string, unknown> }) {
+function dispatchAction(
+  sessionId: string,
+  action: { type: string; payload: Record<string, unknown> }
+) {
   const session = sessionManager.get(sessionId)
   if (!session) return
 
@@ -433,14 +434,7 @@ Be friendly and helpful. Extract any medical information present.`
 
 // 🔄 SESSION INITIALIZATION HELPER
 function getOrCreateSession(sessionId: string): SessionData {
-  const session = sessionManager.getOrCreate(sessionId, {
-    sessionId,
-    messages: [],
-    patientInfo: {},
-    diagnosticState: {},
-    soapState: {},
-    actionHistory: [],
-  })
+  const session = sessionManager.getOrCreate(sessionId)
 
   // If newly created (no action history), dispatch init action
   if (session.actionHistory.length === 0) {
@@ -589,7 +583,6 @@ function activateProtocols(
   }
 }
 
-
 // 🧠 SOAP PROCESSING ORCHESTRATOR
 async function processSOAPAnalysis(
   sessionId: string,
@@ -612,7 +605,7 @@ async function processSOAPAnalysis(
       sessionId,
       sanitizedMessage,
       soapAnalysis,
-      dispatchAction: (action) => dispatchAction(sessionId, action),
+      dispatchAction: action => dispatchAction(sessionId, action),
     })
 
     // Update session in manager after SOAP updates
@@ -680,8 +673,12 @@ Paciente: ${sessionData.patientInfo.age ? `${sessionData.patientInfo.age} años`
 Síntomas: ${sessionData.patientInfo.symptoms?.join(', ') || 'No registrados'}
 SOAP: ${calculateSOAPProgress(sessionData.soapState)}%
 
-${soapGaps.length > 0 ? `🚨 DATOS FALTANTES (${soapGaps.length}):
-${soapGaps.map(g => `• ${g}`).join('\n')}` : '✅ SOAP COMPLETO'}
+${
+  soapGaps.length > 0
+    ? `🚨 DATOS FALTANTES (${soapGaps.length}):
+${soapGaps.map(g => `• ${g}`).join('\n')}`
+    : '✅ SOAP COMPLETO'
+}
 
 ${criticalPatternResult.triggered ? `\n🚨 CRITICAL PATTERN DETECTED:\n${criticalPatternMiddleware.generateMandatoryPrompt(criticalPatternResult)}\n` : ''}
 
@@ -690,9 +687,16 @@ IF (sepsis + abdominal pain + HTN) → MUST consider aortic dissection with bact
 
 📋 FORMATO OBLIGATORIO (Máximo 150 palabras):
 
-${soapGaps.length > 0 ? `**DATOS FALTANTES:**
-${soapGaps.slice(0, 3).map(g => `• ${g}`).join('\n')}
-` : ''}**EVALUACIÓN:**
+${
+  soapGaps.length > 0
+    ? `**DATOS FALTANTES:**
+${soapGaps
+  .slice(0, 3)
+  .map(g => `• ${g}`)
+  .join('\n')}
+`
+    : ''
+}**EVALUACIÓN:**
 • [Punto clave 1]
 • [Punto clave 2]
 

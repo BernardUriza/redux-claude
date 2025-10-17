@@ -1,21 +1,21 @@
 [build]
   base = "."
-  command = "npm run netlify-build"
+  command = "npm ci --legacy-peer-deps && npm run build:core && npm run build"
   publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "20.19.5"
   NPM_FLAGS = "--legacy-peer-deps"
   NEXT_USE_NETLIFY_EDGE = "true"
 
 [context.production]
-  command = "npm run build"
+  command = "npm ci --legacy-peer-deps && npm run build"
 
 [context.deploy-preview]
-  command = "npm run build"
+  command = "npm ci --legacy-peer-deps && npm run build"
 
 [context.branch-deploy]
-  command = "npm run build"
+  command = "npm ci --legacy-peer-deps && npm run build"
 
 # Headers for security
 [[headers]]
