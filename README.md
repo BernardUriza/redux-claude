@@ -1,54 +1,51 @@
-# 🏥 Redux Claude - Plataforma Médica AI Enterprise
+# 🏥 Redux Claude — AI Medical Platform
 
 [![Deploy Status](https://api.netlify.com/api/v1/badges/your-site-id/deploy-status)](https://app.netlify.com/sites/your-site-name/deploys)
 
-_Arquitectura SOLID por Bernard Orozco_
+_SOLID architecture by Bernard Orozco_
 
-## 🚀 Demo en Vivo
+## 🚀 Live Demo
 
-🌐 **[Ver Demo](https://redux-claude-medical.netlify.app)** - Sistema médico con
-contexto persistente
+🌐 **[Open the demo](https://redux-claude-medical.netlify.app)** — a medical assistant that remembers the whole conversation.
 
-## 📖 Descripción
+## 📖 What This Is
 
-Redux Claude es una **plataforma médica enterprise-grade** que combina
-**arquitectura SOLID**, **contexto persistente** y **13 agentes especializados**
-para crear el sistema médico AI más avanzado de 2025.
+Redux Claude is a clinical-decision-support app built on Next.js, Redux Toolkit and the Claude API. You type a case, it keeps the full conversation context, routes the case through 13 specialized agents, and streams back a structured SOAP note.
 
-### ✨ Características Enterprise
+What you get:
 
-- 🧠 **Contexto médico persistente** - Historial completo entre consultas
-- 🤖 **Autocompletado médico inteligente** - Templates SOAP estructurados
-- 🛡️ **Medicina defensiva integrada** - Priorización por gravedad
-- 🏗️ **Arquitectura SOLID escalable** - 13 agentes especializados
-- ⚡ **Streaming en tiempo real** - Respuestas progresivas con Claude AI
-- 📱 **Interface médica profesional** - Diseño responsive enterprise
-- 🔧 **Circuit breakers y métricas** - Monitoreo en tiempo real
+- 🧠 **Persistent medical context** — every consult carries the prior history.
+- 🤖 **Smart autocompletion** — turns a half-written case into three structured SOAP templates.
+- 🛡️ **Defensive-medicine logic** — triage by severity, not by likelihood.
+- 🏗️ **SOLID architecture** — 13 specialized agents behind one registry.
+- ⚡ **Real-time streaming** — responses render as Claude writes them.
+- 📱 **Responsive clinical UI** — built mobile-first.
+- 🔧 **Circuit breakers and metrics** — per-agent health you can watch live.
 
-## 🚀 Inicio Rápido
+## 🚀 Quick Start
 
-### 📋 Prerrequisitos
+### 📋 Requirements
 
 - Node.js 18+
-- npm o yarn
-- Claude API Key (Anthropic)
+- npm or yarn
+- A Claude API key from Anthropic
 
-### ⚡ Instalación
+### ⚡ Install
 
 ```bash
-# Clonar el repositorio
+# Clone the repo
 git clone https://github.com/BernardUriza/redux-claude.git
 cd redux-claude
 
-# Instalar dependencias
+# Install dependencies
 npm install
 
-# Configurar variables de entorno
+# Set up your environment
 cp .env.example .env.local
-# Edita .env.local con tu ANTHROPIC_API_KEY
+# Then put your ANTHROPIC_API_KEY in .env.local
 ```
 
-### 🔑 Variables de Entorno
+### 🔑 Environment Variables
 
 ```bash
 # .env.local
@@ -57,72 +54,72 @@ NEXT_PUBLIC_APP_NAME="Redux Claude Medical"
 NEXT_PUBLIC_APP_VERSION="1.0.0"
 ```
 
-### 🏃‍♂️ Ejecutar en Desarrollo
+### 🏃‍♂️ Run It in Dev
 
 ```bash
-# Construir el core package
+# Build the core package first
 npm run build:core
 
-# Iniciar servidor de desarrollo
+# Start the dev server
 npm run dev
 ```
 
-Visita [http://localhost:3000](http://localhost:3000) para ver la aplicación.
+Open [http://localhost:3000](http://localhost:3000).
 
-### 🏗️ Build para Producción
+### 🏗️ Production Build
 
 ```bash
-# Build completo
+# Full build
 npm run build
 
-# Iniciar servidor de producción
+# Start the production server
 npm start
 ```
 
-## 🌐 Despliegue en Netlify
+## 🌐 Deploying to Netlify
 
-### Método 1: Desde GitHub (Recomendado)
+### Option 1: From GitHub (recommended)
 
-1. **Conecta tu repositorio:**
-   - Ve a [Netlify](https://netlify.com)
-   - Haz clic en "New site from Git"
-   - Conecta tu repositorio de GitHub
+1. **Connect the repo:**
+   - Go to [Netlify](https://netlify.com)
+   - Click "New site from Git"
+   - Pick this GitHub repo
 
-2. **Configuración de Build:**
+2. **Build settings:**
 
    ```
    Build command: npm run build
    Publish directory: .next
    ```
 
-3. **Variables de Entorno:**
-   - `ANTHROPIC_API_KEY`: Tu Claude API key
+3. **Environment variables:**
+   - `ANTHROPIC_API_KEY`: your Claude API key
    - `NEXT_PUBLIC_APP_NAME`: "Redux Claude Medical"
 
-### Método 2: Deploy Manual
+### Option 2: Deploy by hand
 
 ```bash
-# Instalar Netlify CLI
+# Install the Netlify CLI
 npm install -g netlify-cli
 
-# Build y deploy
+# Build and ship
 npm run build
 netlify deploy --prod --dir=.next
 ```
 
-### 🔧 Configuración Netlify
+### 🔧 What's Already Wired Up
 
-El proyecto incluye configuración automática para Netlify con soporte para:
+The repo ships with Netlify config for:
 
-- ✅ Next.js 15 con App Router
-- ✅ Monorepo con workspaces
-- ✅ Variables de entorno
-- ✅ Redirects para SPA
-- ✅ Headers de seguridad
+- ✅ Next.js 15 with the App Router
+- ✅ Monorepo workspaces
+- ✅ Environment variables
+- ✅ SPA redirects
+- ✅ Security headers
 
 ---
 
-## 📊 Arquitectura SOLID Enterprise
+## 📊 Architecture
 
 ```mermaid
 graph TB
@@ -173,31 +170,31 @@ graph TB
 
 ---
 
-## 🛡️ Flujo de Medicina Defensiva + Autocompletado
+## 🛡️ Defensive Medicine + Autocompletion Flow
 
 ```mermaid
 flowchart TD
-    A[👨‍⚕️ Input Médico] --> B[MedicalContentValidator]
-    B --> C{Contenido Médico Válido?}
+    A[👨‍⚕️ Medical Input] --> B[MedicalContentValidator]
+    B --> C{Valid medical content?}
 
-    C -->|No| D[Autocompletado Inteligente]
+    C -->|No| D[Smart Autocompletion]
     D --> E[🤖 MedicalAutocompletionService]
     E --> F[DecisionalMiddleware]
-    F --> G[3 Templates SOAP]
-    G --> H[Usuario Selecciona Template]
+    F --> G[3 SOAP Templates]
+    G --> H[User picks a template]
     H --> A
 
-    C -->|Sí| I[Context History Manager]
+    C -->|Yes| I[Context History Manager]
     I --> J[Redux Store + Conversation]
     J --> K[UrgencyClassifier]
-    K --> L{Nivel de Urgencia}
+    K --> L{Urgency level}
 
-    L -->|Crítico| M[🚨 PROTOCOLO EMERGENCIA]
-    L -->|Alto| N[⚠️ REFERENCIA URGENTE]
-    L -->|Medio| O[📋 EVALUACIÓN PRIORITARIA]
-    L -->|Bajo| P[📅 SEGUIMIENTO RUTINARIO]
+    L -->|Critical| M[🚨 EMERGENCY PROTOCOL]
+    L -->|High| N[⚠️ URGENT REFERRAL]
+    L -->|Medium| O[📋 PRIORITY WORKUP]
+    L -->|Low| P[📅 ROUTINE FOLLOW-UP]
 
-    M --> Q[13 Agentes Especializados]
+    M --> Q[13 Specialized Agents]
     N --> Q
     O --> Q
     P --> Q
@@ -221,11 +218,11 @@ flowchart TD
 
 ---
 
-## ⚡ Flujo SOLID + Contexto Persistente
+## ⚡ Request Lifecycle
 
 ```mermaid
 sequenceDiagram
-    participant U as 👨‍⚕️ Usuario
+    participant U as 👨‍⚕️ User
     participant CD as 🖥️ CognitiveDashboard
     participant AS as 🤖 AutocompletionService
     participant DM as 🏗️ DecisionalMiddleware
@@ -234,7 +231,7 @@ sequenceDiagram
     participant CA as ⚕️ ClaudeAdapter
     participant API as 🔥 Claude API
 
-    U->>CD: Input médico incompleto
+    U->>CD: Incomplete medical input
     CD->>AS: generateCompletionSuggestions()
     AS->>DM: callClaudeForDecision('medical_autocompletion')
     DM->>CH: getConversationHistory()
@@ -247,28 +244,28 @@ sequenceDiagram
     CA-->>DM: structured response
     DM-->>AS: MedicalAutocompletionDecision
     AS-->>CD: suggestions[]
-    CD->>U: Modal con 3 opciones
+    CD->>U: Modal with 3 options
 
-    U->>CD: Selecciona template + datos
+    U->>CD: Picks a template + fills it in
     CD->>CH: sendMedicalQuery(completedInput)
     CH->>RS: updateConversationHistory()
     CH->>DM: processWithContext()
     DM->>CA: requestWithFullHistory()
     CA->>API: complete conversation context
 
-    loop Streaming Contextual
+    loop Contextual streaming
         API-->>CA: chunk with context awareness
         CA-->>RS: updateStreamingState()
         RS-->>CD: progressive display
         CD-->>U: real-time SOAP response
     end
 
-    Note over U,CD: 🧠 Contexto médico preservado entre consultas
+    Note over U,CD: 🧠 Medical context carries across consults
 ```
 
 ---
 
-## 🏗️ Arquitectura SOLID Enterprise
+## 🏗️ Repo Layout
 
 ```mermaid
 graph TB
@@ -290,7 +287,7 @@ graph TB
         M --> N[🔄 Real-time Context]
     end
 
-    subgraph "🎨 Enterprise UI"
+    subgraph "🎨 UI"
         O[CognitiveDashboard] --> P[MedicalAutocompletion<br/>Template Modal]
         O --> Q[CognitiveAgentsPanel<br/>13 Agents Status]
         O --> R[SOAPDisplay<br/>Structured Output]
@@ -298,7 +295,7 @@ graph TB
         P --> T[3 SOAP Templates<br/>Editable Fields]
     end
 
-    subgraph "🌐 Production Ready"
+    subgraph "🌐 Production"
         U[Static Build] --> V[Netlify Edge]
         V --> W[Global CDN]
         W --> X[Security Headers]
@@ -316,124 +313,120 @@ graph TB
 
 ---
 
-## 🎯 Características Enterprise
+## 🎯 How the Pieces Work
 
-### 🧠 **Contexto Médico Persistente (NUEVO)**
+### 🧠 Persistent medical context
 
-- **ConversationHistoryManager**: Mantiene contexto completo entre consultas
-- **ClaudeAdapter + Context**: Envía historial completo a Claude API
-- **Redux Store Integration**: Fuente única de verdad para conversaciones
-- **convertReduxMessagesToClaudeFormat**: Transformación automática de contexto
+- **ConversationHistoryManager** — holds the full context between consults.
+- **ClaudeAdapter + Context** — sends the whole history to the Claude API.
+- **Redux store integration** — one source of truth for every conversation.
+- **convertReduxMessagesToClaudeFormat** — converts store messages into Claude's message format.
 
-### 🤖 **Autocompletado Médico Inteligente (NUEVO)**
+### 🤖 Smart medical autocompletion
 
-- **MedicalAutocompletionService**: Refactorizado con patrón SOLID
-- **DecisionalMiddleware Integration**: Reutiliza arquitectura existente
-- **3 Templates SOAP**: Básico, Detallado y Especializado automáticos
-- **Detección de Especialidades**: Inferencia inteligente de contexto médico
+- **MedicalAutocompletionService** — refactored onto the SOLID pattern.
+- **DecisionalMiddleware integration** — reuses the existing decision pipeline instead of a parallel one.
+- **3 SOAP templates** — basic, detailed and specialized, generated on the fly.
+- **Specialty detection** — infers the clinical specialty from what you typed.
 
-### 🏗️ **Arquitectura SOLID Enterprise**
+### 🏗️ SOLID architecture
 
-- **13 Agentes Especializados**: Registry unificado con circuit breakers
-- **Single Responsibility**: Cada servicio tiene una función específica
-- **Dependency Inversion**: Interfaces abstractas sobre implementaciones
-- **Open/Closed**: Sistema extensible sin modificar código base
+- **13 specialized agents** behind a single registry, each with its own circuit breaker.
+- **Single responsibility** — one job per service.
+- **Dependency inversion** — components depend on interfaces, not implementations.
+- **Open/closed** — add an agent without touching the core.
 
-### 🛡️ **Sistema de Medicina Defensiva Avanzado**
+### 🛡️ Defensive medicine
 
-- **UrgencyClassifier**: Priorización por gravedad médica real
-- **DefensiveMedicineValidator**: Validación profesional automática
-- **Circuit Breakers**: Protección contra fallos de agentes
-- **Fallback Systems**: Templates y respuestas de emergencia
+- **UrgencyClassifier** — ranks by clinical severity.
+- **DefensiveMedicineValidator** — automatic professional validation.
+- **Circuit breakers** — one failing agent doesn't take the system down.
+- **Fallbacks** — canned templates and emergency responses when a call fails.
 
-### 📊 **Monitoreo y Métricas en Tiempo Real**
+### 📊 Live monitoring
 
-- **AgentMetrics**: Métricas individuales por especialista
-- **RealTimeMetrics**: Dashboard con estado del sistema
-- **Performance Tracking**: Latencia y confianza por agente
-- **Health Monitoring**: Estado global de 13 agentes especializados
-
----
-
-## 🚀 Stack Tecnológico
-
-### 🏗️ **Framework & Build**
-
-- **Next.js 15** con App Router y Static Export
-- **TypeScript 5.9** con tipos médicos específicos
-- **Monorepo Workspaces** para arquitectura modular
-- **Netlify** deployment con headers de seguridad
-
-### 🧠 **AI & Cognitive**
-
-- **@anthropic-ai/sdk** - Claude AI con streaming nativo
-- **Custom Decision Engine** - Motor de decisiones médicas
-- **Defensive Medicine System** - Medicina defensiva integrada
-- **SOAP Processing Engine** - Análisis SOAP automático
-
-### 📊 **State Management**
-
-- **Redux Toolkit** con middleware médico personalizado
-- **React-Redux** para conectores de componentes
-- **Streaming State Updates** - Actualizaciones en tiempo real
-- **Medical Chat Slice** - Estado específico para medicina
-
-### 🎨 **UI/UX Framework**
-
-- **Tailwind CSS v4** con Lightning CSS
-- **React Markdown** para renderizado de diagnósticos
-- **Corporate Medical Theme** - Diseño médico profesional 2025
-- **Responsive Mobile-First** - Optimizado para dispositivos médicos
-
-### 🔧 **Development Tools**
-
-- **Workspace Configuration** - npm workspaces
-- **TypeScript Build Pipeline** - Transpilación automática
-- **ESLint + Prettier** - Calidad de código médico
-- **Hot Reload Development** - Desarrollo iterativo rápido
+- **AgentMetrics** — per-specialist numbers.
+- **RealTimeMetrics** — system-status dashboard.
+- **Performance tracking** — latency and confidence per agent.
+- **Health monitoring** — global state across all 13 agents.
 
 ---
 
-## 🏥 Casos de Uso Implementados
+## 🚀 Stack
 
-### 🛡️ **Medicina Defensiva**
+### 🏗️ Framework & build
 
-✅ **Clasificación Automática de Urgencias** - Sistema de triage inteligente  
-✅ **Protocolos de Emergencia** - Activación automática para casos críticos  
-✅ **Diagnósticos por Gravedad** - Priorización defensiva sobre probabilidad  
-✅ **Alertas Visuales Médicas** - Indicadores críticos/altos/medios/bajos
+- **Next.js 15** with the App Router and static export
+- **TypeScript 5.9** with domain-specific medical types
+- **npm workspaces** monorepo
+- **Netlify** deploys with security headers
 
-### 📋 **Análisis SOAP Estructurado**
+### 🧠 AI layer
 
-✅ **SOAP Automático** - Procesamiento completo de casos médicos  
-✅ **Documentación Médica** - Generación automática de notas clínicas  
-✅ **Seguimiento de Pacientes** - Recordatorios y notas con trazabilidad  
-✅ **Copy-to-Clipboard** - Exportación directa de diagnósticos
+- **@anthropic-ai/sdk** — Claude with native streaming
+- **Custom decision engine** for clinical routing
+- **Defensive-medicine system** baked into the pipeline
+- **SOAP processing engine** for structured output
 
-### 🧠 **Motor Cognitivo Avanzado**
+### 📊 State
 
-✅ **Diagnósticos Iterativos** - Procesamiento en múltiples ciclos  
-✅ **Análisis en Tiempo Real** - Streaming progresivo de respuestas  
-✅ **Orquestación de Agentes** - Panel de agentes cognitivos coordinados  
-✅ **Validación Médica Inteligente** - Filtros profesionales automáticos
+- **Redux Toolkit** with custom medical middleware
+- **React-Redux** bindings
+- **Streaming state updates** as chunks arrive
+- **Medical chat slice** for the domain state
 
-### 📱 **Interface Médica Corporativa**
+### 🎨 UI
 
-✅ **Dashboard Responsivo** - Multi-pestaña optimizado para medicina  
-✅ **Métricas en Tiempo Real** - Monitoreo del sistema cognitivo  
-✅ **Dark Mode Médico** - Tema profesional corporativo 2025  
-✅ **Mobile-First Design** - Optimizado para dispositivos médicos
+- **Tailwind CSS v4** with Lightning CSS
+- **React Markdown** to render diagnoses
+- **Dark clinical theme**
+- **Mobile-first responsive** layout
 
----
+### 🔧 Dev tooling
 
-## 🎭 Por Bernard Orozco
-
-_"Acelerar el desarrollo médico 15-20x vs estimaciones tradicionales usando
-Claude Code y arquitectura moderna."_
-
-**Sistema médico que redefine la interacción entre IA y medicina profesional.**
+- **npm workspaces** configuration
+- **TypeScript build pipeline** for the core package
+- **ESLint + Prettier**
+- **Hot reload** in dev
 
 ---
 
-_🤖 Sistema optimizado para médicos latinoamericanos con streaming progresivo y
-validación inteligente_
+## 🏥 What It Does Today
+
+### 🛡️ Defensive medicine
+
+✅ Automatic urgency triage  
+✅ Emergency protocols that fire on critical cases  
+✅ Differentials ranked by severity, not just probability  
+✅ Visual alerts for critical / high / medium / low
+
+### 📋 Structured SOAP
+
+✅ Full SOAP generation from a free-text case  
+✅ Clinical notes written for you  
+✅ Patient follow-up notes and reminders  
+✅ Copy-to-clipboard export
+
+### 🧠 Cognitive engine
+
+✅ Iterative diagnosis across multiple passes  
+✅ Progressive streaming of every response  
+✅ Coordinated agent orchestration with a live panel  
+✅ Automatic validation of medical input
+
+### 📱 Clinical interface
+
+✅ Responsive multi-tab dashboard  
+✅ Real-time system metrics  
+✅ Dark mode  
+✅ Mobile-first design
+
+---
+
+## 🎭 By Bernard Orozco
+
+_"Ship medical software 15–20x faster than traditional estimates, using Claude Code and a modern architecture."_
+
+---
+
+_🤖 Built for Latin American clinicians: progressive streaming and smart validation._
