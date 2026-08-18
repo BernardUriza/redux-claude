@@ -1,12 +1,6 @@
 # 🏥 Redux Claude — AI Medical Platform
 
-[![Deploy Status](https://api.netlify.com/api/v1/badges/your-site-id/deploy-status)](https://app.netlify.com/sites/your-site-name/deploys)
-
 _SOLID architecture by Bernard Orozco_
-
-## 🚀 Live Demo
-
-🌐 **[Open the demo](https://redux-claude-medical.netlify.app)** — a medical assistant that remembers the whole conversation.
 
 ## 📖 What This Is
 
